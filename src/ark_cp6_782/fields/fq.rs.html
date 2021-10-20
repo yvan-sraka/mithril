@@ -1,0 +1,343 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `&#x2F;home&#x2F;runner&#x2F;.cargo&#x2F;registry&#x2F;src&#x2F;github.com-1ecc6299db9ec823&#x2F;ark-cp6-782-0.3.0&#x2F;src&#x2F;fields&#x2F;fq.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>fq.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../../ark_cp6_782/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="18" height="18" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input"name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="18" height="18" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
+<span id="2">  2</span>
+<span id="3">  3</span>
+<span id="4">  4</span>
+<span id="5">  5</span>
+<span id="6">  6</span>
+<span id="7">  7</span>
+<span id="8">  8</span>
+<span id="9">  9</span>
+<span id="10"> 10</span>
+<span id="11"> 11</span>
+<span id="12"> 12</span>
+<span id="13"> 13</span>
+<span id="14"> 14</span>
+<span id="15"> 15</span>
+<span id="16"> 16</span>
+<span id="17"> 17</span>
+<span id="18"> 18</span>
+<span id="19"> 19</span>
+<span id="20"> 20</span>
+<span id="21"> 21</span>
+<span id="22"> 22</span>
+<span id="23"> 23</span>
+<span id="24"> 24</span>
+<span id="25"> 25</span>
+<span id="26"> 26</span>
+<span id="27"> 27</span>
+<span id="28"> 28</span>
+<span id="29"> 29</span>
+<span id="30"> 30</span>
+<span id="31"> 31</span>
+<span id="32"> 32</span>
+<span id="33"> 33</span>
+<span id="34"> 34</span>
+<span id="35"> 35</span>
+<span id="36"> 36</span>
+<span id="37"> 37</span>
+<span id="38"> 38</span>
+<span id="39"> 39</span>
+<span id="40"> 40</span>
+<span id="41"> 41</span>
+<span id="42"> 42</span>
+<span id="43"> 43</span>
+<span id="44"> 44</span>
+<span id="45"> 45</span>
+<span id="46"> 46</span>
+<span id="47"> 47</span>
+<span id="48"> 48</span>
+<span id="49"> 49</span>
+<span id="50"> 50</span>
+<span id="51"> 51</span>
+<span id="52"> 52</span>
+<span id="53"> 53</span>
+<span id="54"> 54</span>
+<span id="55"> 55</span>
+<span id="56"> 56</span>
+<span id="57"> 57</span>
+<span id="58"> 58</span>
+<span id="59"> 59</span>
+<span id="60"> 60</span>
+<span id="61"> 61</span>
+<span id="62"> 62</span>
+<span id="63"> 63</span>
+<span id="64"> 64</span>
+<span id="65"> 65</span>
+<span id="66"> 66</span>
+<span id="67"> 67</span>
+<span id="68"> 68</span>
+<span id="69"> 69</span>
+<span id="70"> 70</span>
+<span id="71"> 71</span>
+<span id="72"> 72</span>
+<span id="73"> 73</span>
+<span id="74"> 74</span>
+<span id="75"> 75</span>
+<span id="76"> 76</span>
+<span id="77"> 77</span>
+<span id="78"> 78</span>
+<span id="79"> 79</span>
+<span id="80"> 80</span>
+<span id="81"> 81</span>
+<span id="82"> 82</span>
+<span id="83"> 83</span>
+<span id="84"> 84</span>
+<span id="85"> 85</span>
+<span id="86"> 86</span>
+<span id="87"> 87</span>
+<span id="88"> 88</span>
+<span id="89"> 89</span>
+<span id="90"> 90</span>
+<span id="91"> 91</span>
+<span id="92"> 92</span>
+<span id="93"> 93</span>
+<span id="94"> 94</span>
+<span id="95"> 95</span>
+<span id="96"> 96</span>
+<span id="97"> 97</span>
+<span id="98"> 98</span>
+<span id="99"> 99</span>
+<span id="100">100</span>
+<span id="101">101</span>
+<span id="102">102</span>
+<span id="103">103</span>
+<span id="104">104</span>
+<span id="105">105</span>
+<span id="106">106</span>
+<span id="107">107</span>
+<span id="108">108</span>
+<span id="109">109</span>
+<span id="110">110</span>
+<span id="111">111</span>
+<span id="112">112</span>
+<span id="113">113</span>
+<span id="114">114</span>
+<span id="115">115</span>
+<span id="116">116</span>
+<span id="117">117</span>
+<span id="118">118</span>
+<span id="119">119</span>
+<span id="120">120</span>
+<span id="121">121</span>
+<span id="122">122</span>
+<span id="123">123</span>
+<span id="124">124</span>
+<span id="125">125</span>
+<span id="126">126</span>
+<span id="127">127</span>
+<span id="128">128</span>
+<span id="129">129</span>
+<span id="130">130</span>
+<span id="131">131</span>
+<span id="132">132</span>
+<span id="133">133</span>
+<span id="134">134</span>
+<span id="135">135</span>
+<span id="136">136</span>
+<span id="137">137</span>
+<span id="138">138</span>
+<span id="139">139</span>
+<span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
+<span id="147">147</span>
+<span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
+<span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
+<span id="157">157</span>
+<span id="158">158</span>
+<span id="159">159</span>
+<span id="160">160</span>
+<span id="161">161</span>
+<span id="162">162</span>
+<span id="163">163</span>
+<span id="164">164</span>
+<span id="165">165</span>
+<span id="166">166</span>
+<span id="167">167</span>
+<span id="168">168</span>
+<span id="169">169</span>
+</pre><pre class="rust">
+<span class="kw">use</span> <span class="ident">ark_ff</span>::{
+    <span class="ident">biginteger::BigInteger832</span> <span class="kw">as</span> <span class="ident">BigInteger</span>,
+    <span class="ident">fields</span>::{<span class="ident">FftParameters</span>, <span class="ident">Fp832</span>, <span class="ident">Fp832Parameters</span>, <span class="ident">FpParameters</span>},
+};
+
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">Fq</span> <span class="op">=</span> <span class="ident">Fp832</span><span class="op">&lt;</span><span class="ident">FqParameters</span><span class="op">&gt;</span>;
+
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">FqParameters</span>;
+
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">FQ_ONE</span>: <span class="ident">Fq</span> <span class="op">=</span> <span class="macro">ark_ff::field_new!</span>(<span class="ident">Fq</span>, <span class="string">&quot;1&quot;</span>);
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">FQ_ZERO</span>: <span class="ident">Fq</span> <span class="op">=</span> <span class="macro">ark_ff::field_new!</span>(<span class="ident">Fq</span>, <span class="string">&quot;0&quot;</span>);
+
+<span class="kw">impl</span> <span class="ident">Fp832Parameters</span> <span class="kw">for</span> <span class="ident">FqParameters</span> {}
+<span class="kw">impl</span> <span class="ident">FftParameters</span> <span class="kw">for</span> <span class="ident">FqParameters</span> {
+    <span class="kw">type</span> <span class="ident">BigInt</span> <span class="op">=</span> <span class="ident">BigInteger</span>;
+
+    <span class="kw">const</span> <span class="ident">TWO_ADICITY</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">3</span>;
+
+    <span class="attribute">#[<span class="ident">rustfmt::skip</span>]</span>
+    <span class="kw">const</span> <span class="ident">TWO_ADIC_ROOT_OF_UNITY</span>: <span class="ident">BigInteger</span> <span class="op">=</span> <span class="ident">BigInteger</span>([
+        <span class="number">18044746167194862600u64</span>,
+        <span class="number">63590321303744709u64</span>,
+        <span class="number">5009346151370959890u64</span>,
+        <span class="number">2859114157767503991u64</span>,
+        <span class="number">8301813204852325413u64</span>,
+        <span class="number">5629414263664332594u64</span>,
+        <span class="number">2637340888701394641u64</span>,
+        <span class="number">17433538052687852753u64</span>,
+        <span class="number">2230763098934759248u64</span>,
+        <span class="number">3785382115983092023u64</span>,
+        <span class="number">8895511354022222370u64</span>,
+        <span class="number">15792083141709071785u64</span>,
+        <span class="number">1328u64</span>,
+    ]);
+}
+<span class="kw">impl</span> <span class="ident">FpParameters</span> <span class="kw">for</span> <span class="ident">FqParameters</span> {
+    <span class="doccomment">/// MODULUS = 22369874298875696930346742206501054934775599465297184582183496627646774052458024540232479018147881220178054575403841904557897715222633333372134756426301062487682326574958588001132586331462553235407484089304633076250782629492557320825577</span>
+    <span class="attribute">#[<span class="ident">rustfmt::skip</span>]</span>
+    <span class="kw">const</span> <span class="ident">MODULUS</span>: <span class="ident">BigInteger</span> <span class="op">=</span> <span class="ident">BigInteger</span>([
+        <span class="number">0xdace79b57b942ae9</span>,
+        <span class="number">0x545d85c16dfd424a</span>,
+        <span class="number">0xee135c065f4d26b7</span>,
+        <span class="number">0x9c2f764a12c4024b</span>,
+        <span class="number">0x1ad533049cfe6a39</span>,
+        <span class="number">0x52a3fb77c79c1320</span>,
+        <span class="number">0xab3596c8617c5792</span>,
+        <span class="number">0x830c728d80f9d78b</span>,
+        <span class="number">0x6a7223ee72023d07</span>,
+        <span class="number">0xbc5d176b746af026</span>,
+        <span class="number">0xe959283d8f526663</span>,
+        <span class="number">0xc4d2263babf8941f</span>,
+        <span class="number">0x3848</span>,
+    ]);
+
+    <span class="kw">const</span> <span class="ident">MODULUS_BITS</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">782</span>;
+
+    <span class="kw">const</span> <span class="ident">CAPACITY</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="self">Self</span><span class="ident">::MODULUS_BITS</span> <span class="op">-</span> <span class="number">1</span>;
+
+    <span class="kw">const</span> <span class="ident">REPR_SHAVE_BITS</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">50</span>;
+
+    <span class="attribute">#[<span class="ident">rustfmt::skip</span>]</span>
+    <span class="kw">const</span> <span class="ident">R</span>: <span class="ident">BigInteger</span> <span class="op">=</span> <span class="ident">BigInteger</span>([
+        <span class="number">11190988450819017841u64</span>,
+        <span class="number">16170411717126802030u64</span>,
+        <span class="number">2265463223430229059u64</span>,
+        <span class="number">16946880912571045974u64</span>,
+        <span class="number">11155248462028513229u64</span>,
+        <span class="number">12855672356664541314u64</span>,
+        <span class="number">8489376931127408159u64</span>,
+        <span class="number">2655797810825538098u64</span>,
+        <span class="number">9648483887143916718u64</span>,
+        <span class="number">17514963461276738952u64</span>,
+        <span class="number">16777089214204267338u64</span>,
+        <span class="number">15649035958020076168u64</span>,
+        <span class="number">8659u64</span>,
+    ]);
+
+    <span class="attribute">#[<span class="ident">rustfmt::skip</span>]</span>
+    <span class="kw">const</span> <span class="ident">R2</span>: <span class="ident">BigInteger</span> <span class="op">=</span> <span class="ident">BigInteger</span>([
+        <span class="number">13983406830510863714u64</span>,
+        <span class="number">17863856572171232656u64</span>,
+        <span class="number">1698388424046564526u64</span>,
+        <span class="number">1773634430448388392u64</span>,
+        <span class="number">8684647957094413275u64</span>,
+        <span class="number">3992637317298078843u64</span>,
+        <span class="number">18420879196616862245u64</span>,
+        <span class="number">3238482510270583127u64</span>,
+        <span class="number">7928200707794018216u64</span>,
+        <span class="number">10024831010452223910u64</span>,
+        <span class="number">9613847725664942650u64</span>,
+        <span class="number">15361265984156787358u64</span>,
+        <span class="number">7833u64</span>,
+    ]);
+
+    <span class="kw">const</span> <span class="ident">INV</span>: <span class="ident">u64</span> <span class="op">=</span> <span class="number">14469047335842394791u64</span>;
+
+    <span class="doccomment">/// GENERATOR = 13</span>
+    <span class="attribute">#[<span class="ident">rustfmt::skip</span>]</span>
+    <span class="kw">const</span> <span class="ident">GENERATOR</span>: <span class="ident">BigInteger</span> <span class="op">=</span> <span class="ident">BigInteger</span>([
+        <span class="number">16669393626057438558u64</span>,
+        <span class="number">1640520694378723217u64</span>,
+        <span class="number">1598646156981121135u64</span>,
+        <span class="number">12401834967100173388u64</span>,
+        <span class="number">2356467520877704673u64</span>,
+        <span class="number">14759118825104212161u64</span>,
+        <span class="number">5556628239575210651u64</span>,
+        <span class="number">5317520392768798654u64</span>,
+        <span class="number">16398429955031064995u64</span>,
+        <span class="number">3556102264904210145u64</span>,
+        <span class="number">8166834915717907988u64</span>,
+        <span class="number">11926665585800594452u64</span>,
+        <span class="number">11716u64</span>,
+    ]);
+
+    <span class="attribute">#[<span class="ident">rustfmt::skip</span>]</span>
+    <span class="kw">const</span> <span class="ident">MODULUS_MINUS_ONE_DIV_TWO</span>: <span class="ident">BigInteger</span> <span class="op">=</span> <span class="ident">BigInteger</span>([
+        <span class="number">0x6d673cdabdca1574</span>,
+        <span class="number">0xaa2ec2e0b6fea125</span>,
+        <span class="number">0xf709ae032fa6935b</span>,
+        <span class="number">0xce17bb2509620125</span>,
+        <span class="number">0xd6a99824e7f351c</span>,
+        <span class="number">0x2951fdbbe3ce0990</span>,
+        <span class="number">0xd59acb6430be2bc9</span>,
+        <span class="number">0xc1863946c07cebc5</span>,
+        <span class="number">0x353911f739011e83</span>,
+        <span class="number">0xde2e8bb5ba357813</span>,
+        <span class="number">0xf4ac941ec7a93331</span>,
+        <span class="number">0x6269131dd5fc4a0f</span>,
+        <span class="number">0x1c24</span>,
+    ]);
+
+    <span class="comment">// (T - 1)/2 =</span>
+    <span class="comment">// 1398117143679731058146671387906315933423474966581074036386468539227923378278626533764529938634242576261128410962740119034868607201414583335758422276643816405480145410934911750070786645716409577212967755581539567265673914343284832551598</span>
+    <span class="attribute">#[<span class="ident">rustfmt::skip</span>]</span>
+    <span class="kw">const</span> <span class="ident">T_MINUS_ONE_DIV_TWO</span>: <span class="ident">BigInteger</span> <span class="op">=</span> <span class="ident">BigInteger</span>([
+        <span class="number">0xadace79b57b942ae</span>,
+        <span class="number">0x7545d85c16dfd424</span>,
+        <span class="number">0xbee135c065f4d26b</span>,
+        <span class="number">0x99c2f764a12c4024</span>,
+        <span class="number">0x1ad533049cfe6a3</span>,
+        <span class="number">0x252a3fb77c79c132</span>,
+        <span class="number">0xbab3596c8617c579</span>,
+        <span class="number">0x7830c728d80f9d78</span>,
+        <span class="number">0x66a7223ee72023d0</span>,
+        <span class="number">0x3bc5d176b746af02</span>,
+        <span class="number">0xfe959283d8f52666</span>,
+        <span class="number">0x8c4d2263babf8941</span>,
+        <span class="number">0x384</span>,
+    ]);
+
+    <span class="comment">// T =</span>
+    <span class="comment">// 2796234287359462116293342775812631866846949933162148072772937078455846756557253067529059877268485152522256821925480238069737214402829166671516844553287632810960290821869823500141573291432819154425935511163079134531347828686569665103197</span>
+    <span class="attribute">#[<span class="ident">rustfmt::skip</span>]</span>
+    <span class="kw">const</span> <span class="ident">T</span>: <span class="ident">BigInteger</span> <span class="op">=</span> <span class="ident">BigInteger</span>([
+        <span class="number">0x5b59cf36af72855d</span>,
+        <span class="number">0xea8bb0b82dbfa849</span>,
+        <span class="number">0x7dc26b80cbe9a4d6</span>,
+        <span class="number">0x3385eec942588049</span>,
+        <span class="number">0x35aa660939fcd47</span>,
+        <span class="number">0x4a547f6ef8f38264</span>,
+        <span class="number">0x7566b2d90c2f8af2</span>,
+        <span class="number">0xf0618e51b01f3af1</span>,
+        <span class="number">0xcd4e447dce4047a0</span>,
+        <span class="number">0x778ba2ed6e8d5e04</span>,
+        <span class="number">0xfd2b2507b1ea4ccc</span>,
+        <span class="number">0x189a44c7757f1283</span>,
+        <span class="number">0x709</span>,
+    ]);
+}
+</pre></div>
+</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="ark_cp6_782" data-search-index-js="../../../search-index.js" data-search-js="../../../search.js"></div>
+    <script src="../../../main.js"></script><script src="../../../source-script.js"></script><script src="../../../source-files.js"></script>
+</body></html>

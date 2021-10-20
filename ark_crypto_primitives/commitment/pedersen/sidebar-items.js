@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Commitment",""],["Parameters",""],["Randomness",""]]});
