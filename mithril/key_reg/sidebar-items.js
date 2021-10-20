@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["KeyReg",""],["RegParty",""]]});
+initSidebarItems({"enum":[["RegisterError",""]],"struct":[["KeyReg",""],["RegParty",""]]});
