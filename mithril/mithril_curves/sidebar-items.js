@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["hash_to_curve",""]]});
+initSidebarItems({});
