@@ -1,1 +1,1 @@
-initSidebarItems({"type":[["ConcatProof",""]]});
+initSidebarItems({"type":[["ConcatEnv",""],["ConcatProof",""],["ConcatRel",""]]});
