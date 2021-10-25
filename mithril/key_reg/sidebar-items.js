@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["RegisterError",""]],"struct":[["KeyReg",""],["RegParty",""]]});
+initSidebarItems({"enum":[["RegisterError",""]],"struct":[["KeyReg",""],["RegParty","A registered party, i.e. an id associated with its stake and public key"]]});

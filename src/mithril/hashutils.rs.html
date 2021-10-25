@@ -9,56 +9,16 @@
 <span id="9"> 9</span>
 <span id="10">10</span>
 <span id="11">11</span>
-<span id="12">12</span>
-<span id="13">13</span>
-<span id="14">14</span>
-<span id="15">15</span>
-<span id="16">16</span>
-<span id="17">17</span>
-<span id="18">18</span>
-<span id="19">19</span>
-<span id="20">20</span>
-<span id="21">21</span>
-<span id="22">22</span>
-<span id="23">23</span>
-<span id="24">24</span>
-<span id="25">25</span>
-<span id="26">26</span>
-<span id="27">27</span>
-<span id="28">28</span>
-<span id="29">29</span>
-<span id="30">30</span>
-<span id="31">31</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">blake2::digest</span>::{<span class="ident">Update</span>, <span class="ident">VariableOutput</span>};
-<span class="kw">use</span> <span class="ident">blake2::VarBlake2b</span>;
+</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">digest::ExtendableOutput</span>;
+<span class="kw">use</span> <span class="ident">sha3::Shake256</span>;
+<span class="kw">use</span> <span class="ident">std::io::Write</span>;
 <span class="kw">use</span> <span class="ident">std::vec::Vec</span>;
 
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">hash_message</span>(<span class="ident">msg</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="ident">out_len</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">hasher</span> <span class="op">=</span> <span class="ident">VarBlake2b::new</span>(<span class="ident">out_len</span>).<span class="ident">unwrap</span>();
-    <span class="ident">hasher</span>.<span class="ident">update</span>(<span class="ident">msg</span>);
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">out</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="number">0u8</span>; <span class="ident">out_len</span>];
-    <span class="ident">hasher</span>.<span class="ident">finalize_variable</span>(<span class="op">|</span><span class="ident">res</span><span class="op">|</span> <span class="ident">out</span>.<span class="ident">copy_from_slice</span>(<span class="ident">res</span>));
-    <span class="ident">out</span>
-}
-
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
-
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">size_test</span>() {
-        <span class="kw">let</span> <span class="ident">message</span> <span class="op">=</span> <span class="string">b&quot;testing if lengths bigger than 300 bits work&quot;</span>;
-        <span class="kw">let</span> <span class="ident">hash</span> <span class="op">=</span> <span class="ident">hash_message</span>(<span class="ident">message</span>, <span class="number">42</span>);
-
-        <span class="macro">assert_eq!</span>(
-            <span class="ident">hash</span>,
-            [
-                <span class="number">210</span>, <span class="number">197</span>, <span class="number">244</span>, <span class="number">136</span>, <span class="number">108</span>, <span class="number">49</span>, <span class="number">176</span>, <span class="number">109</span>, <span class="number">118</span>, <span class="number">254</span>, <span class="number">196</span>, <span class="number">130</span>, <span class="number">213</span>, <span class="number">133</span>, <span class="number">151</span>, <span class="number">78</span>, <span class="number">137</span>,
-                <span class="number">125</span>, <span class="number">87</span>, <span class="number">113</span>, <span class="number">139</span>, <span class="number">149</span>, <span class="number">190</span>, <span class="number">80</span>, <span class="number">184</span>, <span class="number">115</span>, <span class="number">149</span>, <span class="number">139</span>, <span class="number">125</span>, <span class="number">186</span>, <span class="number">70</span>, <span class="number">170</span>, <span class="number">209</span>, <span class="number">237</span>,
-                <span class="number">78</span>, <span class="number">168</span>, <span class="number">192</span>, <span class="number">58</span>, <span class="number">120</span>, <span class="number">189</span>, <span class="number">83</span>, <span class="number">232</span>
-            ]
-        )
-    }
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">hasher</span> <span class="op">=</span> <span class="ident">Shake256::default</span>();
+    <span class="ident">hasher</span>.<span class="ident">write_all</span>(<span class="ident">msg</span>).<span class="ident">unwrap</span>();
+    <span class="kw">let</span> <span class="ident">out</span> <span class="op">=</span> <span class="ident">hasher</span>.<span class="ident">finalize_boxed</span>(<span class="ident">out_len</span>);
+    <span class="ident">out</span>.<span class="ident">to_vec</span>()
 }
 </code></pre></div>
 </section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="mithril" data-search-index-js="../../search-index.js" data-search-js="../../search.js"></div>
