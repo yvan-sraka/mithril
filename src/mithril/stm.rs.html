@@ -765,6 +765,11 @@
 <span id="765">765</span>
 <span id="766">766</span>
 <span id="767">767</span>
+<span id="768">768</span>
+<span id="769">769</span>
+<span id="770">770</span>
+<span id="771">771</span>
+<span id="772">772</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Top-level API for Mithril Stake-based Threshold Multisignature scheme.</span>
 
 <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">concat_avk_with_msg</span>, <span class="ident">ev_lt_phi</span>, <span class="ident">Index</span>, <span class="ident">PartyId</span>, <span class="ident">Path</span>, <span class="ident">Stake</span>};
@@ -803,10 +808,15 @@
 <span class="kw">where</span>
     <span class="ident">PE</span>: <span class="ident">PairingEngine</span>,
 {
+    <span class="doccomment">/// This participant&#39;s Id</span>
     <span class="ident">party_id</span>: <span class="ident">PartyId</span>,
+    <span class="doccomment">/// This participant&#39;s stake</span>
     <span class="ident">stake</span>: <span class="ident">Stake</span>,
+    <span class="doccomment">/// Current protocol instantiation parameters</span>
     <span class="ident">params</span>: <span class="ident">StmParameters</span>,
+    <span class="doccomment">/// Secret key</span>
     <span class="ident">sk</span>: <span class="ident">MspSk</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// Verification (public) key + proof of possession</span>
     <span class="ident">pk</span>: <span class="ident">MspPk</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span>,
 }
 
@@ -910,7 +920,7 @@
         <span class="self">self</span>.<span class="ident">sk</span>
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">public_key</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">MspPk</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verification_key</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">MspPk</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">pk</span>
     }
 
@@ -1211,7 +1221,7 @@
             .<span class="ident">into_iter</span>()
             .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">pid</span>, <span class="ident">stake</span>)<span class="op">|</span> {
                 <span class="kw">let</span> <span class="ident">p</span> <span class="op">=</span> <span class="ident">StmInitializer::setup</span>(<span class="ident">params</span>, <span class="ident">pid</span>, <span class="ident">stake</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">rng</span>);
-                <span class="ident">kr</span>.<span class="ident">register</span>(<span class="ident">p</span>.<span class="ident">party_id</span>(), <span class="ident">p</span>.<span class="ident">stake</span>(), <span class="ident">p</span>.<span class="ident">public_key</span>())
+                <span class="ident">kr</span>.<span class="ident">register</span>(<span class="ident">p</span>.<span class="ident">party_id</span>(), <span class="ident">p</span>.<span class="ident">stake</span>(), <span class="ident">p</span>.<span class="ident">verification_key</span>())
                     .<span class="ident">unwrap</span>();
                 <span class="ident">p</span>
             })
