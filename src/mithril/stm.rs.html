@@ -743,10 +743,38 @@
 <span id="743">743</span>
 <span id="744">744</span>
 <span id="745">745</span>
+<span id="746">746</span>
+<span id="747">747</span>
+<span id="748">748</span>
+<span id="749">749</span>
+<span id="750">750</span>
+<span id="751">751</span>
+<span id="752">752</span>
+<span id="753">753</span>
+<span id="754">754</span>
+<span id="755">755</span>
+<span id="756">756</span>
+<span id="757">757</span>
+<span id="758">758</span>
+<span id="759">759</span>
+<span id="760">760</span>
+<span id="761">761</span>
+<span id="762">762</span>
+<span id="763">763</span>
+<span id="764">764</span>
+<span id="765">765</span>
+<span id="766">766</span>
+<span id="767">767</span>
+<span id="768">768</span>
+<span id="769">769</span>
+<span id="770">770</span>
+<span id="771">771</span>
+<span id="772">772</span>
+<span id="773">773</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Top-level API for Mithril Stake-based Threshold Multisignature scheme.</span>
 
 <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">concat_avk_with_msg</span>, <span class="ident">ev_lt_phi</span>, <span class="ident">Index</span>, <span class="ident">PartyId</span>, <span class="ident">Path</span>, <span class="ident">Stake</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::key_reg</span>::{<span class="ident">KeyReg</span>, <span class="ident">RegParty</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::key_reg::RegParty</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::merkle_tree</span>::{<span class="ident">MTHashLeaf</span>, <span class="ident">MerkleTree</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::mithril_proof</span>::{<span class="ident">MithrilProof</span>, <span class="ident">Statement</span>, <span class="ident">Witness</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::msp</span>::{<span class="ident">Msp</span>, <span class="ident">MspMvk</span>, <span class="ident">MspPk</span>, <span class="ident">MspSig</span>, <span class="ident">MspSk</span>};
@@ -756,7 +784,6 @@
 <span class="kw">use</span> <span class="ident">rand::Rng</span>;
 <span class="kw">use</span> <span class="ident">std::collections::HashMap</span>;
 <span class="kw">use</span> <span class="ident">std::convert::From</span>;
-<span class="kw">use</span> <span class="ident">std::iter::FromIterator</span>;
 <span class="kw">use</span> <span class="ident">std::rc::Rc</span>;
 
 <span class="doccomment">/// The values that are represented in the Merkle Tree.</span>
@@ -779,19 +806,20 @@
 
 <span class="doccomment">/// Initializer for `StmSigner`.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">StmInitializer</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">PE</span><span class="op">&gt;</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">StmInitializer</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span>
 <span class="kw">where</span>
-    <span class="ident">H</span>: <span class="ident">MTHashLeaf</span><span class="op">&lt;</span><span class="ident">MTValue</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="ident">PE</span>: <span class="ident">PairingEngine</span>,
 {
+    <span class="doccomment">/// This participant&#39;s Id</span>
     <span class="ident">party_id</span>: <span class="ident">PartyId</span>,
+    <span class="doccomment">/// This participant&#39;s stake</span>
     <span class="ident">stake</span>: <span class="ident">Stake</span>,
+    <span class="doccomment">/// Current protocol instantiation parameters</span>
     <span class="ident">params</span>: <span class="ident">StmParameters</span>,
-    <span class="ident">avk</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">MerkleTree</span><span class="op">&lt;</span><span class="ident">MTValue</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span>, <span class="ident">H</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">avk_indices</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">PartyId</span>, <span class="ident">usize</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">sk</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">MspSk</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">pk</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">MspPk</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">total_stake</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Stake</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// Secret key</span>
+    <span class="ident">sk</span>: <span class="ident">MspSk</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// Verification (public) key + proof of possession</span>
+    <span class="ident">pk</span>: <span class="ident">MspPk</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span>,
 }
 
 <span class="doccomment">/// Participant in the protocol. Can sign messages.</span>
@@ -857,73 +885,100 @@
     <span class="ident">VerifyFailed</span>,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">PE</span><span class="op">&gt;</span> <span class="ident">StmInitializer</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">PE</span><span class="op">&gt;</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span> <span class="ident">StmInitializer</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span>
 <span class="kw">where</span>
     <span class="ident">PE</span>: <span class="ident">PairingEngine</span>,
     <span class="ident">MspPk</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span>: <span class="ident">std::hash::Hash</span>,
-    <span class="ident">H</span>: <span class="ident">MTHashLeaf</span><span class="op">&lt;</span><span class="ident">MTValue</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span><span class="op">&gt;</span>,
 {
     <span class="comment">//////////////////////////</span>
     <span class="comment">// Initialization phase //</span>
     <span class="comment">//////////////////////////</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">setup</span>(<span class="ident">params</span>: <span class="ident">StmParameters</span>, <span class="ident">party_id</span>: <span class="ident">PartyId</span>, <span class="ident">stake</span>: <span class="ident">Stake</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+
+    <span class="doccomment">/// Builds an `StmInitializer` that is ready to register with the key registration service</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">setup</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>(<span class="ident">params</span>: <span class="ident">StmParameters</span>, <span class="ident">party_id</span>: <span class="ident">PartyId</span>, <span class="ident">stake</span>: <span class="ident">Stake</span>, <span class="ident">rng</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">R</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span>
+    <span class="kw">where</span>
+        <span class="ident">R</span>: <span class="ident">Rng</span> <span class="op">+</span> <span class="ident">rand::CryptoRng</span> <span class="op">+</span> <span class="question-mark">?</span><span class="ident">Sized</span>,
+    {
+        <span class="kw">let</span> (<span class="ident">sk</span>, <span class="ident">pk</span>) <span class="op">=</span> <span class="ident">Msp::gen</span>(<span class="ident">rng</span>);
         <span class="self">Self</span> {
             <span class="ident">party_id</span>,
             <span class="ident">stake</span>,
-            <span class="ident">avk_indices</span>: <span class="prelude-val">None</span>,
-            <span class="ident">avk</span>: <span class="prelude-val">None</span>,
-            <span class="ident">sk</span>: <span class="prelude-val">None</span>,
-            <span class="ident">pk</span>: <span class="prelude-val">None</span>,
-            <span class="ident">total_stake</span>: <span class="prelude-val">None</span>,
+            <span class="ident">pk</span>,
+            <span class="ident">sk</span>,
             <span class="ident">params</span>,
         }
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">register</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">rng</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">R</span>, <span class="ident">kr</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">KeyReg</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span>)
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">generate_new_key</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">rng</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">R</span>)
     <span class="kw">where</span>
         <span class="ident">R</span>: <span class="ident">Rng</span> <span class="op">+</span> <span class="ident">rand::CryptoRng</span> <span class="op">+</span> <span class="question-mark">?</span><span class="ident">Sized</span>,
     {
-        <span class="comment">// (msk_i, mvk_i, k_i) &lt;- MSP.Gen(Param)</span>
-        <span class="comment">// (vk_i, sk_i) := ((mvk_i, k_i), msk_i)</span>
-        <span class="comment">// send (Register, sid, vk_i) to F_KR</span>
         <span class="kw">let</span> (<span class="ident">sk</span>, <span class="ident">pk</span>) <span class="op">=</span> <span class="ident">Msp::gen</span>(<span class="ident">rng</span>);
-        <span class="self">self</span>.<span class="ident">sk</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">sk</span>);
-        <span class="self">self</span>.<span class="ident">pk</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">pk</span>);
-        <span class="ident">kr</span>.<span class="ident">register</span>(<span class="self">self</span>.<span class="ident">party_id</span>, <span class="self">self</span>.<span class="ident">stake</span>, <span class="ident">pk</span>).<span class="ident">unwrap</span>();
+        <span class="self">self</span>.<span class="ident">sk</span> <span class="op">=</span> <span class="ident">sk</span>;
+        <span class="self">self</span>.<span class="ident">pk</span> <span class="op">=</span> <span class="ident">pk</span>;
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">build_avk</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">kr</span>: <span class="kw-2">&amp;</span><span class="ident">KeyReg</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span>) {
-        <span class="comment">// Reg := (K(P_i), stake_i) via key registration</span>
-        <span class="kw">let</span> <span class="ident">reg</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">RegParty</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">kr</span>.<span class="ident">retrieve_all</span>();
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">secret_key</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">MspSk</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="ident">sk</span>
+    }
+
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verification_key</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">MspPk</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="ident">pk</span>
+    }
+
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_stake</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">stake</span>: <span class="ident">Stake</span>) {
+        <span class="self">self</span>.<span class="ident">stake</span> <span class="op">=</span> <span class="ident">stake</span>;
+    }
+
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">stake</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Stake</span> {
+        <span class="self">self</span>.<span class="ident">stake</span>
+    }
+
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">party_id</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PartyId</span> {
+        <span class="self">self</span>.<span class="ident">party_id</span>
+    }
+
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_params</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">params</span>: <span class="ident">StmParameters</span>) {
+        <span class="self">self</span>.<span class="ident">params</span> <span class="op">=</span> <span class="ident">params</span>;
+    }
+
+    <span class="doccomment">/// Build the avk for the given list of parties.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Note that if this StmInitializer was modified *between* the last call to `register`,</span>
+    <span class="doccomment">/// then the resulting `StmSigner` may not be able to produce valid signatures.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Returns an StmSigner specialized to</span>
+    <span class="doccomment">/// (1) this StmSigner&#39;s ID and current stake</span>
+    <span class="doccomment">/// (2) this StmSigner&#39;s parameter valuation</span>
+    <span class="doccomment">/// (3) the avk as built from the current registered parties (according to the registration service)</span>
+    <span class="doccomment">/// (4) the current total stake (according to the registration service)</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_signer</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">reg</span>: <span class="kw-2">&amp;</span>[<span class="ident">RegParty</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">StmSigner</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">PE</span><span class="op">&gt;</span>
+    <span class="kw">where</span>
+        <span class="ident">H</span>: <span class="ident">MTHashLeaf</span><span class="op">&lt;</span><span class="ident">MTValue</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    {
         <span class="comment">// The paper uses Reg as the vector of values with which to initialize</span>
         <span class="comment">// the merkle tree. The implementation stores MTValues (derived from</span>
         <span class="comment">// this vector) in the tree.</span>
         <span class="kw">let</span> <span class="ident">mtvals</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">MTValue</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">reg</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">rp</span><span class="op">|</span> <span class="ident">MTValue</span>(<span class="ident">rp</span>.<span class="ident">pk</span>.<span class="ident">mvk</span>, <span class="ident">rp</span>.<span class="ident">stake</span>)).<span class="ident">collect</span>();
         <span class="comment">// AVK &lt;- MT.Create(Reg)</span>
-        <span class="self">self</span>.<span class="ident">avk</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">MerkleTree::create</span>(<span class="kw-2">&amp;</span><span class="ident">mtvals</span>));
-        <span class="self">self</span>.<span class="ident">avk_indices</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">HashMap::from_iter</span>(
-            <span class="ident">reg</span>.<span class="ident">iter</span>().<span class="ident">enumerate</span>().<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">i</span>, <span class="ident">rp</span>)<span class="op">|</span> (<span class="ident">rp</span>.<span class="ident">party_id</span>, <span class="ident">i</span>)),
-        ));
-
-        <span class="self">self</span>.<span class="ident">total_stake</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">mtvals</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="number">1</span>).<span class="ident">sum</span>());
-    }
-
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">finish</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">StmSigner</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">PE</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">indices</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">avk_indices</span>.<span class="ident">expect</span>(<span class="string">&quot;registered party indices unknown&quot;</span>);
-        <span class="kw">let</span> <span class="ident">my_id</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">party_id</span>;
-        <span class="kw">let</span> <span class="ident">my_index</span> <span class="op">=</span> <span class="ident">indices</span>
-            .<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">my_id</span>)
-            .<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="macro">panic!</span>(<span class="string">&quot;party unkown: {}&quot;</span>, <span class="ident">my_id</span>));
+        <span class="kw">let</span> <span class="ident">avk</span> <span class="op">=</span> <span class="ident">MerkleTree::create</span>(<span class="kw-2">&amp;</span><span class="ident">mtvals</span>);
+        <span class="kw">let</span> <span class="ident">my_index</span> <span class="op">=</span> <span class="ident">reg</span>
+            .<span class="ident">iter</span>()
+            .<span class="ident">enumerate</span>()
+            .<span class="ident">find</span>(<span class="op">|</span>(<span class="ident">i</span>, <span class="ident">rp</span>)<span class="op">|</span> <span class="ident">rp</span>.<span class="ident">party_id</span> <span class="op">=</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">party_id</span>)
+            .<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="macro">panic!</span>(<span class="string">&quot;party unknown: {}&quot;</span>, <span class="self">self</span>.<span class="ident">party_id</span>))
+            .<span class="number">0</span>;
+        <span class="kw">let</span> <span class="ident">total_stake</span> <span class="op">=</span> <span class="ident">mtvals</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="number">1</span>).<span class="ident">sum</span>();
 
         <span class="ident">StmSigner</span> {
             <span class="ident">party_id</span>: <span class="self">self</span>.<span class="ident">party_id</span>,
-            <span class="ident">avk_idx</span>: <span class="kw-2">*</span><span class="ident">my_index</span>,
+            <span class="ident">avk_idx</span>: <span class="ident">my_index</span>,
             <span class="ident">stake</span>: <span class="self">self</span>.<span class="ident">stake</span>,
             <span class="ident">params</span>: <span class="self">self</span>.<span class="ident">params</span>,
-            <span class="ident">total_stake</span>: <span class="self">self</span>.<span class="ident">total_stake</span>.<span class="ident">expect</span>(<span class="string">&quot;total stake unknown&quot;</span>),
-            <span class="ident">avk</span>: <span class="self">self</span>.<span class="ident">avk</span>.<span class="ident">expect</span>(<span class="string">&quot;merkle tree not created&quot;</span>),
-            <span class="ident">sk</span>: <span class="self">self</span>.<span class="ident">sk</span>.<span class="ident">expect</span>(<span class="string">&quot;register not called&quot;</span>),
-            <span class="ident">pk</span>: <span class="self">self</span>.<span class="ident">pk</span>.<span class="ident">expect</span>(<span class="string">&quot;register not called&quot;</span>),
+            <span class="ident">avk</span>,
+            <span class="ident">sk</span>: <span class="self">self</span>.<span class="ident">sk</span>,
+            <span class="ident">pk</span>: <span class="self">self</span>.<span class="ident">pk</span>,
+            <span class="ident">total_stake</span>,
         }
     }
 }
@@ -1134,6 +1189,7 @@
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="kw">mod</span> <span class="ident">tests</span> {
     <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::key_reg</span>::<span class="kw-2">*</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::mithril_proof::concat_proofs</span>::<span class="kw-2">*</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::proof::trivial</span>::{<span class="ident">TrivialEnv</span>, <span class="ident">TrivialProof</span>};
     <span class="kw">use</span> <span class="ident">ark_bls12_377</span>::{<span class="ident">Bls12_377</span>, <span class="ident">G1Projective</span> <span class="kw">as</span> <span class="ident">G1P</span>, <span class="ident">G2Projective</span> <span class="kw">as</span> <span class="ident">G2P</span>};
@@ -1160,20 +1216,20 @@
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">kr</span> <span class="op">=</span> <span class="ident">KeyReg::new</span>(<span class="kw-2">&amp;</span><span class="ident">parties</span>);
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">trng</span> <span class="op">=</span> <span class="ident">TestRng::deterministic_rng</span>(<span class="ident">ChaCha</span>);
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">rng</span> <span class="op">=</span> <span class="ident">rand_chacha::ChaCha8Rng::from_seed</span>(<span class="ident">trng</span>.<span class="ident">gen</span>());
+
+        <span class="comment">// The needless_collect lint is not correct here</span>
+        <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::needless_collect</span>)]</span>
         <span class="kw">let</span> <span class="ident">ps</span> <span class="op">=</span> <span class="ident">parties</span>
             .<span class="ident">into_iter</span>()
             .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">pid</span>, <span class="ident">stake</span>)<span class="op">|</span> {
-                <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">p</span> <span class="op">=</span> <span class="ident">StmInitializer::setup</span>(<span class="ident">params</span>, <span class="ident">pid</span>, <span class="ident">stake</span>);
-                <span class="ident">p</span>.<span class="ident">register</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">rng</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">kr</span>);
+                <span class="kw">let</span> <span class="ident">p</span> <span class="op">=</span> <span class="ident">StmInitializer::setup</span>(<span class="ident">params</span>, <span class="ident">pid</span>, <span class="ident">stake</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">rng</span>);
+                <span class="ident">kr</span>.<span class="ident">register</span>(<span class="ident">p</span>.<span class="ident">party_id</span>(), <span class="ident">p</span>.<span class="ident">stake</span>(), <span class="ident">p</span>.<span class="ident">verification_key</span>())
+                    .<span class="ident">unwrap</span>();
                 <span class="ident">p</span>
             })
             .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
-        <span class="ident">ps</span>.<span class="ident">into_iter</span>()
-            .<span class="ident">map</span>(<span class="op">|</span><span class="kw-2">mut</span> <span class="ident">p</span><span class="op">|</span> {
-                <span class="ident">p</span>.<span class="ident">build_avk</span>(<span class="kw-2">&amp;</span><span class="ident">kr</span>);
-                <span class="ident">p</span>.<span class="ident">finish</span>()
-            })
-            .<span class="ident">collect</span>()
+        <span class="kw">let</span> <span class="ident">reg</span> <span class="op">=</span> <span class="ident">kr</span>.<span class="ident">retrieve_all</span>();
+        <span class="ident">ps</span>.<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">p</span><span class="op">|</span> <span class="ident">p</span>.<span class="ident">new_signer</span>(<span class="kw-2">&amp;</span><span class="ident">reg</span>)).<span class="ident">collect</span>()
     }
 
     <span class="doccomment">/// Generate a vector of stakes that should sum to `honest_stake`</span>
