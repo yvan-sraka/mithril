@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["DigestHash","An internal wrapper that allows us to define traits"]]});
+initSidebarItems({"struct":[["DigestHash","A newtype that allows us to implement traits like ToBytes, FromBytes"]]});
