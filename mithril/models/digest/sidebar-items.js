@@ -1,1 +1,1 @@
-initSidebarItems({});
+initSidebarItems({"struct":[["DigestHash","An internal wrapper that allows us to define traits"]]});
