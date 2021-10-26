@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["TrivialEnv",""],["TrivialProof",""]]});
+initSidebarItems({"enum":[["TrivialErr",""]],"struct":[["TrivialEnv",""],["TrivialProof",""]]});
