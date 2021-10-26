@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["DigestHash","A newtype that allows us to implement traits like ToBytes, FromBytes"]]});
+initSidebarItems({});
