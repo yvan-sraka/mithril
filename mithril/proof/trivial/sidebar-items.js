@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["TrivialEnv","Trivial environment which contains nothing."],["TrivialProof","TrivialProof simply contains the Witness directly."]]});
+initSidebarItems({"struct":[["TrivialEnv",""],["TrivialError",""],["TrivialProof",""]]});

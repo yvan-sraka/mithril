@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["Msp","Struct used to namespace the functions."],["MspMvk","MSP verification key."],["MspPk","MSP public key."],["MspSig","MSP signature."],["MspSk","MSP secret key."]]});
+initSidebarItems({"struct":[["Msp",""],["MspMvk",""],["MspPk",""],["MspSig",""],["MspSk",""]]});
