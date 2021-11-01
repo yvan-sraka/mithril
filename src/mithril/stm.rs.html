@@ -918,36 +918,6 @@
 <span id="918">918</span>
 <span id="919">919</span>
 <span id="920">920</span>
-<span id="921">921</span>
-<span id="922">922</span>
-<span id="923">923</span>
-<span id="924">924</span>
-<span id="925">925</span>
-<span id="926">926</span>
-<span id="927">927</span>
-<span id="928">928</span>
-<span id="929">929</span>
-<span id="930">930</span>
-<span id="931">931</span>
-<span id="932">932</span>
-<span id="933">933</span>
-<span id="934">934</span>
-<span id="935">935</span>
-<span id="936">936</span>
-<span id="937">937</span>
-<span id="938">938</span>
-<span id="939">939</span>
-<span id="940">940</span>
-<span id="941">941</span>
-<span id="942">942</span>
-<span id="943">943</span>
-<span id="944">944</span>
-<span id="945">945</span>
-<span id="946">946</span>
-<span id="947">947</span>
-<span id="948">948</span>
-<span id="949">949</span>
-<span id="950">950</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Top-level API for Mithril Stake-based Threshold Multisignature scheme.</span>
 
 <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">concat_avk_with_msg</span>, <span class="ident">ev_lt_phi</span>, <span class="ident">Index</span>, <span class="ident">PartyId</span>, <span class="ident">Path</span>, <span class="ident">Stake</span>};
@@ -1038,10 +1008,15 @@
 <span class="doccomment">/// Signature created by a single party who has won the lottery.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">StmSig</span><span class="op">&lt;</span><span class="ident">PE</span>: <span class="ident">PairingEngine</span>, <span class="ident">F</span><span class="op">&gt;</span> {
+    <span class="doccomment">/// The signature from the underlying MSP scheme.</span>
     <span class="kw">pub</span> <span class="ident">sigma</span>: <span class="ident">MspSig</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// The pubkey from the underlying MSP scheme.</span>
     <span class="kw">pub</span> <span class="ident">pk</span>: <span class="ident">MspPk</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// The party that made this signature.</span>
     <span class="kw">pub</span> <span class="ident">party</span>: <span class="ident">PartyId</span>,
+    <span class="doccomment">/// The stake of the party that made this signature.</span>
     <span class="kw">pub</span> <span class="ident">stake</span>: <span class="ident">Stake</span>,
+    <span class="doccomment">/// The path through the MerkleTree for this party.</span>
     <span class="kw">pub</span> <span class="ident">path</span>: <span class="ident">Path</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>,
 }
 
@@ -1059,36 +1034,12 @@
 }
 
 <span class="doccomment">/// Error types for aggregation.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">AggregationFailure</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">F</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">PE</span>: <span class="ident">PairingEngine</span>,
-{
-    <span class="doccomment">/// How many signatures we got</span>
-    <span class="ident">NotEnoughSignatures</span>(<span class="ident">usize</span>),
-    <span class="doccomment">/// Verification failed for this signature</span>
-    <span class="ident">VerifyFailed</span>(<span class="ident">VerificationFailure</span>, <span class="ident">StmSig</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">F</span><span class="op">&gt;</span>, <span class="ident">Index</span>),
-}
-
-<span class="doccomment">/// Error types for single signature verification</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">VerificationFailure</span> {
-    <span class="doccomment">/// The lottery was actually lost for the signature</span>
-    <span class="ident">LotteryLost</span>,
-    <span class="doccomment">/// The Merkle Tree is invalid</span>
-    <span class="ident">InvalidMerkleTree</span>,
-    <span class="doccomment">/// The MSP signature is invalid</span>
-    <span class="ident">InvalidSignature</span>,
-}
-
-<span class="doccomment">/// Error types for multisignature verification</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">MultiVerificationFailure</span><span class="op">&lt;</span><span class="ident">Proof</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">Proof</span>: <span class="ident">MithrilProof</span>,
-{
-    <span class="doccomment">/// The underlying MSP aggregate is invalid</span>
-    <span class="ident">InvalidAggregate</span>,
-    <span class="ident">ProofError</span>(<span class="ident">Proof::Error</span>),
+<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">AggregationFailure</span> {
+    <span class="doccomment">/// Not enough signatures were collected, got this many instead.</span>
+    <span class="ident">NotEnoughSignatures</span>(<span class="ident">usize</span>),
+    <span class="doccomment">/// How many signatures we got</span>
+    <span class="ident">VerifyFailed</span>,
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">PE</span>: <span class="ident">PairingEngine</span>, <span class="ident">F</span>: <span class="ident">FromBytes</span><span class="op">&gt;</span> <span class="ident">FromBytes</span> <span class="kw">for</span> <span class="ident">StmSig</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">F</span><span class="op">&gt;</span> {
@@ -1212,6 +1163,7 @@
         }
     }
 
+    <span class="doccomment">/// Create a new key.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">generate_new_key</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">rng</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">R</span>)
     <span class="kw">where</span>
         <span class="ident">R</span>: <span class="ident">RngCore</span> <span class="op">+</span> <span class="ident">CryptoRng</span>,
@@ -1221,26 +1173,32 @@
         <span class="self">self</span>.<span class="ident">pk</span> <span class="op">=</span> <span class="ident">pk</span>;
     }
 
+    <span class="doccomment">/// Extract the secret key.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">secret_key</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">MspSk</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">sk</span>
     }
 
+    <span class="doccomment">/// Extract the verification key.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verification_key</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">MspPk</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">pk</span>
     }
 
+    <span class="doccomment">/// Set the stake.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_stake</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">stake</span>: <span class="ident">Stake</span>) {
         <span class="self">self</span>.<span class="ident">stake</span> <span class="op">=</span> <span class="ident">stake</span>;
     }
 
+    <span class="doccomment">/// Get the stake.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">stake</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Stake</span> {
         <span class="self">self</span>.<span class="ident">stake</span>
     }
 
+    <span class="doccomment">/// Get the party ID.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">party_id</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PartyId</span> {
         <span class="self">self</span>.<span class="ident">party_id</span>
     }
 
+    <span class="doccomment">/// Set the StmParameters.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_params</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">params</span>: <span class="ident">StmParameters</span>) {
         <span class="self">self</span>.<span class="ident">params</span> <span class="op">=</span> <span class="ident">params</span>;
     }
@@ -1268,7 +1226,7 @@
         <span class="kw">let</span> <span class="ident">my_index</span> <span class="op">=</span> <span class="ident">reg</span>
             .<span class="ident">iter</span>()
             .<span class="ident">enumerate</span>()
-            .<span class="ident">find</span>(<span class="op">|</span>(<span class="ident">i</span>, <span class="ident">rp</span>)<span class="op">|</span> <span class="ident">rp</span>.<span class="ident">party_id</span> <span class="op">=</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">party_id</span>)
+            .<span class="ident">find</span>(<span class="op">|</span>(<span class="ident">_i</span>, <span class="ident">rp</span>)<span class="op">|</span> <span class="ident">rp</span>.<span class="ident">party_id</span> <span class="op">=</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">party_id</span>)
             .<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="macro">panic!</span>(<span class="string">&quot;party unknown: {}&quot;</span>, <span class="self">self</span>.<span class="ident">party_id</span>))
             .<span class="number">0</span>;
         <span class="kw">let</span> <span class="ident">total_stake</span> <span class="op">=</span> <span class="ident">mtvals</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="number">1</span>).<span class="ident">sum</span>();
@@ -1294,6 +1252,7 @@
     <span class="comment">/////////////////////</span>
     <span class="comment">// Operation phase //</span>
     <span class="comment">/////////////////////</span>
+    <span class="doccomment">/// Try to win the lottery for this message/index combo.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">eligibility_check</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">msg</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="ident">index</span>: <span class="ident">Index</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
         <span class="comment">// let msg&#39; &lt;- AVK || msg</span>
         <span class="comment">// sigma &lt;- MSP.Sig(msk, msg&#39;)</span>
@@ -1305,6 +1264,7 @@
         <span class="ident">ev_lt_phi</span>(<span class="self">self</span>.<span class="ident">params</span>.<span class="ident">phi_f</span>, <span class="ident">ev</span>, <span class="self">self</span>.<span class="ident">stake</span>, <span class="self">self</span>.<span class="ident">total_stake</span>)
     }
 
+    <span class="doccomment">/// If lottery is won for this message/index, signs it.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">sign</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">msg</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="ident">index</span>: <span class="ident">Index</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">StmSig</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H::F</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="kw">if</span> <span class="self">self</span>.<span class="ident">eligibility_check</span>(<span class="ident">msg</span>, <span class="ident">index</span>) {
             <span class="comment">// msg&#39; &lt;- AVK||msg</span>
@@ -1336,6 +1296,7 @@
     <span class="ident">PE</span>: <span class="ident">PairingEngine</span>,
     <span class="ident">PE::G1Projective</span>: <span class="ident">ToConstraintField</span><span class="op">&lt;</span><span class="ident">PE::Fq</span><span class="op">&gt;</span>,
 {
+    <span class="doccomment">/// Create a new Clerk.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(
         <span class="ident">params</span>: <span class="ident">StmParameters</span>,
         <span class="ident">proof_env</span>: <span class="ident">E</span>,
@@ -1353,6 +1314,7 @@
         }
     }
 
+    <span class="doccomment">/// Creates a Clerk from a Signer.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_signer</span>(<span class="ident">signer</span>: <span class="kw-2">&amp;</span><span class="ident">StmSigner</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">PE</span><span class="op">&gt;</span>, <span class="ident">proof_env</span>: <span class="ident">E</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="ident"><span class="self">Self</span>::new</span>(
             <span class="ident">signer</span>.<span class="ident">params</span>,
@@ -1362,27 +1324,19 @@
         )
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verify_sig</span>(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">sig</span>: <span class="kw-2">&amp;</span><span class="ident">StmSig</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H::F</span><span class="op">&gt;</span>,
-        <span class="ident">index</span>: <span class="ident">Index</span>,
-        <span class="ident">msg</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">VerificationFailure</span><span class="op">&gt;</span> {
+    <span class="doccomment">/// Verify a signature.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verify_sig</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">sig</span>: <span class="kw-2">&amp;</span><span class="ident">StmSig</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H::F</span><span class="op">&gt;</span>, <span class="ident">index</span>: <span class="ident">Index</span>, <span class="ident">msg</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
         <span class="kw">let</span> <span class="ident">msgp</span> <span class="op">=</span> <span class="ident">concat_avk_with_msg</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">avk</span>, <span class="ident">msg</span>);
         <span class="kw">let</span> <span class="ident">ev</span> <span class="op">=</span> <span class="ident">Msp::eval</span>(<span class="kw-2">&amp;</span><span class="ident">msgp</span>, <span class="ident">index</span>, <span class="kw-2">&amp;</span><span class="ident">sig</span>.<span class="ident">sigma</span>);
 
-        <span class="kw">if</span> <span class="op">!</span><span class="ident">ev_lt_phi</span>(<span class="self">self</span>.<span class="ident">params</span>.<span class="ident">phi_f</span>, <span class="ident">ev</span>, <span class="ident">sig</span>.<span class="ident">stake</span>, <span class="self">self</span>.<span class="ident">total_stake</span>) {
-            <span class="prelude-val">Err</span>(<span class="ident">VerificationFailure::LotteryLost</span>)
-        } <span class="kw">else</span> <span class="kw">if</span> <span class="op">!</span><span class="self">self</span>
-            .<span class="ident">avk</span>
-            .<span class="ident">check</span>(<span class="kw-2">&amp;</span><span class="ident">MTValue</span>(<span class="ident">sig</span>.<span class="ident">pk</span>.<span class="ident">mvk</span>, <span class="ident">sig</span>.<span class="ident">stake</span>), <span class="ident">sig</span>.<span class="ident">party</span>, <span class="kw-2">&amp;</span><span class="ident">sig</span>.<span class="ident">path</span>)
+        <span class="kw">if</span> <span class="op">!</span><span class="ident">ev_lt_phi</span>(<span class="self">self</span>.<span class="ident">params</span>.<span class="ident">phi_f</span>, <span class="ident">ev</span>, <span class="ident">sig</span>.<span class="ident">stake</span>, <span class="self">self</span>.<span class="ident">total_stake</span>)
+            <span class="op">|</span><span class="op">|</span> <span class="op">!</span><span class="self">self</span>
+                .<span class="ident">avk</span>
+                .<span class="ident">check</span>(<span class="kw-2">&amp;</span><span class="ident">MTValue</span>(<span class="ident">sig</span>.<span class="ident">pk</span>.<span class="ident">mvk</span>, <span class="ident">sig</span>.<span class="ident">stake</span>), <span class="ident">sig</span>.<span class="ident">party</span>, <span class="kw-2">&amp;</span><span class="ident">sig</span>.<span class="ident">path</span>)
         {
-            <span class="prelude-val">Err</span>(<span class="ident">VerificationFailure::InvalidMerkleTree</span>)
-        } <span class="kw">else</span> <span class="kw">if</span> <span class="op">!</span><span class="ident">Msp::ver</span>(<span class="kw-2">&amp;</span><span class="ident">msgp</span>, <span class="kw-2">&amp;</span><span class="ident">sig</span>.<span class="ident">pk</span>.<span class="ident">mvk</span>, <span class="kw-2">&amp;</span><span class="ident">sig</span>.<span class="ident">sigma</span>) {
-            <span class="prelude-val">Err</span>(<span class="ident">VerificationFailure::InvalidSignature</span>)
-        } <span class="kw">else</span> {
-            <span class="prelude-val">Ok</span>(())
+            <span class="kw">return</span> <span class="bool-val">false</span>;
         }
+        <span class="ident">Msp::ver</span>(<span class="kw-2">&amp;</span><span class="ident">msgp</span>, <span class="kw-2">&amp;</span><span class="ident">sig</span>.<span class="ident">pk</span>.<span class="ident">mvk</span>, <span class="kw-2">&amp;</span><span class="ident">sig</span>.<span class="ident">sigma</span>)
     }
 
     <span class="doccomment">/// Aggregate a set of signatures for their corresponding indices.</span>
@@ -1395,7 +1349,7 @@
         <span class="ident">sigs</span>: <span class="kw-2">&amp;</span>[<span class="ident">StmSig</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H::F</span><span class="op">&gt;</span>],
         <span class="ident">indices</span>: <span class="kw-2">&amp;</span>[<span class="ident">Index</span>],
         <span class="ident">msg</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">StmMultiSig</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">Proof</span><span class="op">&gt;</span>, <span class="ident">AggregationFailure</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H::F</span><span class="op">&gt;</span><span class="op">&gt;</span>
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">StmMultiSig</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">Proof</span><span class="op">&gt;</span>, <span class="ident">AggregationFailure</span><span class="op">&gt;</span>
     <span class="kw">where</span>
         <span class="ident">Proof</span>: <span class="ident">MithrilProof</span><span class="op">&lt;</span><span class="ident">Env</span> <span class="op">=</span> <span class="ident">E</span><span class="op">&gt;</span>,
         <span class="ident">Proof::Statement</span>: <span class="ident">From</span><span class="op">&lt;</span><span class="ident">MithrilStatement</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H</span><span class="op">&gt;</span><span class="op">&gt;</span>,
@@ -1408,9 +1362,9 @@
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">sigs_to_verify</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">indices_to_verify</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
 
-        <span class="kw">for</span> (<span class="ident">ix</span>, <span class="ident">sig</span>) <span class="kw">in</span> <span class="ident">dedup_sigs_for_indices</span>::<span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">PE</span><span class="op">&gt;</span>(<span class="ident">indices</span>, <span class="ident">sigs</span>) {
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">verify_sig</span>(<span class="ident">sig</span>, <span class="kw-2">*</span><span class="ident">ix</span>, <span class="ident">msg</span>) {
-                <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">AggregationFailure::VerifyFailed</span>(<span class="ident">e</span>, <span class="ident">sig</span>.<span class="ident">clone</span>(), <span class="kw-2">*</span><span class="ident">ix</span>));
+        <span class="kw">for</span> (<span class="ident">ix</span>, <span class="ident">sig</span>) <span class="kw">in</span> <span class="ident">dedup_sigs_for_indices</span>::<span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">PE</span><span class="op">&gt;</span>(<span class="ident">sigs</span>, <span class="ident">indices</span>) {
+            <span class="kw">if</span> <span class="op">!</span><span class="self">self</span>.<span class="ident">verify_sig</span>(<span class="ident">sig</span>, <span class="kw-2">*</span><span class="ident">ix</span>, <span class="ident">msg</span>) {
+                <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">AggregationFailure::VerifyFailed</span>);
             }
 
             <span class="ident">evals</span>.<span class="ident">push</span>(<span class="ident">Msp::eval</span>(<span class="kw-2">&amp;</span><span class="ident">msgp</span>, <span class="kw-2">*</span><span class="ident">ix</span>, <span class="kw-2">&amp;</span><span class="ident">sig</span>.<span class="ident">sigma</span>));
@@ -1462,11 +1416,7 @@
     <span class="doccomment">/// The `From` bound on `Proof::Statement` allows `aggregate` to translate</span>
     <span class="doccomment">/// from the `Mithril` specific statement and witness types to their proof system-specific</span>
     <span class="doccomment">/// representations.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verify_msig</span><span class="op">&lt;</span><span class="ident">Proof</span><span class="op">&gt;</span>(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">msig</span>: <span class="kw-2">&amp;</span><span class="ident">StmMultiSig</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">Proof</span><span class="op">&gt;</span>,
-        <span class="ident">msg</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MultiVerificationFailure</span><span class="op">&lt;</span><span class="ident">Proof</span><span class="op">&gt;</span><span class="op">&gt;</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verify_msig</span><span class="op">&lt;</span><span class="ident">Proof</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">msig</span>: <span class="kw-2">&amp;</span><span class="ident">StmMultiSig</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">Proof</span><span class="op">&gt;</span>, <span class="ident">msg</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span>
     <span class="kw">where</span>
         <span class="ident">Proof</span>: <span class="ident">MithrilProof</span><span class="op">&lt;</span><span class="ident">Env</span> <span class="op">=</span> <span class="ident">E</span><span class="op">&gt;</span>,
         <span class="ident">Proof::Statement</span>: <span class="ident">From</span><span class="op">&lt;</span><span class="ident">MithrilStatement</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H</span><span class="op">&gt;</span><span class="op">&gt;</span>,
@@ -1482,25 +1432,22 @@
             <span class="ident">params</span>: <span class="self">self</span>.<span class="ident">params</span>,
             <span class="ident">total_stake</span>: <span class="self">self</span>.<span class="ident">total_stake</span>,
         };
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span> <span class="ident">msig</span>.<span class="ident">proof</span>.<span class="ident">verify</span>(
+        <span class="kw">if</span> <span class="op">!</span><span class="ident">msig</span>.<span class="ident">proof</span>.<span class="ident">verify</span>(
             <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">proof_env</span>,
             <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">verif_key</span>,
             <span class="kw-2">&amp;</span><span class="ident">Proof::RELATION</span>,
             <span class="kw-2">&amp;</span><span class="ident">Proof::Statement::from</span>(<span class="ident">statement</span>),
         ) {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">MultiVerificationFailure::ProofError</span>(<span class="ident">e</span>));
+            <span class="kw">return</span> <span class="bool-val">false</span>;
         }
         <span class="kw">let</span> <span class="ident">msgp</span> <span class="op">=</span> <span class="ident">concat_avk_with_msg</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">avk</span>, <span class="ident">msg</span>);
-        <span class="kw">if</span> <span class="op">!</span><span class="ident">Msp::aggregate_ver</span>(<span class="kw-2">&amp;</span><span class="ident">msgp</span>, <span class="kw-2">&amp;</span><span class="ident">msig</span>.<span class="ident">ivk</span>, <span class="kw-2">&amp;</span><span class="ident">msig</span>.<span class="ident">mu</span>) {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">MultiVerificationFailure::InvalidAggregate</span>);
-        }
-        <span class="prelude-val">Ok</span>(())
+        <span class="ident">Msp::aggregate_ver</span>(<span class="kw-2">&amp;</span><span class="ident">msgp</span>, <span class="kw-2">&amp;</span><span class="ident">msig</span>.<span class="ident">ivk</span>, <span class="kw-2">&amp;</span><span class="ident">msig</span>.<span class="ident">mu</span>)
     }
 }
 
 <span class="kw">fn</span> <span class="ident">dedup_sigs_for_indices</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">H</span>: <span class="ident">MTHashLeaf</span><span class="op">&lt;</span><span class="ident">MTValue</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">PE</span>: <span class="ident">PairingEngine</span><span class="op">&gt;</span>(
-    <span class="ident">indices</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">Index</span>],
     <span class="ident">sigs</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">StmSig</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H::F</span><span class="op">&gt;</span>],
+    <span class="ident">indices</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">Index</span>],
 ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> (<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">Index</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">StmSig</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H::F</span><span class="op">&gt;</span>)<span class="op">&gt;</span>
 <span class="kw">where</span>
     <span class="ident">PE::G1Projective</span>: <span class="ident">ToConstraintField</span><span class="op">&lt;</span><span class="ident">PE::Fq</span><span class="op">&gt;</span>,
@@ -1557,8 +1504,7 @@
             .<span class="ident">into_iter</span>()
             .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">pid</span>, <span class="ident">stake</span>)<span class="op">|</span> {
                 <span class="kw">let</span> <span class="ident">p</span> <span class="op">=</span> <span class="ident">StmInitializer::setup</span>(<span class="ident">params</span>, <span class="ident">pid</span>, <span class="ident">stake</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">rng</span>);
-                <span class="ident">kr</span>.<span class="ident">register</span>(<span class="ident">p</span>.<span class="ident">party_id</span>(), <span class="ident">p</span>.<span class="ident">stake</span>(), <span class="ident">p</span>.<span class="ident">verification_key</span>())
-                    .<span class="ident">unwrap</span>();
+                <span class="ident">kr</span>.<span class="ident">register</span>(<span class="ident">p</span>.<span class="ident">party_id</span>(), <span class="ident">p</span>.<span class="ident">verification_key</span>()).<span class="ident">unwrap</span>();
                 <span class="ident">p</span>
             })
             .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
@@ -1626,13 +1572,8 @@
         )
     }
 
-    <span class="kw">fn</span> <span class="ident">arb_num_parties_and_index</span>(<span class="ident">min</span>: <span class="ident">usize</span>, <span class="ident">max</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Strategy</span><span class="op">&lt;</span><span class="ident">Value</span> <span class="op">=</span> (<span class="ident">usize</span>, <span class="ident">usize</span>)<span class="op">&gt;</span> {
-        (<span class="ident">min</span>..<span class="ident">max</span>).<span class="ident">prop_flat_map</span>(<span class="op">|</span><span class="ident">n</span><span class="op">|</span> (<span class="ident">Just</span>(<span class="ident">n</span>), <span class="number">0</span>..<span class="ident">n</span>))
-    }
-
     <span class="kw">fn</span> <span class="ident">find_signatures</span>(
         <span class="ident">m</span>: <span class="ident">u64</span>,
-        <span class="ident">k</span>: <span class="ident">u64</span>,
         <span class="ident">msg</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
         <span class="ident">ps</span>: <span class="kw-2">&amp;</span>[<span class="ident">StmSigner</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">Bls12_377</span><span class="op">&gt;</span>],
         <span class="ident">is</span>: <span class="kw-2">&amp;</span>[<span class="ident">usize</span>],
@@ -1669,7 +1610,7 @@
 
             <span class="kw">for</span> <span class="ident">index</span> <span class="kw">in</span> <span class="number">1</span>..<span class="ident">nparties</span> {
                 <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">sig</span>) <span class="op">=</span> <span class="ident">p</span>.<span class="ident">sign</span>(<span class="kw-2">&amp;</span><span class="ident">msg</span>, <span class="ident">index</span> <span class="kw">as</span> <span class="ident">u64</span>) {
-                    <span class="macro">assert!</span>(<span class="ident">clerk</span>.<span class="ident">verify_sig</span>(<span class="kw-2">&amp;</span><span class="ident">sig</span>, <span class="ident">index</span> <span class="kw">as</span> <span class="ident">u64</span>, <span class="kw-2">&amp;</span><span class="ident">msg</span>).<span class="ident">is_ok</span>());
+                    <span class="macro">assert!</span>(<span class="ident">clerk</span>.<span class="ident">verify_sig</span>(<span class="kw-2">&amp;</span><span class="ident">sig</span>, <span class="ident">index</span> <span class="kw">as</span> <span class="ident">u64</span>, <span class="kw-2">&amp;</span><span class="ident">msg</span>));
                 }
             }
         }
@@ -1689,13 +1630,13 @@
             <span class="kw">let</span> <span class="ident">clerk</span> <span class="op">=</span> <span class="ident">StmClerk::from_signer</span>(<span class="kw-2">&amp;</span><span class="ident">ps</span>[<span class="number">0</span>], <span class="ident">TrivialEnv</span>);
 
             <span class="kw">let</span> <span class="ident">all_ps</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> <span class="op">=</span> (<span class="number">0</span>..<span class="ident">nparties</span>).<span class="ident">collect</span>();
-            <span class="kw">let</span> (<span class="ident">ixs</span>, <span class="ident">sigs</span>) <span class="op">=</span> <span class="ident">find_signatures</span>(<span class="ident">m</span>, <span class="ident">k</span>, <span class="kw-2">&amp;</span><span class="ident">msg</span>, <span class="kw-2">&amp;</span><span class="ident">ps</span>, <span class="kw-2">&amp;</span><span class="ident">all_ps</span>);
+            <span class="kw">let</span> (<span class="ident">ixs</span>, <span class="ident">sigs</span>) <span class="op">=</span> <span class="ident">find_signatures</span>(<span class="ident">m</span>, <span class="kw-2">&amp;</span><span class="ident">msg</span>, <span class="kw-2">&amp;</span><span class="ident">ps</span>, <span class="kw-2">&amp;</span><span class="ident">all_ps</span>);
 
             <span class="kw">let</span> <span class="ident">msig</span> <span class="op">=</span> <span class="ident">clerk</span>.<span class="ident">aggregate</span>::<span class="op">&lt;</span><span class="ident">ConcatProof</span><span class="op">&lt;</span><span class="ident">Bls12_377</span>,<span class="ident">H</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="ident">sigs</span>, <span class="kw-2">&amp;</span><span class="ident">ixs</span>, <span class="kw-2">&amp;</span><span class="ident">msg</span>);
 
             <span class="kw">match</span> <span class="ident">msig</span> {
                 <span class="prelude-val">Ok</span>(<span class="ident">aggr</span>) <span class="op">=</span><span class="op">&gt;</span>
-                    <span class="macro">assert!</span>(<span class="ident">clerk</span>.<span class="ident">verify_msig</span>::<span class="op">&lt;</span><span class="ident">ConcatProof</span><span class="op">&lt;</span><span class="ident">Bls12_377</span>,<span class="ident">H</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="ident">aggr</span>, <span class="kw-2">&amp;</span><span class="ident">msg</span>).<span class="ident">is_ok</span>()),
+                    <span class="macro">assert!</span>(<span class="ident">clerk</span>.<span class="ident">verify_msig</span>::<span class="op">&lt;</span><span class="ident">ConcatProof</span><span class="op">&lt;</span><span class="ident">Bls12_377</span>,<span class="ident">H</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="ident">aggr</span>, <span class="kw-2">&amp;</span><span class="ident">msg</span>)),
                 <span class="prelude-val">Err</span>(<span class="ident">AggregationFailure::NotEnoughSignatures</span>(<span class="ident">n</span>)) <span class="op">=</span><span class="op">&gt;</span>
                     <span class="macro">assert!</span>(<span class="ident">n</span> <span class="op">&lt;</span> <span class="ident">params</span>.<span class="ident">k</span> <span class="kw">as</span> <span class="ident">usize</span>),
                 <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">unreachable!</span>()
@@ -1713,12 +1654,12 @@
             <span class="kw">let</span> <span class="ident">clerk</span> <span class="op">=</span> <span class="ident">StmClerk::from_signer</span>(<span class="kw-2">&amp;</span><span class="ident">ps</span>[<span class="number">0</span>], <span class="ident">TrivialEnv</span>);
 
             <span class="kw">let</span> <span class="ident">all_ps</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> <span class="op">=</span> (<span class="number">0</span>..<span class="ident">nparties</span>).<span class="ident">collect</span>();
-            <span class="kw">let</span> (<span class="ident">ixs</span>, <span class="ident">sigs</span>) <span class="op">=</span> <span class="ident">find_signatures</span>(<span class="number">10</span>, <span class="number">1</span>, <span class="kw-2">&amp;</span><span class="ident">msg</span>, <span class="kw-2">&amp;</span><span class="ident">ps</span>, <span class="kw-2">&amp;</span><span class="ident">all_ps</span>);
+            <span class="kw">let</span> (<span class="ident">ixs</span>, <span class="ident">sigs</span>) <span class="op">=</span> <span class="ident">find_signatures</span>(<span class="number">10</span>, <span class="kw-2">&amp;</span><span class="ident">msg</span>, <span class="kw-2">&amp;</span><span class="ident">ps</span>, <span class="kw-2">&amp;</span><span class="ident">all_ps</span>);
             <span class="kw">let</span> <span class="ident">msig</span> <span class="op">=</span> <span class="ident">clerk</span>.<span class="ident">aggregate</span>::<span class="op">&lt;</span><span class="ident">ConcatProof</span><span class="op">&lt;</span><span class="ident">Bls12_377</span>,<span class="ident">H</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="ident">sigs</span>, <span class="kw-2">&amp;</span><span class="ident">ixs</span>, <span class="kw-2">&amp;</span><span class="ident">msg</span>);
             <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="ident">aggr</span>) <span class="op">=</span> <span class="ident">msig</span> {
                     <span class="kw">let</span> <span class="ident">bytes</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span> <span class="op">=</span> <span class="macro">ark_ff::to_bytes!</span>(<span class="ident">aggr</span>).<span class="ident">unwrap</span>();
                     <span class="kw">let</span> <span class="ident">aggr2</span> <span class="op">=</span> <span class="ident">StmMultiSig::read</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[..]).<span class="ident">unwrap</span>();
-                    <span class="macro">assert!</span>(<span class="ident">clerk</span>.<span class="ident">verify_msig</span>::<span class="op">&lt;</span><span class="ident">ConcatProof</span><span class="op">&lt;</span><span class="ident">Bls12_377</span>,<span class="ident">H</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="ident">aggr2</span>, <span class="kw-2">&amp;</span><span class="ident">msg</span>).<span class="ident">is_ok</span>());
+                    <span class="macro">assert!</span>(<span class="ident">clerk</span>.<span class="ident">verify_msig</span>::<span class="op">&lt;</span><span class="ident">ConcatProof</span><span class="op">&lt;</span><span class="ident">Bls12_377</span>,<span class="ident">H</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="ident">aggr2</span>, <span class="kw-2">&amp;</span><span class="ident">msg</span>));
             }
         }
     }
@@ -1748,7 +1689,7 @@
         <span class="kw">fn</span> <span class="ident">test_adversary_quorum</span>(
             (<span class="ident">adversaries</span>, <span class="ident">parties</span>) <span class="kw">in</span> <span class="ident">arb_parties_adversary_stake</span>(<span class="number">8</span>, <span class="number">30</span>, <span class="number">16</span>, <span class="number">4</span>),
             <span class="ident">msg</span> <span class="kw">in</span> <span class="ident">any</span>::<span class="op">&lt;</span>[<span class="ident">u8</span>;<span class="number">16</span>]<span class="op">&gt;</span>(),
-            <span class="ident">i</span> <span class="kw">in</span> <span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>(), <span class="ident">j</span> <span class="kw">in</span> <span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>(),
+            <span class="ident">_i</span> <span class="kw">in</span> <span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>(), <span class="ident">_j</span> <span class="kw">in</span> <span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>(),
         ) {
             <span class="comment">// Test sanity check:</span>
             <span class="comment">// Check that the adversarial party has less than 40% of the total stake.</span>
@@ -1765,7 +1706,6 @@
             <span class="kw">let</span> <span class="ident">ps</span> <span class="op">=</span> <span class="ident">setup_parties</span>(<span class="ident">params</span>, <span class="ident">parties</span>);
 
             <span class="kw">let</span> (<span class="ident">ixs</span>, <span class="ident">sigs</span>) <span class="op">=</span> <span class="ident">find_signatures</span>(<span class="ident">params</span>.<span class="ident">m</span>,
-                                              <span class="ident">params</span>.<span class="ident">k</span>,
                                               <span class="kw-2">&amp;</span><span class="ident">msg</span>,
                                               <span class="kw-2">&amp;</span><span class="ident">ps</span>,
                                               <span class="kw-2">&amp;</span><span class="ident">adversaries</span>.<span class="ident">into_iter</span>().<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>());
@@ -1787,7 +1727,7 @@
     <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
     <span class="kw">struct</span> <span class="ident">ProofTest</span> {
         <span class="ident">n</span>: <span class="ident">usize</span>,
-        <span class="ident">msig</span>: <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Sig</span>, <span class="ident">AggregationFailure</span><span class="op">&lt;</span><span class="ident">Bls12_377</span>, <span class="ident">F</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+        <span class="ident">msig</span>: <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Sig</span>, <span class="ident">AggregationFailure</span><span class="op">&gt;</span>,
         <span class="ident">clerk</span>: <span class="ident">StmClerk</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">Bls12_377</span>, <span class="ident">TrivialEnv</span><span class="op">&gt;</span>,
         <span class="ident">msg</span>: [<span class="ident">u8</span>; <span class="number">16</span>],
     }
@@ -1806,7 +1746,7 @@
                 <span class="kw">let</span> <span class="ident">clerk</span> <span class="op">=</span> <span class="ident">StmClerk::from_signer</span>(<span class="kw-2">&amp;</span><span class="ident">ps</span>[<span class="number">0</span>], <span class="ident">TrivialEnv</span>);
 
                 <span class="kw">let</span> <span class="ident">all_ps</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> <span class="op">=</span> (<span class="number">0</span>..<span class="ident">n</span>).<span class="ident">collect</span>();
-                <span class="kw">let</span> (<span class="ident">ixs</span>, <span class="ident">sigs</span>) <span class="op">=</span> <span class="ident">find_signatures</span>(<span class="ident">params</span>.<span class="ident">m</span>, <span class="ident">params</span>.<span class="ident">k</span>, <span class="kw-2">&amp;</span><span class="ident">msg</span>, <span class="kw-2">&amp;</span><span class="ident">ps</span>, <span class="kw-2">&amp;</span><span class="ident">all_ps</span>);
+                <span class="kw">let</span> (<span class="ident">ixs</span>, <span class="ident">sigs</span>) <span class="op">=</span> <span class="ident">find_signatures</span>(<span class="ident">params</span>.<span class="ident">m</span>, <span class="kw-2">&amp;</span><span class="ident">msg</span>, <span class="kw-2">&amp;</span><span class="ident">ps</span>, <span class="kw-2">&amp;</span><span class="ident">all_ps</span>);
 
                 <span class="kw">let</span> <span class="ident">msig</span> <span class="op">=</span> <span class="ident">clerk</span>.<span class="ident">aggregate</span>::<span class="op">&lt;</span><span class="ident">ConcatProof</span><span class="op">&lt;</span><span class="ident">Bls12_377</span>, <span class="ident">H</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="ident">sigs</span>, <span class="kw-2">&amp;</span><span class="ident">ixs</span>, <span class="kw-2">&amp;</span><span class="ident">msg</span>);
                 <span class="ident">ProofTest</span> {
@@ -1819,34 +1759,21 @@
         })
     }
 
-    <span class="kw">fn</span> <span class="ident">with_proof_mod</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>(<span class="kw-2">mut</span> <span class="ident">tc</span>: <span class="ident">ProofTest</span>, <span class="ident">f</span>: <span class="ident">F</span>)
-    <span class="kw">where</span>
-        <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Sig</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">StmClerk</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">Bls12_377</span>, <span class="ident">TrivialEnv</span><span class="op">&gt;</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> [<span class="ident">u8</span>; <span class="number">16</span>]),
-    {
-        <span class="kw">match</span> <span class="ident">tc</span>.<span class="ident">msig</span> {
-            <span class="prelude-val">Ok</span>(<span class="kw-2">mut</span> <span class="ident">aggr</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                <span class="ident">f</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">aggr</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">tc</span>.<span class="ident">clerk</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">tc</span>.<span class="ident">msg</span>);
-                <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">tc</span>.<span class="ident">clerk</span>.<span class="ident">verify_msig</span>(<span class="kw-2">&amp;</span><span class="ident">aggr</span>, <span class="kw-2">&amp;</span><span class="ident">tc</span>.<span class="ident">msg</span>).<span class="ident">is_ok</span>())
-            }
-            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">unreachable!</span>(),
-        }
-    }
-
     <span class="macro">proptest!</span> {
         <span class="comment">// Each of the tests below corresponds to falsifying a conjunct in the</span>
         <span class="comment">// defintion of the proved relation between statement &amp; witness as</span>
         <span class="comment">// defined in the Mithril protocol</span>
         <span class="attribute">#[<span class="ident">test</span>]</span>
         <span class="kw">fn</span> <span class="ident">test_invalid_proof_quorum</span>(<span class="ident">tc</span> <span class="kw">in</span> <span class="ident">arb_proof_setup</span>(<span class="number">10</span>),
-                                     <span class="ident">rnd</span> <span class="kw">in</span> <span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>()) {
-            <span class="ident">with_proof_mod</span>(<span class="ident">tc</span>, <span class="op">|</span><span class="ident">aggr</span>, <span class="ident">clerk</span>, <span class="ident">msg</span><span class="op">|</span> {
+                                     <span class="ident">_rnd</span> <span class="kw">in</span> <span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>()) {
+            <span class="ident">with_proof_mod</span>(<span class="ident">tc</span>, <span class="op">|</span><span class="ident">_aggr</span>, <span class="ident">clerk</span>, <span class="ident">_msg</span><span class="op">|</span> {
                 <span class="ident">clerk</span>.<span class="ident">params</span>.<span class="ident">k</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
             })
         }
         <span class="attribute">#[<span class="ident">test</span>]</span>
         <span class="kw">fn</span> <span class="ident">test_invalid_proof_ivk</span>(<span class="ident">tc</span> <span class="kw">in</span> <span class="ident">arb_proof_setup</span>(<span class="number">10</span>),
                                   <span class="ident">rnd</span> <span class="kw">in</span> <span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>()) {
-            <span class="ident">with_proof_mod</span>(<span class="ident">tc</span>, <span class="op">|</span><span class="ident">aggr</span>, <span class="ident">clerk</span>, <span class="ident">msg</span><span class="op">|</span> {
+            <span class="ident">with_proof_mod</span>(<span class="ident">tc</span>, <span class="op">|</span><span class="ident">aggr</span>, <span class="ident">_clerk</span>, <span class="ident">_msg</span><span class="op">|</span> {
                 <span class="kw">let</span> <span class="ident">x</span> <span class="op">=</span> <span class="ident">G2P::prime_subgroup_generator</span>().<span class="ident">mul</span>(<span class="kw-2">&amp;</span>[<span class="ident">rnd</span>]);
                 <span class="ident">aggr</span>.<span class="ident">ivk</span> <span class="op">=</span> <span class="ident">MspMvk</span>(<span class="ident">x</span>)
             })
@@ -1854,21 +1781,21 @@
         <span class="attribute">#[<span class="ident">test</span>]</span>
         <span class="kw">fn</span> <span class="ident">test_invalid_proof_mu</span>(<span class="ident">tc</span> <span class="kw">in</span> <span class="ident">arb_proof_setup</span>(<span class="number">10</span>),
                                  <span class="ident">rnd</span> <span class="kw">in</span> <span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>()) {
-            <span class="ident">with_proof_mod</span>(<span class="ident">tc</span>, <span class="op">|</span><span class="ident">aggr</span>, <span class="ident">clerk</span>, <span class="ident">msg</span><span class="op">|</span> {
+            <span class="ident">with_proof_mod</span>(<span class="ident">tc</span>, <span class="op">|</span><span class="ident">aggr</span>, <span class="ident">_clerk</span>, <span class="ident">_msg</span><span class="op">|</span> {
                 <span class="kw">let</span> <span class="ident">x</span> <span class="op">=</span> <span class="ident">G1P::prime_subgroup_generator</span>().<span class="ident">mul</span>(<span class="kw-2">&amp;</span>[<span class="ident">rnd</span>]);
                 <span class="ident">aggr</span>.<span class="ident">mu</span> <span class="op">=</span> <span class="ident">MspSig</span>(<span class="ident">x</span>)
             })
         }
         <span class="attribute">#[<span class="ident">test</span>]</span>
         <span class="kw">fn</span> <span class="ident">test_invalid_proof_index_bound</span>(<span class="ident">tc</span> <span class="kw">in</span> <span class="ident">arb_proof_setup</span>(<span class="number">10</span>),
-                                          <span class="ident">rnd</span> <span class="kw">in</span> <span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>()) {
-            <span class="ident">with_proof_mod</span>(<span class="ident">tc</span>, <span class="op">|</span><span class="ident">aggr</span>, <span class="ident">clerk</span>, <span class="ident">msg</span><span class="op">|</span> {
+                                          <span class="ident">_rnd</span> <span class="kw">in</span> <span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>()) {
+            <span class="ident">with_proof_mod</span>(<span class="ident">tc</span>, <span class="op">|</span><span class="ident">_aggr</span>, <span class="ident">clerk</span>, <span class="ident">_msg</span><span class="op">|</span> {
                 <span class="ident">clerk</span>.<span class="ident">params</span>.<span class="ident">m</span> <span class="op">=</span> <span class="number">1</span>;
             })
         }
         <span class="attribute">#[<span class="ident">test</span>]</span>
         <span class="kw">fn</span> <span class="ident">test_invalid_proof_index_unique</span>(<span class="ident">tc</span> <span class="kw">in</span> <span class="ident">arb_proof_setup</span>(<span class="number">10</span>)) {
-            <span class="ident">with_proof_mod</span>(<span class="ident">tc</span>, <span class="op">|</span><span class="ident">aggr</span>, <span class="ident">clerk</span>, <span class="ident">msg</span><span class="op">|</span> {
+            <span class="ident">with_proof_mod</span>(<span class="ident">tc</span>, <span class="op">|</span><span class="ident">aggr</span>, <span class="ident">clerk</span>, <span class="ident">_msg</span><span class="op">|</span> {
                 <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="ident">aggr</span>.<span class="ident">proof</span>.<span class="ident">witness</span>.<span class="ident">indices</span>.<span class="ident">iter_mut</span>() {
                     <span class="kw-2">*</span><span class="ident">i</span> <span class="op">%</span><span class="op">=</span> <span class="ident">clerk</span>.<span class="ident">params</span>.<span class="ident">k</span> <span class="op">-</span> <span class="number">1</span>
                 }
@@ -1877,24 +1804,37 @@
         <span class="attribute">#[<span class="ident">test</span>]</span>
         <span class="kw">fn</span> <span class="ident">test_invalid_proof_path</span>(<span class="ident">tc</span> <span class="kw">in</span> <span class="ident">arb_proof_setup</span>(<span class="number">10</span>), <span class="ident">i</span> <span class="kw">in</span> <span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>()) {
             <span class="kw">let</span> <span class="ident">n</span> <span class="op">=</span> <span class="ident">tc</span>.<span class="ident">n</span>;
-            <span class="ident">with_proof_mod</span>(<span class="ident">tc</span>, <span class="op">|</span><span class="ident">aggr</span>, <span class="ident">clerk</span>, <span class="ident">msg</span><span class="op">|</span> {
+            <span class="ident">with_proof_mod</span>(<span class="ident">tc</span>, <span class="op">|</span><span class="ident">aggr</span>, <span class="ident">clerk</span>, <span class="ident">_msg</span><span class="op">|</span> {
                 <span class="kw">let</span> <span class="ident">pi</span> <span class="op">=</span> <span class="ident">i</span> <span class="op">%</span> <span class="ident">clerk</span>.<span class="ident">params</span>.<span class="ident">k</span> <span class="kw">as</span> <span class="ident">usize</span>;
                 <span class="ident">aggr</span>.<span class="ident">proof</span>.<span class="ident">witness</span>.<span class="ident">sigs</span>[<span class="ident">pi</span>].<span class="ident">party</span> <span class="op">=</span> (<span class="ident">aggr</span>.<span class="ident">proof</span>.<span class="ident">witness</span>.<span class="ident">sigs</span>[<span class="ident">pi</span>].<span class="ident">party</span> <span class="op">+</span> <span class="number">1</span>) <span class="op">%</span> <span class="ident">n</span>;
             })
         }
         <span class="attribute">#[<span class="ident">test</span>]</span>
         <span class="kw">fn</span> <span class="ident">test_invalid_proof_eval</span>(<span class="ident">tc</span> <span class="kw">in</span> <span class="ident">arb_proof_setup</span>(<span class="number">10</span>), <span class="ident">i</span> <span class="kw">in</span> <span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>(), <span class="ident">v</span> <span class="kw">in</span> <span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>()) {
-            <span class="ident">with_proof_mod</span>(<span class="ident">tc</span>, <span class="op">|</span><span class="ident">aggr</span>, <span class="ident">clerk</span>, <span class="ident">msg</span><span class="op">|</span> {
+            <span class="ident">with_proof_mod</span>(<span class="ident">tc</span>, <span class="op">|</span><span class="ident">aggr</span>, <span class="ident">clerk</span>, <span class="ident">_msg</span><span class="op">|</span> {
                 <span class="kw">let</span> <span class="ident">pi</span> <span class="op">=</span> <span class="ident">i</span> <span class="op">%</span> <span class="ident">clerk</span>.<span class="ident">params</span>.<span class="ident">k</span> <span class="kw">as</span> <span class="ident">usize</span>;
                 <span class="ident">aggr</span>.<span class="ident">proof</span>.<span class="ident">witness</span>.<span class="ident">evals</span>[<span class="ident">pi</span>] <span class="op">=</span> <span class="ident">v</span>;
             })
         }
         <span class="attribute">#[<span class="ident">test</span>]</span>
         <span class="kw">fn</span> <span class="ident">test_invalid_proof_stake</span>(<span class="ident">tc</span> <span class="kw">in</span> <span class="ident">arb_proof_setup</span>(<span class="number">10</span>), <span class="ident">i</span> <span class="kw">in</span> <span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>()) {
-            <span class="ident">with_proof_mod</span>(<span class="ident">tc</span>, <span class="op">|</span><span class="ident">aggr</span>, <span class="ident">clerk</span>, <span class="ident">msg</span><span class="op">|</span> {
+            <span class="ident">with_proof_mod</span>(<span class="ident">tc</span>, <span class="op">|</span><span class="ident">aggr</span>, <span class="ident">clerk</span>, <span class="ident">_msg</span><span class="op">|</span> {
                 <span class="kw">let</span> <span class="ident">pi</span> <span class="op">=</span> <span class="ident">i</span> <span class="op">%</span> <span class="ident">clerk</span>.<span class="ident">params</span>.<span class="ident">k</span> <span class="kw">as</span> <span class="ident">usize</span>;
                 <span class="ident">aggr</span>.<span class="ident">proof</span>.<span class="ident">witness</span>.<span class="ident">evals</span>[<span class="ident">pi</span>] <span class="op">=</span> <span class="number">0</span>;
             })
+        }
+    }
+
+    <span class="kw">fn</span> <span class="ident">with_proof_mod</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>(<span class="kw-2">mut</span> <span class="ident">tc</span>: <span class="ident">ProofTest</span>, <span class="ident">f</span>: <span class="ident">F</span>)
+    <span class="kw">where</span>
+        <span class="ident">F</span>: <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Sig</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">StmClerk</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">Bls12_377</span>, <span class="ident">TrivialEnv</span><span class="op">&gt;</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> [<span class="ident">u8</span>; <span class="number">16</span>]),
+    {
+        <span class="kw">match</span> <span class="ident">tc</span>.<span class="ident">msig</span> {
+            <span class="prelude-val">Ok</span>(<span class="kw-2">mut</span> <span class="ident">aggr</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="ident">f</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">aggr</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">tc</span>.<span class="ident">clerk</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">tc</span>.<span class="ident">msg</span>);
+                <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">tc</span>.<span class="ident">clerk</span>.<span class="ident">verify_msig</span>(<span class="kw-2">&amp;</span><span class="ident">aggr</span>, <span class="kw-2">&amp;</span><span class="ident">tc</span>.<span class="ident">msg</span>))
+            }
+            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">unreachable!</span>(),
         }
     }
 }
