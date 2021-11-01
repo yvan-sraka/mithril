@@ -127,15 +127,32 @@
 <span id="127">127</span>
 <span id="128">128</span>
 <span id="129">129</span>
+<span id="130">130</span>
+<span id="131">131</span>
+<span id="132">132</span>
+<span id="133">133</span>
+<span id="134">134</span>
+<span id="135">135</span>
+<span id="136">136</span>
+<span id="137">137</span>
+<span id="138">138</span>
+<span id="139">139</span>
+<span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
 </pre><pre class="rust"><code><span class="doccomment">//! General API for producing proofs from statements and witnesses</span>
 <span class="kw">use</span> <span class="ident">std::fmt::Debug</span>;
 
 <span class="doccomment">/// An environment or context that can contain any long-lived information</span>
 <span class="doccomment">/// relevant to the proof backend</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">ProverEnv</span> {
+    <span class="doccomment">/// The secret key used to create proofs.</span>
     <span class="kw">type</span> <span class="ident">ProvingKey</span>;
+    <span class="doccomment">/// The public key used to verify proofs.</span>
     <span class="kw">type</span> <span class="ident">VerificationKey</span>;
-
+    <span class="doccomment">/// Create a new key pair.</span>
     <span class="kw">fn</span> <span class="ident">setup</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> (<span class="ident"><span class="self">Self</span>::ProvingKey</span>, <span class="ident"><span class="self">Self</span>::VerificationKey</span>);
 }
 
@@ -143,12 +160,19 @@
 <span class="doccomment">/// holds between values of types `Statement` and `Witness` (generally the</span>
 <span class="doccomment">/// proofs are knowledge of such a `Witness`)</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Proof</span>: <span class="ident">Sized</span> {
+    <span class="doccomment">/// Context for this proof system.</span>
     <span class="kw">type</span> <span class="ident">Env</span>: <span class="ident">ProverEnv</span>;
+    <span class="doccomment">/// Statement to be proven.</span>
     <span class="kw">type</span> <span class="ident">Statement</span>;
+    <span class="doccomment">/// Relation between values of type Statement and type Witness.</span>
     <span class="kw">type</span> <span class="ident">Relation</span>;
+    <span class="doccomment">/// Witness of the validity of Statement.</span>
     <span class="kw">type</span> <span class="ident">Witness</span>;
-    <span class="kw">type</span> <span class="ident">Error</span>: <span class="ident">Debug</span> <span class="op">+</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">i64</span><span class="op">&gt;</span>; <span class="comment">// Into&lt;i64&gt; allows passing the error to the C API</span>
+    <span class="doccomment">/// Type of errors which can be output by the proof system.</span>
+    <span class="doccomment">/// Into&lt;i64&gt; allows passing the error to the C API.</span>
+    <span class="kw">type</span> <span class="ident">Error</span>: <span class="ident">Debug</span> <span class="op">+</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">i64</span><span class="op">&gt;</span>;
 
+    <span class="doccomment">/// Construct a proof.</span>
     <span class="kw">fn</span> <span class="ident">prove</span>(
         <span class="ident">env</span>: <span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::Env</span>,
         <span class="ident">pk</span>: <span class="kw-2">&amp;</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Env</span> <span class="kw">as</span> <span class="ident">ProverEnv</span><span class="op">&gt;</span><span class="ident">::ProvingKey</span>,
@@ -157,6 +181,7 @@
         <span class="ident">witness</span>: <span class="ident"><span class="self">Self</span>::Witness</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span>;
 
+    <span class="doccomment">/// Verify a proof.</span>
     <span class="kw">fn</span> <span class="ident">verify</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">env</span>: <span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::Env</span>,
@@ -173,17 +198,21 @@
     <span class="kw">use</span> <span class="ident">std::fmt</span>::{<span class="ident">Debug</span>, <span class="ident">Formatter</span>, <span class="prelude-ty">Result</span> <span class="kw">as</span> <span class="ident">FmtResult</span>};
     <span class="kw">use</span> <span class="ident">std::marker::PhantomData</span>;
 
+    <span class="doccomment">/// Trivial environment which contains nothing.</span>
     <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>)]</span>
     <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">TrivialEnv</span>;
 
+    <span class="doccomment">/// TrivialProof simply contains the Witness directly.</span>
     <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>)]</span>
     <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">TrivialProof</span><span class="op">&lt;</span><span class="ident">S</span>, <span class="ident">R</span>, <span class="ident">W</span><span class="op">&gt;</span> {
+        <span class="doccomment">/// The witness itself.</span>
         <span class="kw">pub</span> <span class="ident">witness</span>: <span class="ident">W</span>,
         <span class="ident">pr</span>: <span class="ident">PhantomData</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>,
         <span class="ident">ps</span>: <span class="ident">PhantomData</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span>,
     }
 
     <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">S</span>, <span class="ident">R</span>, <span class="ident">W</span><span class="op">&gt;</span> <span class="ident">TrivialProof</span><span class="op">&lt;</span><span class="ident">S</span>, <span class="ident">R</span>, <span class="ident">W</span><span class="op">&gt;</span> {
+        <span class="doccomment">/// Create a new TrivialProof from the witness.</span>
         <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">witness</span>: <span class="ident">W</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
             <span class="self">Self</span> {
                 <span class="ident">witness</span>,
@@ -207,6 +236,7 @@
         }
     }
 
+    <span class="doccomment">/// Error wrapper for TrivialProof.</span>
     <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
     <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">TrivialError</span><span class="op">&lt;</span><span class="ident">Error</span>: <span class="ident">Debug</span> <span class="op">+</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">i64</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="ident">Error</span>);
 
@@ -228,7 +258,7 @@
         <span class="kw">type</span> <span class="ident">Witness</span> <span class="op">=</span> <span class="ident">Witness</span>;
         <span class="kw">type</span> <span class="ident">Error</span> <span class="op">=</span> <span class="ident">TrivialError</span><span class="op">&lt;</span><span class="ident">UnderlyingError</span><span class="op">&gt;</span>;
         <span class="kw">fn</span> <span class="ident">prove</span>(
-            <span class="ident">env</span>: <span class="kw-2">&amp;</span><span class="ident">TrivialEnv</span>,
+            <span class="ident">_env</span>: <span class="kw-2">&amp;</span><span class="ident">TrivialEnv</span>,
             <span class="ident">_pk</span>: <span class="kw-2">&amp;</span>(),
             <span class="ident">rel</span>: <span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::Relation</span>,
             <span class="ident">stmt</span>: <span class="kw-2">&amp;</span><span class="ident">Stmt</span>,
@@ -243,8 +273,8 @@
 
         <span class="kw">fn</span> <span class="ident">verify</span>(
             <span class="kw-2">&amp;</span><span class="self">self</span>,
-            <span class="ident">env</span>: <span class="kw-2">&amp;</span><span class="ident">TrivialEnv</span>,
-            <span class="ident">vk</span>: <span class="kw-2">&amp;</span>(),
+            <span class="ident">_env</span>: <span class="kw-2">&amp;</span><span class="ident">TrivialEnv</span>,
+            <span class="ident">_vk</span>: <span class="kw-2">&amp;</span>(),
             <span class="ident">rel</span>: <span class="kw-2">&amp;</span><span class="ident">R</span>,
             <span class="ident">statement</span>: <span class="kw-2">&amp;</span><span class="ident">Stmt</span>,
         ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span> {
