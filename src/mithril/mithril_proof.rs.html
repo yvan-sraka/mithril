@@ -221,6 +221,64 @@
 <span id="221">221</span>
 <span id="222">222</span>
 <span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
+<span id="226">226</span>
+<span id="227">227</span>
+<span id="228">228</span>
+<span id="229">229</span>
+<span id="230">230</span>
+<span id="231">231</span>
+<span id="232">232</span>
+<span id="233">233</span>
+<span id="234">234</span>
+<span id="235">235</span>
+<span id="236">236</span>
+<span id="237">237</span>
+<span id="238">238</span>
+<span id="239">239</span>
+<span id="240">240</span>
+<span id="241">241</span>
+<span id="242">242</span>
+<span id="243">243</span>
+<span id="244">244</span>
+<span id="245">245</span>
+<span id="246">246</span>
+<span id="247">247</span>
+<span id="248">248</span>
+<span id="249">249</span>
+<span id="250">250</span>
+<span id="251">251</span>
+<span id="252">252</span>
+<span id="253">253</span>
+<span id="254">254</span>
+<span id="255">255</span>
+<span id="256">256</span>
+<span id="257">257</span>
+<span id="258">258</span>
+<span id="259">259</span>
+<span id="260">260</span>
+<span id="261">261</span>
+<span id="262">262</span>
+<span id="263">263</span>
+<span id="264">264</span>
+<span id="265">265</span>
+<span id="266">266</span>
+<span id="267">267</span>
+<span id="268">268</span>
+<span id="269">269</span>
+<span id="270">270</span>
+<span id="271">271</span>
+<span id="272">272</span>
+<span id="273">273</span>
+<span id="274">274</span>
+<span id="275">275</span>
+<span id="276">276</span>
+<span id="277">277</span>
+<span id="278">278</span>
+<span id="279">279</span>
+<span id="280">280</span>
+<span id="281">281</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Prove the validity of aggregated signatures.</span>
 
 <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::Index</span>;
@@ -264,74 +322,128 @@
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">evals</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
 }
 
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>)]</span>
+<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">MithrilWitnessError</span> {
+    <span class="doccomment">/// No qorum was found</span>
+    <span class="ident">NoQuorum</span>,
+    <span class="doccomment">/// The IVK is invalid after aggregating the keys</span>
+    <span class="ident">IvkInvalid</span>,
+    <span class="doccomment">/// Mu is not the sum of the signatures</span>
+    <span class="ident">SumInvalid</span>,
+    <span class="doccomment">/// There is an index out of bounds</span>
+    <span class="ident">IndexBoundFailed</span>,
+    <span class="doccomment">/// There is a duplicate index</span>
+    <span class="ident">IndexNotUnique</span>,
+    <span class="doccomment">/// The path is not valid for the Merkle Tree</span>
+    <span class="ident">PathInvalid</span>,
+    <span class="doccomment">/// MSP.Eval was computed incorrectly</span>
+    <span class="ident">EvalInvalid</span>,
+    <span class="doccomment">/// A party did not actually win the lottery</span>
+    <span class="ident">StakeInvalid</span>,
+}
+
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">PE</span>: <span class="ident">PairingEngine</span>, <span class="ident">H</span>: <span class="ident">MTHashLeaf</span><span class="op">&lt;</span><span class="ident">MTValue</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident">MithrilWitness</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">verify</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">stmt</span>: <span class="kw-2">&amp;</span><span class="ident">MithrilStatement</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
-        <span class="self">self</span>.<span class="ident">check_quorum</span>(<span class="ident">stmt</span>.<span class="ident">params</span>.<span class="ident">k</span> <span class="kw">as</span> <span class="ident">usize</span>)
-            <span class="op">&amp;&amp;</span> <span class="self">self</span>.<span class="ident">check_ivk</span>(<span class="kw-2">&amp;</span><span class="ident">stmt</span>.<span class="ident">ivk</span>)
-            <span class="op">&amp;&amp;</span> <span class="self">self</span>.<span class="ident">check_sum</span>(<span class="kw-2">&amp;</span><span class="ident">stmt</span>.<span class="ident">mu</span>)
-            <span class="op">&amp;&amp;</span> <span class="self">self</span>.<span class="ident">check_index_bound</span>(<span class="ident">stmt</span>.<span class="ident">params</span>.<span class="ident">m</span>)
-            <span class="op">&amp;&amp;</span> <span class="self">self</span>.<span class="ident">check_index_unique</span>()
-            <span class="op">&amp;&amp;</span> <span class="self">self</span>.<span class="ident">check_path</span>(<span class="kw-2">&amp;</span><span class="ident">stmt</span>.<span class="ident">avk</span>)
-            <span class="op">&amp;&amp;</span> <span class="self">self</span>.<span class="ident">check_eval</span>(<span class="kw-2">&amp;</span><span class="ident">stmt</span>.<span class="ident">avk</span>, <span class="kw-2">&amp;</span><span class="ident">stmt</span>.<span class="ident">msg</span>)
-            <span class="op">&amp;&amp;</span> <span class="self">self</span>.<span class="ident">check_stake</span>(<span class="ident">stmt</span>.<span class="ident">params</span>.<span class="ident">phi_f</span>, <span class="ident">stmt</span>.<span class="ident">total_stake</span>)
+    <span class="kw">fn</span> <span class="ident">verify</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">stmt</span>: <span class="kw-2">&amp;</span><span class="ident">MithrilStatement</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MithrilWitnessError</span><span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="ident">check_quorum</span>(<span class="ident">stmt</span>.<span class="ident">params</span>.<span class="ident">k</span> <span class="kw">as</span> <span class="ident">usize</span>)<span class="question-mark">?</span>;
+        <span class="self">self</span>.<span class="ident">check_ivk</span>(<span class="kw-2">&amp;</span><span class="ident">stmt</span>.<span class="ident">ivk</span>)<span class="question-mark">?</span>;
+        <span class="self">self</span>.<span class="ident">check_sum</span>(<span class="kw-2">&amp;</span><span class="ident">stmt</span>.<span class="ident">mu</span>)<span class="question-mark">?</span>;
+        <span class="self">self</span>.<span class="ident">check_index_bound</span>(<span class="ident">stmt</span>.<span class="ident">params</span>.<span class="ident">m</span>)<span class="question-mark">?</span>;
+        <span class="self">self</span>.<span class="ident">check_index_unique</span>()<span class="question-mark">?</span>;
+        <span class="self">self</span>.<span class="ident">check_path</span>(<span class="kw-2">&amp;</span><span class="ident">stmt</span>.<span class="ident">avk</span>)<span class="question-mark">?</span>;
+        <span class="self">self</span>.<span class="ident">check_eval</span>(<span class="kw-2">&amp;</span><span class="ident">stmt</span>.<span class="ident">avk</span>, <span class="kw-2">&amp;</span><span class="ident">stmt</span>.<span class="ident">msg</span>)<span class="question-mark">?</span>;
+        <span class="self">self</span>.<span class="ident">check_stake</span>(<span class="ident">stmt</span>.<span class="ident">params</span>.<span class="ident">phi_f</span>, <span class="ident">stmt</span>.<span class="ident">total_stake</span>)<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(())
     }
 
     <span class="doccomment">/// ivk = Prod(1..k, mvk[i])</span>
-    <span class="kw">fn</span> <span class="ident">check_ivk</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">ivk</span>: <span class="kw-2">&amp;</span><span class="ident">MspMvk</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">fn</span> <span class="ident">check_ivk</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">ivk</span>: <span class="kw-2">&amp;</span><span class="ident">MspMvk</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MithrilWitnessError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">mvks</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">sigs</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">pk</span>.<span class="ident">mvk</span>).<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
-
         <span class="kw">let</span> <span class="ident">sum</span> <span class="op">=</span> <span class="ident">Msp::aggregate_keys</span>(<span class="kw-2">&amp;</span><span class="ident">mvks</span>).<span class="number">0</span>;
-        <span class="ident">ivk</span>.<span class="number">0</span> <span class="op">=</span><span class="op">=</span> <span class="ident">sum</span>
+        <span class="kw">if</span> <span class="ident">ivk</span>.<span class="number">0</span> <span class="op">!</span><span class="op">=</span> <span class="ident">sum</span> {
+            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">MithrilWitnessError::IvkInvalid</span>);
+        }
+        <span class="prelude-val">Ok</span>(())
     }
 
     <span class="doccomment">/// mu = Prod(1..k, sigma[i])</span>
-    <span class="kw">fn</span> <span class="ident">check_sum</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">mu</span>: <span class="kw-2">&amp;</span><span class="ident">MspSig</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">fn</span> <span class="ident">check_sum</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">mu</span>: <span class="kw-2">&amp;</span><span class="ident">MspSig</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MithrilWitnessError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">mu1</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">sigs</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">sigma</span>.<span class="number">0</span>).<span class="ident">sum</span>();
-        <span class="ident">mu</span>.<span class="number">0</span> <span class="op">=</span><span class="op">=</span> <span class="ident">mu1</span>
+        <span class="kw">if</span> <span class="ident">mu</span>.<span class="number">0</span> <span class="op">!</span><span class="op">=</span> <span class="ident">mu1</span> {
+            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">MithrilWitnessError::SumInvalid</span>);
+        }
+        <span class="prelude-val">Ok</span>(())
     }
 
     <span class="doccomment">/// \forall i. index[i] &lt;= m</span>
-    <span class="kw">fn</span> <span class="ident">check_index_bound</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">m</span>: <span class="ident">u64</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
-        <span class="self">self</span>.<span class="ident">indices</span>.<span class="ident">iter</span>().<span class="ident">all</span>(<span class="op">|</span><span class="ident">i</span><span class="op">|</span> <span class="kw-2">*</span><span class="ident">i</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">m</span>)
+    <span class="kw">fn</span> <span class="ident">check_index_bound</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">m</span>: <span class="ident">u64</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MithrilWitnessError</span><span class="op">&gt;</span> {
+        <span class="kw">if</span> <span class="op">!</span><span class="self">self</span>.<span class="ident">indices</span>.<span class="ident">iter</span>().<span class="ident">all</span>(<span class="op">|</span><span class="ident">i</span><span class="op">|</span> <span class="kw-2">*</span><span class="ident">i</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">m</span>) {
+            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">MithrilWitnessError::IndexBoundFailed</span>);
+        }
+        <span class="prelude-val">Ok</span>(())
     }
 
     <span class="doccomment">/// \forall i. \forall j. (i == j || index[i] != index[j])</span>
-    <span class="kw">fn</span> <span class="ident">check_index_unique</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
-        <span class="ident">HashSet</span>::<span class="op">&lt;</span><span class="ident">Index</span><span class="op">&gt;</span><span class="ident">::from_iter</span>(<span class="self">self</span>.<span class="ident">indices</span>.<span class="ident">iter</span>().<span class="ident">cloned</span>()).<span class="ident">len</span>() <span class="op">=</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">indices</span>.<span class="ident">len</span>()
+    <span class="kw">fn</span> <span class="ident">check_index_unique</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MithrilWitnessError</span><span class="op">&gt;</span> {
+        <span class="kw">if</span> <span class="ident">HashSet</span>::<span class="op">&lt;</span><span class="ident">Index</span><span class="op">&gt;</span><span class="ident">::from_iter</span>(<span class="self">self</span>.<span class="ident">indices</span>.<span class="ident">iter</span>().<span class="ident">cloned</span>()).<span class="ident">len</span>() <span class="op">!</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">indices</span>.<span class="ident">len</span>() {
+            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">MithrilWitnessError::IndexNotUnique</span>);
+        }
+        <span class="prelude-val">Ok</span>(())
     }
 
     <span class="doccomment">/// k-sized quorum</span>
     <span class="doccomment">/// if this returns `true`, then there are exactly k signatures</span>
-    <span class="kw">fn</span> <span class="ident">check_quorum</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">k</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
-        <span class="ident">k</span> <span class="op">=</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">sigs</span>.<span class="ident">len</span>() <span class="op">&amp;&amp;</span> <span class="ident">k</span> <span class="op">=</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">evals</span>.<span class="ident">len</span>() <span class="op">&amp;&amp;</span> <span class="ident">k</span> <span class="op">=</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">indices</span>.<span class="ident">len</span>()
+    <span class="kw">fn</span> <span class="ident">check_quorum</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">k</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MithrilWitnessError</span><span class="op">&gt;</span> {
+        <span class="kw">if</span> <span class="ident">k</span> <span class="op">!</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">sigs</span>.<span class="ident">len</span>() <span class="op">&amp;&amp;</span> <span class="ident">k</span> <span class="op">=</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">evals</span>.<span class="ident">len</span>() <span class="op">&amp;&amp;</span> <span class="ident">k</span> <span class="op">=</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">indices</span>.<span class="ident">len</span>() {
+            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">MithrilWitnessError::NoQuorum</span>);
+        }
+        <span class="prelude-val">Ok</span>(())
     }
 
     <span class="doccomment">/// \forall i : [0..k]. path[i] is a witness for (mvk[i]), stake[i] in avk</span>
-    <span class="kw">fn</span> <span class="ident">check_path</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">avk</span>: <span class="kw-2">&amp;</span><span class="ident">MerkleTree</span><span class="op">&lt;</span><span class="ident">MTValue</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span>, <span class="ident">H</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
-        <span class="self">self</span>.<span class="ident">sigs</span>
+    <span class="kw">fn</span> <span class="ident">check_path</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">avk</span>: <span class="kw-2">&amp;</span><span class="ident">MerkleTree</span><span class="op">&lt;</span><span class="ident">MTValue</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span>, <span class="ident">H</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MithrilWitnessError</span><span class="op">&gt;</span> {
+        <span class="kw">if</span> <span class="op">!</span><span class="self">self</span>
+            .<span class="ident">sigs</span>
             .<span class="ident">iter</span>()
             .<span class="ident">all</span>(<span class="op">|</span><span class="ident">sig</span><span class="op">|</span> <span class="ident">avk</span>.<span class="ident">check</span>(<span class="kw-2">&amp;</span><span class="ident">MTValue</span>(<span class="ident">sig</span>.<span class="ident">pk</span>.<span class="ident">mvk</span>, <span class="ident">sig</span>.<span class="ident">stake</span>), <span class="ident">sig</span>.<span class="ident">party</span>, <span class="kw-2">&amp;</span><span class="ident">sig</span>.<span class="ident">path</span>))
+        {
+            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">MithrilWitnessError::PathInvalid</span>);
+        }
+        <span class="prelude-val">Ok</span>(())
     }
 
     <span class="doccomment">/// \forall i : [1..k]. ev[i] = MSP.Eval(msg, index[i], sig[i])</span>
-    <span class="kw">fn</span> <span class="ident">check_eval</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">avk</span>: <span class="kw-2">&amp;</span><span class="ident">MerkleTree</span><span class="op">&lt;</span><span class="ident">MTValue</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span>, <span class="ident">H</span><span class="op">&gt;</span>, <span class="ident">msg</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">fn</span> <span class="ident">check_eval</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">avk</span>: <span class="kw-2">&amp;</span><span class="ident">MerkleTree</span><span class="op">&lt;</span><span class="ident">MTValue</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span>, <span class="ident">H</span><span class="op">&gt;</span>,
+        <span class="ident">msg</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MithrilWitnessError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">msp_evals</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">indices</span>.<span class="ident">iter</span>().<span class="ident">zip</span>(<span class="self">self</span>.<span class="ident">sigs</span>.<span class="ident">iter</span>()).<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">idx</span>, <span class="ident">sig</span>)<span class="op">|</span> {
             <span class="kw">let</span> <span class="ident">msgp</span> <span class="op">=</span> <span class="ident">concat_avk_with_msg</span>(<span class="ident">avk</span>, <span class="ident">msg</span>);
             <span class="ident">Msp::eval</span>(<span class="kw-2">&amp;</span><span class="ident">msgp</span>, <span class="kw-2">*</span><span class="ident">idx</span>, <span class="kw-2">&amp;</span><span class="ident">sig</span>.<span class="ident">sigma</span>)
         });
 
-        <span class="self">self</span>.<span class="ident">evals</span>
+        <span class="kw">if</span> <span class="op">!</span><span class="self">self</span>
+            .<span class="ident">evals</span>
             .<span class="ident">iter</span>()
             .<span class="ident">zip</span>(<span class="ident">msp_evals</span>)
             .<span class="ident">all</span>(<span class="op">|</span>(<span class="ident">ev</span>, <span class="ident">msp_e</span>)<span class="op">|</span> <span class="kw-2">*</span><span class="ident">ev</span> <span class="op">=</span><span class="op">=</span> <span class="ident">msp_e</span>)
+        {
+            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">MithrilWitnessError::EvalInvalid</span>);
+        }
+        <span class="prelude-val">Ok</span>(())
     }
 
     <span class="doccomment">/// \forall i : [1..k]. ev[i] &lt;= phi(stake_i)</span>
-    <span class="kw">fn</span> <span class="ident">check_stake</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">phi_f</span>: <span class="ident">f64</span>, <span class="ident">total_stake</span>: <span class="ident">u64</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
-        <span class="self">self</span>.<span class="ident">evals</span>
+    <span class="kw">fn</span> <span class="ident">check_stake</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">phi_f</span>: <span class="ident">f64</span>, <span class="ident">total_stake</span>: <span class="ident">u64</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MithrilWitnessError</span><span class="op">&gt;</span> {
+        <span class="kw">if</span> <span class="op">!</span><span class="self">self</span>
+            .<span class="ident">evals</span>
             .<span class="ident">iter</span>()
             .<span class="ident">zip</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">sigs</span>)
             .<span class="ident">all</span>(<span class="op">|</span>(<span class="ident">ev</span>, <span class="ident">sig</span>)<span class="op">|</span> <span class="ident">ev_lt_phi</span>(<span class="ident">phi_f</span>, <span class="kw-2">*</span><span class="ident">ev</span>, <span class="ident">sig</span>.<span class="ident">stake</span>, <span class="ident">total_stake</span>))
+        {
+            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">MithrilWitnessError::StakeInvalid</span>);
+        }
+        <span class="prelude-val">Ok</span>(())
     }
 }
 
@@ -389,17 +501,18 @@
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">concat_proofs</span> {
     <span class="doccomment">//! This is the trivial proof system instantiated to Mithril: witnesses are</span>
     <span class="doccomment">//! just the aggregated signatures themselves.</span>
-    <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">MithrilProof</span>, <span class="ident">MithrilStatement</span>, <span class="ident">MithrilWitness</span>};
+    <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">MithrilProof</span>, <span class="ident">MithrilStatement</span>, <span class="ident">MithrilWitness</span>, <span class="ident">MithrilWitnessError</span>};
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::merkle_tree::MTHashLeaf</span>;
-    <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::proof::trivial::TrivialEnv</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::proof::trivial::TrivialProof</span>;
+    <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::proof::trivial</span>::{<span class="ident">TrivialEnv</span>, <span class="ident">TrivialError</span>};
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::stm::MTValue</span>;
     <span class="kw">use</span> <span class="ident">ark_ec::PairingEngine</span>;
     <span class="kw">use</span> <span class="ident">ark_ff</span>::{<span class="ident">FromBytes</span>, <span class="ident">ToBytes</span>};
     <span class="kw">use</span> <span class="ident">std::io</span>::{<span class="ident">Read</span>, <span class="ident">Write</span>};
 
     <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ConcatEnv</span> <span class="op">=</span> <span class="ident">TrivialEnv</span>;
-    <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ConcatRel</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H</span><span class="op">&gt;</span> <span class="op">=</span> <span class="kw">fn</span>(<span class="kw-2">&amp;</span><span class="ident">MithrilStatement</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H</span><span class="op">&gt;</span>, <span class="kw-2">&amp;</span><span class="ident">MithrilWitness</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span>;
+    <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ConcatRel</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H</span><span class="op">&gt;</span> <span class="op">=</span>
+        <span class="kw">fn</span>(<span class="kw-2">&amp;</span><span class="ident">MithrilStatement</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H</span><span class="op">&gt;</span>, <span class="kw-2">&amp;</span><span class="ident">MithrilWitness</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MithrilWitnessError</span><span class="op">&gt;</span>;
     <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ConcatProof</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H</span><span class="op">&gt;</span> <span class="op">=</span>
         <span class="ident">TrivialProof</span><span class="op">&lt;</span><span class="ident">MithrilStatement</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H</span><span class="op">&gt;</span>, <span class="ident">ConcatRel</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H</span><span class="op">&gt;</span>, <span class="ident">MithrilWitness</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H</span><span class="op">&gt;</span><span class="op">&gt;</span>;
 
@@ -436,7 +549,10 @@
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">trivial_relation</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H</span><span class="op">&gt;</span>(<span class="ident">s</span>: <span class="kw-2">&amp;</span><span class="ident">MithrilStatement</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H</span><span class="op">&gt;</span>, <span class="ident">w</span>: <span class="kw-2">&amp;</span><span class="ident">MithrilWitness</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span>
+    <span class="kw">fn</span> <span class="ident">trivial_relation</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H</span><span class="op">&gt;</span>(
+        <span class="ident">s</span>: <span class="kw-2">&amp;</span><span class="ident">MithrilStatement</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H</span><span class="op">&gt;</span>,
+        <span class="ident">w</span>: <span class="kw-2">&amp;</span><span class="ident">MithrilWitness</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H</span><span class="op">&gt;</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MithrilWitnessError</span><span class="op">&gt;</span>
     <span class="kw">where</span>
         <span class="ident">PE</span>: <span class="ident">PairingEngine</span>,
         <span class="ident">H</span>: <span class="ident">MTHashLeaf</span><span class="op">&lt;</span><span class="ident">MTValue</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span><span class="op">&gt;</span>,
