@@ -957,9 +957,6 @@
 <span id="957">957</span>
 <span id="958">958</span>
 <span id="959">959</span>
-<span id="960">960</span>
-<span id="961">961</span>
-<span id="962">962</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Top-level API for Mithril Stake-based Threshold Multisignature scheme.</span>
 
 <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">concat_avk_with_msg</span>, <span class="ident">ev_lt_phi</span>, <span class="ident">Index</span>, <span class="ident">PartyId</span>, <span class="ident">Path</span>, <span class="ident">Stake</span>};
@@ -1294,7 +1291,7 @@
         <span class="kw">let</span> <span class="ident">my_index</span> <span class="op">=</span> <span class="ident">reg</span>
             .<span class="ident">iter</span>()
             .<span class="ident">enumerate</span>()
-            .<span class="ident">find</span>(<span class="op">|</span>(<span class="ident">_i</span>, <span class="ident">rp</span>)<span class="op">|</span> <span class="ident">rp</span>.<span class="ident">party_id</span> <span class="op">=</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">party_id</span>)
+            .<span class="ident">find</span>(<span class="op">|</span>(<span class="kw">_</span>, <span class="ident">rp</span>)<span class="op">|</span> <span class="ident">rp</span>.<span class="ident">party_id</span> <span class="op">=</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">party_id</span>)
             .<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="macro">panic!</span>(<span class="string">&quot;party unknown: {}&quot;</span>, <span class="self">self</span>.<span class="ident">party_id</span>))
             .<span class="number">0</span>;
         <span class="kw">let</span> <span class="ident">total_stake</span> <span class="op">=</span> <span class="ident">mtvals</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="number">1</span>).<span class="ident">sum</span>();
@@ -1773,7 +1770,6 @@
         <span class="kw">fn</span> <span class="ident">test_adversary_quorum</span>(
             (<span class="ident">adversaries</span>, <span class="ident">parties</span>) <span class="kw">in</span> <span class="ident">arb_parties_adversary_stake</span>(<span class="number">8</span>, <span class="number">30</span>, <span class="number">16</span>, <span class="number">4</span>),
             <span class="ident">msg</span> <span class="kw">in</span> <span class="ident">any</span>::<span class="op">&lt;</span>[<span class="ident">u8</span>;<span class="number">16</span>]<span class="op">&gt;</span>(),
-            <span class="ident">_i</span> <span class="kw">in</span> <span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>(), <span class="ident">_j</span> <span class="kw">in</span> <span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>(),
         ) {
             <span class="comment">// Test sanity check:</span>
             <span class="comment">// Check that the adversarial party has less than 40% of the total stake.</span>
@@ -1861,8 +1857,7 @@
         <span class="comment">// defintion of the proved relation between statement &amp; witness as</span>
         <span class="comment">// defined in the Mithril protocol</span>
         <span class="attribute">#[<span class="ident">test</span>]</span>
-        <span class="kw">fn</span> <span class="ident">test_invalid_proof_quorum</span>(<span class="ident">tc</span> <span class="kw">in</span> <span class="ident">arb_proof_setup</span>(<span class="number">10</span>),
-                                     <span class="ident">_rnd</span> <span class="kw">in</span> <span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>()) {
+        <span class="kw">fn</span> <span class="ident">test_invalid_proof_quorum</span>(<span class="ident">tc</span> <span class="kw">in</span> <span class="ident">arb_proof_setup</span>(<span class="number">10</span>)) {
             <span class="ident">with_proof_mod</span>(<span class="ident">tc</span>, <span class="op">|</span><span class="ident">_aggr</span>, <span class="ident">clerk</span>, <span class="ident">_msg</span><span class="op">|</span> {
                 <span class="ident">clerk</span>.<span class="ident">params</span>.<span class="ident">k</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
             })
@@ -1884,8 +1879,7 @@
             })
         }
         <span class="attribute">#[<span class="ident">test</span>]</span>
-        <span class="kw">fn</span> <span class="ident">test_invalid_proof_index_bound</span>(<span class="ident">tc</span> <span class="kw">in</span> <span class="ident">arb_proof_setup</span>(<span class="number">10</span>),
-                                          <span class="ident">_rnd</span> <span class="kw">in</span> <span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>()) {
+        <span class="kw">fn</span> <span class="ident">test_invalid_proof_index_bound</span>(<span class="ident">tc</span> <span class="kw">in</span> <span class="ident">arb_proof_setup</span>(<span class="number">10</span>)) {
             <span class="ident">with_proof_mod</span>(<span class="ident">tc</span>, <span class="op">|</span><span class="ident">_aggr</span>, <span class="ident">clerk</span>, <span class="ident">_msg</span><span class="op">|</span> {
                 <span class="ident">clerk</span>.<span class="ident">params</span>.<span class="ident">m</span> <span class="op">=</span> <span class="number">1</span>;
             })
