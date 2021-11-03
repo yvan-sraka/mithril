@@ -341,7 +341,97 @@
 <span id="341">341</span>
 <span id="342">342</span>
 <span id="343">343</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Base multisignature scheme.</span>
+<span id="344">344</span>
+<span id="345">345</span>
+<span id="346">346</span>
+<span id="347">347</span>
+<span id="348">348</span>
+<span id="349">349</span>
+<span id="350">350</span>
+<span id="351">351</span>
+<span id="352">352</span>
+<span id="353">353</span>
+<span id="354">354</span>
+<span id="355">355</span>
+<span id="356">356</span>
+<span id="357">357</span>
+<span id="358">358</span>
+<span id="359">359</span>
+<span id="360">360</span>
+<span id="361">361</span>
+<span id="362">362</span>
+<span id="363">363</span>
+<span id="364">364</span>
+<span id="365">365</span>
+<span id="366">366</span>
+<span id="367">367</span>
+<span id="368">368</span>
+<span id="369">369</span>
+<span id="370">370</span>
+<span id="371">371</span>
+<span id="372">372</span>
+<span id="373">373</span>
+<span id="374">374</span>
+<span id="375">375</span>
+<span id="376">376</span>
+<span id="377">377</span>
+<span id="378">378</span>
+<span id="379">379</span>
+<span id="380">380</span>
+<span id="381">381</span>
+<span id="382">382</span>
+<span id="383">383</span>
+<span id="384">384</span>
+<span id="385">385</span>
+<span id="386">386</span>
+<span id="387">387</span>
+<span id="388">388</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Base multisignature scheme, used as a primitive for STM.</span>
+<span class="doccomment">//! See Section 2.4 of [the paper](https://eprint.iacr.org/2021/916).</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! The following is an example showing how to use Msp with the BLS12 curve.</span>
+<span class="doccomment">//! It creates 10 signatures of the same (arbitrary) message, then shows how to combine</span>
+<span class="doccomment">//! those signatures into an aggregate signature.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ```rust</span>
+<span class="doccomment">//! # fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {</span>
+<span class="doccomment">//!     use mithril::msp::Msp; // Import the Msp module</span>
+<span class="doccomment">//!     use rand_chacha::rand_core::{RngCore, SeedableRng}; // For RNG functionality</span>
+<span class="doccomment">//!     use ark_bls12_377::Bls12_377; // Underlying curve using Ark</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!     // We will create and aggregate 10 signatures in this example</span>
+<span class="doccomment">//!     let num_sigs = 10;</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!     // create and initialize the RNG</span>
+<span class="doccomment">//!     let mut rng = rand_chacha::ChaCha8Rng::seed_from_u64(42);</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!     // The message will just be some arbitrary data</span>
+<span class="doccomment">//!     let mut msg = [0; 16];</span>
+<span class="doccomment">//!     rng.fill_bytes(&amp;mut msg);</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!     let mut mvks = Vec::new(); // vec of verification keys</span>
+<span class="doccomment">//!     let mut sigs = Vec::new(); // vec of signatures</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!     for _ in 0..num_sigs {</span>
+<span class="doccomment">//!         // Create a new keypair using the BLS12_377 curve</span>
+<span class="doccomment">//!         let (sk, pk) = Msp::&lt;Bls12_377&gt;::gen(&amp;mut rng);</span>
+<span class="doccomment">//!         // Sign the message using an individual secret key</span>
+<span class="doccomment">//!         let sig = Msp::sig(&amp;sk, &amp;msg);</span>
+<span class="doccomment">//!         // Check that the individual verification is valid</span>
+<span class="doccomment">//!         assert!(Msp::ver(&amp;msg, &amp;pk.mvk, &amp;sig));</span>
+<span class="doccomment">//!         sigs.push(sig);</span>
+<span class="doccomment">//!         mvks.push(pk.mvk);</span>
+<span class="doccomment">//!     }</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!     // Aggregate the verification keys</span>
+<span class="doccomment">//!     let ivk = Msp::aggregate_keys(&amp;mvks);</span>
+<span class="doccomment">//!     // Aggregate the signatures keys</span>
+<span class="doccomment">//!     let mu = Msp::aggregate_sigs(&amp;sigs);</span>
+<span class="doccomment">//!     // Check that the aggregated signature is valid</span>
+<span class="doccomment">//!     assert!(Msp::aggregate_ver(&amp;msg, &amp;ivk, &amp;mu));</span>
+<span class="doccomment">//! # Ok(())</span>
+<span class="doccomment">//! # }</span>
+<span class="doccomment">//! ```</span>
 
 <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::mithril_curves::hash_to_curve</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::Index</span>;
@@ -356,7 +446,6 @@
 <span class="kw">use</span> <span class="ident">std::marker::PhantomData</span>;
 
 <span class="doccomment">/// Struct used to namespace the functions.</span>
-<span class="doccomment">/// See section 2.4 of [the paper](https://eprint.iacr.org/2021/916).</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Msp</span><span class="op">&lt;</span><span class="ident">PE</span>: <span class="ident">PairingEngine</span><span class="op">&gt;</span> {
     <span class="ident">x</span>: <span class="ident">PhantomData</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span>,
 }
@@ -634,10 +723,11 @@
                               <span class="ident">num_sigs</span> <span class="kw">in</span> <span class="number">1</span>..<span class="number">16</span>,
                               <span class="ident">seed</span> <span class="kw">in</span> <span class="ident">any</span>::<span class="op">&lt;</span>[<span class="ident">u8</span>;<span class="number">32</span>]<span class="op">&gt;</span>(),
         ) {
+            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">rng</span> <span class="op">=</span> <span class="ident">ChaCha20Rng::from_seed</span>(<span class="ident">seed</span>);
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mvks</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">sigs</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
             <span class="kw">for</span> <span class="kw">_</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">num_sigs</span> {
-                <span class="kw">let</span> (<span class="ident">sk</span>, <span class="ident">pk</span>) <span class="op">=</span> <span class="ident">Msp</span>::<span class="op">&lt;</span><span class="ident">Bls12_377</span><span class="op">&gt;</span><span class="ident">::gen</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">ChaCha20Rng::from_seed</span>(<span class="ident">seed</span>));
+                <span class="kw">let</span> (<span class="ident">sk</span>, <span class="ident">pk</span>) <span class="op">=</span> <span class="ident">Msp</span>::<span class="op">&lt;</span><span class="ident">Bls12_377</span><span class="op">&gt;</span><span class="ident">::gen</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">rng</span>);
                 <span class="kw">let</span> <span class="ident">sig</span> <span class="op">=</span> <span class="ident">Msp::sig</span>(<span class="kw-2">&amp;</span><span class="ident">sk</span>, <span class="kw-2">&amp;</span><span class="ident">msg</span>);
                 <span class="macro">assert!</span>(<span class="ident">Msp::ver</span>(<span class="kw-2">&amp;</span><span class="ident">msg</span>, <span class="kw-2">&amp;</span><span class="ident">pk</span>.<span class="ident">mvk</span>, <span class="kw-2">&amp;</span><span class="ident">sig</span>));
                 <span class="ident">sigs</span>.<span class="ident">push</span>(<span class="ident">sig</span>);
