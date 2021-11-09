@@ -1078,6 +1078,24 @@
 <span id="1078">1078</span>
 <span id="1079">1079</span>
 <span id="1080">1080</span>
+<span id="1081">1081</span>
+<span id="1082">1082</span>
+<span id="1083">1083</span>
+<span id="1084">1084</span>
+<span id="1085">1085</span>
+<span id="1086">1086</span>
+<span id="1087">1087</span>
+<span id="1088">1088</span>
+<span id="1089">1089</span>
+<span id="1090">1090</span>
+<span id="1091">1091</span>
+<span id="1092">1092</span>
+<span id="1093">1093</span>
+<span id="1094">1094</span>
+<span id="1095">1095</span>
+<span id="1096">1096</span>
+<span id="1097">1097</span>
+<span id="1098">1098</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Top-level API for Mithril Stake-based Threshold Multisignature scheme.</span>
 <span class="doccomment">//! See figure 6 of [the paper](https://eprint.iacr.org/2021/916) for most of the</span>
 <span class="doccomment">//! protocol.</span>
@@ -1203,9 +1221,8 @@
 <span class="doccomment">//! # }</span>
 <span class="doccomment">//! ```</span>
 
-<span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">concat_avk_with_msg</span>, <span class="ident">ev_lt_phi</span>, <span class="ident">Index</span>, <span class="ident">PartyId</span>, <span class="ident">Path</span>, <span class="ident">Stake</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::key_reg::RegParty</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::merkle_tree</span>::{<span class="ident">MTHashLeaf</span>, <span class="ident">MerkleTree</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::merkle_tree</span>::{<span class="ident">concat_avk_with_msg</span>, <span class="ident">MTHashLeaf</span>, <span class="ident">MerkleTree</span>, <span class="ident">Path</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::mithril_proof</span>::{<span class="ident">MithrilProof</span>, <span class="ident">MithrilStatement</span>, <span class="ident">MithrilWitness</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::msp</span>::{<span class="ident">Msp</span>, <span class="ident">MspMvk</span>, <span class="ident">MspPk</span>, <span class="ident">MspSig</span>, <span class="ident">MspSk</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::proof::ProverEnv</span>;
@@ -1218,6 +1235,14 @@
 <span class="kw">use</span> <span class="ident">std::convert::From</span>;
 <span class="kw">use</span> <span class="ident">std::convert::TryInto</span>;
 <span class="kw">use</span> <span class="ident">std::rc::Rc</span>;
+
+<span class="doccomment">/// The quantity of stake held by a party, represented as a `u64`.</span>
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">Stake</span> <span class="op">=</span> <span class="ident">u64</span>;
+<span class="doccomment">/// Party identifier, unique for each participant in the protocol.</span>
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">PartyId</span> <span class="op">=</span> <span class="ident">usize</span>;
+<span class="doccomment">/// Quorum index for signatures.</span>
+<span class="doccomment">/// An aggregate signature (`StmMultiSig`) must have at least `k` unique indices.</span>
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">Index</span> <span class="op">=</span> <span class="ident">u64</span>;
 
 <span class="doccomment">/// The values that are represented in the Merkle Tree.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>)]</span>
@@ -1766,6 +1791,17 @@
         }
         <span class="prelude-val">Ok</span>(())
     }
+}
+
+<span class="doccomment">/// Compares the output of `phi` (a real) to the output of `ev` (a hash).</span>
+<span class="doccomment">/// Used to determine winning lottery tickets.</span>
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">ev_lt_phi</span>(<span class="ident">phi_f</span>: <span class="ident">f64</span>, <span class="ident">ev</span>: <span class="ident">u64</span>, <span class="ident">stake</span>: <span class="ident">Stake</span>, <span class="ident">total_stake</span>: <span class="ident">Stake</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="comment">//TODO: Fix this, casting to f64 isn&#39;t safe</span>
+    <span class="kw">let</span> <span class="ident">w</span> <span class="op">=</span> (<span class="ident">stake</span> <span class="kw">as</span> <span class="ident">f64</span>) <span class="op">/</span> (<span class="ident">total_stake</span> <span class="kw">as</span> <span class="ident">f64</span>);
+    <span class="kw">let</span> <span class="ident">phi</span> <span class="op">=</span> <span class="number">1.0</span> <span class="op">-</span> (<span class="number">1.0</span> <span class="op">-</span> <span class="ident">phi_f</span>).<span class="ident">powf</span>(<span class="ident">w</span>);
+    <span class="kw">let</span> <span class="ident">ev_as_f64</span> <span class="op">=</span> <span class="ident">ev</span> <span class="kw">as</span> <span class="ident">f64</span> <span class="op">/</span> <span class="number">2_f64</span>.<span class="ident">powf</span>(<span class="number">64.0</span>);
+    <span class="comment">// println!(&quot;{} {}&quot;, phi, ev_as_f64);</span>
+    <span class="ident">ev_as_f64</span> <span class="op">&lt;</span> <span class="ident">phi</span>
 }
 
 <span class="kw">fn</span> <span class="ident">dedup_sigs_for_indices</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">H</span>: <span class="ident">MTHashLeaf</span><span class="op">&lt;</span><span class="ident">MTValue</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">PE</span>: <span class="ident">PairingEngine</span><span class="op">&gt;</span>(
