@@ -1,1 +1,0 @@
-initSidebarItems({"fn":[["free_multi_sig","Frees a multi signature pointer"],["free_sig","Frees a signature pointer"],["free_stm_clerk","Frees an STM Clerk pointer"],["free_stm_initializer","Frees an STM initialiser pointer"],["free_stm_signer","Frees an STM signer pointer"]],"mod":[["serialize","Serialisation functions"]]});
