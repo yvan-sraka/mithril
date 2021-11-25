@@ -510,6 +510,18 @@
 <span id="510">510</span>
 <span id="511">511</span>
 <span id="512">512</span>
+<span id="513">513</span>
+<span id="514">514</span>
+<span id="515">515</span>
+<span id="516">516</span>
+<span id="517">517</span>
+<span id="518">518</span>
+<span id="519">519</span>
+<span id="520">520</span>
+<span id="521">521</span>
+<span id="522">522</span>
+<span id="523">523</span>
+<span id="524">524</span>
 </pre><pre class="rust"><code><span class="doccomment">//! C api</span>
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::key_reg</span>::{<span class="ident">ClosedKeyReg</span>, <span class="ident">KeyReg</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::{
@@ -701,6 +713,8 @@
 
 <span class="kw">mod</span> <span class="ident">initializer</span> {
     <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::key_reg::RegParty</span>;
+    <span class="kw">use</span> <span class="ident">std::slice</span>;
 
     <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
     <span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">stm_intializer_setup</span>(
@@ -789,20 +803,31 @@
         }
     }
 
-    <span class="doccomment">/// This function consumes the `StmInitilizer`. This ensures that after the registration is</span>
-    <span class="doccomment">/// closed, there is no more mangling of the data of the registered party (such as stake or</span>
-    <span class="doccomment">/// keys).</span>
     <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
     <span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">stm_initializer_new_signer</span>(
         <span class="ident">me</span>: <span class="ident">StmInitializerPtr</span>,
-        <span class="ident">closed_reg</span>: <span class="ident">ClosedKeyRegPtr</span>,
+        <span class="ident">n_parties</span>: <span class="ident">usize</span>,
+        <span class="ident">party_ids</span>: <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">PartyId</span>,
+        <span class="ident">party_stakes</span>: <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">Stake</span>,
+        <span class="ident">party_keys</span>: <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">MspPkPtr</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">StmSignerPtr</span> {
         <span class="kw">unsafe</span> {
-            <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">me</span>.<span class="ident">is_null</span>());
-            <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">closed_reg</span>.<span class="ident">is_null</span>());
-            <span class="kw">let</span> <span class="ident">ref_me</span> <span class="op">=</span> <span class="kw-2">*</span><span class="ident">Box::from_raw</span>(<span class="ident">me</span>);
-            <span class="kw">let</span> <span class="ident">ref_reg</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">closed_reg</span>;
-            <span class="ident">Box::into_raw</span>(<span class="ident">Box::new</span>(<span class="ident">ref_me</span>.<span class="ident">new_signer</span>(<span class="ident">ref_reg</span>)))
+            <span class="kw">let</span> <span class="ident">ref_me</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="kw-2">*</span><span class="ident">me</span>;
+            <span class="kw">let</span> <span class="ident">ids</span> <span class="op">=</span> <span class="ident">slice::from_raw_parts</span>(<span class="ident">party_ids</span>, <span class="ident">n_parties</span>);
+            <span class="kw">let</span> <span class="ident">stakes</span> <span class="op">=</span> <span class="ident">slice::from_raw_parts</span>(<span class="ident">party_stakes</span>, <span class="ident">n_parties</span>);
+            <span class="kw">let</span> <span class="ident">keys</span> <span class="op">=</span> <span class="ident">slice::from_raw_parts</span>(<span class="ident">party_keys</span>, <span class="ident">n_parties</span>);
+            <span class="kw">let</span> <span class="ident">reg</span> <span class="op">=</span> <span class="ident">ids</span>
+                .<span class="ident">iter</span>()
+                .<span class="ident">zip</span>(<span class="ident">stakes</span>)
+                .<span class="ident">zip</span>(<span class="ident">keys</span>)
+                .<span class="ident">map</span>(<span class="op">|</span>((<span class="ident">party_id</span>, <span class="ident">stake</span>), <span class="ident">k</span>)<span class="op">|</span> <span class="ident">RegParty</span> {
+                    <span class="ident">party_id</span>: <span class="kw-2">*</span><span class="ident">party_id</span>,
+                    <span class="ident">stake</span>: <span class="kw-2">*</span><span class="ident">stake</span>,
+                    <span class="ident">pk</span>: <span class="kw-2">*</span><span class="kw-2">*</span><span class="ident">k</span>,
+                })
+                .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
+
+            <span class="ident">Box::into_raw</span>(<span class="ident">Box::new</span>(<span class="ident">ref_me</span>.<span class="ident">new_signer</span>(<span class="kw-2">&amp;</span><span class="ident">reg</span>)))
         }
     }
 }
@@ -914,19 +939,18 @@
     <span class="kw">use</span> <span class="ident">core::slice</span>;
     <span class="kw">use</span> <span class="ident">std::convert::TryInto</span>;
 
-    <span class="doccomment">/// A clerk can only be generated out of a `ClosedKeyReg` instance, or out of an `StmSigner`.</span>
-    <span class="doccomment">/// This function initialises a `Clerk` out of a `ClosedKeyReg`.</span>
     <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-    <span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">stm_clerk_from_reg</span>(
+    <span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">stm_clerk_new</span>(
         <span class="ident">params</span>: <span class="ident">StmParameters</span>,
-        <span class="ident">closed_reg</span>: <span class="ident">ClosedKeyRegPtr</span>,
+        <span class="ident">avk</span>: <span class="ident">MerkleTreePtr</span>,
+        <span class="ident">total_stake</span>: <span class="ident">Stake</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">StmClerkPtr</span> {
         <span class="kw">unsafe</span> {
-            <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">closed_reg</span>.<span class="ident">is_null</span>());
-            <span class="ident">Box::into_raw</span>(<span class="ident">Box::new</span>(<span class="ident">StmClerk::from_registration</span>(
+            <span class="ident">Box::into_raw</span>(<span class="ident">Box::new</span>(<span class="ident">StmClerk::new</span>(
                 <span class="ident">params</span>,
                 <span class="ident">TrivialEnv</span>,
-                <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">closed_reg</span>,
+                <span class="kw-2">*</span><span class="ident">Box::from_raw</span>(<span class="ident">avk</span>),
+                <span class="ident">total_stake</span>,
             )))
         }
     }
