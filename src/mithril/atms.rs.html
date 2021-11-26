@@ -348,6 +348,10 @@
 <span id="348">348</span>
 <span id="349">349</span>
 <span id="350">350</span>
+<span id="351">351</span>
+<span id="352">352</span>
+<span id="353">353</span>
+<span id="354">354</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Ad-Hoc Threshold Multisignatures</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! Proof-of-Stake Sidechains</span>
@@ -380,20 +384,21 @@
 }
 
 <span class="doccomment">/// The implementation relies on an underlying public signature with a proof</span>
-<span class="doccomment">/// of possession. We need the ability to verify the Proof of Possesion, and to</span>
-<span class="doccomment">/// verify the signature.</span>
+<span class="doccomment">/// of possession. We need the ability to verify the signature. Moreover, it is common that</span>
+<span class="doccomment">/// multi signatures schemes require the verification of correctness of the public key, and</span>
+<span class="doccomment">/// therefore we require also associate a `check_key` function.</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Atms</span>: <span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Debug</span> {
-    <span class="doccomment">/// Proof of Possession of the secret key with respect to the Public Key.</span>
-    <span class="kw">type</span> <span class="ident">POP</span>: <span class="ident">Copy</span>;
-    <span class="doccomment">/// Associated type that defines the Public Key.</span>
-    <span class="kw">type</span> <span class="ident">PK</span>;
+    <span class="doccomment">/// Public key before verification of correctness.</span>
+    <span class="kw">type</span> <span class="ident">PreCheckedPK</span>: <span class="ident">Copy</span>;
+    <span class="doccomment">/// Public key after verification of correctness.</span>
+    <span class="kw">type</span> <span class="ident">CheckedPK</span>;
     <span class="doccomment">/// Associated type that defines the Signature.</span>
     <span class="kw">type</span> <span class="ident">SIG</span>;
-    <span class="doccomment">/// Verify the proof of possesion. If it is valid, return the public key (without</span>
-    <span class="doccomment">/// the proof of possession)</span>
-    <span class="kw">fn</span> <span class="ident">verify_proof</span>(<span class="ident">proof</span>: <span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::POP</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::PK</span><span class="op">&gt;</span>;
+    <span class="doccomment">/// Verify the correctness of the public key. If it is valid, return the public key (without</span>
+    <span class="doccomment">/// the proof of correctness).</span>
+    <span class="kw">fn</span> <span class="ident">check_key</span>(<span class="ident">proof</span>: <span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::PreCheckedPK</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::CheckedPK</span><span class="op">&gt;</span>;
     <span class="doccomment">/// Verify that the signature is valid for a message `msg` and key `key`</span>
-    <span class="kw">fn</span> <span class="ident">verify</span>(<span class="ident">msg</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="ident">pk</span>: <span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::PK</span>, <span class="ident">sig</span>: <span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::SIG</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span>;
+    <span class="kw">fn</span> <span class="ident">verify</span>(<span class="ident">msg</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="ident">pk</span>: <span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::CheckedPK</span>, <span class="ident">sig</span>: <span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::SIG</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span>;
 }
 
 <span class="doccomment">/// An aggregated key, that contains the aggregation of a set of keys, the merkle commitment of</span>
@@ -403,14 +408,14 @@
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Avk</span><span class="op">&lt;</span><span class="ident">A</span>, <span class="ident">H</span><span class="op">&gt;</span>
 <span class="kw">where</span>
     <span class="ident">A</span>: <span class="ident">Atms</span>,
-    <span class="ident">H</span>: <span class="ident">MTHashLeaf</span><span class="op">&lt;</span><span class="ident">MTValue</span><span class="op">&lt;</span><span class="ident">A::PK</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Digest</span>,
+    <span class="ident">H</span>: <span class="ident">MTHashLeaf</span><span class="op">&lt;</span><span class="ident">MTValue</span><span class="op">&lt;</span><span class="ident">A::CheckedPK</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Digest</span>,
 {
     <span class="doccomment">/// The product of the aggregated keys</span>
-    <span class="ident">aggregate_key</span>: <span class="ident">A::PK</span>,
+    <span class="ident">aggregate_key</span>: <span class="ident">A::CheckedPK</span>,
     <span class="doccomment">/// The Merkle commitment to the set of keys</span>
-    <span class="ident">tree</span>: <span class="ident">MerkleTree</span><span class="op">&lt;</span><span class="ident">MTValue</span><span class="op">&lt;</span><span class="ident">A::PK</span><span class="op">&gt;</span>, <span class="ident">H</span><span class="op">&gt;</span>,
+    <span class="ident">tree</span>: <span class="ident">MerkleTree</span><span class="op">&lt;</span><span class="ident">MTValue</span><span class="op">&lt;</span><span class="ident">A::CheckedPK</span><span class="op">&gt;</span>, <span class="ident">H</span><span class="op">&gt;</span>,
     <span class="doccomment">/// Mapping to identify position of key within merkle tree</span>
-    <span class="ident">leaf_map</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">A::PK</span>, (<span class="ident">Stake</span>, <span class="ident">usize</span>)<span class="op">&gt;</span>,
+    <span class="ident">leaf_map</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">A::CheckedPK</span>, (<span class="ident">Stake</span>, <span class="ident">usize</span>)<span class="op">&gt;</span>,
     <span class="doccomment">/// Total stake</span>
     <span class="ident">total_stake</span>: <span class="ident">Stake</span>,
     <span class="doccomment">/// Threshold of Stake required to validate a signature</span>
@@ -427,7 +432,7 @@
     <span class="ident">aggregate</span>: <span class="ident">A::SIG</span>,
     <span class="doccomment">/// Proofs of membership of non-signing keys in the original</span>
     <span class="doccomment">/// set of keys</span>
-    <span class="ident">keys_proofs</span>: <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">A::PK</span>, <span class="ident">Path</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>)<span class="op">&gt;</span>,
+    <span class="ident">keys_proofs</span>: <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">A::CheckedPK</span>, <span class="ident">Path</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>)<span class="op">&gt;</span>,
 }
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
@@ -437,11 +442,11 @@
     <span class="ident">A</span>: <span class="ident">Atms</span>,
 {
     <span class="doccomment">/// An unknown key (we don&#39;t know its index in the merkle tree)</span>
-    <span class="ident">UnknownKey</span>(<span class="ident">A::PK</span>),
+    <span class="ident">UnknownKey</span>(<span class="ident">A::CheckedPK</span>),
     <span class="doccomment">/// The proof that `PK` is at a given idx is false</span>
-    <span class="ident">InvalidMerkleProof</span>(<span class="ident">usize</span>, <span class="ident">A::PK</span>, <span class="ident">Path</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>),
+    <span class="ident">InvalidMerkleProof</span>(<span class="ident">usize</span>, <span class="ident">A::CheckedPK</span>, <span class="ident">Path</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>),
     <span class="doccomment">/// The proof that the secret key with respect to `PK` is known, fails</span>
-    <span class="ident">InvalidPoPProof</span>(<span class="ident">A::POP</span>),
+    <span class="ident">InvalidPoPProof</span>(<span class="ident">A::PreCheckedPK</span>),
     <span class="doccomment">/// Duplicate non-signers in signature</span>
     <span class="ident">FoundDuplicates</span>,
     <span class="doccomment">/// Non-signers sum to the given stake, which is more than half of total</span>
@@ -456,17 +461,20 @@
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">A</span>, <span class="ident">H</span><span class="op">&gt;</span> <span class="ident">Avk</span><span class="op">&lt;</span><span class="ident">A</span>, <span class="ident">H</span><span class="op">&gt;</span>
 <span class="kw">where</span>
     <span class="ident">A</span>: <span class="ident">Atms</span>,
-    <span class="ident">A::PK</span>: <span class="ident">Eq</span> <span class="op">+</span> <span class="ident">Ord</span> <span class="op">+</span> <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">Hash</span> <span class="op">+</span> <span class="kw">for</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">Sum</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">A::PK</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">ToBytes</span>,
-    <span class="ident">H</span>: <span class="ident">MTHashLeaf</span><span class="op">&lt;</span><span class="ident">MTValue</span><span class="op">&lt;</span><span class="ident">A::PK</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Digest</span>,
+    <span class="ident">A::CheckedPK</span>: <span class="ident">Eq</span> <span class="op">+</span> <span class="ident">Ord</span> <span class="op">+</span> <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">Hash</span> <span class="op">+</span> <span class="kw">for</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">Sum</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">A::CheckedPK</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">ToBytes</span>,
+    <span class="ident">H</span>: <span class="ident">MTHashLeaf</span><span class="op">&lt;</span><span class="ident">MTValue</span><span class="op">&lt;</span><span class="ident">A::CheckedPK</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Digest</span>,
 {
     <span class="doccomment">/// Aggregate a set of keys, and commit to them in a canonical order.</span>
     <span class="doccomment">/// Called `AKey` in the paper.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>(<span class="ident">keys_pop</span>: <span class="kw-2">&amp;</span>[(<span class="ident">A::POP</span>, <span class="ident">Stake</span>)], <span class="ident">threshold</span>: <span class="ident">Stake</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">AtmsError</span><span class="op">&lt;</span><span class="ident">A</span>, <span class="ident">F</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">keys</span>: <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">A::PK</span>, <span class="ident">Stake</span>)<span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Vec::with_capacity</span>(<span class="ident">keys_pop</span>.<span class="ident">len</span>());
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>(
+        <span class="ident">keys_pop</span>: <span class="kw-2">&amp;</span>[(<span class="ident">A::PreCheckedPK</span>, <span class="ident">Stake</span>)],
+        <span class="ident">threshold</span>: <span class="ident">Stake</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">AtmsError</span><span class="op">&lt;</span><span class="ident">A</span>, <span class="ident">F</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">keys</span>: <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">A::CheckedPK</span>, <span class="ident">Stake</span>)<span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Vec::with_capacity</span>(<span class="ident">keys_pop</span>.<span class="ident">len</span>());
         <span class="kw">for</span> (<span class="ident">key</span>, <span class="ident">stake</span>) <span class="kw">in</span> <span class="ident">keys_pop</span> {
-            <span class="kw">let</span> <span class="ident">pk</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">A::verify_proof</span>(<span class="ident">key</span>) {
-                <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">AtmsError::InvalidPoPProof</span>(<span class="kw-2">*</span><span class="ident">key</span>)),
+            <span class="kw">let</span> <span class="ident">pk</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">A::check_key</span>(<span class="ident">key</span>) {
                 <span class="prelude-val">Some</span>(<span class="ident">p</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">p</span>,
+                <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">AtmsError::InvalidPoPProof</span>(<span class="kw-2">*</span><span class="ident">key</span>)),
             };
             <span class="ident">keys</span>.<span class="ident">push</span>((<span class="ident">pk</span>, <span class="kw-2">*</span><span class="ident">stake</span>))
         }
@@ -474,7 +482,7 @@
         <span class="comment">// This ensures the order is the same for permutations of the input keys</span>
         <span class="ident">keys</span>.<span class="ident">sort</span>();
 
-        <span class="kw">let</span> <span class="ident">aggregate_key</span>: <span class="ident">A::PK</span> <span class="op">=</span> <span class="ident">keys</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">k</span><span class="op">|</span> <span class="kw-2">&amp;</span><span class="ident">k</span>.<span class="number">0</span>).<span class="ident">sum</span>();
+        <span class="kw">let</span> <span class="ident">aggregate_key</span>: <span class="ident">A::CheckedPK</span> <span class="op">=</span> <span class="ident">keys</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">k</span><span class="op">|</span> <span class="kw-2">&amp;</span><span class="ident">k</span>.<span class="number">0</span>).<span class="ident">sum</span>();
         <span class="kw">let</span> <span class="ident">tree</span> <span class="op">=</span> <span class="ident">MerkleTree::create</span>(
             <span class="ident">keys</span>.<span class="ident">iter</span>()
                 .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">k</span>, <span class="ident">s</span>)<span class="op">|</span> <span class="ident">MTValue</span>(<span class="ident">k</span>.<span class="ident">clone</span>(), <span class="kw-2">*</span><span class="ident">s</span>))
@@ -496,7 +504,7 @@
 
     <span class="doccomment">/// Check that this aggregation is derived from the given sequence of valid keys.</span>
     <span class="doccomment">/// Called `ACheck` in the paper.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">check</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">keys</span>: <span class="kw-2">&amp;</span>[(<span class="ident">A::POP</span>, <span class="ident">Stake</span>)]) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">AtmsError</span><span class="op">&lt;</span><span class="ident">A</span>, <span class="ident">F</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">check</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">keys</span>: <span class="kw-2">&amp;</span>[(<span class="ident">A::PreCheckedPK</span>, <span class="ident">Stake</span>)]) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">AtmsError</span><span class="op">&lt;</span><span class="ident">A</span>, <span class="ident">F</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="comment">// Stake is irrelevant for this check.</span>
         <span class="kw">let</span> <span class="ident">akey2</span> <span class="op">=</span> <span class="ident"><span class="self">Self</span>::new</span>(<span class="ident">keys</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
         <span class="kw">if</span> <span class="self">self</span>.<span class="ident">tree</span>.<span class="ident">root</span>() <span class="op">=</span><span class="op">=</span> <span class="ident">akey2</span>.<span class="ident">tree</span>.<span class="ident">root</span>() <span class="op">&amp;&amp;</span> <span class="self">self</span>.<span class="ident">aggregate_key</span> <span class="op">=</span><span class="op">=</span> <span class="ident">akey2</span>.<span class="ident">aggregate_key</span> {
@@ -510,19 +518,19 @@
 <span class="kw">where</span>
     <span class="ident">F</span>: <span class="ident">Clone</span>,
     <span class="ident">A</span>: <span class="ident">Atms</span>,
-    <span class="ident">A::PK</span>: <span class="ident">Clone</span>
+    <span class="ident">A::CheckedPK</span>: <span class="ident">Clone</span>
         <span class="op">+</span> <span class="ident">Eq</span>
         <span class="op">+</span> <span class="ident">Hash</span>
-        <span class="op">+</span> <span class="ident">Sub</span><span class="op">&lt;</span><span class="ident">A::PK</span>, <span class="ident">Output</span> <span class="op">=</span> <span class="ident">A::PK</span><span class="op">&gt;</span>
-        <span class="op">+</span> <span class="kw">for</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">Sum</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">A::PK</span><span class="op">&gt;</span>
+        <span class="op">+</span> <span class="ident">Sub</span><span class="op">&lt;</span><span class="ident">A::CheckedPK</span>, <span class="ident">Output</span> <span class="op">=</span> <span class="ident">A::CheckedPK</span><span class="op">&gt;</span>
+        <span class="op">+</span> <span class="kw">for</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">Sum</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">A::CheckedPK</span><span class="op">&gt;</span>
         <span class="op">+</span> <span class="ident">std::fmt::Debug</span>
         <span class="op">+</span> <span class="ident">Ord</span>,
     <span class="ident">A::SIG</span>: <span class="kw">for</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">Sum</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">A::SIG</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Ord</span> <span class="op">+</span> <span class="ident">Clone</span>,
 {
     <span class="doccomment">/// Aggregate a list of signatures.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span><span class="op">&lt;</span><span class="ident">H</span>: <span class="ident">MTHashLeaf</span><span class="op">&lt;</span><span class="ident">MTValue</span><span class="op">&lt;</span><span class="ident">A::PK</span><span class="op">&gt;</span>, <span class="ident">F</span> <span class="op">=</span> <span class="ident">F</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Digest</span><span class="op">&gt;</span>(
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span><span class="op">&lt;</span><span class="ident">H</span>: <span class="ident">MTHashLeaf</span><span class="op">&lt;</span><span class="ident">MTValue</span><span class="op">&lt;</span><span class="ident">A::CheckedPK</span><span class="op">&gt;</span>, <span class="ident">F</span> <span class="op">=</span> <span class="ident">F</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Digest</span><span class="op">&gt;</span>(
         <span class="ident">keys</span>: <span class="kw-2">&amp;</span><span class="ident">Avk</span><span class="op">&lt;</span><span class="ident">A</span>, <span class="ident">H</span><span class="op">&gt;</span>,
-        <span class="ident">sigs</span>: <span class="kw-2">&amp;</span>[(<span class="ident">A::PK</span>, <span class="ident">A::SIG</span>)],
+        <span class="ident">sigs</span>: <span class="kw-2">&amp;</span>[(<span class="ident">A::CheckedPK</span>, <span class="ident">A::SIG</span>)],
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="kw">let</span> <span class="ident">signers</span> <span class="op">=</span> <span class="ident">sigs</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">k</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="ident">k</span>).<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">HashSet</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
         <span class="kw">let</span> <span class="ident">keys_proofs</span> <span class="op">=</span> <span class="ident">keys</span>
@@ -538,7 +546,7 @@
             })
             .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span>(<span class="kw">_</span>, <span class="kw">_</span>)<span class="op">&gt;</span><span class="op">&gt;</span>();
 
-        <span class="comment">// lets get an list of unique signatures. We first sort them and then `dedup` as we don&#39;t</span>
+        <span class="comment">// lets get a list of unique signatures. We first sort them and then `dedup` as we don&#39;t</span>
         <span class="comment">// care of the order of the signatures. However, we do care of having duplicates.</span>
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">unique_sigs</span> <span class="op">=</span> <span class="ident">sigs</span>.<span class="ident">to_vec</span>();
         <span class="ident">unique_sigs</span>.<span class="ident">sort_unstable</span>();
@@ -553,7 +561,7 @@
 
     <span class="doccomment">/// Verify that this aggregation is valid for the given collection of keys and message.</span>
     <span class="doccomment">/// Called `AVer` in the paper</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verify</span><span class="op">&lt;</span><span class="ident">H</span>: <span class="ident">MTHashLeaf</span><span class="op">&lt;</span><span class="ident">MTValue</span><span class="op">&lt;</span><span class="ident">A::PK</span><span class="op">&gt;</span>, <span class="ident">F</span> <span class="op">=</span> <span class="ident">F</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Digest</span><span class="op">&gt;</span>(
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verify</span><span class="op">&lt;</span><span class="ident">H</span>: <span class="ident">MTHashLeaf</span><span class="op">&lt;</span><span class="ident">MTValue</span><span class="op">&lt;</span><span class="ident">A::CheckedPK</span><span class="op">&gt;</span>, <span class="ident">F</span> <span class="op">=</span> <span class="ident">F</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Digest</span><span class="op">&gt;</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">msg</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
         <span class="ident">keys</span>: <span class="kw-2">&amp;</span><span class="ident">Avk</span><span class="op">&lt;</span><span class="ident">A</span>, <span class="ident">H</span><span class="op">&gt;</span>,
@@ -566,24 +574,24 @@
         <span class="comment">// Check inclusion proofs</span>
         <span class="kw">for</span> (<span class="ident">non_signer</span>, <span class="ident">proof</span>) <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">keys_proofs</span> {
             <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>((<span class="ident">stake</span>, <span class="ident">idx</span>)) <span class="op">=</span> <span class="ident">keys</span>.<span class="ident">leaf_map</span>.<span class="ident">get</span>(<span class="ident">non_signer</span>) {
-                <span class="kw">if</span> <span class="op">!</span><span class="ident">keys</span>
+                <span class="kw">if</span> <span class="ident">keys</span>
                     .<span class="ident">tree</span>
                     .<span class="ident">check</span>(<span class="kw-2">&amp;</span><span class="ident">MTValue</span>(<span class="ident">non_signer</span>.<span class="ident">clone</span>(), <span class="kw-2">*</span><span class="ident">stake</span>), <span class="kw-2">*</span><span class="ident">idx</span>, <span class="ident">proof</span>)
                 {
+                    <span class="ident">non_signing_stake</span> <span class="op">+</span><span class="op">=</span> <span class="ident">stake</span>;
+                    <span class="comment">// Check non-signers are distinct</span>
+                    <span class="kw">if</span> <span class="op">!</span><span class="ident">unique_non_signers</span>.<span class="ident">insert</span>(<span class="ident">non_signer</span>) {
+                        <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">AtmsError::FoundDuplicates</span>);
+                    }
+                } <span class="kw">else</span> {
                     <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">AtmsError::InvalidMerkleProof</span>(
                         <span class="kw-2">*</span><span class="ident">idx</span>,
                         <span class="ident">non_signer</span>.<span class="ident">clone</span>(),
                         <span class="ident">proof</span>.<span class="ident">clone</span>(),
                     ));
-                } <span class="kw">else</span> {
-                    <span class="ident">non_signing_stake</span> <span class="op">+</span><span class="op">=</span> <span class="ident">stake</span>;
-                    <span class="comment">// Check non-signers are distinct</span>
-                    <span class="kw">if</span> <span class="op">!</span><span class="ident">unique_non_signers</span>.<span class="ident">insert</span>(<span class="ident">non_signer</span>) {
-                        <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">AtmsError::UnknownKey</span>(<span class="ident">non_signer</span>.<span class="ident">clone</span>()));
-                    }
                 }
             } <span class="kw">else</span> {
-                <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">AtmsError::FoundDuplicates</span>);
+                <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">AtmsError::UnknownKey</span>(<span class="ident">non_signer</span>.<span class="ident">clone</span>()));
             }
         }
 
@@ -612,18 +620,18 @@
     <span class="kw">where</span>
         <span class="ident">PE</span>: <span class="ident">PairingEngine</span> <span class="op">+</span> <span class="ident">Hash</span>,
     {
-        <span class="kw">type</span> <span class="ident">POP</span> <span class="op">=</span> <span class="ident">MspPk</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span>;
-        <span class="kw">type</span> <span class="ident">PK</span> <span class="op">=</span> <span class="ident">MspMvk</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span>;
+        <span class="kw">type</span> <span class="ident">PreCheckedPK</span> <span class="op">=</span> <span class="ident">MspPk</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span>;
+        <span class="kw">type</span> <span class="ident">CheckedPK</span> <span class="op">=</span> <span class="ident">MspMvk</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span>;
         <span class="kw">type</span> <span class="ident">SIG</span> <span class="op">=</span> <span class="ident">MspSig</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span>;
 
-        <span class="kw">fn</span> <span class="ident">verify_proof</span>(<span class="ident">proof</span>: <span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::POP</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::PK</span><span class="op">&gt;</span> {
+        <span class="kw">fn</span> <span class="ident">check_key</span>(<span class="ident">proof</span>: <span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::PreCheckedPK</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::CheckedPK</span><span class="op">&gt;</span> {
             <span class="kw">if</span> <span class="ident">Msp::check</span>(<span class="ident">proof</span>) {
                 <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="ident">proof</span>.<span class="ident">mvk</span>);
             }
             <span class="prelude-val">None</span>
         }
 
-        <span class="kw">fn</span> <span class="ident">verify</span>(<span class="ident">msg</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="ident">pk</span>: <span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::PK</span>, <span class="ident">sig</span>: <span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::SIG</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+        <span class="kw">fn</span> <span class="ident">verify</span>(<span class="ident">msg</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="ident">pk</span>: <span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::CheckedPK</span>, <span class="ident">sig</span>: <span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::SIG</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
             <span class="ident">Msp::aggregate_ver</span>(<span class="ident">msg</span>, <span class="ident">pk</span>, <span class="ident">sig</span>)
         }
     }
