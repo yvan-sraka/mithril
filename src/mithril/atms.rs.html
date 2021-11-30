@@ -352,6 +352,13 @@
 <span id="352">352</span>
 <span id="353">353</span>
 <span id="354">354</span>
+<span id="355">355</span>
+<span id="356">356</span>
+<span id="357">357</span>
+<span id="358">358</span>
+<span id="359">359</span>
+<span id="360">360</span>
+<span id="361">361</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Ad-Hoc Threshold Multisignatures</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! Proof-of-Stake Sidechains</span>
@@ -435,7 +442,7 @@
     <span class="ident">keys_proofs</span>: <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">A::CheckedPK</span>, <span class="ident">Path</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>)<span class="op">&gt;</span>,
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">thiserror::Error</span>)]</span>
 <span class="doccomment">/// Errors associated with Atms</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">AtmsError</span><span class="op">&lt;</span><span class="ident">A</span>, <span class="ident">F</span>, <span class="ident">H</span><span class="op">&gt;</span>
 <span class="kw">where</span>
@@ -443,19 +450,26 @@
     <span class="ident">H</span>: <span class="ident">MTHashLeaf</span><span class="op">&lt;</span><span class="ident">MTValue</span><span class="op">&lt;</span><span class="ident">A::CheckedPK</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Digest</span>,
 {
     <span class="doccomment">/// An unknown key (we don&#39;t know its index in the merkle tree)</span>
+    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Key not present in the Merkle Tree.&quot;</span>)]</span>
     <span class="ident">UnknownKey</span>(<span class="ident">A::CheckedPK</span>),
     <span class="doccomment">/// The proof that `PK` is at a given idx is false</span>
+    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Proof that key with index {0} is in Merkle Tree is invalid.&quot;</span>)]</span>
     <span class="ident">InvalidMerkleProof</span>(<span class="ident">usize</span>, <span class="ident">A::CheckedPK</span>, <span class="ident">Path</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>),
     <span class="doccomment">/// The proof that the secret key with respect to `PK` is known, fails</span>
+    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Proof of Possesion of the secret key is invalid.&quot;</span>)]</span>
     <span class="ident">InvalidProofOfPossession</span>(<span class="ident">A::PreCheckedPK</span>),
     <span class="doccomment">/// Duplicate non-signers in signature</span>
+    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Submitted keys of non-signers contains duplicates.&quot;</span>)]</span>
     <span class="ident">FoundDuplicates</span>(<span class="ident">A::CheckedPK</span>),
     <span class="doccomment">/// Non-signers sum to the given stake, which is more than half of total</span>
+    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Signatures do not exceed the required threshold.&quot;</span>)]</span>
     <span class="ident">TooMuchOutstandingStake</span>(<span class="ident">Stake</span>),
     <span class="doccomment">/// Underlying signature scheme failed to verify</span>
+    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Invalid Signature.&quot;</span>)]</span>
     <span class="ident">InvalidSignature</span>(<span class="ident">A::SIG</span>),
     <span class="doccomment">/// The given public key does not correspond to the aggregation of the given</span>
     <span class="doccomment">/// set of keys</span>
+    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Given public key does not correspond to the aggregation of the set of public keys.&quot;</span>)]</span>
     <span class="ident">InvalidAggregation</span>(<span class="ident">Avk</span><span class="op">&lt;</span><span class="ident">A</span>, <span class="ident">H</span><span class="op">&gt;</span>),
 }
 
