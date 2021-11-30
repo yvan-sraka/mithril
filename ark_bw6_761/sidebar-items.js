@@ -1,0 +1,1 @@
+initSidebarItems({"constant":[["FQ_ONE",""],["FQ_ZERO",""]],"mod":[["fq",""],["fq3",""],["fq6",""],["fr",""],["g1",""],["g2",""]],"struct":[["Fq3Parameters",""],["Fq6Parameters",""],["FqParameters",""],["FrParameters",""],["Parameters",""]],"type":[["BW6_761",""],["Fq",""],["Fq3",""],["Fq6",""],["Fr",""],["G1Affine",""],["G1Projective",""],["G2Affine",""],["G2Projective",""]]});

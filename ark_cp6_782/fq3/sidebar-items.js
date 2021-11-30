@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Fq3Parameters",""]],"type":[["Fq3",""]]});
