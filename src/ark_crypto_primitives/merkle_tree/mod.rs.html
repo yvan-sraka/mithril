@@ -600,7 +600,7 @@
     <span class="doccomment">/// `position[i]` is 0 (false) iff `i`th on-path node from top to bottom is on the left.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// This function simply converts `self.leaf_index` to boolean array in big endian form.</span>
-    <span class="kw">fn</span> <span class="ident">position_list</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;_</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="lifetime">&#39;_</span> <span class="op">+</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">bool</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">position_list</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;_</span> <span class="self">self</span>) -&gt; <span class="kw">impl</span> <span class="lifetime">&#39;_</span> <span class="op">+</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">bool</span><span class="op">&gt;</span> {
         (<span class="number">0</span>..<span class="self">self</span>.<span class="ident">auth_path</span>.<span class="ident">len</span>() <span class="op">+</span> <span class="number">1</span>)
             .<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">i</span><span class="op">|</span> ((<span class="self">self</span>.<span class="ident">leaf_index</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident">i</span>) <span class="op">&amp;</span> <span class="number">1</span>) <span class="op">!</span><span class="op">=</span> <span class="number">0</span>)
             .<span class="ident">rev</span>()
@@ -618,8 +618,8 @@
     <span class="ident">index</span>: <span class="ident">usize</span>,
     <span class="ident">computed_hash</span>: <span class="kw-2">&amp;</span><span class="ident">B</span>,
     <span class="ident">sibling_hash</span>: <span class="kw-2">&amp;</span><span class="ident">B</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>), <span class="ident"><span class="kw">crate</span>::Error</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="ident">is_left</span> <span class="op">=</span> <span class="ident">index</span> <span class="op">&amp;</span> <span class="number">1</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span>;
+) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>), <span class="ident"><span class="kw">crate</span>::Error</span><span class="op">&gt;</span> {
+    <span class="kw">let</span> <span class="ident">is_left</span> <span class="op">=</span> <span class="ident">index</span> <span class="op">&amp;</span> <span class="number">1</span> <span class="op">==</span> <span class="number">0</span>;
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">left_bytes</span> <span class="op">=</span> <span class="macro">ark_ff::to_bytes!</span>(<span class="ident">computed_hash</span>)<span class="question-mark">?</span>;
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">right_bytes</span> <span class="op">=</span> <span class="macro">ark_ff::to_bytes!</span>(<span class="ident">sibling_hash</span>)<span class="question-mark">?</span>;
     <span class="kw">if</span> <span class="op">!</span><span class="ident">is_left</span> {
@@ -639,7 +639,7 @@
         <span class="ident">two_to_one_hash_params</span>: <span class="kw-2">&amp;</span><span class="ident">TwoToOneParam</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>,
         <span class="ident">root_hash</span>: <span class="kw-2">&amp;</span><span class="ident">TwoToOneDigest</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>,
         <span class="ident">leaf</span>: <span class="kw-2">&amp;</span><span class="ident">L</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident"><span class="kw">crate</span>::Error</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident"><span class="kw">crate</span>::Error</span><span class="op">&gt;</span> {
         <span class="comment">// calculate leaf hash</span>
         <span class="kw">let</span> <span class="ident">claimed_leaf_hash</span> <span class="op">=</span>
             <span class="ident">P::LeafHash::evaluate</span>(<span class="kw-2">&amp;</span><span class="ident">leaf_hash_params</span>, <span class="kw-2">&amp;</span><span class="macro">ark_ff::to_bytes!</span>(<span class="kw-2">&amp;</span><span class="ident">leaf</span>)<span class="question-mark">?</span>)<span class="question-mark">?</span>;
@@ -703,7 +703,7 @@
         <span class="ident">leaf_hash_param</span>: <span class="kw-2">&amp;</span><span class="ident">LeafParam</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>,
         <span class="ident">two_to_one_hash_param</span>: <span class="kw-2">&amp;</span><span class="ident">TwoToOneParam</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>,
         <span class="ident">height</span>: <span class="ident">usize</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident"><span class="kw">crate</span>::Error</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident"><span class="kw">crate</span>::Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">leaf</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="number">0u8</span>; <span class="ident">P::LeafHash::INPUT_SIZE_BITS</span> <span class="op">/</span> <span class="number">8</span>];
         <span class="kw">let</span> <span class="ident">leaves</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="ident">leaf</span>; <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> (<span class="ident">height</span> <span class="op">-</span> <span class="number">1</span>)];
         <span class="ident"><span class="self">Self</span>::new</span>(<span class="ident">leaf_hash_param</span>, <span class="ident">two_to_one_hash_param</span>, <span class="kw-2">&amp;</span><span class="ident">leaves</span>)
@@ -714,7 +714,7 @@
         <span class="ident">leaf_hash_param</span>: <span class="kw-2">&amp;</span><span class="ident">LeafParam</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>,
         <span class="ident">two_to_one_hash_param</span>: <span class="kw-2">&amp;</span><span class="ident">TwoToOneParam</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>,
         <span class="ident">leaves</span>: <span class="kw-2">&amp;</span>[<span class="ident">L</span>],
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident"><span class="kw">crate</span>::Error</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident"><span class="kw">crate</span>::Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">leaf_nodes_size</span> <span class="op">=</span> <span class="ident">leaves</span>.<span class="ident">len</span>(); <span class="comment">// size of the leaf layer</span>
         <span class="macro">assert!</span>(
             <span class="ident">leaf_nodes_size</span>.<span class="ident">is_power_of_two</span>(),
@@ -795,23 +795,23 @@
     }
 
     <span class="doccomment">/// Returns the root of the Merkle tree.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">root</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">TwoToOneDigest</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">root</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">TwoToOneDigest</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">non_leaf_nodes</span>[<span class="number">0</span>].<span class="ident">clone</span>()
     }
 
     <span class="doccomment">/// Returns the height of the Merkle tree.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">height</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">height</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
         <span class="self">self</span>.<span class="ident">height</span>
     }
 
     <span class="doccomment">/// Returns the authentication path from leaf at `index` to root.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">generate_proof</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">index</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Path</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>, <span class="ident"><span class="kw">crate</span>::Error</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">generate_proof</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">index</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Path</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>, <span class="ident"><span class="kw">crate</span>::Error</span><span class="op">&gt;</span> {
         <span class="comment">// gather basic tree information</span>
         <span class="kw">let</span> <span class="ident">tree_height</span> <span class="op">=</span> <span class="ident">tree_height</span>(<span class="self">self</span>.<span class="ident">leaf_nodes</span>.<span class="ident">len</span>());
 
         <span class="comment">// Get Leaf hash, and leaf sibling hash,</span>
         <span class="kw">let</span> <span class="ident">leaf_index_in_tree</span> <span class="op">=</span> <span class="ident">convert_index_to_last_level</span>(<span class="ident">index</span>, <span class="ident">tree_height</span>);
-        <span class="kw">let</span> <span class="ident">leaf_sibling_hash</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">index</span> <span class="op">&amp;</span> <span class="number">1</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span> {
+        <span class="kw">let</span> <span class="ident">leaf_sibling_hash</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">index</span> <span class="op">&amp;</span> <span class="number">1</span> <span class="op">==</span> <span class="number">0</span> {
             <span class="comment">// leaf is left child</span>
             <span class="self">self</span>.<span class="ident">leaf_nodes</span>[<span class="ident">index</span> <span class="op">+</span> <span class="number">1</span>].<span class="ident">clone</span>()
         } <span class="kw">else</span> {
@@ -847,13 +847,13 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">index</span>: <span class="ident">usize</span>,
         <span class="ident">new_leaf</span>: <span class="kw-2">&amp;</span><span class="ident">L</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">LeafDigest</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">TwoToOneDigest</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span><span class="op">&gt;</span>), <span class="ident"><span class="kw">crate</span>::Error</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">LeafDigest</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">TwoToOneDigest</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span><span class="op">&gt;</span>), <span class="ident"><span class="kw">crate</span>::Error</span><span class="op">&gt;</span> {
         <span class="comment">// calculate the hash of leaf</span>
         <span class="kw">let</span> <span class="ident">new_leaf_hash</span> <span class="op">=</span>
             <span class="ident">P::LeafHash::evaluate</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">leaf_hash_param</span>, <span class="kw-2">&amp;</span><span class="macro">ark_ff::to_bytes!</span>(<span class="kw-2">&amp;</span><span class="ident">new_leaf</span>)<span class="question-mark">?</span>)<span class="question-mark">?</span>;
 
         <span class="comment">// calculate leaf sibling hash and locate its position (left or right)</span>
-        <span class="kw">let</span> (<span class="ident">leaf_left</span>, <span class="ident">leaf_right</span>) <span class="op">=</span> <span class="kw">if</span> <span class="ident">index</span> <span class="op">&amp;</span> <span class="number">1</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span> {
+        <span class="kw">let</span> (<span class="ident">leaf_left</span>, <span class="ident">leaf_right</span>) <span class="op">=</span> <span class="kw">if</span> <span class="ident">index</span> <span class="op">&amp;</span> <span class="number">1</span> <span class="op">==</span> <span class="number">0</span> {
             <span class="comment">// leaf on left</span>
             (<span class="kw-2">&amp;</span><span class="ident">new_leaf_hash</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">leaf_nodes</span>[<span class="ident">index</span> <span class="op">+</span> <span class="number">1</span>])
         } <span class="kw">else</span> {
@@ -909,7 +909,7 @@
     <span class="doccomment">///    [I] J</span>
     <span class="doccomment">/// ```</span>
     <span class="doccomment">/// update(3, {new leaf}) would swap the leaf value at `[I]` and cause a recomputation of `[A]`, `[B]`, and `[E]`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">update</span><span class="op">&lt;</span><span class="ident">L</span>: <span class="ident">ToBytes</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">index</span>: <span class="ident">usize</span>, <span class="ident">new_leaf</span>: <span class="kw-2">&amp;</span><span class="ident">L</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident"><span class="kw">crate</span>::Error</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">update</span><span class="op">&lt;</span><span class="ident">L</span>: <span class="ident">ToBytes</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">index</span>: <span class="ident">usize</span>, <span class="ident">new_leaf</span>: <span class="kw-2">&amp;</span><span class="ident">L</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident"><span class="kw">crate</span>::Error</span><span class="op">&gt;</span> {
         <span class="macro">assert!</span>(<span class="ident">index</span> <span class="op">&lt;</span> <span class="self">self</span>.<span class="ident">leaf_nodes</span>.<span class="ident">len</span>(), <span class="string">&quot;index out of range&quot;</span>);
         <span class="kw">let</span> (<span class="ident">updated_leaf_hash</span>, <span class="kw-2">mut</span> <span class="ident">updated_path</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">updated_path</span>(<span class="ident">index</span>, <span class="ident">new_leaf</span>)<span class="question-mark">?</span>;
         <span class="self">self</span>.<span class="ident">leaf_nodes</span>[<span class="ident">index</span>] <span class="op">=</span> <span class="ident">updated_leaf_hash</span>;
@@ -929,7 +929,7 @@
         <span class="ident">index</span>: <span class="ident">usize</span>,
         <span class="ident">new_leaf</span>: <span class="kw-2">&amp;</span><span class="ident">L</span>,
         <span class="ident">asserted_new_root</span>: <span class="kw-2">&amp;</span><span class="ident">TwoToOneDigest</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident"><span class="kw">crate</span>::Error</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident"><span class="kw">crate</span>::Error</span><span class="op">&gt;</span> {
         <span class="macro">assert!</span>(<span class="ident">index</span> <span class="op">&lt;</span> <span class="self">self</span>.<span class="ident">leaf_nodes</span>.<span class="ident">len</span>(), <span class="string">&quot;index out of range&quot;</span>);
         <span class="kw">let</span> (<span class="ident">updated_leaf_hash</span>, <span class="kw-2">mut</span> <span class="ident">updated_path</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">updated_path</span>(<span class="ident">index</span>, <span class="ident">new_leaf</span>)<span class="question-mark">?</span>;
         <span class="kw">if</span> <span class="kw-2">&amp;</span><span class="ident">updated_path</span>[<span class="number">0</span>] <span class="op">!</span><span class="op">=</span> <span class="ident">asserted_new_root</span> {
@@ -947,8 +947,8 @@
 
 <span class="doccomment">/// Returns the height of the tree, given the number of leaves.</span>
 <span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">fn</span> <span class="ident">tree_height</span>(<span class="ident">num_leaves</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span> {
-    <span class="kw">if</span> <span class="ident">num_leaves</span> <span class="op">=</span><span class="op">=</span> <span class="number">1</span> {
+<span class="kw">fn</span> <span class="ident">tree_height</span>(<span class="ident">num_leaves</span>: <span class="ident">usize</span>) -&gt; <span class="ident">usize</span> {
+    <span class="kw">if</span> <span class="ident">num_leaves</span> <span class="op">==</span> <span class="number">1</span> {
         <span class="kw">return</span> <span class="number">1</span>;
     }
 
@@ -956,26 +956,26 @@
 }
 <span class="doccomment">/// Returns true iff the index represents the root.</span>
 <span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">fn</span> <span class="ident">is_root</span>(<span class="ident">index</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
-    <span class="ident">index</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span>
+<span class="kw">fn</span> <span class="ident">is_root</span>(<span class="ident">index</span>: <span class="ident">usize</span>) -&gt; <span class="ident">bool</span> {
+    <span class="ident">index</span> <span class="op">==</span> <span class="number">0</span>
 }
 
 <span class="doccomment">/// Returns the index of the left child, given an index.</span>
 <span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">fn</span> <span class="ident">left_child</span>(<span class="ident">index</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span> {
+<span class="kw">fn</span> <span class="ident">left_child</span>(<span class="ident">index</span>: <span class="ident">usize</span>) -&gt; <span class="ident">usize</span> {
     <span class="number">2</span> <span class="op">*</span> <span class="ident">index</span> <span class="op">+</span> <span class="number">1</span>
 }
 
 <span class="doccomment">/// Returns the index of the right child, given an index.</span>
 <span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">fn</span> <span class="ident">right_child</span>(<span class="ident">index</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span> {
+<span class="kw">fn</span> <span class="ident">right_child</span>(<span class="ident">index</span>: <span class="ident">usize</span>) -&gt; <span class="ident">usize</span> {
     <span class="number">2</span> <span class="op">*</span> <span class="ident">index</span> <span class="op">+</span> <span class="number">2</span>
 }
 
 <span class="doccomment">/// Returns the index of the sibling, given an index.</span>
 <span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">fn</span> <span class="ident">sibling</span>(<span class="ident">index</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-    <span class="kw">if</span> <span class="ident">index</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span> {
+<span class="kw">fn</span> <span class="ident">sibling</span>(<span class="ident">index</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
+    <span class="kw">if</span> <span class="ident">index</span> <span class="op">==</span> <span class="number">0</span> {
         <span class="prelude-val">None</span>
     } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">is_left_child</span>(<span class="ident">index</span>) {
         <span class="prelude-val">Some</span>(<span class="ident">index</span> <span class="op">+</span> <span class="number">1</span>)
@@ -986,13 +986,13 @@
 
 <span class="doccomment">/// Returns true iff the given index represents a left child.</span>
 <span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">fn</span> <span class="ident">is_left_child</span>(<span class="ident">index</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
-    <span class="ident">index</span> <span class="op">%</span> <span class="number">2</span> <span class="op">=</span><span class="op">=</span> <span class="number">1</span>
+<span class="kw">fn</span> <span class="ident">is_left_child</span>(<span class="ident">index</span>: <span class="ident">usize</span>) -&gt; <span class="ident">bool</span> {
+    <span class="ident">index</span> <span class="op">%</span> <span class="number">2</span> <span class="op">==</span> <span class="number">1</span>
 }
 
 <span class="doccomment">/// Returns the index of the parent, given an index.</span>
 <span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">fn</span> <span class="ident">parent</span>(<span class="ident">index</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
+<span class="kw">fn</span> <span class="ident">parent</span>(<span class="ident">index</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
     <span class="kw">if</span> <span class="ident">index</span> <span class="op">&gt;</span> <span class="number">0</span> {
         <span class="prelude-val">Some</span>((<span class="ident">index</span> <span class="op">-</span> <span class="number">1</span>) <span class="op">&gt;</span><span class="op">&gt;</span> <span class="number">1</span>)
     } <span class="kw">else</span> {
@@ -1001,7 +1001,7 @@
 }
 
 <span class="attribute">#[<span class="ident">inline</span>]</span>
-<span class="kw">fn</span> <span class="ident">convert_index_to_last_level</span>(<span class="ident">index</span>: <span class="ident">usize</span>, <span class="ident">tree_height</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span> {
+<span class="kw">fn</span> <span class="ident">convert_index_to_last_level</span>(<span class="ident">index</span>: <span class="ident">usize</span>, <span class="ident">tree_height</span>: <span class="ident">usize</span>) -&gt; <span class="ident">usize</span> {
     <span class="ident">index</span> <span class="op">+</span> (<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> (<span class="ident">tree_height</span> <span class="op">-</span> <span class="number">1</span>)) <span class="op">-</span> <span class="number">1</span>
 }
 
@@ -1032,7 +1032,7 @@
     }
     <span class="kw">type</span> <span class="ident">JubJubMerkleTree</span> <span class="op">=</span> <span class="ident">MerkleTree</span><span class="op">&lt;</span><span class="ident">JubJubMerkleTreeParams</span><span class="op">&gt;</span>;
 
-    <span class="kw">fn</span> <span class="ident">merkle_tree_test</span><span class="op">&lt;</span><span class="ident">L</span>: <span class="ident">ToBytes</span> <span class="op">+</span> <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">Eq</span><span class="op">&gt;</span>(<span class="ident">leaves</span>: <span class="kw-2">&amp;</span>[<span class="ident">L</span>], <span class="ident">update_query</span>: <span class="kw-2">&amp;</span>[(<span class="ident">usize</span>, <span class="ident">L</span>)]) <span class="op">-</span><span class="op">&gt;</span> () {
+    <span class="kw">fn</span> <span class="ident">merkle_tree_test</span><span class="op">&lt;</span><span class="ident">L</span>: <span class="ident">ToBytes</span> <span class="op">+</span> <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">Eq</span><span class="op">&gt;</span>(<span class="ident">leaves</span>: <span class="kw-2">&amp;</span>[<span class="ident">L</span>], <span class="ident">update_query</span>: <span class="kw-2">&amp;</span>[(<span class="ident">usize</span>, <span class="ident">L</span>)]) -&gt; () {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">rng</span> <span class="op">=</span> <span class="ident">ark_std::test_rng</span>();
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">leaves</span> <span class="op">=</span> <span class="ident">leaves</span>.<span class="ident">to_vec</span>();
         <span class="kw">let</span> <span class="ident">leaf_crh_params</span> <span class="op">=</span> <span class="op">&lt;</span><span class="ident">H</span> <span class="kw">as</span> <span class="ident">CRH</span><span class="op">&gt;</span><span class="ident">::setup</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">rng</span>).<span class="ident">unwrap</span>();

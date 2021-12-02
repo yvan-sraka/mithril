@@ -1076,7 +1076,7 @@
 <span class="comment">// TODO: Think: should we replace this with just a closure?</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">ConstraintSynthesizer</span><span class="op">&lt;</span><span class="ident">F</span>: <span class="ident">Field</span><span class="op">&gt;</span> {
     <span class="doccomment">/// Drives generation of new constraints inside `cs`.</span>
-    <span class="kw">fn</span> <span class="ident">generate_constraints</span>(<span class="self">self</span>, <span class="ident">cs</span>: <span class="ident">ConstraintSystemRef</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident"><span class="kw">crate</span>::r1cs::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span>;
+    <span class="kw">fn</span> <span class="ident">generate_constraints</span>(<span class="self">self</span>, <span class="ident">cs</span>: <span class="ident">ConstraintSystemRef</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>) -&gt; <span class="ident"><span class="kw">crate</span>::r1cs::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span>;
 }
 
 <span class="doccomment">/// An Rank-One `ConstraintSystem`. Enforces constraints of the form</span>
@@ -1130,7 +1130,7 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">F</span>: <span class="ident">Field</span><span class="op">&gt;</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">ConstraintSystem</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">default</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> {
         <span class="ident"><span class="self">Self</span>::new</span>()
     }
 }
@@ -1165,7 +1165,7 @@
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">F</span>: <span class="ident">Field</span><span class="op">&gt;</span> <span class="ident">ConstraintSystem</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span> {
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">make_row</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">l</span>: <span class="kw-2">&amp;</span><span class="ident">LinearCombination</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">F</span>, <span class="ident">usize</span>)<span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">make_row</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">l</span>: <span class="kw-2">&amp;</span><span class="ident">LinearCombination</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">F</span>, <span class="ident">usize</span>)<span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">num_input</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">num_instance_variables</span>;
         <span class="ident">l</span>.<span class="number">0</span>.<span class="ident">iter</span>()
             .<span class="ident">filter_map</span>(<span class="op">|</span>(<span class="ident">coeff</span>, <span class="ident">var</span>)<span class="op">|</span> {
@@ -1182,7 +1182,7 @@
     }
 
     <span class="doccomment">/// Construct an empty `ConstraintSystem`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="self">Self</span> {
         <span class="self">Self</span> {
             <span class="ident">num_instance_variables</span>: <span class="number">1</span>,
             <span class="ident">num_witness_variables</span>: <span class="number">0</span>,
@@ -1209,7 +1209,7 @@
     }
 
     <span class="doccomment">/// Create a new `ConstraintSystemRef&lt;F&gt;`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_ref</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">ConstraintSystemRef</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_ref</span>() -&gt; <span class="ident">ConstraintSystemRef</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span> {
         <span class="ident">ConstraintSystemRef::new</span>(<span class="ident"><span class="self">Self</span>::new</span>())
     }
 
@@ -1219,13 +1219,13 @@
     }
 
     <span class="doccomment">/// Check whether `self.mode == SynthesisMode::Setup`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_in_setup_mode</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
-        <span class="self">self</span>.<span class="ident">mode</span> <span class="op">=</span><span class="op">=</span> <span class="ident">SynthesisMode::Setup</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_in_setup_mode</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
+        <span class="self">self</span>.<span class="ident">mode</span> <span class="op">==</span> <span class="ident">SynthesisMode::Setup</span>
     }
 
     <span class="doccomment">/// Check whether this constraint system aims to optimize weight,</span>
     <span class="doccomment">/// number of constraints, or neither.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">optimization_goal</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">OptimizationGoal</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">optimization_goal</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">OptimizationGoal</span> {
         <span class="self">self</span>.<span class="ident">optimization_goal</span>
     }
 
@@ -1242,32 +1242,32 @@
     }
 
     <span class="doccomment">/// Check whether or not `self` will construct matrices.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">should_construct_matrices</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">should_construct_matrices</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
         <span class="kw">match</span> <span class="self">self</span>.<span class="ident">mode</span> {
-            <span class="ident">SynthesisMode::Setup</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">true</span>,
-            <span class="ident">SynthesisMode::Prove</span> { <span class="ident">construct_matrices</span> } <span class="op">=</span><span class="op">&gt;</span> <span class="ident">construct_matrices</span>,
+            <span class="ident">SynthesisMode::Setup</span> =&gt; <span class="bool-val">true</span>,
+            <span class="ident">SynthesisMode::Prove</span> { <span class="ident">construct_matrices</span> } =&gt; <span class="ident">construct_matrices</span>,
         }
     }
 
     <span class="doccomment">/// Return a variable representing the constant &quot;zero&quot; inside the constraint</span>
     <span class="doccomment">/// system.</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">zero</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Variable</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">zero</span>() -&gt; <span class="ident">Variable</span> {
         <span class="ident">Variable::Zero</span>
     }
 
     <span class="doccomment">/// Return a variable representing the constant &quot;one&quot; inside the constraint</span>
     <span class="doccomment">/// system.</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">one</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Variable</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">one</span>() -&gt; <span class="ident">Variable</span> {
         <span class="ident">Variable::One</span>
     }
 
     <span class="doccomment">/// Obtain a variable representing a new public instance input.</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_input_variable</span><span class="op">&lt;</span><span class="ident">Func</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">f</span>: <span class="ident">Func</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident"><span class="kw">crate</span>::r1cs::Result</span><span class="op">&lt;</span><span class="ident">Variable</span><span class="op">&gt;</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_input_variable</span><span class="op">&lt;</span><span class="ident">Func</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">f</span>: <span class="ident">Func</span>) -&gt; <span class="ident"><span class="kw">crate</span>::r1cs::Result</span><span class="op">&lt;</span><span class="ident">Variable</span><span class="op">&gt;</span>
     <span class="kw">where</span>
-        <span class="ident">Func</span>: <span class="ident">FnOnce</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident"><span class="kw">crate</span>::r1cs::Result</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>,
+        <span class="ident">Func</span>: <span class="ident">FnOnce</span>() -&gt; <span class="ident"><span class="kw">crate</span>::r1cs::Result</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>,
     {
         <span class="kw">let</span> <span class="ident">index</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">num_instance_variables</span>;
         <span class="self">self</span>.<span class="ident">num_instance_variables</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
@@ -1280,9 +1280,9 @@
 
     <span class="doccomment">/// Obtain a variable representing a new private witness input.</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_witness_variable</span><span class="op">&lt;</span><span class="ident">Func</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">f</span>: <span class="ident">Func</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident"><span class="kw">crate</span>::r1cs::Result</span><span class="op">&lt;</span><span class="ident">Variable</span><span class="op">&gt;</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_witness_variable</span><span class="op">&lt;</span><span class="ident">Func</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">f</span>: <span class="ident">Func</span>) -&gt; <span class="ident"><span class="kw">crate</span>::r1cs::Result</span><span class="op">&lt;</span><span class="ident">Variable</span><span class="op">&gt;</span>
     <span class="kw">where</span>
-        <span class="ident">Func</span>: <span class="ident">FnOnce</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident"><span class="kw">crate</span>::r1cs::Result</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>,
+        <span class="ident">Func</span>: <span class="ident">FnOnce</span>() -&gt; <span class="ident"><span class="kw">crate</span>::r1cs::Result</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>,
     {
         <span class="kw">let</span> <span class="ident">index</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">num_witness_variables</span>;
         <span class="self">self</span>.<span class="ident">num_witness_variables</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
@@ -1295,7 +1295,7 @@
 
     <span class="doccomment">/// Obtain a variable representing a linear combination.</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_lc</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">lc</span>: <span class="ident">LinearCombination</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident"><span class="kw">crate</span>::r1cs::Result</span><span class="op">&lt;</span><span class="ident">Variable</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_lc</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">lc</span>: <span class="ident">LinearCombination</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>) -&gt; <span class="ident"><span class="kw">crate</span>::r1cs::Result</span><span class="op">&lt;</span><span class="ident">Variable</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">index</span> <span class="op">=</span> <span class="ident">LcIndex</span>(<span class="self">self</span>.<span class="ident">num_linear_combinations</span>);
         <span class="kw">let</span> <span class="ident">var</span> <span class="op">=</span> <span class="ident">Variable::SymbolicLc</span>(<span class="ident">index</span>);
 
@@ -1312,7 +1312,7 @@
         <span class="ident">a</span>: <span class="ident">LinearCombination</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>,
         <span class="ident">b</span>: <span class="ident">LinearCombination</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>,
         <span class="ident">c</span>: <span class="ident">LinearCombination</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident"><span class="kw">crate</span>::r1cs::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    ) -&gt; <span class="ident"><span class="kw">crate</span>::r1cs::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="kw">if</span> <span class="self">self</span>.<span class="ident">should_construct_matrices</span>() {
             <span class="kw">let</span> <span class="ident">a_index</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">new_lc</span>(<span class="ident">a</span>)<span class="question-mark">?</span>.<span class="ident">get_lc_index</span>().<span class="ident">unwrap</span>();
             <span class="kw">let</span> <span class="ident">b_index</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">new_lc</span>(<span class="ident">b</span>)<span class="question-mark">?</span>.<span class="ident">get_lc_index</span>().<span class="ident">unwrap</span>();
@@ -1332,7 +1332,7 @@
 
     <span class="doccomment">/// Count the number of times each LC is used within other LCs in the</span>
     <span class="doccomment">/// constraint system</span>
-    <span class="kw">fn</span> <span class="ident">lc_num_times_used</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">count_sinks</span>: <span class="ident">bool</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">lc_num_times_used</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">count_sinks</span>: <span class="ident">bool</span>) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">num_times_used</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="number">0</span>; <span class="self">self</span>.<span class="ident">lc_map</span>.<span class="ident">len</span>()];
 
         <span class="comment">// Iterate over every lc in constraint system</span>
@@ -1368,7 +1368,7 @@
             <span class="kw-2">&amp;</span><span class="ident">ConstraintSystem</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>,
             <span class="ident">usize</span>,
             <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">LinearCombination</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>,
-        ) <span class="op">-</span><span class="op">&gt;</span> (<span class="ident">usize</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span><span class="op">&gt;</span>),
+        ) -&gt; (<span class="ident">usize</span>, <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span><span class="op">&gt;</span>),
     ) {
         <span class="comment">// `transformed_lc_map` stores the transformed linear combinations.</span>
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">transformed_lc_map</span> <span class="op">=</span> <span class="ident">BTreeMap::new</span>();
@@ -1411,7 +1411,7 @@
                     <span class="comment">//   the entry from `new_lc_map`</span>
                     <span class="comment">//</span>
                     <span class="ident">num_times_used</span>[<span class="ident">lc_index</span>.<span class="number">0</span>] <span class="op">-</span><span class="op">=</span> <span class="number">1</span>;
-                    <span class="kw">if</span> <span class="ident">num_times_used</span>[<span class="ident">lc_index</span>.<span class="number">0</span>] <span class="op">=</span><span class="op">=</span> <span class="number">0</span> {
+                    <span class="kw">if</span> <span class="ident">num_times_used</span>[<span class="ident">lc_index</span>.<span class="number">0</span>] <span class="op">==</span> <span class="number">0</span> {
                         <span class="comment">// This lc is not used any more, so remove it.</span>
                         <span class="ident">transformed_lc_map</span>.<span class="ident">remove</span>(<span class="kw-2">&amp;</span><span class="ident">lc_index</span>);
                     }
@@ -1570,16 +1570,16 @@
     <span class="doccomment">/// if an optimization goal is set).</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">finalize</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
         <span class="kw">match</span> <span class="self">self</span>.<span class="ident">optimization_goal</span> {
-            <span class="ident">OptimizationGoal::None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">inline_all_lcs</span>(),
-            <span class="ident">OptimizationGoal::Constraints</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">inline_all_lcs</span>(),
-            <span class="ident">OptimizationGoal::Weight</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">outline_lcs</span>(),
+            <span class="ident">OptimizationGoal::None</span> =&gt; <span class="self">self</span>.<span class="ident">inline_all_lcs</span>(),
+            <span class="ident">OptimizationGoal::Constraints</span> =&gt; <span class="self">self</span>.<span class="ident">inline_all_lcs</span>(),
+            <span class="ident">OptimizationGoal::Weight</span> =&gt; <span class="self">self</span>.<span class="ident">outline_lcs</span>(),
         };
     }
 
     <span class="doccomment">/// This step must be called after constraint generation has completed, and</span>
     <span class="doccomment">/// after all symbolic LCs have been inlined into the places that they</span>
     <span class="doccomment">/// are used.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_matrices</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ConstraintMatrices</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_matrices</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ConstraintMatrices</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="kw">if</span> <span class="kw">let</span> <span class="ident">SynthesisMode::Prove</span> {
             <span class="ident">construct_matrices</span>: <span class="bool-val">false</span>,
         } <span class="op">=</span> <span class="self">self</span>.<span class="ident">mode</span>
@@ -1622,7 +1622,7 @@
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">eval_lc</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">lc</span>: <span class="ident">LcIndex</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">eval_lc</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">lc</span>: <span class="ident">LcIndex</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">lc</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">lc_map</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">lc</span>)<span class="question-mark">?</span>;
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">acc</span> <span class="op">=</span> <span class="ident">F::zero</span>();
         <span class="kw">for</span> (<span class="ident">coeff</span>, <span class="ident">var</span>) <span class="kw">in</span> <span class="ident">lc</span>.<span class="ident">iter</span>() {
@@ -1634,7 +1634,7 @@
     <span class="doccomment">/// If `self` is satisfied, outputs `Ok(true)`.</span>
     <span class="doccomment">/// If `self` is unsatisfied, outputs `Ok(false)`.</span>
     <span class="doccomment">/// If `self.is_in_setup_mode()`, outputs `Err(())`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_satisfied</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident"><span class="kw">crate</span>::r1cs::Result</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_satisfied</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident"><span class="kw">crate</span>::r1cs::Result</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">which_is_unsatisfied</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">is_none</span>())
     }
 
@@ -1642,7 +1642,7 @@
     <span class="doccomment">/// If `self` is unsatisfied, outputs `Some(i)`, where `i` is the index of</span>
     <span class="doccomment">/// the first unsatisfied constraint. If `self.is_in_setup_mode()`, outputs</span>
     <span class="doccomment">/// `Err(())`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">which_is_unsatisfied</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident"><span class="kw">crate</span>::r1cs::Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">which_is_unsatisfied</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident"><span class="kw">crate</span>::r1cs::Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="kw">if</span> <span class="self">self</span>.<span class="ident">is_in_setup_mode</span>() {
             <span class="prelude-val">Err</span>(<span class="ident">SynthesisError::AssignmentMissing</span>)
         } <span class="kw">else</span> {
@@ -1680,13 +1680,13 @@
     }
 
     <span class="doccomment">/// Obtain the assignment corresponding to the `Variable` `v`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">assigned_value</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">v</span>: <span class="ident">Variable</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">assigned_value</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">v</span>: <span class="ident">Variable</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span> {
         <span class="kw">match</span> <span class="ident">v</span> {
-            <span class="ident">Variable::One</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">F::one</span>()),
-            <span class="ident">Variable::Zero</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">F::zero</span>()),
-            <span class="ident">Variable::Witness</span>(<span class="ident">idx</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">witness_assignment</span>.<span class="ident">get</span>(<span class="ident">idx</span>).<span class="ident">copied</span>(),
-            <span class="ident">Variable::Instance</span>(<span class="ident">idx</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">instance_assignment</span>.<span class="ident">get</span>(<span class="ident">idx</span>).<span class="ident">copied</span>(),
-            <span class="ident">Variable::SymbolicLc</span>(<span class="ident">idx</span>) <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="ident">Variable::One</span> =&gt; <span class="prelude-val">Some</span>(<span class="ident">F::one</span>()),
+            <span class="ident">Variable::Zero</span> =&gt; <span class="prelude-val">Some</span>(<span class="ident">F::zero</span>()),
+            <span class="ident">Variable::Witness</span>(<span class="ident">idx</span>) =&gt; <span class="self">self</span>.<span class="ident">witness_assignment</span>.<span class="ident">get</span>(<span class="ident">idx</span>).<span class="ident">copied</span>(),
+            <span class="ident">Variable::Instance</span>(<span class="ident">idx</span>) =&gt; <span class="self">self</span>.<span class="ident">instance_assignment</span>.<span class="ident">get</span>(<span class="ident">idx</span>).<span class="ident">copied</span>(),
+            <span class="ident">Variable::SymbolicLc</span>(<span class="ident">idx</span>) =&gt; {
                 <span class="kw">let</span> <span class="ident">value</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">lc_assignment_cache</span>.<span class="ident">borrow</span>().<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">idx</span>).<span class="ident">copied</span>();
                 <span class="kw">if</span> <span class="ident">value</span>.<span class="ident">is_some</span>() {
                     <span class="ident">value</span>
@@ -1744,10 +1744,10 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">F</span>: <span class="ident">Field</span><span class="op">&gt;</span> <span class="ident">PartialEq</span> <span class="kw">for</span> <span class="ident">ConstraintSystemRef</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">fn</span> <span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="ident">bool</span> {
         <span class="kw">match</span> (<span class="self">self</span>, <span class="ident">other</span>) {
-            (<span class="ident"><span class="self">Self</span>::None</span>, <span class="ident"><span class="self">Self</span>::None</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">true</span>,
-            (..) <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">false</span>,
+            (<span class="ident"><span class="self">Self</span>::None</span>, <span class="ident"><span class="self">Self</span>::None</span>) =&gt; <span class="bool-val">true</span>,
+            (..) =&gt; <span class="bool-val">false</span>,
         }
     }
 }
@@ -1762,7 +1762,7 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">F</span>: <span class="ident">Field</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">ConstraintSystemRef</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Namespace</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">other</span>: <span class="ident">ConstraintSystemRef</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">other</span>: <span class="ident">ConstraintSystemRef</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
         <span class="self">Self</span> {
             <span class="ident">inner</span>: <span class="ident">other</span>,
             <span class="ident">id</span>: <span class="prelude-val">None</span>,
@@ -1772,12 +1772,12 @@
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">F</span>: <span class="ident">Field</span><span class="op">&gt;</span> <span class="ident">Namespace</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span> {
     <span class="doccomment">/// Construct a new `Namespace`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">inner</span>: <span class="ident">ConstraintSystemRef</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>, <span class="ident">id</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">tracing::Id</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">inner</span>: <span class="ident">ConstraintSystemRef</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>, <span class="ident">id</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">tracing::Id</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
         <span class="self">Self</span> { <span class="ident">inner</span>, <span class="ident">id</span> }
     }
 
     <span class="doccomment">/// Obtain the inner `ConstraintSystemRef&lt;F&gt;`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cs</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">ConstraintSystemRef</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cs</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">ConstraintSystemRef</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">clone</span>()
     }
 
@@ -1798,38 +1798,38 @@
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">F</span>: <span class="ident">Field</span><span class="op">&gt;</span> <span class="ident">ConstraintSystemRef</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span> {
     <span class="doccomment">/// Returns `self` if `!self.is_none()`, otherwise returns `other`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">or</span>(<span class="self">self</span>, <span class="ident">other</span>: <span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">or</span>(<span class="self">self</span>, <span class="ident">other</span>: <span class="self">Self</span>) -&gt; <span class="self">Self</span> {
         <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">ConstraintSystemRef::None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">other</span>,
-            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>,
+            <span class="ident">ConstraintSystemRef::None</span> =&gt; <span class="ident">other</span>,
+            <span class="kw">_</span> =&gt; <span class="self">self</span>,
         }
     }
 
     <span class="doccomment">/// Returns `true` is `self == ConstraintSystemRef::None`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_none</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_none</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
         <span class="macro">matches!</span>(<span class="self">self</span>, <span class="ident">ConstraintSystemRef::None</span>)
     }
 
     <span class="doccomment">/// Construct a `ConstraintSystemRef` from a `ConstraintSystem`.</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">inner</span>: <span class="ident">ConstraintSystem</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">inner</span>: <span class="ident">ConstraintSystem</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
         <span class="ident"><span class="self">Self</span>::CS</span>(<span class="ident">Rc::new</span>(<span class="ident">RefCell::new</span>(<span class="ident">inner</span>)))
     }
 
-    <span class="kw">fn</span> <span class="ident">inner</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">Rc</span><span class="op">&lt;</span><span class="ident">RefCell</span><span class="op">&lt;</span><span class="ident">ConstraintSystem</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">inner</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">Rc</span><span class="op">&lt;</span><span class="ident">RefCell</span><span class="op">&lt;</span><span class="ident">ConstraintSystem</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident"><span class="self">Self</span>::CS</span>(<span class="ident">a</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">a</span>),
-            <span class="ident"><span class="self">Self</span>::None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
+            <span class="ident"><span class="self">Self</span>::CS</span>(<span class="ident">a</span>) =&gt; <span class="prelude-val">Some</span>(<span class="ident">a</span>),
+            <span class="ident"><span class="self">Self</span>::None</span> =&gt; <span class="prelude-val">None</span>,
         }
     }
 
     <span class="doccomment">/// Consumes self to return the inner `ConstraintSystem&lt;F&gt;`. Returns</span>
     <span class="doccomment">/// `None` if `Self::CS` is `None` or if any other references to</span>
     <span class="doccomment">/// `Self::CS` exist.  </span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">into_inner</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ConstraintSystem</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">into_inner</span>(<span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ConstraintSystem</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident"><span class="self">Self</span>::CS</span>(<span class="ident">a</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Rc::try_unwrap</span>(<span class="ident">a</span>).<span class="ident">ok</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">into_inner</span>()),
-            <span class="ident"><span class="self">Self</span>::None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
+            <span class="ident"><span class="self">Self</span>::CS</span>(<span class="ident">a</span>) =&gt; <span class="ident">Rc::try_unwrap</span>(<span class="ident">a</span>).<span class="ident">ok</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">into_inner</span>()),
+            <span class="ident"><span class="self">Self</span>::None</span> =&gt; <span class="prelude-val">None</span>,
         }
     }
 
@@ -1838,7 +1838,7 @@
     <span class="doccomment">/// # Panics</span>
     <span class="doccomment">/// This method panics if `self` is already mutably borrowed.</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">borrow</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Ref</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="ident">ConstraintSystem</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">borrow</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Ref</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="ident">ConstraintSystem</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">cs</span><span class="op">|</span> <span class="ident">cs</span>.<span class="ident">borrow</span>())
     }
 
@@ -1847,7 +1847,7 @@
     <span class="doccomment">/// # Panics</span>
     <span class="doccomment">/// This method panics if `self` is already mutably borrowed.</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">borrow_mut</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">RefMut</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="ident">ConstraintSystem</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">borrow_mut</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">RefMut</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="ident">ConstraintSystem</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">cs</span><span class="op">|</span> <span class="ident">cs</span>.<span class="ident">borrow_mut</span>())
     }
 
@@ -1858,27 +1858,27 @@
 
     <span class="doccomment">/// Check whether `self.mode == SynthesisMode::Setup`.</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_in_setup_mode</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_in_setup_mode</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
         <span class="self">self</span>.<span class="ident">inner</span>()
             .<span class="ident">map_or</span>(<span class="bool-val">false</span>, <span class="op">|</span><span class="ident">cs</span><span class="op">|</span> <span class="ident">cs</span>.<span class="ident">borrow</span>().<span class="ident">is_in_setup_mode</span>())
     }
 
     <span class="doccomment">/// Returns the number of constraints.</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">num_constraints</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">num_constraints</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
         <span class="self">self</span>.<span class="ident">inner</span>().<span class="ident">map_or</span>(<span class="number">0</span>, <span class="op">|</span><span class="ident">cs</span><span class="op">|</span> <span class="ident">cs</span>.<span class="ident">borrow</span>().<span class="ident">num_constraints</span>)
     }
 
     <span class="doccomment">/// Returns the number of instance variables.</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">num_instance_variables</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">num_instance_variables</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
         <span class="self">self</span>.<span class="ident">inner</span>()
             .<span class="ident">map_or</span>(<span class="number">0</span>, <span class="op">|</span><span class="ident">cs</span><span class="op">|</span> <span class="ident">cs</span>.<span class="ident">borrow</span>().<span class="ident">num_instance_variables</span>)
     }
 
     <span class="doccomment">/// Returns the number of witness variables.</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">num_witness_variables</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">num_witness_variables</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
         <span class="self">self</span>.<span class="ident">inner</span>()
             .<span class="ident">map_or</span>(<span class="number">0</span>, <span class="op">|</span><span class="ident">cs</span><span class="op">|</span> <span class="ident">cs</span>.<span class="ident">borrow</span>().<span class="ident">num_witness_variables</span>)
     }
@@ -1886,7 +1886,7 @@
     <span class="doccomment">/// Check whether this constraint system aims to optimize weight,</span>
     <span class="doccomment">/// number of constraints, or neither.</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">optimization_goal</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">OptimizationGoal</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">optimization_goal</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">OptimizationGoal</span> {
         <span class="self">self</span>.<span class="ident">inner</span>().<span class="ident">map_or</span>(<span class="ident">OptimizationGoal::Constraints</span>, <span class="op">|</span><span class="ident">cs</span><span class="op">|</span> {
             <span class="ident">cs</span>.<span class="ident">borrow</span>().<span class="ident">optimization_goal</span>()
         })
@@ -1902,16 +1902,16 @@
 
     <span class="doccomment">/// Check whether or not `self` will construct matrices.</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">should_construct_matrices</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">should_construct_matrices</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
         <span class="self">self</span>.<span class="ident">inner</span>()
             .<span class="ident">map_or</span>(<span class="bool-val">false</span>, <span class="op">|</span><span class="ident">cs</span><span class="op">|</span> <span class="ident">cs</span>.<span class="ident">borrow</span>().<span class="ident">should_construct_matrices</span>())
     }
 
     <span class="doccomment">/// Obtain a variable representing a new public instance input.</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_input_variable</span><span class="op">&lt;</span><span class="ident">Func</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="ident">Func</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident"><span class="kw">crate</span>::r1cs::Result</span><span class="op">&lt;</span><span class="ident">Variable</span><span class="op">&gt;</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_input_variable</span><span class="op">&lt;</span><span class="ident">Func</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="ident">Func</span>) -&gt; <span class="ident"><span class="kw">crate</span>::r1cs::Result</span><span class="op">&lt;</span><span class="ident">Variable</span><span class="op">&gt;</span>
     <span class="kw">where</span>
-        <span class="ident">Func</span>: <span class="ident">FnOnce</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident"><span class="kw">crate</span>::r1cs::Result</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>,
+        <span class="ident">Func</span>: <span class="ident">FnOnce</span>() -&gt; <span class="ident"><span class="kw">crate</span>::r1cs::Result</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>,
     {
         <span class="self">self</span>.<span class="ident">inner</span>()
             .<span class="ident">ok_or</span>(<span class="ident">SynthesisError::MissingCS</span>)
@@ -1929,9 +1929,9 @@
 
     <span class="doccomment">/// Obtain a variable representing a new private witness input.</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_witness_variable</span><span class="op">&lt;</span><span class="ident">Func</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="ident">Func</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident"><span class="kw">crate</span>::r1cs::Result</span><span class="op">&lt;</span><span class="ident">Variable</span><span class="op">&gt;</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_witness_variable</span><span class="op">&lt;</span><span class="ident">Func</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="ident">Func</span>) -&gt; <span class="ident"><span class="kw">crate</span>::r1cs::Result</span><span class="op">&lt;</span><span class="ident">Variable</span><span class="op">&gt;</span>
     <span class="kw">where</span>
-        <span class="ident">Func</span>: <span class="ident">FnOnce</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident"><span class="kw">crate</span>::r1cs::Result</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>,
+        <span class="ident">Func</span>: <span class="ident">FnOnce</span>() -&gt; <span class="ident"><span class="kw">crate</span>::r1cs::Result</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>,
     {
         <span class="self">self</span>.<span class="ident">inner</span>()
             .<span class="ident">ok_or</span>(<span class="ident">SynthesisError::MissingCS</span>)
@@ -1949,7 +1949,7 @@
 
     <span class="doccomment">/// Obtain a variable representing a linear combination.</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_lc</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">lc</span>: <span class="ident">LinearCombination</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident"><span class="kw">crate</span>::r1cs::Result</span><span class="op">&lt;</span><span class="ident">Variable</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_lc</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">lc</span>: <span class="ident">LinearCombination</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>) -&gt; <span class="ident"><span class="kw">crate</span>::r1cs::Result</span><span class="op">&lt;</span><span class="ident">Variable</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>()
             .<span class="ident">ok_or</span>(<span class="ident">SynthesisError::MissingCS</span>)
             .<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">cs</span><span class="op">|</span> <span class="ident">cs</span>.<span class="ident">borrow_mut</span>().<span class="ident">new_lc</span>(<span class="ident">lc</span>))
@@ -1962,7 +1962,7 @@
         <span class="ident">a</span>: <span class="ident">LinearCombination</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>,
         <span class="ident">b</span>: <span class="ident">LinearCombination</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>,
         <span class="ident">c</span>: <span class="ident">LinearCombination</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident"><span class="kw">crate</span>::r1cs::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    ) -&gt; <span class="ident"><span class="kw">crate</span>::r1cs::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>()
             .<span class="ident">ok_or</span>(<span class="ident">SynthesisError::MissingCS</span>)
             .<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">cs</span><span class="op">|</span> <span class="ident">cs</span>.<span class="ident">borrow_mut</span>().<span class="ident">enforce_constraint</span>(<span class="ident">a</span>, <span class="ident">b</span>, <span class="ident">c</span>))
@@ -1994,14 +1994,14 @@
     <span class="doccomment">/// after all symbolic LCs have been inlined into the places that they</span>
     <span class="doccomment">/// are used.</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_matrices</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ConstraintMatrices</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_matrices</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ConstraintMatrices</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>().<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">cs</span><span class="op">|</span> <span class="ident">cs</span>.<span class="ident">borrow</span>().<span class="ident">to_matrices</span>())
     }
 
     <span class="doccomment">/// If `self` is satisfied, outputs `Ok(true)`.</span>
     <span class="doccomment">/// If `self` is unsatisfied, outputs `Ok(false)`.</span>
     <span class="doccomment">/// If `self.is_in_setup_mode()` or if `self == None`, outputs `Err(())`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_satisfied</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident"><span class="kw">crate</span>::r1cs::Result</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">is_satisfied</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident"><span class="kw">crate</span>::r1cs::Result</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>()
             .<span class="ident">map_or</span>(<span class="prelude-val">Err</span>(<span class="ident">SynthesisError::AssignmentMissing</span>), <span class="op">|</span><span class="ident">cs</span><span class="op">|</span> {
                 <span class="ident">cs</span>.<span class="ident">borrow</span>().<span class="ident">is_satisfied</span>()
@@ -2012,7 +2012,7 @@
     <span class="doccomment">/// If `self` is unsatisfied, outputs `Some(i)`, where `i` is the index of</span>
     <span class="doccomment">/// the first unsatisfied constraint.</span>
     <span class="doccomment">/// If `self.is_in_setup_mode()` or `self == None`, outputs `Err(())`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">which_is_unsatisfied</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident"><span class="kw">crate</span>::r1cs::Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">which_is_unsatisfied</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident"><span class="kw">crate</span>::r1cs::Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>()
             .<span class="ident">map_or</span>(<span class="prelude-val">Err</span>(<span class="ident">SynthesisError::AssignmentMissing</span>), <span class="op">|</span><span class="ident">cs</span><span class="op">|</span> {
                 <span class="ident">cs</span>.<span class="ident">borrow</span>().<span class="ident">which_is_unsatisfied</span>()
@@ -2020,12 +2020,12 @@
     }
 
     <span class="doccomment">/// Obtain the assignment corresponding to the `Variable` `v`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">assigned_value</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">v</span>: <span class="ident">Variable</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">assigned_value</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">v</span>: <span class="ident">Variable</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>().<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">cs</span><span class="op">|</span> <span class="ident">cs</span>.<span class="ident">borrow</span>().<span class="ident">assigned_value</span>(<span class="ident">v</span>))
     }
 
     <span class="doccomment">/// Get trace information about all constraints in the system</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">constraint_names</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">constraint_names</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
         {
             <span class="self">self</span>.<span class="ident">inner</span>().<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">cs</span><span class="op">|</span> {
@@ -2037,7 +2037,7 @@
                         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">prev_module_path</span> <span class="op">=</span> <span class="string">&quot;&quot;</span>;
                         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">prefixes</span> <span class="op">=</span> <span class="ident">ark_std::collections::BTreeSet::new</span>();
                         <span class="kw">for</span> <span class="ident">step</span> <span class="kw">in</span> <span class="ident">trace</span>.<span class="ident">as_ref</span>()<span class="question-mark">?</span>.<span class="ident">path</span>() {
-                            <span class="kw">let</span> <span class="ident">module_path</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">prev_module_path</span> <span class="op">=</span><span class="op">=</span> <span class="ident">step</span>.<span class="ident">module_path</span> {
+                            <span class="kw">let</span> <span class="ident">module_path</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">prev_module_path</span> <span class="op">==</span> <span class="ident">step</span>.<span class="ident">module_path</span> {
                                 <span class="ident">prefixes</span>.<span class="ident">insert</span>(<span class="ident">step</span>.<span class="ident">module_path</span>.<span class="ident">to_string</span>());
                                 <span class="ident">String::new</span>()
                             } <span class="kw">else</span> {
@@ -2083,7 +2083,7 @@
     <span class="kw">use</span> <span class="ident">ark_test_curves::bls12_381::Fr</span>;
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">matrix_generation</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident"><span class="kw">crate</span>::r1cs::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">matrix_generation</span>() -&gt; <span class="ident"><span class="kw">crate</span>::r1cs::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">cs</span> <span class="op">=</span> <span class="ident">ConstraintSystem</span>::<span class="op">&lt;</span><span class="ident">Fr</span><span class="op">&gt;</span><span class="ident">::new_ref</span>();
         <span class="kw">let</span> <span class="ident">two</span> <span class="op">=</span> <span class="ident">Fr::one</span>() <span class="op">+</span> <span class="ident">Fr::one</span>();
         <span class="kw">let</span> <span class="ident">a</span> <span class="op">=</span> <span class="ident">cs</span>.<span class="ident">new_input_variable</span>(<span class="op">|</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="ident">Fr::one</span>()))<span class="question-mark">?</span>;

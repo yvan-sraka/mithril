@@ -351,13 +351,13 @@
 
 <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::from_over_into</span>)]</span>
 <span class="kw">impl</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">i64</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">MithrilWitnessError</span> {
-    <span class="kw">fn</span> <span class="ident">into</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">i64</span> {
+    <span class="kw">fn</span> <span class="ident">into</span>(<span class="self">self</span>) -&gt; <span class="ident">i64</span> {
         <span class="self">self</span> <span class="kw">as</span> <span class="ident">i64</span>
     }
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">PE</span>: <span class="ident">PairingEngine</span>, <span class="ident">H</span>: <span class="ident">MTHashLeaf</span><span class="op">&lt;</span><span class="ident">MTValue</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident">MithrilWitness</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">verify</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">stmt</span>: <span class="kw-2">&amp;</span><span class="ident">MithrilStatement</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MithrilWitnessError</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">verify</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">stmt</span>: <span class="kw-2">&amp;</span><span class="ident">MithrilStatement</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MithrilWitnessError</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">check_quorum</span>(<span class="ident">stmt</span>.<span class="ident">params</span>.<span class="ident">k</span> <span class="kw">as</span> <span class="ident">usize</span>)<span class="question-mark">?</span>;
         <span class="self">self</span>.<span class="ident">check_ivk</span>(<span class="kw-2">&amp;</span><span class="ident">stmt</span>.<span class="ident">ivk</span>)<span class="question-mark">?</span>;
         <span class="self">self</span>.<span class="ident">check_sum</span>(<span class="kw-2">&amp;</span><span class="ident">stmt</span>.<span class="ident">mu</span>)<span class="question-mark">?</span>;
@@ -370,7 +370,7 @@
     }
 
     <span class="doccomment">/// ivk = Prod(1..k, mvk[i])</span>
-    <span class="kw">fn</span> <span class="ident">check_ivk</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">ivk</span>: <span class="kw-2">&amp;</span><span class="ident">MspMvk</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MithrilWitnessError</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">check_ivk</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">ivk</span>: <span class="kw-2">&amp;</span><span class="ident">MspMvk</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MithrilWitnessError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">mvks</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">sigs</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">pk</span>.<span class="ident">mvk</span>).<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
         <span class="kw">let</span> <span class="ident">sum</span> <span class="op">=</span> <span class="ident">Msp::aggregate_keys</span>(<span class="kw-2">&amp;</span><span class="ident">mvks</span>).<span class="number">0</span>;
         <span class="kw">if</span> <span class="ident">ivk</span>.<span class="number">0</span> <span class="op">!</span><span class="op">=</span> <span class="ident">sum</span> {
@@ -380,7 +380,7 @@
     }
 
     <span class="doccomment">/// mu = Prod(1..k, sigma[i])</span>
-    <span class="kw">fn</span> <span class="ident">check_sum</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">mu</span>: <span class="kw-2">&amp;</span><span class="ident">MspSig</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MithrilWitnessError</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">check_sum</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">mu</span>: <span class="kw-2">&amp;</span><span class="ident">MspSig</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MithrilWitnessError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">mu1</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">sigs</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">sigma</span>.<span class="number">0</span>).<span class="ident">sum</span>();
         <span class="kw">if</span> <span class="ident">mu</span>.<span class="number">0</span> <span class="op">!</span><span class="op">=</span> <span class="ident">mu1</span> {
             <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">MithrilWitnessError::SumInvalid</span>);
@@ -389,7 +389,7 @@
     }
 
     <span class="doccomment">/// \forall i. index[i] &lt;= m</span>
-    <span class="kw">fn</span> <span class="ident">check_index_bound</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">m</span>: <span class="ident">u64</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MithrilWitnessError</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">check_index_bound</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">m</span>: <span class="ident">u64</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MithrilWitnessError</span><span class="op">&gt;</span> {
         <span class="kw">if</span> <span class="op">!</span><span class="self">self</span>.<span class="ident">indices</span>.<span class="ident">iter</span>().<span class="ident">all</span>(<span class="op">|</span><span class="ident">i</span><span class="op">|</span> <span class="kw-2">*</span><span class="ident">i</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">m</span>) {
             <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">MithrilWitnessError::IndexBoundFailed</span>);
         }
@@ -397,7 +397,7 @@
     }
 
     <span class="doccomment">/// \forall i. \forall j. (i == j || index[i] != index[j])</span>
-    <span class="kw">fn</span> <span class="ident">check_index_unique</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MithrilWitnessError</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">check_index_unique</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MithrilWitnessError</span><span class="op">&gt;</span> {
         <span class="kw">if</span> <span class="ident">HashSet</span>::<span class="op">&lt;</span><span class="ident">Index</span><span class="op">&gt;</span><span class="ident">::from_iter</span>(<span class="self">self</span>.<span class="ident">indices</span>.<span class="ident">iter</span>().<span class="ident">cloned</span>()).<span class="ident">len</span>() <span class="op">!</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">indices</span>.<span class="ident">len</span>() {
             <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">MithrilWitnessError::IndexNotUnique</span>);
         }
@@ -406,15 +406,15 @@
 
     <span class="doccomment">/// k-sized quorum</span>
     <span class="doccomment">/// if this returns `true`, then there are exactly k signatures</span>
-    <span class="kw">fn</span> <span class="ident">check_quorum</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">k</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MithrilWitnessError</span><span class="op">&gt;</span> {
-        <span class="kw">if</span> <span class="op">!</span>(<span class="ident">k</span> <span class="op">=</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">sigs</span>.<span class="ident">len</span>() <span class="op">&amp;&amp;</span> <span class="ident">k</span> <span class="op">=</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">evals</span>.<span class="ident">len</span>() <span class="op">&amp;&amp;</span> <span class="ident">k</span> <span class="op">=</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">indices</span>.<span class="ident">len</span>()) {
+    <span class="kw">fn</span> <span class="ident">check_quorum</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">k</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MithrilWitnessError</span><span class="op">&gt;</span> {
+        <span class="kw">if</span> <span class="op">!</span>(<span class="ident">k</span> <span class="op">==</span> <span class="self">self</span>.<span class="ident">sigs</span>.<span class="ident">len</span>() <span class="op">&amp;&amp;</span> <span class="ident">k</span> <span class="op">==</span> <span class="self">self</span>.<span class="ident">evals</span>.<span class="ident">len</span>() <span class="op">&amp;&amp;</span> <span class="ident">k</span> <span class="op">==</span> <span class="self">self</span>.<span class="ident">indices</span>.<span class="ident">len</span>()) {
             <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">MithrilWitnessError::NoQuorum</span>);
         }
         <span class="prelude-val">Ok</span>(())
     }
 
     <span class="doccomment">/// \forall i : [0..k]. path[i] is a witness for (mvk[i]), stake[i] in avk</span>
-    <span class="kw">fn</span> <span class="ident">check_path</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">avk</span>: <span class="kw-2">&amp;</span><span class="ident">MerkleTree</span><span class="op">&lt;</span><span class="ident">MTValue</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span>, <span class="ident">H</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MithrilWitnessError</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">check_path</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">avk</span>: <span class="kw-2">&amp;</span><span class="ident">MerkleTree</span><span class="op">&lt;</span><span class="ident">MTValue</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span>, <span class="ident">H</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MithrilWitnessError</span><span class="op">&gt;</span> {
         <span class="kw">if</span> <span class="op">!</span><span class="self">self</span>
             .<span class="ident">sigs</span>
             .<span class="ident">iter</span>()
@@ -430,7 +430,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">avk</span>: <span class="kw-2">&amp;</span><span class="ident">MerkleTree</span><span class="op">&lt;</span><span class="ident">MTValue</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span>, <span class="ident">H</span><span class="op">&gt;</span>,
         <span class="ident">msg</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MithrilWitnessError</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MithrilWitnessError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">msp_evals</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">indices</span>.<span class="ident">iter</span>().<span class="ident">zip</span>(<span class="self">self</span>.<span class="ident">sigs</span>.<span class="ident">iter</span>()).<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">idx</span>, <span class="ident">sig</span>)<span class="op">|</span> {
             <span class="kw">let</span> <span class="ident">msgp</span> <span class="op">=</span> <span class="ident">concat_avk_with_msg</span>(<span class="ident">avk</span>, <span class="ident">msg</span>);
             <span class="ident">Msp::eval</span>(<span class="kw-2">&amp;</span><span class="ident">msgp</span>, <span class="kw-2">*</span><span class="ident">idx</span>, <span class="kw-2">&amp;</span><span class="ident">sig</span>.<span class="ident">sigma</span>)
@@ -440,7 +440,7 @@
             .<span class="ident">evals</span>
             .<span class="ident">iter</span>()
             .<span class="ident">zip</span>(<span class="ident">msp_evals</span>)
-            .<span class="ident">all</span>(<span class="op">|</span>(<span class="ident">ev</span>, <span class="ident">msp_e</span>)<span class="op">|</span> <span class="kw-2">*</span><span class="ident">ev</span> <span class="op">=</span><span class="op">=</span> <span class="ident">msp_e</span>)
+            .<span class="ident">all</span>(<span class="op">|</span>(<span class="ident">ev</span>, <span class="ident">msp_e</span>)<span class="op">|</span> <span class="kw-2">*</span><span class="ident">ev</span> <span class="op">==</span> <span class="ident">msp_e</span>)
         {
             <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">MithrilWitnessError::EvalInvalid</span>);
         }
@@ -448,7 +448,7 @@
     }
 
     <span class="doccomment">/// \forall i : [1..k]. ev[i] &lt;= phi(stake_i)</span>
-    <span class="kw">fn</span> <span class="ident">check_stake</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">phi_f</span>: <span class="ident">f64</span>, <span class="ident">total_stake</span>: <span class="ident">u64</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MithrilWitnessError</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">check_stake</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">phi_f</span>: <span class="ident">f64</span>, <span class="ident">total_stake</span>: <span class="ident">u64</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MithrilWitnessError</span><span class="op">&gt;</span> {
         <span class="kw">if</span> <span class="op">!</span><span class="self">self</span>
             .<span class="ident">evals</span>
             .<span class="ident">iter</span>()
@@ -467,7 +467,7 @@
     <span class="ident">H</span>: <span class="ident">MTHashLeaf</span><span class="op">&lt;</span><span class="ident">MTValue</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="ident">H::F</span>: <span class="ident">ToBytes</span>,
 {
-    <span class="kw">fn</span> <span class="ident">write</span><span class="op">&lt;</span><span class="ident">W</span>: <span class="ident">Write</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut</span> <span class="ident">writer</span>: <span class="ident">W</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">std::io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">write</span><span class="op">&lt;</span><span class="ident">W</span>: <span class="ident">Write</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut</span> <span class="ident">writer</span>: <span class="ident">W</span>) -&gt; <span class="ident">std::io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">n</span>: <span class="ident">u64</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">sigs</span>.<span class="ident">len</span>().<span class="ident">try_into</span>().<span class="ident">unwrap</span>();
         <span class="ident">n</span>.<span class="ident">write</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">writer</span>)<span class="question-mark">?</span>;
         <span class="self">self</span>.<span class="ident">sigs</span>.<span class="ident">write</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">writer</span>)<span class="question-mark">?</span>;
@@ -481,7 +481,7 @@
     <span class="ident">H</span>: <span class="ident">MTHashLeaf</span><span class="op">&lt;</span><span class="ident">MTValue</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="ident">H::F</span>: <span class="ident">FromBytes</span>,
 {
-    <span class="kw">fn</span> <span class="ident">read</span><span class="op">&lt;</span><span class="ident">R</span>: <span class="ident">Read</span><span class="op">&gt;</span>(<span class="kw-2">mut</span> <span class="ident">reader</span>: <span class="ident">R</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">std::io::Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">read</span><span class="op">&lt;</span><span class="ident">R</span>: <span class="ident">Read</span><span class="op">&gt;</span>(<span class="kw-2">mut</span> <span class="ident">reader</span>: <span class="ident">R</span>) -&gt; <span class="ident">std::io::Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">n</span> <span class="op">=</span> <span class="ident">u64::read</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">reader</span>)<span class="question-mark">?</span>;
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">sigs</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">StmSig</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H::F</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Vec::with_capacity</span>(<span class="ident">n</span> <span class="kw">as</span> <span class="ident">usize</span>);
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">indices</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Index</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Vec::with_capacity</span>(<span class="ident">n</span> <span class="kw">as</span> <span class="ident">usize</span>);
@@ -529,7 +529,7 @@
     <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ConcatEnv</span> <span class="op">=</span> <span class="ident">TrivialEnv</span>;
     <span class="doccomment">/// The relation is a function outputting an error or not.</span>
     <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ConcatRel</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H</span><span class="op">&gt;</span> <span class="op">=</span>
-        <span class="kw">fn</span>(<span class="kw-2">&amp;</span><span class="ident">MithrilStatement</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H</span><span class="op">&gt;</span>, <span class="kw-2">&amp;</span><span class="ident">MithrilWitness</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MithrilWitnessError</span><span class="op">&gt;</span>;
+        <span class="kw">fn</span>(<span class="kw-2">&amp;</span><span class="ident">MithrilStatement</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H</span><span class="op">&gt;</span>, <span class="kw-2">&amp;</span><span class="ident">MithrilWitness</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MithrilWitnessError</span><span class="op">&gt;</span>;
     <span class="doccomment">/// The proof is a TrivialProof.</span>
     <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ConcatProof</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H</span><span class="op">&gt;</span> <span class="op">=</span>
         <span class="ident">TrivialProof</span><span class="op">&lt;</span><span class="ident">MithrilStatement</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H</span><span class="op">&gt;</span>, <span class="ident">ConcatRel</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H</span><span class="op">&gt;</span>, <span class="ident">MithrilWitness</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H</span><span class="op">&gt;</span><span class="op">&gt;</span>;
@@ -549,7 +549,7 @@
         <span class="ident">H</span>: <span class="ident">MTHashLeaf</span><span class="op">&lt;</span><span class="ident">MTValue</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span><span class="op">&gt;</span>,
         <span class="ident">H::F</span>: <span class="ident">ToBytes</span>,
     {
-        <span class="kw">fn</span> <span class="ident">write</span><span class="op">&lt;</span><span class="ident">W</span>: <span class="ident">Write</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">writer</span>: <span class="ident">W</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">std::io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+        <span class="kw">fn</span> <span class="ident">write</span><span class="op">&lt;</span><span class="ident">W</span>: <span class="ident">Write</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">writer</span>: <span class="ident">W</span>) -&gt; <span class="ident">std::io::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
             <span class="self">self</span>.<span class="ident">witness</span>.<span class="ident">write</span>(<span class="ident">writer</span>)
         }
     }
@@ -560,7 +560,7 @@
         <span class="ident">H</span>: <span class="ident">MTHashLeaf</span><span class="op">&lt;</span><span class="ident">MTValue</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span><span class="op">&gt;</span>,
         <span class="ident">H::F</span>: <span class="ident">FromBytes</span>,
     {
-        <span class="kw">fn</span> <span class="ident">read</span><span class="op">&lt;</span><span class="ident">R</span>: <span class="ident">Read</span><span class="op">&gt;</span>(<span class="ident">reader</span>: <span class="ident">R</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">std::io::Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
+        <span class="kw">fn</span> <span class="ident">read</span><span class="op">&lt;</span><span class="ident">R</span>: <span class="ident">Read</span><span class="op">&gt;</span>(<span class="ident">reader</span>: <span class="ident">R</span>) -&gt; <span class="ident">std::io::Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
             <span class="kw">let</span> <span class="ident">witness</span> <span class="op">=</span> <span class="ident">MithrilWitness</span>::<span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H</span><span class="op">&gt;</span><span class="ident">::read</span>(<span class="ident">reader</span>)<span class="question-mark">?</span>;
 
             <span class="prelude-val">Ok</span>(<span class="ident">TrivialProof::new</span>(<span class="ident">witness</span>))
@@ -570,7 +570,7 @@
     <span class="kw">fn</span> <span class="ident">trivial_relation</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H</span><span class="op">&gt;</span>(
         <span class="ident">s</span>: <span class="kw-2">&amp;</span><span class="ident">MithrilStatement</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H</span><span class="op">&gt;</span>,
         <span class="ident">w</span>: <span class="kw-2">&amp;</span><span class="ident">MithrilWitness</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H</span><span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MithrilWitnessError</span><span class="op">&gt;</span>
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MithrilWitnessError</span><span class="op">&gt;</span>
     <span class="kw">where</span>
         <span class="ident">PE</span>: <span class="ident">PairingEngine</span>,
         <span class="ident">H</span>: <span class="ident">MTHashLeaf</span><span class="op">&lt;</span><span class="ident">MTValue</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span><span class="op">&gt;</span>,

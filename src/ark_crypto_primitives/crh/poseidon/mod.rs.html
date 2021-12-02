@@ -266,7 +266,7 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">F</span>: <span class="ident">PrimeField</span>, <span class="ident">P</span>: <span class="ident">PoseidonRoundParams</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident">Poseidon</span><span class="op">&lt;</span><span class="ident">F</span>, <span class="ident">P</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">permute</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">input</span>: <span class="kw-2">&amp;</span>[<span class="ident">F</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">permute</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">input</span>: <span class="kw-2">&amp;</span>[<span class="ident">F</span>]) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">width</span> <span class="op">=</span> <span class="ident">P::WIDTH</span>;
         <span class="macro">assert_eq!</span>(<span class="ident">input</span>.<span class="ident">len</span>(), <span class="ident">width</span>);
 
@@ -356,7 +356,7 @@
         <span class="ident">current_state</span>
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">hash_2</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">xl</span>: <span class="ident">F</span>, <span class="ident">xr</span>: <span class="ident">F</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">F</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">hash_2</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">xl</span>: <span class="ident">F</span>, <span class="ident">xr</span>: <span class="ident">F</span>) -&gt; <span class="ident">F</span> {
         <span class="comment">// Only 2 inputs to the permutation are set to the input of this hash</span>
         <span class="comment">// function, one is set to the padding constant and rest are 0. Always keep</span>
         <span class="comment">// the 1st input as 0</span>
@@ -373,7 +373,7 @@
         <span class="self">self</span>.<span class="ident">permute</span>(<span class="kw-2">&amp;</span><span class="ident">input</span>)[<span class="number">1</span>]
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">hash_4</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">inputs</span>: [<span class="ident">F</span>; <span class="number">4</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">F</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">hash_4</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">inputs</span>: [<span class="ident">F</span>; <span class="number">4</span>]) -&gt; <span class="ident">F</span> {
         <span class="comment">// Only 4 inputs to the permutation are set to the input of this hash</span>
         <span class="comment">// function, one is set to the padding constant and one is set to 0. Always</span>
         <span class="comment">// keep the 1st input as 0</span>
@@ -401,20 +401,20 @@
     <span class="kw">type</span> <span class="ident">Output</span> <span class="op">=</span> <span class="ident">F</span>;
     <span class="kw">type</span> <span class="ident">Parameters</span> <span class="op">=</span> <span class="ident">Poseidon</span><span class="op">&lt;</span><span class="ident">F</span>, <span class="ident">P</span><span class="op">&gt;</span>;
 
-    <span class="kw">fn</span> <span class="ident">setup</span><span class="op">&lt;</span><span class="ident">R</span>: <span class="ident">Rng</span><span class="op">&gt;</span>(<span class="ident">_rng</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">R</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Parameters</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">setup</span><span class="op">&lt;</span><span class="ident">R</span>: <span class="ident">Rng</span><span class="op">&gt;</span>(<span class="ident">_rng</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">R</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Parameters</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="comment">// automatic generation of parameters are not implemented yet</span>
         <span class="comment">// therefore, the developers must specify the parameters themselves</span>
         <span class="macro">unimplemented!</span>()
     }
 
     <span class="comment">// https://github.com/arkworks-rs/algebra/blob/master/ff/src/to_field_vec.rs</span>
-    <span class="kw">fn</span> <span class="ident">evaluate</span>(<span class="ident">parameters</span>: <span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::Parameters</span>, <span class="ident">input</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Output</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">evaluate</span>(<span class="ident">parameters</span>: <span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::Parameters</span>, <span class="ident">input</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Output</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">eval_time</span> <span class="op">=</span> <span class="macro">start_timer!</span>(<span class="op">|</span><span class="op">|</span> <span class="string">&quot;PoseidonCRH::Eval&quot;</span>);
         <span class="kw">let</span> <span class="ident">elts</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">input</span>.<span class="ident">to_field_elements</span>().<span class="ident">unwrap_or_default</span>();
         <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">elts</span>.<span class="ident">len</span>() {
-            <span class="number">2</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">parameters</span>.<span class="ident">hash_2</span>(<span class="ident">elts</span>[<span class="number">0</span>], <span class="ident">elts</span>[<span class="number">1</span>]),
-            <span class="number">4</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">parameters</span>.<span class="ident">hash_4</span>([<span class="ident">elts</span>[<span class="number">0</span>], <span class="ident">elts</span>[<span class="number">1</span>], <span class="ident">elts</span>[<span class="number">2</span>], <span class="ident">elts</span>[<span class="number">3</span>]]),
-            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic!</span>(<span class="string">&quot;incorrect number of windows (elements) for poseidon hash&quot;</span>),
+            <span class="number">2</span> =&gt; <span class="ident">parameters</span>.<span class="ident">hash_2</span>(<span class="ident">elts</span>[<span class="number">0</span>], <span class="ident">elts</span>[<span class="number">1</span>]),
+            <span class="number">4</span> =&gt; <span class="ident">parameters</span>.<span class="ident">hash_4</span>([<span class="ident">elts</span>[<span class="number">0</span>], <span class="ident">elts</span>[<span class="number">1</span>], <span class="ident">elts</span>[<span class="number">2</span>], <span class="ident">elts</span>[<span class="number">3</span>]]),
+            <span class="kw">_</span> =&gt; <span class="macro">panic!</span>(<span class="string">&quot;incorrect number of windows (elements) for poseidon hash&quot;</span>),
         };
 
         <span class="macro">end_timer!</span>(<span class="ident">eval_time</span>);
@@ -429,7 +429,7 @@
     <span class="kw">type</span> <span class="ident">Output</span> <span class="op">=</span> <span class="ident">F</span>;
     <span class="kw">type</span> <span class="ident">Parameters</span> <span class="op">=</span> <span class="ident">Poseidon</span><span class="op">&lt;</span><span class="ident">F</span>, <span class="ident">P</span><span class="op">&gt;</span>;
 
-    <span class="kw">fn</span> <span class="ident">setup</span><span class="op">&lt;</span><span class="ident">R</span>: <span class="ident">Rng</span><span class="op">&gt;</span>(<span class="ident">rng</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">R</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Parameters</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">setup</span><span class="op">&lt;</span><span class="ident">R</span>: <span class="ident">Rng</span><span class="op">&gt;</span>(<span class="ident">rng</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">R</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Parameters</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="op">&lt;</span><span class="self">Self</span> <span class="kw">as</span> <span class="ident">CRHTrait</span><span class="op">&gt;</span><span class="ident">::setup</span>(<span class="ident">rng</span>)
     }
 
@@ -438,7 +438,7 @@
         <span class="ident">parameters</span>: <span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::Parameters</span>,
         <span class="ident">left_input</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
         <span class="ident">right_input</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Output</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Output</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="macro">assert_eq!</span>(<span class="ident">left_input</span>.<span class="ident">len</span>(), <span class="ident">right_input</span>.<span class="ident">len</span>());
         <span class="macro">assert!</span>(<span class="ident">left_input</span>.<span class="ident">len</span>() <span class="op">*</span> <span class="number">8</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident"><span class="self">Self</span>::LEFT_INPUT_SIZE_BITS</span>);
         <span class="kw">let</span> <span class="ident">chained</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">left_input</span>

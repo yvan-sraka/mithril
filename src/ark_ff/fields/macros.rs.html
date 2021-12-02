@@ -734,13 +734,13 @@
 <span id="734">734</span>
 <span id="735">735</span>
 </pre><pre class="rust"><code><span class="macro">macro_rules!</span> <span class="ident">impl_prime_field_serializer</span> {
-    (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">field</span>: <span class="ident">ident</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">params</span>: <span class="ident">ident</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">byte_size</span>: <span class="ident">expr</span>) <span class="op">=</span><span class="op">&gt;</span> {
+    (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">field</span>: <span class="ident">ident</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">params</span>: <span class="ident">ident</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">byte_size</span>: <span class="ident">expr</span>) =&gt; {
         <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">P</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">params</span><span class="op">&gt;</span> <span class="ident">CanonicalSerializeWithFlags</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">field</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span> {
             <span class="kw">fn</span> <span class="ident">serialize_with_flags</span><span class="op">&lt;</span><span class="ident">W</span>: <span class="ident">ark_std::io::Write</span>, <span class="ident">F</span>: <span class="ident">Flags</span><span class="op">&gt;</span>(
                 <span class="kw-2">&amp;</span><span class="self">self</span>,
                 <span class="kw-2">mut</span> <span class="ident">writer</span>: <span class="ident">W</span>,
                 <span class="ident">flags</span>: <span class="ident">F</span>,
-            ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">SerializationError</span><span class="op">&gt;</span> {
+            ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">SerializationError</span><span class="op">&gt;</span> {
                 <span class="comment">// All reasonable `Flags` should be less than 8 bits in size</span>
                 <span class="comment">// (256 values are enough for anyone!)</span>
                 <span class="kw">if</span> <span class="ident">F::BIT_SIZE</span> <span class="op">&gt;</span> <span class="number">8</span> {
@@ -769,7 +769,7 @@
             <span class="comment">// than `P::MODULUS_BITS`.</span>
             <span class="comment">// If `(m - P::MODULUS_BITS) &gt;= F::BIT_SIZE` , then this method returns `n`;</span>
             <span class="comment">// otherwise, it returns `n + 1`.</span>
-            <span class="kw">fn</span> <span class="ident">serialized_size_with_flags</span><span class="op">&lt;</span><span class="ident">F</span>: <span class="ident">Flags</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span> {
+            <span class="kw">fn</span> <span class="ident">serialized_size_with_flags</span><span class="op">&lt;</span><span class="ident">F</span>: <span class="ident">Flags</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
                 <span class="ident">buffer_byte_size</span>(<span class="ident">P::MODULUS_BITS</span> <span class="kw">as</span> <span class="ident">usize</span> <span class="op">+</span> <span class="ident">F::BIT_SIZE</span>)
             }
         }
@@ -779,12 +779,12 @@
             <span class="kw">fn</span> <span class="ident">serialize</span><span class="op">&lt;</span><span class="ident">W</span>: <span class="ident">ark_std::io::Write</span><span class="op">&gt;</span>(
                 <span class="kw-2">&amp;</span><span class="self">self</span>,
                 <span class="ident">writer</span>: <span class="ident">W</span>,
-            ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">SerializationError</span><span class="op">&gt;</span> {
+            ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">SerializationError</span><span class="op">&gt;</span> {
                 <span class="self">self</span>.<span class="ident">serialize_with_flags</span>(<span class="ident">writer</span>, <span class="ident">EmptyFlags</span>)
             }
 
             <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">fn</span> <span class="ident">serialized_size</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span> {
+            <span class="kw">fn</span> <span class="ident">serialized_size</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
                 <span class="self">self</span>.<span class="ident">serialized_size_with_flags</span>::<span class="op">&lt;</span><span class="ident">EmptyFlags</span><span class="op">&gt;</span>()
             }
         }
@@ -792,7 +792,7 @@
         <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">P</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">params</span><span class="op">&gt;</span> <span class="ident">CanonicalDeserializeWithFlags</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">field</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span> {
             <span class="kw">fn</span> <span class="ident">deserialize_with_flags</span><span class="op">&lt;</span><span class="ident">R</span>: <span class="ident">ark_std::io::Read</span>, <span class="ident">F</span>: <span class="ident">Flags</span><span class="op">&gt;</span>(
                 <span class="kw-2">mut</span> <span class="ident">reader</span>: <span class="ident">R</span>,
-            ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="self">Self</span>, <span class="ident">F</span>), <span class="ident">SerializationError</span><span class="op">&gt;</span> {
+            ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="self">Self</span>, <span class="ident">F</span>), <span class="ident">SerializationError</span><span class="op">&gt;</span> {
                 <span class="comment">// All reasonable `Flags` should be less than 8 bits in size</span>
                 <span class="comment">// (256 values are enough for anyone!)</span>
                 <span class="kw">if</span> <span class="ident">F::BIT_SIZE</span> <span class="op">&gt;</span> <span class="number">8</span> {
@@ -814,7 +814,7 @@
         }
 
         <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">P</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">params</span><span class="op">&gt;</span> <span class="ident">CanonicalDeserialize</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">field</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span> {
-            <span class="kw">fn</span> <span class="ident">deserialize</span><span class="op">&lt;</span><span class="ident">R</span>: <span class="ident">ark_std::io::Read</span><span class="op">&gt;</span>(<span class="ident">reader</span>: <span class="ident">R</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">SerializationError</span><span class="op">&gt;</span> {
+            <span class="kw">fn</span> <span class="ident">deserialize</span><span class="op">&lt;</span><span class="ident">R</span>: <span class="ident">ark_std::io::Read</span><span class="op">&gt;</span>(<span class="ident">reader</span>: <span class="ident">R</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">SerializationError</span><span class="op">&gt;</span> {
                 <span class="ident"><span class="self">Self</span>::deserialize_with_flags</span>::<span class="op">&lt;</span><span class="ident">R</span>, <span class="ident">EmptyFlags</span><span class="op">&gt;</span>(<span class="ident">reader</span>).<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">r</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="ident">r</span>)
             }
         }
@@ -822,7 +822,7 @@
 }
 
 <span class="macro">macro_rules!</span> <span class="ident">impl_Fp</span> {
-    (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">Fp</span>:<span class="ident">ident</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">FpParameters</span>:<span class="ident">ident</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">BigInteger</span>:<span class="ident">ident</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">BigIntegerType</span>:<span class="ident">ty</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">limbs</span>:<span class="ident">expr</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">field_size</span>:<span class="ident">expr</span>) <span class="op">=</span><span class="op">&gt;</span> {
+    (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">Fp</span>:<span class="ident">ident</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">FpParameters</span>:<span class="ident">ident</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">BigInteger</span>:<span class="ident">ident</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">BigIntegerType</span>:<span class="ident">ty</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">limbs</span>:<span class="ident">expr</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">field_size</span>:<span class="ident">expr</span>) =&gt; {
         <span class="kw">pub</span> <span class="kw">trait</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">FpParameters</span>: <span class="ident">FpParameters</span><span class="op">&lt;</span><span class="ident">BigInt</span> <span class="op">=</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">BigIntegerType</span><span class="op">&gt;</span> {}
 
         <span class="doccomment">/// Represents an element of the prime field F_p, where `p == P::MODULUS`.</span>
@@ -848,20 +848,20 @@
 
         <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Fp</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span> {
             <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">element</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">BigIntegerType</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+            <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">element</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">BigIntegerType</span>) -&gt; <span class="self">Self</span> {
                 <span class="self">Self</span>(<span class="ident">element</span>, <span class="ident">PhantomData</span>)
             }
 
             <span class="attribute">#[<span class="ident">ark_ff_asm::unroll_for_loops</span>]</span>
-            <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">const_is_zero</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+            <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">const_is_zero</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">is_zero</span> <span class="op">=</span> <span class="bool-val">true</span>;
                 <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="macro-nonterminal">$</span><span class="macro-nonterminal">limbs</span> {
-                    <span class="ident">is_zero</span> <span class="op">&amp;=</span> (<span class="self">self</span>.<span class="number">0</span>).<span class="number">0</span>[<span class="ident">i</span>] <span class="op">=</span><span class="op">=</span> <span class="number">0</span>;
+                    <span class="ident">is_zero</span> <span class="op">&amp;=</span> (<span class="self">self</span>.<span class="number">0</span>).<span class="number">0</span>[<span class="ident">i</span>] <span class="op">==</span> <span class="number">0</span>;
                 }
                 <span class="ident">is_zero</span>
             }
 
-            <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">const_neg</span>(<span class="self">self</span>, <span class="ident">modulus</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">BigIntegerType</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+            <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">const_neg</span>(<span class="self">self</span>, <span class="ident">modulus</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">BigIntegerType</span>) -&gt; <span class="self">Self</span> {
                 <span class="kw">if</span> <span class="op">!</span><span class="self">self</span>.<span class="ident">const_is_zero</span>() {
                     <span class="ident"><span class="self">Self</span>::new</span>(<span class="ident"><span class="self">Self</span>::sub_noborrow</span>(<span class="kw-2">&amp;</span><span class="ident">modulus</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>))
                 } <span class="kw">else</span> {
@@ -874,7 +874,7 @@
             <span class="doccomment">/// For *internal* use only; please use the `field_new` macro instead</span>
             <span class="doccomment">/// of this method</span>
             <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-            <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">const_from_str</span>(<span class="ident">limbs</span>: <span class="kw-2">&amp;</span>[<span class="ident">u64</span>], <span class="ident">is_positive</span>: <span class="ident">bool</span>, <span class="ident">r2</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">BigIntegerType</span>, <span class="ident">modulus</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">BigIntegerType</span>, <span class="ident">inv</span>: <span class="ident">u64</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+            <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">const_from_str</span>(<span class="ident">limbs</span>: <span class="kw-2">&amp;</span>[<span class="ident">u64</span>], <span class="ident">is_positive</span>: <span class="ident">bool</span>, <span class="ident">r2</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">BigIntegerType</span>, <span class="ident">modulus</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">BigIntegerType</span>, <span class="ident">inv</span>: <span class="ident">u64</span>) -&gt; <span class="self">Self</span> {
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">repr</span> <span class="op">=</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">BigInteger</span>([<span class="number">0</span>; <span class="macro-nonterminal">$</span><span class="macro-nonterminal">limbs</span>]);
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">i</span> <span class="op">=</span> <span class="number">0</span>;
                 <span class="kw">while</span> <span class="ident">i</span> <span class="op">&lt;</span> <span class="ident">limbs</span>.<span class="ident">len</span>() {
@@ -890,7 +890,7 @@
             }
 
             <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">const_from_repr</span>(<span class="ident">repr</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">BigIntegerType</span>, <span class="ident">r2</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">BigIntegerType</span>, <span class="ident">modulus</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">BigIntegerType</span>, <span class="ident">inv</span>: <span class="ident">u64</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+            <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">const_from_repr</span>(<span class="ident">repr</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">BigIntegerType</span>, <span class="ident">r2</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">BigIntegerType</span>, <span class="ident">modulus</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">BigIntegerType</span>, <span class="ident">inv</span>: <span class="ident">u64</span>) -&gt; <span class="self">Self</span> {
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">r</span> <span class="op">=</span> <span class="ident"><span class="self">Self</span>::new</span>(<span class="ident">repr</span>);
                 <span class="kw">if</span> <span class="ident">r</span>.<span class="ident">const_is_zero</span>() {
                     <span class="ident">r</span>
@@ -901,7 +901,7 @@
             }
 
             <span class="attribute">#[<span class="ident">ark_ff_asm::unroll_for_loops</span>]</span>
-            <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">mul_without_reduce</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>, <span class="ident">modulus</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">BigIntegerType</span>, <span class="ident">inv</span>: <span class="ident">u64</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+            <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">mul_without_reduce</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>, <span class="ident">modulus</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">BigIntegerType</span>, <span class="ident">inv</span>: <span class="ident">u64</span>) -&gt; <span class="self">Self</span> {
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">r</span> <span class="op">=</span> [<span class="number">0u64</span>; <span class="macro-nonterminal">$</span><span class="macro-nonterminal">limbs</span> <span class="op">*</span> <span class="number">2</span>];
 
                 <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="macro-nonterminal">$</span><span class="macro-nonterminal">limbs</span> {
@@ -931,14 +931,14 @@
             }
 
             <span class="attribute">#[<span class="ident">ark_ff_asm::unroll_for_loops</span>]</span>
-            <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">const_mul</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>, <span class="ident">modulus</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">BigIntegerType</span>, <span class="ident">inv</span>: <span class="ident">u64</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+            <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">const_mul</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>, <span class="ident">modulus</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">BigIntegerType</span>, <span class="ident">inv</span>: <span class="ident">u64</span>) -&gt; <span class="self">Self</span> {
                 <span class="self">self</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">mul_without_reduce</span>(<span class="ident">other</span>, <span class="ident">modulus</span>, <span class="ident">inv</span>);
                 <span class="self">self</span>.<span class="ident">const_reduce</span>(<span class="ident">modulus</span>)
             }
 
 
             <span class="attribute">#[<span class="ident">ark_ff_asm::unroll_for_loops</span>]</span>
-            <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">const_is_valid</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">modulus</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">BigIntegerType</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+            <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">const_is_valid</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">modulus</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">BigIntegerType</span>) -&gt; <span class="ident">bool</span> {
                 <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="macro-nonterminal">$</span><span class="macro-nonterminal">limbs</span> {
                     <span class="kw">if</span> (<span class="self">self</span>.<span class="number">0</span>).<span class="number">0</span>[(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">limbs</span> <span class="op">-</span> <span class="ident">i</span> <span class="op">-</span> <span class="number">1</span>)] <span class="op">&lt;</span> <span class="ident">modulus</span>.<span class="number">0</span>[(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">limbs</span> <span class="op">-</span> <span class="ident">i</span> <span class="op">-</span> <span class="number">1</span>)] {
                         <span class="kw">return</span> <span class="bool-val">true</span>
@@ -950,7 +950,7 @@
             }
 
             <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">const_reduce</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">modulus</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">BigIntegerType</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+            <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">const_reduce</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">modulus</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">BigIntegerType</span>) -&gt; <span class="self">Self</span> {
                 <span class="kw">if</span> <span class="op">!</span><span class="self">self</span>.<span class="ident">const_is_valid</span>(<span class="ident">modulus</span>) {
                     <span class="self">self</span>.<span class="number">0</span> <span class="op">=</span> <span class="ident"><span class="self">Self</span>::sub_noborrow</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>, <span class="kw-2">&amp;</span><span class="ident">modulus</span>);
                 }
@@ -961,7 +961,7 @@
             <span class="comment">// need unused assignment because the last iteration of the loop produces an assignment</span>
             <span class="comment">// to `borrow` that is unused.</span>
             <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">unused_assignments</span>)]</span>
-            <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">sub_noborrow</span>(<span class="ident">a</span>: <span class="kw-2">&amp;</span><span class="macro-nonterminal">$</span><span class="macro-nonterminal">BigIntegerType</span>, <span class="ident">b</span>: <span class="kw-2">&amp;</span><span class="macro-nonterminal">$</span><span class="macro-nonterminal">BigIntegerType</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">BigInteger</span> {
+            <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">sub_noborrow</span>(<span class="ident">a</span>: <span class="kw-2">&amp;</span><span class="macro-nonterminal">$</span><span class="macro-nonterminal">BigIntegerType</span>, <span class="ident">b</span>: <span class="kw-2">&amp;</span><span class="macro-nonterminal">$</span><span class="macro-nonterminal">BigIntegerType</span>) -&gt; <span class="macro-nonterminal">$</span><span class="macro-nonterminal">BigInteger</span> {
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">a</span> <span class="op">=</span> <span class="kw-2">*</span><span class="ident">a</span>;
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">borrow</span> <span class="op">=</span> <span class="number">0</span>;
                 <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="macro-nonterminal">$</span><span class="macro-nonterminal">limbs</span> {
@@ -973,7 +973,7 @@
 
         <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">P</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">FpParameters</span><span class="op">&gt;</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Fp</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span> {
             <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
-            <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">is_valid</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+            <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">is_valid</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
                 <span class="self">self</span>.<span class="number">0</span> <span class="op">&lt;</span> <span class="ident">P::MODULUS</span>
             }
 
@@ -987,36 +987,36 @@
 
         <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">P</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">FpParameters</span><span class="op">&gt;</span> <span class="ident">Zero</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Fp</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span> {
             <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">fn</span> <span class="ident">zero</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+            <span class="kw">fn</span> <span class="ident">zero</span>() -&gt; <span class="self">Self</span> {
                 <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Fp</span>::<span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">BigInteger::from</span>(<span class="number">0</span>), <span class="ident">PhantomData</span>)
             }
 
             <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">fn</span> <span class="ident">is_zero</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+            <span class="kw">fn</span> <span class="ident">is_zero</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
                 <span class="self">self</span>.<span class="number">0</span>.<span class="ident">is_zero</span>()
             }
         }
 
         <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">P</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">FpParameters</span><span class="op">&gt;</span> <span class="ident">One</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Fp</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span> {
             <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">fn</span> <span class="ident">one</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+            <span class="kw">fn</span> <span class="ident">one</span>() -&gt; <span class="self">Self</span> {
                 <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Fp</span>::<span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>(<span class="ident">P::R</span>, <span class="ident">PhantomData</span>)
             }
 
             <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">fn</span> <span class="ident">is_one</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
-                <span class="self">self</span>.<span class="number">0</span> <span class="op">=</span><span class="op">=</span> <span class="ident">P::R</span>
+            <span class="kw">fn</span> <span class="ident">is_one</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">bool</span> {
+                <span class="self">self</span>.<span class="number">0</span> <span class="op">==</span> <span class="ident">P::R</span>
             }
         }
 
         <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">P</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">FpParameters</span><span class="op">&gt;</span> <span class="ident">Field</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Fp</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span> {
             <span class="kw">type</span> <span class="ident">BasePrimeField</span> <span class="op">=</span> <span class="self">Self</span>;
 
-            <span class="kw">fn</span> <span class="ident">extension_degree</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u64</span> {
+            <span class="kw">fn</span> <span class="ident">extension_degree</span>() -&gt; <span class="ident">u64</span> {
                 <span class="number">1</span>
             }
 
-            <span class="kw">fn</span> <span class="ident">from_base_prime_field_elems</span>(<span class="ident">elems</span>: <span class="kw-2">&amp;</span>[<span class="ident"><span class="self">Self</span>::BasePrimeField</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
+            <span class="kw">fn</span> <span class="ident">from_base_prime_field_elems</span>(<span class="ident">elems</span>: <span class="kw-2">&amp;</span>[<span class="ident"><span class="self">Self</span>::BasePrimeField</span>]) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
                 <span class="kw">if</span> <span class="ident">elems</span>.<span class="ident">len</span>() <span class="op">!</span><span class="op">=</span> (<span class="ident"><span class="self">Self</span>::extension_degree</span>() <span class="kw">as</span> <span class="ident">usize</span>) {
                     <span class="kw">return</span> <span class="prelude-val">None</span>;
                 }
@@ -1024,14 +1024,14 @@
             }
 
             <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">fn</span> <span class="ident">double</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+            <span class="kw">fn</span> <span class="ident">double</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self</span> {
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">temp</span> <span class="op">=</span> <span class="kw-2">*</span><span class="self">self</span>;
                 <span class="ident">temp</span>.<span class="ident">double_in_place</span>();
                 <span class="ident">temp</span>
             }
 
             <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">fn</span> <span class="ident">double_in_place</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
+            <span class="kw">fn</span> <span class="ident">double_in_place</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
                 <span class="comment">// This cannot exceed the backing capacity.</span>
                 <span class="self">self</span>.<span class="number">0</span>.<span class="ident">mul2</span>();
                 <span class="comment">// However, it may need to be reduced.</span>
@@ -1040,12 +1040,12 @@
             }
 
             <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">fn</span> <span class="ident">characteristic</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> [<span class="ident">u64</span>] {
+            <span class="kw">fn</span> <span class="ident">characteristic</span>() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> [<span class="ident">u64</span>] {
                 <span class="ident">P::MODULUS</span>.<span class="ident">as_ref</span>()
             }
 
             <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">fn</span> <span class="ident">from_random_bytes_with_flags</span><span class="op">&lt;</span><span class="ident">F</span>: <span class="ident">Flags</span><span class="op">&gt;</span>(<span class="ident">bytes</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="self">Self</span>, <span class="ident">F</span>)<span class="op">&gt;</span> {
+            <span class="kw">fn</span> <span class="ident">from_random_bytes_with_flags</span><span class="op">&lt;</span><span class="ident">F</span>: <span class="ident">Flags</span><span class="op">&gt;</span>(<span class="ident">bytes</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="self">Self</span>, <span class="ident">F</span>)<span class="op">&gt;</span> {
                 <span class="kw">if</span> <span class="ident">F::BIT_SIZE</span> <span class="op">&gt;</span> <span class="number">8</span> {
                     <span class="kw">return</span> <span class="prelude-val">None</span>
                 } <span class="kw">else</span> {
@@ -1080,7 +1080,7 @@
                     <span class="comment">// flag</span>
                     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">flags</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">0</span>;
                     <span class="kw">for</span> (<span class="ident">i</span>, (<span class="ident">b</span>, <span class="ident">m</span>)) <span class="kw">in</span> <span class="ident">last_bytes</span>.<span class="ident">iter_mut</span>().<span class="ident">zip</span>(<span class="kw-2">&amp;</span><span class="ident">last_bytes_mask</span>).<span class="ident">enumerate</span>() {
-                        <span class="kw">if</span> <span class="ident">i</span> <span class="op">=</span><span class="op">=</span> <span class="ident">flag_location_in_last_limb</span> {
+                        <span class="kw">if</span> <span class="ident">i</span> <span class="op">==</span> <span class="ident">flag_location_in_last_limb</span> {
                             <span class="ident">flags</span> <span class="op">=</span> <span class="kw-2">*</span><span class="ident">b</span> <span class="op">&amp;</span> <span class="ident">flags_mask</span>
                         }
                         <span class="kw-2">*</span><span class="ident">b</span> <span class="op">&amp;=</span> <span class="ident">m</span>;
@@ -1092,7 +1092,7 @@
             }
 
             <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">fn</span> <span class="ident">square</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+            <span class="kw">fn</span> <span class="ident">square</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self</span> {
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">temp</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">clone</span>();
                 <span class="ident">temp</span>.<span class="ident">square_in_place</span>();
                 <span class="ident">temp</span>
@@ -1101,7 +1101,7 @@
             <span class="macro">impl_field_square_in_place!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">limbs</span>);
 
             <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">fn</span> <span class="ident">inverse</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
+            <span class="kw">fn</span> <span class="ident">inverse</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
                 <span class="kw">if</span> <span class="self">self</span>.<span class="ident">is_zero</span>() {
                     <span class="prelude-val">None</span>
                 } <span class="kw">else</span> {
@@ -1149,7 +1149,7 @@
                         }
                     }
 
-                    <span class="kw">if</span> <span class="ident">u</span> <span class="op">=</span><span class="op">=</span> <span class="ident">one</span> {
+                    <span class="kw">if</span> <span class="ident">u</span> <span class="op">==</span> <span class="ident">one</span> {
                         <span class="prelude-val">Some</span>(<span class="ident">b</span>)
                     } <span class="kw">else</span> {
                         <span class="prelude-val">Some</span>(<span class="ident">c</span>)
@@ -1157,7 +1157,7 @@
                 }
             }
 
-            <span class="kw">fn</span> <span class="ident">inverse_in_place</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span><span class="op">&gt;</span> {
+            <span class="kw">fn</span> <span class="ident">inverse_in_place</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span><span class="op">&gt;</span> {
                 <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">inverse</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">inverse</span>() {
                     <span class="kw-2">*</span><span class="self">self</span> <span class="op">=</span> <span class="ident">inverse</span>;
                     <span class="prelude-val">Some</span>(<span class="self">self</span>)
@@ -1176,7 +1176,7 @@
             <span class="kw">type</span> <span class="ident">BigInt</span> <span class="op">=</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">BigIntegerType</span>;
 
             <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">fn</span> <span class="ident">from_repr</span>(<span class="ident">r</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">BigIntegerType</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
+            <span class="kw">fn</span> <span class="ident">from_repr</span>(<span class="ident">r</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">BigIntegerType</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">r</span> <span class="op">=</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Fp</span>(<span class="ident">r</span>, <span class="ident">PhantomData</span>);
                 <span class="kw">if</span> <span class="ident">r</span>.<span class="ident">is_zero</span>() {
                     <span class="prelude-val">Some</span>(<span class="ident">r</span>)
@@ -1195,24 +1195,24 @@
             <span class="kw">type</span> <span class="ident">FftParams</span> <span class="op">=</span> <span class="ident">P</span>;
 
             <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">fn</span> <span class="ident">two_adic_root_of_unity</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+            <span class="kw">fn</span> <span class="ident">two_adic_root_of_unity</span>() -&gt; <span class="self">Self</span> {
                 <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Fp</span>::<span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>(<span class="ident">P::TWO_ADIC_ROOT_OF_UNITY</span>, <span class="ident">PhantomData</span>)
             }
 
             <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">fn</span> <span class="ident">large_subgroup_root_of_unity</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
+            <span class="kw">fn</span> <span class="ident">large_subgroup_root_of_unity</span>() -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
                 <span class="prelude-val">Some</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">Fp</span>::<span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>(<span class="ident">P::LARGE_SUBGROUP_ROOT_OF_UNITY</span><span class="question-mark">?</span>, <span class="ident">PhantomData</span>))
             }
 
             <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">fn</span> <span class="ident">multiplicative_generator</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+            <span class="kw">fn</span> <span class="ident">multiplicative_generator</span>() -&gt; <span class="self">Self</span> {
                 <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Fp</span>::<span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>(<span class="ident">P::GENERATOR</span>, <span class="ident">PhantomData</span>)
             }
         }
 
         <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">P</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">FpParameters</span><span class="op">&gt;</span> <span class="ident">SquareRootField</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Fp</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span> {
             <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">fn</span> <span class="ident">legendre</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">LegendreSymbol</span> {
+            <span class="kw">fn</span> <span class="ident">legendre</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">LegendreSymbol</span> {
                 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::fields::LegendreSymbol</span>::<span class="kw-2">*</span>;
 
                 <span class="comment">// s = self^((MODULUS - 1) // 2)</span>
@@ -1227,11 +1227,11 @@
             }
 
             <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">fn</span> <span class="ident">sqrt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
+            <span class="kw">fn</span> <span class="ident">sqrt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
                 <span class="macro">sqrt_impl!</span>(<span class="self">Self</span>, <span class="ident">P</span>, <span class="self">self</span>)
             }
 
-            <span class="kw">fn</span> <span class="ident">sqrt_in_place</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span><span class="op">&gt;</span> {
+            <span class="kw">fn</span> <span class="ident">sqrt_in_place</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span><span class="op">&gt;</span> {
                 (<span class="kw-2">*</span><span class="self">self</span>).<span class="ident">sqrt</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">sqrt</span><span class="op">|</span> {
                     <span class="kw-2">*</span><span class="self">self</span> <span class="op">=</span> <span class="ident">sqrt</span>;
                     <span class="self">self</span>
@@ -1247,7 +1247,7 @@
         <span class="doccomment">/// where a particular ordering is required.</span>
         <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">P</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">FpParameters</span><span class="op">&gt;</span> <span class="ident">Ord</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Fp</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span> {
             <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
-            <span class="kw">fn</span> <span class="ident">cmp</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Ordering</span> {
+            <span class="kw">fn</span> <span class="ident">cmp</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="ident">Ordering</span> {
                 <span class="self">self</span>.<span class="ident">into_repr</span>().<span class="ident">cmp</span>(<span class="kw-2">&amp;</span><span class="ident">other</span>.<span class="ident">into_repr</span>())
             }
         }
@@ -1260,7 +1260,7 @@
         <span class="doccomment">/// where a particular ordering is required.</span>
         <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">P</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">FpParameters</span><span class="op">&gt;</span> <span class="ident">PartialOrd</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Fp</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span> {
             <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
-            <span class="kw">fn</span> <span class="ident">partial_cmp</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Ordering</span><span class="op">&gt;</span> {
+            <span class="kw">fn</span> <span class="ident">partial_cmp</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Ordering</span><span class="op">&gt;</span> {
                 <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">cmp</span>(<span class="ident">other</span>))
             }
         }
@@ -1278,18 +1278,18 @@
 
         <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">P</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">FpParameters</span><span class="op">&gt;</span> <span class="ident">ToBytes</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Fp</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span> {
             <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">fn</span> <span class="ident">write</span><span class="op">&lt;</span><span class="ident">W</span>: <span class="ident">Write</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">writer</span>: <span class="ident">W</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">IoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+            <span class="kw">fn</span> <span class="ident">write</span><span class="op">&lt;</span><span class="ident">W</span>: <span class="ident">Write</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">writer</span>: <span class="ident">W</span>) -&gt; <span class="ident">IoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
                 <span class="self">self</span>.<span class="ident">into_repr</span>().<span class="ident">write</span>(<span class="ident">writer</span>)
             }
         }
 
         <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">P</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">FpParameters</span><span class="op">&gt;</span> <span class="ident">FromBytes</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Fp</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span> {
             <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">fn</span> <span class="ident">read</span><span class="op">&lt;</span><span class="ident">R</span>: <span class="ident">Read</span><span class="op">&gt;</span>(<span class="ident">reader</span>: <span class="ident">R</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">IoResult</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
+            <span class="kw">fn</span> <span class="ident">read</span><span class="op">&lt;</span><span class="ident">R</span>: <span class="ident">Read</span><span class="op">&gt;</span>(<span class="ident">reader</span>: <span class="ident">R</span>) -&gt; <span class="ident">IoResult</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
                 <span class="macro-nonterminal">$</span><span class="macro-nonterminal">BigInteger::read</span>(<span class="ident">reader</span>).<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">b</span><span class="op">|</span>
                     <span class="kw">match</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Fp::from_repr</span>(<span class="ident">b</span>) {
-                        <span class="prelude-val">Some</span>(<span class="ident">f</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">f</span>),
-                        <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Err</span>(<span class="ident"><span class="kw">crate</span>::error</span>(<span class="string">&quot;FromBytes::read failed&quot;</span>)),
+                        <span class="prelude-val">Some</span>(<span class="ident">f</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">f</span>),
+                        <span class="prelude-val">None</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident"><span class="kw">crate</span>::error</span>(<span class="string">&quot;FromBytes::read failed&quot;</span>)),
                     })
             }
         }
@@ -1299,12 +1299,12 @@
 
             <span class="doccomment">/// Interpret a string of numbers as a (congruent) prime field element.</span>
             <span class="doccomment">/// Does not accept unnecessary leading zeroes or a blank string.</span>
-            <span class="kw">fn</span> <span class="ident">from_str</span>(<span class="ident">s</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident"><span class="self">Self</span>::Err</span><span class="op">&gt;</span> {
+            <span class="kw">fn</span> <span class="ident">from_str</span>(<span class="ident">s</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident"><span class="self">Self</span>::Err</span><span class="op">&gt;</span> {
                 <span class="kw">if</span> <span class="ident">s</span>.<span class="ident">is_empty</span>() {
                     <span class="kw">return</span> <span class="prelude-val">Err</span>(());
                 }
 
-                <span class="kw">if</span> <span class="ident">s</span> <span class="op">=</span><span class="op">=</span> <span class="string">&quot;0&quot;</span> {
+                <span class="kw">if</span> <span class="ident">s</span> <span class="op">==</span> <span class="string">&quot;0&quot;</span> {
                     <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident"><span class="self">Self</span>::zero</span>());
                 }
 
@@ -1316,9 +1316,9 @@
 
                 <span class="kw">for</span> <span class="ident">c</span> <span class="kw">in</span> <span class="ident">s</span>.<span class="ident">chars</span>() {
                     <span class="kw">match</span> <span class="ident">c</span>.<span class="ident">to_digit</span>(<span class="number">10</span>) {
-                        <span class="prelude-val">Some</span>(<span class="ident">c</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                        <span class="prelude-val">Some</span>(<span class="ident">c</span>) =&gt; {
                             <span class="kw">if</span> <span class="ident">first_digit</span> {
-                                <span class="kw">if</span> <span class="ident">c</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span> {
+                                <span class="kw">if</span> <span class="ident">c</span> <span class="op">==</span> <span class="number">0</span> {
                                     <span class="kw">return</span> <span class="prelude-val">Err</span>(());
                                 }
 
@@ -1329,7 +1329,7 @@
                             <span class="kw">let</span> <span class="ident">digit</span> <span class="op">=</span> <span class="ident"><span class="self">Self</span>::from</span>(<span class="ident">u64::from</span>(<span class="ident">c</span>));
                             <span class="ident">res</span>.<span class="ident">add_assign</span>(<span class="kw-2">&amp;</span><span class="ident">digit</span>);
                         },
-                        <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> {
+                        <span class="prelude-val">None</span> =&gt; {
                             <span class="kw">return</span> <span class="prelude-val">Err</span>(());
                         },
                     }
@@ -1346,7 +1346,7 @@
         <span class="doccomment">/// 64-bit limbs.</span>
         <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">P</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">FpParameters</span><span class="op">&gt;</span> <span class="ident">Display</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Fp</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span> {
             <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">FmtResult</span> {
+            <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">FmtResult</span> {
                 <span class="macro">write!</span>(<span class="ident">f</span>, <span class="macro">stringify!</span>($<span class="ident">Fp</span><span class="string">&quot;({})&quot;</span>), <span class="self">self</span>.<span class="ident">into_repr</span>())
             }
         }
@@ -1355,7 +1355,7 @@
             <span class="kw">type</span> <span class="ident">Output</span> <span class="op">=</span> <span class="self">Self</span>;
             <span class="attribute">#[<span class="ident">inline</span>]</span>
             <span class="attribute">#[<span class="ident">must_use</span>]</span>
-            <span class="kw">fn</span> <span class="ident">neg</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+            <span class="kw">fn</span> <span class="ident">neg</span>(<span class="self">self</span>) -&gt; <span class="self">Self</span> {
                 <span class="kw">if</span> <span class="op">!</span><span class="self">self</span>.<span class="ident">is_zero</span>() {
                     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">tmp</span> <span class="op">=</span> <span class="ident">P::MODULUS</span>;
                     <span class="ident">tmp</span>.<span class="ident">sub_noborrow</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>);
@@ -1370,7 +1370,7 @@
             <span class="kw">type</span> <span class="ident">Output</span> <span class="op">=</span> <span class="self">Self</span>;
 
             <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">fn</span> <span class="ident">add</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+            <span class="kw">fn</span> <span class="ident">add</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="self">Self</span> {
                 <span class="self">self</span>.<span class="ident">add_assign</span>(<span class="ident">other</span>);
                 <span class="self">self</span>
             }
@@ -1380,7 +1380,7 @@
             <span class="kw">type</span> <span class="ident">Output</span> <span class="op">=</span> <span class="self">Self</span>;
 
             <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">fn</span> <span class="ident">sub</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+            <span class="kw">fn</span> <span class="ident">sub</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="self">Self</span> {
                 <span class="self">self</span>.<span class="ident">sub_assign</span>(<span class="ident">other</span>);
                 <span class="self">self</span>
             }
@@ -1390,7 +1390,7 @@
             <span class="kw">type</span> <span class="ident">Output</span> <span class="op">=</span> <span class="self">Self</span>;
 
             <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">fn</span> <span class="ident">mul</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+            <span class="kw">fn</span> <span class="ident">mul</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="self">Self</span> {
                 <span class="self">self</span>.<span class="ident">mul_assign</span>(<span class="ident">other</span>);
                 <span class="self">self</span>
             }
@@ -1402,7 +1402,7 @@
             <span class="doccomment">/// Returns `self * other.inverse()` if `other.inverse()` is `Some`, and</span>
             <span class="doccomment">/// panics otherwise.</span>
             <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">fn</span> <span class="ident">div</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+            <span class="kw">fn</span> <span class="ident">div</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="self">Self</span> {
                 <span class="self">self</span>.<span class="ident">mul_assign</span>(<span class="kw-2">&amp;</span><span class="ident">other</span>.<span class="ident">inverse</span>().<span class="ident">unwrap</span>());
                 <span class="self">self</span>
             }
@@ -1455,14 +1455,14 @@
 
         <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">P</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">FpParameters</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">num_bigint::BigUint</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Fp</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span> {
             <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">val</span>: <span class="ident">num_bigint::BigUint</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Fp</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span> {
+            <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">val</span>: <span class="ident">num_bigint::BigUint</span>) -&gt; <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Fp</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span> {
                 <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Fp</span>::<span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span><span class="ident">::from_le_bytes_mod_order</span>(<span class="kw-2">&amp;</span><span class="ident">val</span>.<span class="ident">to_bytes_le</span>())
             }
         }
 
         <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">P</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">FpParameters</span><span class="op">&gt;</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">num_bigint::BigUint</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Fp</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span> {
             <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">fn</span> <span class="ident">into</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">num_bigint::BigUint</span> {
+            <span class="kw">fn</span> <span class="ident">into</span>(<span class="self">self</span>) -&gt; <span class="ident">num_bigint::BigUint</span> {
                 <span class="self">self</span>.<span class="ident">into_repr</span>().<span class="ident">into</span>()
             }
         }

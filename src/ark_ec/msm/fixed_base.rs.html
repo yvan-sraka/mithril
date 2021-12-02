@@ -105,7 +105,7 @@
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">FixedBaseMSM</span>;
 
 <span class="kw">impl</span> <span class="ident">FixedBaseMSM</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_mul_window_size</span>(<span class="ident">num_scalars</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_mul_window_size</span>(<span class="ident">num_scalars</span>: <span class="ident">usize</span>) -&gt; <span class="ident">usize</span> {
         <span class="kw">if</span> <span class="ident">num_scalars</span> <span class="op">&lt;</span> <span class="number">32</span> {
             <span class="number">3</span>
         } <span class="kw">else</span> {
@@ -117,7 +117,7 @@
         <span class="ident">scalar_size</span>: <span class="ident">usize</span>,
         <span class="ident">window</span>: <span class="ident">usize</span>,
         <span class="ident">g</span>: <span class="ident">T</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">T::Affine</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">T::Affine</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">in_window</span> <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">window</span>;
         <span class="kw">let</span> <span class="ident">outerc</span> <span class="op">=</span> (<span class="ident">scalar_size</span> <span class="op">+</span> <span class="ident">window</span> <span class="op">-</span> <span class="number">1</span>) <span class="op">/</span> <span class="ident">window</span>;
         <span class="kw">let</span> <span class="ident">last_in_window</span> <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> (<span class="ident">scalar_size</span> <span class="op">-</span> (<span class="ident">outerc</span> <span class="op">-</span> <span class="number">1</span>) <span class="op">*</span> <span class="ident">window</span>);
@@ -137,7 +137,7 @@
             .<span class="ident">take</span>(<span class="ident">outerc</span>)
             .<span class="ident">zip</span>(<span class="ident">g_outers</span>)
             .<span class="ident">for_each</span>(<span class="op">|</span>((<span class="ident">outer</span>, <span class="ident">multiples_of_g</span>), <span class="ident">g_outer</span>)<span class="op">|</span> {
-                <span class="kw">let</span> <span class="ident">cur_in_window</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">outer</span> <span class="op">=</span><span class="op">=</span> <span class="ident">outerc</span> <span class="op">-</span> <span class="number">1</span> {
+                <span class="kw">let</span> <span class="ident">cur_in_window</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">outer</span> <span class="op">==</span> <span class="ident">outerc</span> <span class="op">-</span> <span class="number">1</span> {
                     <span class="ident">last_in_window</span>
                 } <span class="kw">else</span> {
                     <span class="ident">in_window</span>
@@ -159,7 +159,7 @@
         <span class="ident">window</span>: <span class="ident">usize</span>,
         <span class="ident">multiples_of_g</span>: <span class="kw-2">&amp;</span>[<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">T::Affine</span><span class="op">&gt;</span>],
         <span class="ident">scalar</span>: <span class="kw-2">&amp;</span><span class="ident">T::ScalarField</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">T</span> {
+    ) -&gt; <span class="ident">T</span> {
         <span class="kw">let</span> <span class="ident">modulus_size</span> <span class="op">=</span> <span class="op">&lt;</span><span class="ident">T::ScalarField</span> <span class="kw">as</span> <span class="ident">PrimeField</span><span class="op">&gt;</span><span class="ident">::Params::MODULUS_BITS</span> <span class="kw">as</span> <span class="ident">usize</span>;
         <span class="kw">let</span> <span class="ident">scalar_val</span> <span class="op">=</span> <span class="ident">scalar</span>.<span class="ident">into_repr</span>().<span class="ident">to_bits_le</span>();
 
@@ -181,7 +181,7 @@
         <span class="ident">window</span>: <span class="ident">usize</span>,
         <span class="ident">table</span>: <span class="kw-2">&amp;</span>[<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">T::Affine</span><span class="op">&gt;</span>],
         <span class="ident">v</span>: <span class="kw-2">&amp;</span>[<span class="ident">T::ScalarField</span>],
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">outerc</span> <span class="op">=</span> (<span class="ident">scalar_size</span> <span class="op">+</span> <span class="ident">window</span> <span class="op">-</span> <span class="number">1</span>) <span class="op">/</span> <span class="ident">window</span>;
         <span class="macro">assert!</span>(<span class="ident">outerc</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">table</span>.<span class="ident">len</span>());
 

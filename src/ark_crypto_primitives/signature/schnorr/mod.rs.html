@@ -263,7 +263,7 @@
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">C</span>: <span class="ident">ProjectiveCurve</span><span class="op">&gt;</span> <span class="ident">ToBytes</span> <span class="kw">for</span> <span class="ident">SecretKey</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span> {
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">write</span><span class="op">&lt;</span><span class="ident">W</span>: <span class="ident">Write</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">writer</span>: <span class="ident">W</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">IoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">write</span><span class="op">&lt;</span><span class="ident">W</span>: <span class="ident">Write</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">writer</span>: <span class="ident">W</span>) -&gt; <span class="ident">IoResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="number">0</span>.<span class="ident">write</span>(<span class="ident">writer</span>)
     }
 }
@@ -283,7 +283,7 @@
     <span class="kw">type</span> <span class="ident">SecretKey</span> <span class="op">=</span> <span class="ident">SecretKey</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>;
     <span class="kw">type</span> <span class="ident">Signature</span> <span class="op">=</span> <span class="ident">Signature</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>;
 
-    <span class="kw">fn</span> <span class="ident">setup</span><span class="op">&lt;</span><span class="ident">R</span>: <span class="ident">Rng</span><span class="op">&gt;</span>(<span class="ident">rng</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">R</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Parameters</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">setup</span><span class="op">&lt;</span><span class="ident">R</span>: <span class="ident">Rng</span><span class="op">&gt;</span>(<span class="ident">rng</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">R</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Parameters</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">setup_time</span> <span class="op">=</span> <span class="macro">start_timer!</span>(<span class="op">|</span><span class="op">|</span> <span class="string">&quot;SchnorrSig::Setup&quot;</span>);
 
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">salt</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">32</span>];
@@ -301,7 +301,7 @@
     <span class="kw">fn</span> <span class="ident">keygen</span><span class="op">&lt;</span><span class="ident">R</span>: <span class="ident">Rng</span><span class="op">&gt;</span>(
         <span class="ident">parameters</span>: <span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::Parameters</span>,
         <span class="ident">rng</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">R</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident"><span class="self">Self</span>::PublicKey</span>, <span class="ident"><span class="self">Self</span>::SecretKey</span>), <span class="ident">Error</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident"><span class="self">Self</span>::PublicKey</span>, <span class="ident"><span class="self">Self</span>::SecretKey</span>), <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">keygen_time</span> <span class="op">=</span> <span class="macro">start_timer!</span>(<span class="op">|</span><span class="op">|</span> <span class="string">&quot;SchnorrSig::KeyGen&quot;</span>);
 
         <span class="kw">let</span> <span class="ident">secret_key</span> <span class="op">=</span> <span class="ident">C::ScalarField::rand</span>(<span class="ident">rng</span>);
@@ -316,7 +316,7 @@
         <span class="ident">sk</span>: <span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::SecretKey</span>,
         <span class="ident">message</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
         <span class="ident">rng</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">R</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Signature</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Signature</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">sign_time</span> <span class="op">=</span> <span class="macro">start_timer!</span>(<span class="op">|</span><span class="op">|</span> <span class="string">&quot;SchnorrSig::Sign&quot;</span>);
         <span class="comment">// (k, e);</span>
         <span class="kw">let</span> (<span class="ident">random_scalar</span>, <span class="ident">verifier_challenge</span>) <span class="op">=</span> <span class="kw">loop</span> {
@@ -356,7 +356,7 @@
         <span class="ident">pk</span>: <span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::PublicKey</span>,
         <span class="ident">message</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
         <span class="ident">signature</span>: <span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::Signature</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">verify_time</span> <span class="op">=</span> <span class="macro">start_timer!</span>(<span class="op">|</span><span class="op">|</span> <span class="string">&quot;SchnorrSig::Verify&quot;</span>);
 
         <span class="kw">let</span> <span class="ident">Signature</span> {
@@ -381,14 +381,14 @@
             <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>);
         };
         <span class="macro">end_timer!</span>(<span class="ident">verify_time</span>);
-        <span class="prelude-val">Ok</span>(<span class="ident">verifier_challenge</span> <span class="op">=</span><span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">obtained_verifier_challenge</span>)
+        <span class="prelude-val">Ok</span>(<span class="ident">verifier_challenge</span> <span class="op">==</span> <span class="kw-2">&amp;</span><span class="ident">obtained_verifier_challenge</span>)
     }
 
     <span class="kw">fn</span> <span class="ident">randomize_public_key</span>(
         <span class="ident">parameters</span>: <span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::Parameters</span>,
         <span class="ident">public_key</span>: <span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::PublicKey</span>,
         <span class="ident">randomness</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::PublicKey</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::PublicKey</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">rand_pk_time</span> <span class="op">=</span> <span class="macro">start_timer!</span>(<span class="op">|</span><span class="op">|</span> <span class="string">&quot;SchnorrSig::RandomizePubKey&quot;</span>);
 
         <span class="kw">let</span> <span class="ident">randomized_pk</span> <span class="op">=</span> <span class="kw-2">*</span><span class="ident">public_key</span>;
@@ -415,7 +415,7 @@
         <span class="ident">_parameter</span>: <span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::Parameters</span>,
         <span class="ident">signature</span>: <span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::Signature</span>,
         <span class="ident">randomness</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Signature</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Signature</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">rand_signature_time</span> <span class="op">=</span> <span class="macro">start_timer!</span>(<span class="op">|</span><span class="op">|</span> <span class="string">&quot;SchnorrSig::RandomizeSig&quot;</span>);
         <span class="kw">let</span> <span class="ident">Signature</span> {
             <span class="ident">prover_response</span>,
@@ -439,12 +439,12 @@
     }
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">bytes_to_bits</span>(<span class="ident">bytes</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">bytes_to_bits</span>(<span class="ident">bytes</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">bits</span> <span class="op">=</span> <span class="ident">Vec::with_capacity</span>(<span class="ident">bytes</span>.<span class="ident">len</span>() <span class="op">*</span> <span class="number">8</span>);
     <span class="kw">for</span> <span class="ident">byte</span> <span class="kw">in</span> <span class="ident">bytes</span> {
         <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="number">8</span> {
             <span class="kw">let</span> <span class="ident">bit</span> <span class="op">=</span> (<span class="kw-2">*</span><span class="ident">byte</span> <span class="op">&gt;</span><span class="op">&gt;</span> (<span class="number">8</span> <span class="op">-</span> <span class="ident">i</span> <span class="op">-</span> <span class="number">1</span>)) <span class="op">&amp;</span> <span class="number">1</span>;
-            <span class="ident">bits</span>.<span class="ident">push</span>(<span class="ident">bit</span> <span class="op">=</span><span class="op">=</span> <span class="number">1</span>);
+            <span class="ident">bits</span>.<span class="ident">push</span>(<span class="ident">bit</span> <span class="op">==</span> <span class="number">1</span>);
         }
     }
     <span class="ident">bits</span>
@@ -454,7 +454,7 @@
     <span class="ident">ToConstraintField</span><span class="op">&lt;</span><span class="ident">ConstraintF</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Parameters</span><span class="op">&lt;</span><span class="ident">C</span>, <span class="ident">D</span><span class="op">&gt;</span>
 {
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">to_field_elements</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">ConstraintF</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">to_field_elements</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">ConstraintF</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">generator</span>.<span class="ident">into_projective</span>().<span class="ident">to_field_elements</span>()
     }
 }

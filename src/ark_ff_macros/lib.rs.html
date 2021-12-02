@@ -87,7 +87,7 @@
 <span class="kw">use</span> <span class="ident">std::str::FromStr</span>;
 <span class="kw">use</span> <span class="ident">syn</span>::{<span class="ident">Expr</span>, <span class="ident">Lit</span>};
 
-<span class="kw">fn</span> <span class="ident">parse_string</span>(<span class="ident">input</span>: <span class="ident">TokenStream</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span> {
+<span class="kw">fn</span> <span class="ident">parse_string</span>(<span class="ident">input</span>: <span class="ident">TokenStream</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">input</span>: <span class="ident">Expr</span> <span class="op">=</span> <span class="ident">syn::parse</span>(<span class="ident">input</span>).<span class="ident">unwrap</span>();
     <span class="kw">let</span> <span class="ident">input</span> <span class="op">=</span> <span class="kw">if</span> <span class="kw">let</span> <span class="ident">Expr::Group</span>(<span class="ident">syn::ExprGroup</span> { <span class="ident">expr</span>, .. }) <span class="op">=</span> <span class="ident">input</span> {
         <span class="ident">expr</span>
@@ -95,15 +95,15 @@
         <span class="macro">panic!</span>(<span class="string">&quot;could not parse&quot;</span>);
     };
     <span class="kw">match</span> <span class="kw-2">*</span><span class="ident">input</span> {
-        <span class="ident">Expr::Lit</span>(<span class="ident">expr_lit</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">match</span> <span class="ident">expr_lit</span>.<span class="ident">lit</span> {
-            <span class="ident">Lit::Str</span>(<span class="ident">s</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">s</span>.<span class="ident">value</span>()),
-            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
+        <span class="ident">Expr::Lit</span>(<span class="ident">expr_lit</span>) =&gt; <span class="kw">match</span> <span class="ident">expr_lit</span>.<span class="ident">lit</span> {
+            <span class="ident">Lit::Str</span>(<span class="ident">s</span>) =&gt; <span class="prelude-val">Some</span>(<span class="ident">s</span>.<span class="ident">value</span>()),
+            <span class="kw">_</span> =&gt; <span class="prelude-val">None</span>,
         },
-        <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
+        <span class="kw">_</span> =&gt; <span class="prelude-val">None</span>,
     }
 }
 
-<span class="kw">fn</span> <span class="ident">str_to_limbs</span>(<span class="ident">num</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> (<span class="ident">bool</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>) {
+<span class="kw">fn</span> <span class="ident">str_to_limbs</span>(<span class="ident">num</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; (<span class="ident">bool</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>) {
     <span class="kw">let</span> (<span class="ident">sign</span>, <span class="ident">digits</span>) <span class="op">=</span> <span class="ident">BigInt::from_str</span>(<span class="ident">num</span>)
         .<span class="ident">expect</span>(<span class="string">&quot;could not parse to bigint&quot;</span>)
         .<span class="ident">to_radix_le</span>(<span class="number">16</span>);
@@ -123,7 +123,7 @@
 }
 
 <span class="attribute">#[<span class="ident">proc_macro</span>]</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_sign_and_limbs</span>(<span class="ident">input</span>: <span class="ident">TokenStream</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">TokenStream</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_sign_and_limbs</span>(<span class="ident">input</span>: <span class="ident">TokenStream</span>) -&gt; <span class="ident">TokenStream</span> {
     <span class="kw">let</span> <span class="ident">num</span> <span class="op">=</span> <span class="ident">parse_string</span>(<span class="ident">input</span>).<span class="ident">expect</span>(<span class="string">&quot;expected decimal string&quot;</span>);
     <span class="kw">let</span> (<span class="ident">is_positive</span>, <span class="ident">limbs</span>) <span class="op">=</span> <span class="ident">str_to_limbs</span>(<span class="kw-2">&amp;</span><span class="ident">num</span>);
 
