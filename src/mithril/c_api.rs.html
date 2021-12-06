@@ -526,8 +526,6 @@
 <span id="526">526</span>
 <span id="527">527</span>
 <span id="528">528</span>
-<span id="529">529</span>
-<span id="530">530</span>
 </pre><pre class="rust"><code><span class="doccomment">//! C api</span>
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::key_reg</span>::{<span class="ident">ClosedKeyReg</span>, <span class="ident">KeyReg</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::{
@@ -546,7 +544,7 @@
 <span class="kw">type</span> <span class="ident">MspSkPtr</span> <span class="op">=</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">MspSk</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>;
 <span class="kw">type</span> <span class="ident">MspPkPtr</span> <span class="op">=</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">MspPk</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>;
 <span class="kw">type</span> <span class="ident">SigPtr</span> <span class="op">=</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">StmSig</span><span class="op">&lt;</span><span class="ident">C</span>, <span class="ident">F</span><span class="op">&gt;</span>;
-<span class="kw">type</span> <span class="ident">MultiSigPtr</span> <span class="op">=</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">StmMultiSig</span><span class="op">&lt;</span><span class="ident">C</span>, <span class="ident">ConcatProof</span><span class="op">&lt;</span><span class="ident">C</span>, <span class="ident">H</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+<span class="kw">type</span> <span class="ident">MultiSigPtr</span> <span class="op">=</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">StmMultiSig</span><span class="op">&lt;</span><span class="ident">C</span>, <span class="ident">ConcatProof</span><span class="op">&lt;</span><span class="ident">C</span>, <span class="ident">H</span>, <span class="ident">F</span><span class="op">&gt;</span><span class="op">&gt;</span>;
 <span class="kw">type</span> <span class="ident">StmInitializerPtr</span> <span class="op">=</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">StmInitializer</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>;
 <span class="kw">type</span> <span class="ident">StmSignerPtr</span> <span class="op">=</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">StmSigner</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">C</span><span class="op">&gt;</span>;
 <span class="kw">type</span> <span class="ident">StmClerkPtr</span> <span class="op">=</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">StmClerk</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">C</span>, <span class="ident">TrivialEnv</span><span class="op">&gt;</span>;
@@ -948,7 +946,6 @@
 <span class="kw">mod</span> <span class="ident">clerk</span> {
     <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
     <span class="kw">use</span> <span class="ident">core::slice</span>;
-    <span class="kw">use</span> <span class="ident">std::convert::TryInto</span>;
 
     <span class="doccomment">/// A clerk can only be generated out of a `ClosedKeyReg` instance, or out of an `StmSigner`.</span>
     <span class="doccomment">/// This function initialises a `Clerk` out of a `ClosedKeyReg`.</span>
@@ -995,8 +992,8 @@
             <span class="kw">match</span> <span class="ident">out</span> {
                 <span class="prelude-val">Ok</span>(()) =&gt; <span class="number">0</span>,
                 <span class="prelude-val">Err</span>(<span class="ident">VerificationFailure::LotteryLost</span>) =&gt; <span class="op">-</span><span class="number">1</span>,
-                <span class="prelude-val">Err</span>(<span class="ident">VerificationFailure::InvalidMerkleTree</span>) =&gt; <span class="op">-</span><span class="number">2</span>,
-                <span class="prelude-val">Err</span>(<span class="ident">VerificationFailure::InvalidSignature</span>) =&gt; <span class="op">-</span><span class="number">3</span>,
+                <span class="prelude-val">Err</span>(<span class="ident">VerificationFailure::InvalidMerkleTree</span>(<span class="kw">_</span>)) =&gt; <span class="op">-</span><span class="number">2</span>,
+                <span class="prelude-val">Err</span>(<span class="ident">VerificationFailure::InvalidSignature</span>(<span class="kw">_</span>)) =&gt; <span class="op">-</span><span class="number">3</span>,
             }
         }
     }
@@ -1028,8 +1025,7 @@
                     <span class="kw-2">*</span><span class="ident">sig</span> <span class="op">=</span> <span class="ident">Box::into_raw</span>(<span class="ident">Box::new</span>(<span class="ident">msig</span>));
                     <span class="number">0</span>
                 }
-                <span class="prelude-val">Err</span>(<span class="ident">AggregationFailure::VerifyFailed</span>(<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>)) =&gt; <span class="op">-</span><span class="number">1</span>,
-                <span class="prelude-val">Err</span>(<span class="ident">AggregationFailure::NotEnoughSignatures</span>(<span class="ident">n</span>)) =&gt; <span class="ident">n</span>.<span class="ident">try_into</span>().<span class="ident">unwrap</span>(),
+                <span class="prelude-val">Err</span>(<span class="ident">AggregationFailure::NotEnoughSignatures</span>(<span class="ident">n</span>, <span class="ident">m</span>)) =&gt; <span class="ident">n</span> <span class="kw">as</span> <span class="ident">i64</span> <span class="op">-</span> <span class="ident">m</span> <span class="kw">as</span> <span class="ident">i64</span>,
             }
         }
     }
@@ -1052,7 +1048,7 @@
             <span class="kw">let</span> <span class="ident">out</span> <span class="op">=</span> <span class="ident">ref_me</span>.<span class="ident">verify_msig</span>(<span class="ident">ref_msig</span>, <span class="ident">msg_str</span>.<span class="ident">to_bytes</span>());
             <span class="kw">match</span> <span class="ident">out</span> {
                 <span class="prelude-val">Ok</span>(()) =&gt; <span class="number">0</span>,
-                <span class="prelude-val">Err</span>(<span class="ident">MultiVerificationFailure::InvalidAggregate</span>) =&gt; <span class="op">-</span><span class="number">1</span>,
+                <span class="prelude-val">Err</span>(<span class="ident">MultiVerificationFailure::InvalidAggregate</span>(<span class="kw">_</span>)) =&gt; <span class="op">-</span><span class="number">1</span>,
                 <span class="prelude-val">Err</span>(<span class="ident">MultiVerificationFailure::ProofError</span>(<span class="ident">e</span>)) =&gt; <span class="ident">e</span>.<span class="ident">into</span>(),
             }
         }
