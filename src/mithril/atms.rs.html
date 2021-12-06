@@ -351,6 +351,7 @@
 <span id="351">351</span>
 <span id="352">352</span>
 <span id="353">353</span>
+<span id="354">354</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Ad-Hoc Threshold Multisignatures</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! Proof-of-Stake Sidechains</span>
@@ -594,7 +595,7 @@
             }
         }
 
-        <span class="kw">if</span> <span class="ident">non_signing_stake</span> <span class="op">&gt;</span> <span class="ident">keys</span>.<span class="ident">total_stake</span> <span class="op">-</span> <span class="ident">keys</span>.<span class="ident">threshold</span> {
+        <span class="kw">if</span> <span class="ident">non_signing_stake</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">keys</span>.<span class="ident">total_stake</span> <span class="op">-</span> <span class="ident">keys</span>.<span class="ident">threshold</span> {
             <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">AtmsError::TooMuchOutstandingStake</span>(<span class="ident">non_signing_stake</span>));
         }
 
@@ -653,13 +654,14 @@
     <span class="kw">type</span> <span class="ident">F</span> <span class="op">=</span> <span class="op">&lt;</span><span class="ident">H</span> <span class="kw">as</span> <span class="ident">MTHashLeaf</span><span class="op">&lt;</span><span class="ident">MTValue</span><span class="op">&lt;</span><span class="ident">MspMvk</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="ident">::F</span>;
 
     <span class="macro">proptest!</span> {
-    <span class="attribute">#[<span class="ident">ignore</span>]</span>
+    <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">test_atms_protocol</span>(<span class="ident">n</span> <span class="kw">in</span> <span class="number">5</span>..<span class="op">=</span><span class="number">32_usize</span>,
                           <span class="ident">subset_is</span> <span class="kw">in</span> <span class="ident">vec</span>(<span class="number">1</span>..<span class="op">=</span><span class="number">32_usize</span>, <span class="number">1</span>..<span class="op">=</span><span class="number">32_usize</span>),
                           <span class="ident">threshold_frac</span> <span class="kw">in</span> <span class="number">2</span>..<span class="op">=</span><span class="number">4_usize</span>,
-                          <span class="ident">msg</span> <span class="kw">in</span> <span class="ident">any</span>::<span class="op">&lt;</span>[<span class="ident">u8</span>; <span class="number">16</span>]<span class="op">&gt;</span>(),
+                          <span class="comment">// msg in any::&lt;[u8; 16]&gt;(),</span>
                           <span class="comment">// seed in any::&lt;[u8; 32]&gt;()</span>
         ) {
+            <span class="kw">let</span> <span class="ident">msg</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">16</span>];
             <span class="kw">let</span> <span class="ident">seed</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">32</span>];
             <span class="kw">let</span> <span class="ident">threshold</span>: <span class="ident">u64</span> <span class="op">=</span> (<span class="ident">n</span> <span class="op">-</span> <span class="ident">n</span><span class="op">/</span><span class="ident">threshold_frac</span>) <span class="kw">as</span> <span class="ident">u64</span>;
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">rng</span> <span class="op">=</span> <span class="ident">ChaCha20Rng::from_seed</span>(<span class="ident">seed</span>);

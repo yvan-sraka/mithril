@@ -111,9 +111,6 @@
 <span id="111">111</span>
 <span id="112">112</span>
 <span id="113">113</span>
-<span id="114">114</span>
-<span id="115">115</span>
-<span id="116">116</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Abstractions for working with ark curves</span>
 <span class="kw">use</span> <span class="ident">ark_ec::AffineCurve</span>;
 <span class="kw">use</span> <span class="ident">ark_ff::to_bytes</span>;
@@ -185,50 +182,47 @@
     }
 
     <span class="macro">proptest!</span> {
-            <span class="doccomment">/// Test collision resistance</span>
-            <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="attribute">#[<span class="ident">ignore</span>]</span>
-    <span class="attribute">#[<span class="ident">ignore</span>]</span>
-            <span class="kw">fn</span> <span class="ident">test_hash_to_curve_distribution</span>(<span class="ident">input</span> <span class="kw">in</span> <span class="ident">hash_set</span>(<span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>(), <span class="number">100</span>)) {
-                <span class="kw">let</span> <span class="ident">hashes</span> <span class="op">=</span> <span class="ident">input</span>
-                    .<span class="ident">into_iter</span>()
-                    .<span class="ident">map</span>(<span class="op">|</span><span class="ident">i</span><span class="op">|</span> <span class="ident">hash_to_curve</span>::<span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="ident">i</span>.<span class="ident">to_le_bytes</span>()))
-                    .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">HashSet</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>()
-                    .<span class="ident">len</span>();
-                <span class="macro">assert!</span>(<span class="ident">hashes</span> <span class="op">==</span> <span class="number">100</span>);
-            }
-
-            <span class="doccomment">/// Test that &#39;nearby&#39; inputs hash to &#39;distant-enough&#39; values</span>
-            <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="attribute">#[<span class="ident">ignore</span>]</span>
-            <span class="kw">fn</span> <span class="ident">test_hash_to_curve_similar</span>(<span class="ident">input</span> <span class="kw">in</span> <span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>()) {
-                <span class="kw">let</span> <span class="ident">n_trials</span> <span class="op">=</span> <span class="number">100_u64</span>;
-
-                <span class="kw">let</span> <span class="ident">c0</span> <span class="op">=</span> <span class="ident">hash_to_curve</span>::<span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="ident">input</span>.<span class="ident">to_le_bytes</span>());
-                <span class="kw">let</span> <span class="ident">c0_bytes</span> <span class="op">=</span> <span class="ident">curve_bytes</span>(<span class="kw-2">&amp;</span><span class="ident">c0</span>);
-                <span class="kw">let</span> <span class="ident">n_bits</span> <span class="op">=</span>
-                    <span class="number">2</span><span class="kw-2">*</span><span class="op">&lt;</span><span class="op">&lt;</span><span class="ident">C</span> <span class="kw">as</span> <span class="ident">AffineCurve</span><span class="op">&gt;</span><span class="ident">::BaseField</span> <span class="kw">as</span> <span class="ident">Field</span><span class="op">&gt;</span><span class="ident">::BasePrimeField::size_in_bits</span>() <span class="kw">as</span> <span class="ident">u64</span>;
-                <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">bit_diffs</span> <span class="op">=</span> <span class="number">0</span>;
-
-                <span class="kw">for</span> <span class="ident">d</span> <span class="kw">in</span> <span class="number">1</span>..<span class="op">=</span><span class="ident">n_trials</span> {
-                    <span class="kw">let</span> <span class="ident">x</span> <span class="op">=</span> <span class="ident">input</span> <span class="op">+</span> <span class="ident">d</span>;
-                    <span class="kw">let</span> <span class="ident">c_bytes</span> <span class="op">=</span> <span class="ident">curve_bytes</span>(<span class="kw-2">&amp;</span><span class="ident">hash_to_curve</span>::<span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="ident">x</span>.<span class="ident">to_le_bytes</span>()));
-                    <span class="macro">assert!</span>(<span class="ident">c_bytes</span>.<span class="number">0</span>.<span class="ident">len</span>() <span class="op">==</span> <span class="ident">c0_bytes</span>.<span class="number">0</span>.<span class="ident">len</span>());
-                    <span class="macro">assert!</span>(<span class="ident">c_bytes</span>.<span class="number">1</span>.<span class="ident">len</span>() <span class="op">==</span> <span class="ident">c0_bytes</span>.<span class="number">1</span>.<span class="ident">len</span>());
-                    <span class="kw">let</span> <span class="ident">diff</span> <span class="op">=</span> <span class="ident">diff_bits_curves</span>((<span class="kw-2">&amp;</span><span class="ident">c0_bytes</span>.<span class="number">0</span>, <span class="kw-2">&amp;</span><span class="ident">c0_bytes</span>.<span class="number">1</span>),
-                                                  (<span class="kw-2">&amp;</span><span class="ident">c_bytes</span>.<span class="number">0</span>, <span class="kw-2">&amp;</span><span class="ident">c_bytes</span>.<span class="number">1</span>));
-                    <span class="ident">bit_diffs</span> <span class="op">+</span><span class="op">=</span> <span class="ident">diff</span>;
-                }
-
-                <span class="comment">// We expect on each trial, about half the bits should change</span>
-                <span class="kw">let</span> <span class="ident">half_bits</span> <span class="op">=</span> <span class="ident">n_trials</span> <span class="op">*</span> (<span class="ident">n_bits</span> <span class="op">/</span> <span class="number">2</span>);
-                <span class="comment">// Test that about half the bits changed between hashes of similar values,</span>
-                <span class="comment">// +/- 2% for test robustness</span>
-                <span class="kw">let</span> <span class="ident">target_low</span> <span class="op">=</span> <span class="number">98</span><span class="kw-2">*</span><span class="ident">half_bits</span><span class="op">/</span><span class="number">100</span>;
-                <span class="kw">let</span> <span class="ident">target_high</span> <span class="op">=</span> <span class="number">102</span><span class="kw-2">*</span><span class="ident">half_bits</span><span class="op">/</span><span class="number">100</span>;
-                <span class="macro">assert!</span>(<span class="ident">target_low</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">bit_diffs</span> <span class="op">&amp;&amp;</span> <span class="ident">bit_diffs</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">target_high</span>);
-            }
+        <span class="doccomment">/// Test collision resistance</span>
+        <span class="attribute">#[<span class="ident">test</span>]</span>
+        <span class="kw">fn</span> <span class="ident">test_hash_to_curve_distribution</span>(<span class="ident">input</span> <span class="kw">in</span> <span class="ident">hash_set</span>(<span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>(), <span class="number">100</span>)) {
+            <span class="kw">let</span> <span class="ident">hashes</span> <span class="op">=</span> <span class="ident">input</span>
+                .<span class="ident">into_iter</span>()
+                .<span class="ident">map</span>(<span class="op">|</span><span class="ident">i</span><span class="op">|</span> <span class="ident">hash_to_curve</span>::<span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="ident">i</span>.<span class="ident">to_le_bytes</span>()))
+                .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">HashSet</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>()
+                .<span class="ident">len</span>();
+            <span class="macro">assert!</span>(<span class="ident">hashes</span> <span class="op">==</span> <span class="number">100</span>);
         }
+
+        <span class="doccomment">/// Test that &#39;nearby&#39; inputs hash to &#39;distant-enough&#39; values</span>
+        <span class="attribute">#[<span class="ident">test</span>]</span>
+        <span class="kw">fn</span> <span class="ident">test_hash_to_curve_similar</span>(<span class="ident">input</span> <span class="kw">in</span> <span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>()) {
+            <span class="kw">let</span> <span class="ident">n_trials</span> <span class="op">=</span> <span class="number">100_u64</span>;
+
+            <span class="kw">let</span> <span class="ident">c0</span> <span class="op">=</span> <span class="ident">hash_to_curve</span>::<span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="ident">input</span>.<span class="ident">to_le_bytes</span>());
+            <span class="kw">let</span> <span class="ident">c0_bytes</span> <span class="op">=</span> <span class="ident">curve_bytes</span>(<span class="kw-2">&amp;</span><span class="ident">c0</span>);
+            <span class="kw">let</span> <span class="ident">n_bits</span> <span class="op">=</span>
+                <span class="number">2</span><span class="kw-2">*</span><span class="op">&lt;</span><span class="op">&lt;</span><span class="ident">C</span> <span class="kw">as</span> <span class="ident">AffineCurve</span><span class="op">&gt;</span><span class="ident">::BaseField</span> <span class="kw">as</span> <span class="ident">Field</span><span class="op">&gt;</span><span class="ident">::BasePrimeField::size_in_bits</span>() <span class="kw">as</span> <span class="ident">u64</span>;
+            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">bit_diffs</span> <span class="op">=</span> <span class="number">0</span>;
+
+            <span class="kw">for</span> <span class="ident">d</span> <span class="kw">in</span> <span class="number">1</span>..<span class="op">=</span><span class="ident">n_trials</span> {
+                <span class="kw">let</span> <span class="ident">x</span> <span class="op">=</span> <span class="ident">input</span> <span class="op">+</span> <span class="ident">d</span>;
+                <span class="kw">let</span> <span class="ident">c_bytes</span> <span class="op">=</span> <span class="ident">curve_bytes</span>(<span class="kw-2">&amp;</span><span class="ident">hash_to_curve</span>::<span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="ident">x</span>.<span class="ident">to_le_bytes</span>()));
+                <span class="macro">assert!</span>(<span class="ident">c_bytes</span>.<span class="number">0</span>.<span class="ident">len</span>() <span class="op">==</span> <span class="ident">c0_bytes</span>.<span class="number">0</span>.<span class="ident">len</span>());
+                <span class="macro">assert!</span>(<span class="ident">c_bytes</span>.<span class="number">1</span>.<span class="ident">len</span>() <span class="op">==</span> <span class="ident">c0_bytes</span>.<span class="number">1</span>.<span class="ident">len</span>());
+                <span class="kw">let</span> <span class="ident">diff</span> <span class="op">=</span> <span class="ident">diff_bits_curves</span>((<span class="kw-2">&amp;</span><span class="ident">c0_bytes</span>.<span class="number">0</span>, <span class="kw-2">&amp;</span><span class="ident">c0_bytes</span>.<span class="number">1</span>),
+                                              (<span class="kw-2">&amp;</span><span class="ident">c_bytes</span>.<span class="number">0</span>, <span class="kw-2">&amp;</span><span class="ident">c_bytes</span>.<span class="number">1</span>));
+                <span class="ident">bit_diffs</span> <span class="op">+</span><span class="op">=</span> <span class="ident">diff</span>;
+            }
+
+            <span class="comment">// We expect on each trial, about half the bits should change</span>
+            <span class="kw">let</span> <span class="ident">half_bits</span> <span class="op">=</span> <span class="ident">n_trials</span> <span class="op">*</span> (<span class="ident">n_bits</span> <span class="op">/</span> <span class="number">2</span>);
+            <span class="comment">// Test that about half the bits changed between hashes of similar values,</span>
+            <span class="comment">// +/- 2% for test robustness</span>
+            <span class="kw">let</span> <span class="ident">target_low</span> <span class="op">=</span> <span class="number">98</span><span class="kw-2">*</span><span class="ident">half_bits</span><span class="op">/</span><span class="number">100</span>;
+            <span class="kw">let</span> <span class="ident">target_high</span> <span class="op">=</span> <span class="number">102</span><span class="kw-2">*</span><span class="ident">half_bits</span><span class="op">/</span><span class="number">100</span>;
+            <span class="macro">assert!</span>(<span class="ident">target_low</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">bit_diffs</span> <span class="op">&amp;&amp;</span> <span class="ident">bit_diffs</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">target_high</span>);
+        }
+    }
 }
 </code></pre></div>
 </section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="mithril" data-search-index-js="../../search-index.js" data-search-js="../../search.js"></div>
