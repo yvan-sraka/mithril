@@ -1184,8 +1184,6 @@
 <span id="1184">1184</span>
 <span id="1185">1185</span>
 <span id="1186">1186</span>
-<span id="1187">1187</span>
-<span id="1188">1188</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Top-level API for Mithril Stake-based Threshold Multisignature scheme.</span>
 <span class="doccomment">//! See figure 6 of [the paper](https://eprint.iacr.org/2021/916) for most of the</span>
 <span class="doccomment">//! protocol.</span>
@@ -1258,7 +1256,7 @@
 <span class="doccomment">//! // rest of the protocol.</span>
 <span class="doccomment">//! let ps = ps</span>
 <span class="doccomment">//!     .into_par_iter()</span>
-<span class="doccomment">//!     .map(|p| p.new_signer(&amp;closed_reg))</span>
+<span class="doccomment">//!     .map(|p| p.new_signer(closed_reg.clone()))</span>
 <span class="doccomment">//!     .collect::&lt;Vec&lt;StmSigner&lt;H, Bls12_377&gt;&gt;&gt;();</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! /////////////////////</span>
@@ -1355,7 +1353,7 @@
 
 <span class="doccomment">/// Initializer for `StmSigner`. This is the data that is used during the key registration</span>
 <span class="doccomment">/// procedure. One the latter is finished, this instance is consumed into an `StmSigner`.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">StmInitializer</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span>
 <span class="kw">where</span>
     <span class="ident">PE</span>: <span class="ident">PairingEngine</span>,
@@ -1657,7 +1655,7 @@
     <span class="doccomment">/// (2) this StmSigner&#39;s parameter valuation</span>
     <span class="doccomment">/// (3) the avk as built from the current registered parties (according to the registration service)</span>
     <span class="doccomment">/// (4) the current total stake (according to the registration service)</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_signer</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">closed_reg</span>: <span class="kw-2">&amp;</span><span class="ident">ClosedKeyReg</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H</span><span class="op">&gt;</span>) -&gt; <span class="ident">StmSigner</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">PE</span><span class="op">&gt;</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_signer</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">closed_reg</span>: <span class="ident">ClosedKeyReg</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H</span><span class="op">&gt;</span>) -&gt; <span class="ident">StmSigner</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">PE</span><span class="op">&gt;</span>
     <span class="kw">where</span>
         <span class="ident">H</span>: <span class="ident">MTHashLeaf</span><span class="op">&lt;</span><span class="ident">MTValue</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Clone</span>,
     {
@@ -1680,7 +1678,7 @@
             }),
             <span class="ident">stake</span>: <span class="self">self</span>.<span class="ident">stake</span>,
             <span class="ident">params</span>: <span class="self">self</span>.<span class="ident">params</span>,
-            <span class="ident">avk</span>: <span class="ident">closed_reg</span>.<span class="ident">avk</span>.<span class="ident">clone</span>(),
+            <span class="ident">avk</span>: <span class="ident">closed_reg</span>.<span class="ident">avk</span>,
             <span class="ident">sk</span>: <span class="self">self</span>.<span class="ident">sk</span>,
             <span class="ident">pk</span>: <span class="self">self</span>.<span class="ident">pk</span>,
             <span class="ident">total_stake</span>: <span class="ident">closed_reg</span>.<span class="ident">total_stake</span>,
@@ -1740,11 +1738,7 @@
     <span class="doccomment">/// it as input.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// See an example [here](mithril::examples::dynamic_stake).</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_epoch</span>(
-        <span class="self">self</span>,
-        <span class="ident">_closed_reg</span>: <span class="ident">ClosedKeyReg</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H</span><span class="op">&gt;</span>,
-        <span class="ident">new_stake</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Stake</span><span class="op">&gt;</span>,
-    ) -&gt; <span class="ident">StmInitializer</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_epoch</span>(<span class="self">self</span>, <span class="ident">new_stake</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Stake</span><span class="op">&gt;</span>) -&gt; <span class="ident">StmInitializer</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">stake</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">new_stake</span> {
             <span class="prelude-val">None</span> =&gt; <span class="self">self</span>.<span class="ident">stake</span>,
             <span class="prelude-val">Some</span>(<span class="ident">s</span>) =&gt; <span class="ident">s</span>,
@@ -1771,12 +1765,12 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_registration</span>(
         <span class="ident">params</span>: <span class="ident">StmParameters</span>,
         <span class="ident">proof_env</span>: <span class="ident">E</span>,
-        <span class="ident">closed_reg</span>: <span class="kw-2">&amp;</span><span class="ident">ClosedKeyReg</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H</span><span class="op">&gt;</span>,
+        <span class="ident">closed_reg</span>: <span class="ident">ClosedKeyReg</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H</span><span class="op">&gt;</span>,
     ) -&gt; <span class="self">Self</span> {
         <span class="kw">let</span> (<span class="ident">pk</span>, <span class="ident">vk</span>) <span class="op">=</span> <span class="ident">proof_env</span>.<span class="ident">setup</span>();
         <span class="self">Self</span> {
             <span class="ident">params</span>,
-            <span class="ident">avk</span>: <span class="ident">Rc::new</span>(<span class="ident">closed_reg</span>.<span class="ident">avk</span>.<span class="ident">clone</span>()),
+            <span class="ident">avk</span>: <span class="ident">Rc::new</span>(<span class="ident">closed_reg</span>.<span class="ident">avk</span>),
             <span class="ident">total_stake</span>: <span class="ident">closed_reg</span>.<span class="ident">total_stake</span>,
             <span class="ident">proof_env</span>,
             <span class="ident">proof_key</span>: <span class="ident">pk</span>,
@@ -2013,7 +2007,9 @@
             })
             .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
         <span class="kw">let</span> <span class="ident">closed_reg</span> <span class="op">=</span> <span class="ident">kr</span>.<span class="ident">close</span>();
-        <span class="ident">ps</span>.<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">p</span><span class="op">|</span> <span class="ident">p</span>.<span class="ident">new_signer</span>(<span class="kw-2">&amp;</span><span class="ident">closed_reg</span>)).<span class="ident">collect</span>()
+        <span class="ident">ps</span>.<span class="ident">into_iter</span>()
+            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">p</span><span class="op">|</span> <span class="ident">p</span>.<span class="ident">new_signer</span>(<span class="ident">closed_reg</span>.<span class="ident">clone</span>()))
+            .<span class="ident">collect</span>()
     }
 
     <span class="doccomment">/// Generate a vector of stakes that should sum to `honest_stake`</span>
