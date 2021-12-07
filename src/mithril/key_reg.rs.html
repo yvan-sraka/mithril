@@ -402,24 +402,23 @@
 }
 
 <span class="doccomment">/// Errors which can be outputted by key registration.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">thiserror::Error</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>)]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">RegisterError</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span>
 <span class="kw">where</span>
     <span class="ident">PE</span>: <span class="ident">PairingEngine</span>,
 {
     <span class="doccomment">/// This key has already been registered by a participant</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;This key has already been registered.&quot;</span>)]</span>
     <span class="ident">KeyRegistered</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>),
     <span class="doccomment">/// This participant has already been registered</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Participant {0} has already been registered.&quot;</span>)]</span>
     <span class="ident">PartyRegistered</span>(<span class="ident">PartyId</span>),
     <span class="doccomment">/// The supplied participant id does not belong to the</span>
     <span class="doccomment">/// participant list</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Participant id {0} does not belong to the participants list.&quot;</span>)]</span>
     <span class="ident">UnknownPartyId</span>(<span class="ident">PartyId</span>),
     <span class="doccomment">/// The supplied key is not valid</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;The verification of correctness of the supplied key is invalid.&quot;</span>)]</span>
     <span class="ident">InvalidKey</span>(<span class="ident">MspPk</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span>),
+    <span class="doccomment">/// An instance of a registration cannot generate an AVK before the</span>
+    <span class="doccomment">/// registration is closed.</span>
+    <span class="ident">RegistrationStillOpen</span>,
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span> <span class="ident">KeyReg</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span>
@@ -599,6 +598,7 @@
                         <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">Msp::check</span>(<span class="kw-2">&amp;</span><span class="ident">a</span>));
                     }
                     <span class="prelude-val">Err</span>(<span class="ident">RegisterError::UnknownPartyId</span>(<span class="kw">_</span>)) =&gt; <span class="macro">assert_eq!</span>(<span class="ident">fake_it</span>, <span class="number">1</span>),
+                    <span class="prelude-val">Err</span>(<span class="ident">RegisterError::RegistrationStillOpen</span>) =&gt; <span class="macro">unreachable!</span>(<span class="string">&quot;Error cannot be reached with register function&quot;</span>),
                 }
             }
 

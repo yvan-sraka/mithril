@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["ark_cp6_782"] = [{"text":"impl <a class=\"trait\" href=\"ark_ff/fields/models/trait.Fp832Parameters.html\" title=\"trait ark_ff::fields::models::Fp832Parameters\">Fp832Parameters</a> for <a class=\"struct\" href=\"ark_cp6_782/fq/struct.FqParameters.html\" title=\"struct ark_cp6_782::fq::FqParameters\">FqParameters</a>","synthetic":false,"types":["ark_cp6_782::fields::fq::FqParameters"]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
