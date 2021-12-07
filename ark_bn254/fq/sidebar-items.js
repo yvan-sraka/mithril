@@ -1,1 +1,0 @@
-initSidebarItems({"constant":[["FQ_ONE",""],["FQ_ZERO",""]],"struct":[["FqParameters",""]],"type":[["Fq",""]]});
