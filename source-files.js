@@ -22,7 +22,6 @@ sourcesIndex["libc"] = {"name":"","dirs":[{"name":"unix","dirs":[{"name":"linux_
 sourcesIndex["mithril"] = {"name":"","files":["atms.rs","c_api.rs","key_reg.rs","lib.rs","merkle_tree.rs","mithril_curves.rs","mithril_proof.rs","models.rs","msp.rs","proof.rs","stm.rs"]};
 sourcesIndex["num_bigint"] = {"name":"","dirs":[{"name":"bigint","files":["addition.rs","bits.rs","convert.rs","division.rs","multiplication.rs","power.rs","shift.rs","subtraction.rs"]},{"name":"biguint","files":["addition.rs","bits.rs","convert.rs","division.rs","iter.rs","monty.rs","multiplication.rs","power.rs","shift.rs","subtraction.rs"]}],"files":["bigint.rs","biguint.rs","lib.rs","macros.rs"]};
 sourcesIndex["num_integer"] = {"name":"","files":["average.rs","lib.rs","roots.rs"]};
-sourcesIndex["num_rational"] = {"name":"","files":["lib.rs","pow.rs"]};
 sourcesIndex["num_traits"] = {"name":"","dirs":[{"name":"ops","files":["checked.rs","inv.rs","mod.rs","mul_add.rs","overflowing.rs","saturating.rs","wrapping.rs"]}],"files":["bounds.rs","cast.rs","float.rs","identities.rs","int.rs","lib.rs","macros.rs","pow.rs","real.rs","sign.rs"]};
 sourcesIndex["opaque_debug"] = {"name":"","files":["lib.rs"]};
 sourcesIndex["paste"] = {"name":"","files":["attr.rs","error.rs","lib.rs","segment.rs"]};
