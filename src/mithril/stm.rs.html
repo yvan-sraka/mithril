@@ -1315,6 +1315,21 @@
 <span id="1315">1315</span>
 <span id="1316">1316</span>
 <span id="1317">1317</span>
+<span id="1318">1318</span>
+<span id="1319">1319</span>
+<span id="1320">1320</span>
+<span id="1321">1321</span>
+<span id="1322">1322</span>
+<span id="1323">1323</span>
+<span id="1324">1324</span>
+<span id="1325">1325</span>
+<span id="1326">1326</span>
+<span id="1327">1327</span>
+<span id="1328">1328</span>
+<span id="1329">1329</span>
+<span id="1330">1330</span>
+<span id="1331">1331</span>
+<span id="1332">1332</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Top-level API for Mithril Stake-based Threshold Multisignature scheme.</span>
 <span class="doccomment">//! See figure 6 of [the paper](https://eprint.iacr.org/2021/916) for most of the</span>
 <span class="doccomment">//! protocol.</span>
@@ -2133,7 +2148,17 @@
 }
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;pure-rust&quot;</span>)]</span>
-<span class="doccomment">/// Checks if cmp &lt; exp(x).</span>
+<span class="doccomment">/// Checks if cmp &lt; exp(x). Uses error approximation for an early stop. Whenever the value being</span>
+<span class="doccomment">/// compared, `cmp`, is smaller (or greater) than the current approximation minus an `error_term`</span>
+<span class="doccomment">/// (plus an `error_term` respectively), then we stop approximating. The choice of the `error_term`</span>
+<span class="doccomment">/// is specific to our use case, and this function should not be used in other contexts without</span>
+<span class="doccomment">/// reconsidering the `error_term`. As a conservative value of the `error_term` we choose</span>
+<span class="doccomment">/// `new_x * M`, where `new_x` is the next term of the taylor expansion, and `M` is the largest</span>
+<span class="doccomment">/// value of `x` in a reasonable range. Note that `x &gt;= 0`, given that `x = - w * c`, with</span>
+<span class="doccomment">/// `0 &lt;= w &lt;= 1` and `c &lt; 0`, as `c` is defined as `c = ln(1.0 - phi_f)` with `phi_f \in (0,1)`.</span>
+<span class="doccomment">/// Therefore, a good integral bound is the maximum value that `|ln(1.0 - phi_f)|` can take with</span>
+<span class="doccomment">/// `phi_f \in [0, 0.95]` (if we expect to have `phi_f &gt; 0.95` this bound should be extended),</span>
+<span class="doccomment">/// which is `3`. Hence, we set `M = 3`.</span>
 <span class="kw">fn</span> <span class="ident">taylor_comparison</span>(<span class="ident">bound</span>: <span class="ident">usize</span>, <span class="ident">cmp</span>: <span class="ident">Ratio</span><span class="op">&lt;</span><span class="ident">BigInt</span><span class="op">&gt;</span>, <span class="ident">x</span>: <span class="ident">Ratio</span><span class="op">&lt;</span><span class="ident">BigInt</span><span class="op">&gt;</span>) -&gt; <span class="ident">bool</span> {
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">new_x</span> <span class="op">=</span> <span class="ident">x</span>.<span class="ident">clone</span>();
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">phi</span>: <span class="ident">Ratio</span><span class="op">&lt;</span><span class="ident">BigInt</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">One::one</span>();
@@ -2143,7 +2168,7 @@
 
         <span class="ident">divisor</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
         <span class="ident">new_x</span> <span class="op">=</span> (<span class="ident">new_x</span>.<span class="ident">clone</span>() <span class="op">*</span> <span class="ident">x</span>.<span class="ident">clone</span>()) <span class="op">/</span> <span class="ident">divisor</span>.<span class="ident">clone</span>();
-        <span class="kw">let</span> <span class="ident">error_term</span> <span class="op">=</span> <span class="ident">new_x</span>.<span class="ident">clone</span>().<span class="ident">abs</span>() <span class="op">*</span> <span class="ident">BigInt::from</span>(<span class="number">3</span>); <span class="comment">// we define bound for the error term to be 3, but reconsider.</span>
+        <span class="kw">let</span> <span class="ident">error_term</span> <span class="op">=</span> <span class="ident">new_x</span>.<span class="ident">clone</span>().<span class="ident">abs</span>() <span class="op">*</span> <span class="ident">BigInt::from</span>(<span class="number">3</span>); <span class="comment">// new_x * M</span>
 
         <span class="kw">if</span> <span class="ident">cmp</span> <span class="op">&gt;</span> (<span class="ident">phi</span>.<span class="ident">clone</span>() <span class="op">+</span> <span class="ident">error_term</span>.<span class="ident">clone</span>()) {
             <span class="kw">return</span> <span class="bool-val">false</span>;
@@ -2157,8 +2182,13 @@
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;pure-rust&quot;</span>))]</span>
 <span class="doccomment">/// The crate `rug` has sufficient optimizations to not require a taylor approximation with early</span>
 <span class="doccomment">/// stop. The difference between the current implementation and the one using the optimization</span>
-<span class="doccomment">/// above is around 10% faster. We perform the computations with 60 decimal digits of precision,</span>
-<span class="doccomment">/// since this is enough to represent the fraction of a single lovelace.</span>
+<span class="doccomment">/// above is around 10% faster. We perform the computations with 117 significant bits of</span>
+<span class="doccomment">/// precision, since this is enough to represent the fraction of a single lovelace. We have that</span>
+<span class="doccomment">/// 1e6 lovelace equals 1 ada, and there is 45 billion ada in circulation. Meaning there are</span>
+<span class="doccomment">/// 4.5e16 lovelace, so 1e-17 is sufficient to represent fractions of the stake distribution. In</span>
+<span class="doccomment">/// order to keep the error in the 1e-17 range, we need to carry out the computations with 34</span>
+<span class="doccomment">/// decimal digits (in order to represent the 4.5e16 ada without any rounding errors, we need</span>
+<span class="doccomment">/// double that precision).</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">ev_lt_phi</span>(<span class="ident">phi_f</span>: <span class="ident">f64</span>, <span class="ident">ev</span>: [<span class="ident">u8</span>; <span class="number">64</span>], <span class="ident">stake</span>: <span class="ident">Stake</span>, <span class="ident">total_stake</span>: <span class="ident">Stake</span>) -&gt; <span class="ident">bool</span> {
     <span class="kw">use</span> <span class="ident">rug</span>::{<span class="ident">integer::Order</span>, <span class="ident">ops::Pow</span>, <span class="ident">Float</span>};
 
@@ -2167,11 +2197,11 @@
         <span class="kw">return</span> <span class="bool-val">true</span>;
     }
     <span class="kw">let</span> <span class="ident">ev</span> <span class="op">=</span> <span class="ident">rug::Integer::from_digits</span>(<span class="kw-2">&amp;</span><span class="ident">ev</span>, <span class="ident">Order::LsfLe</span>);
-    <span class="kw">let</span> <span class="ident">ev_max</span>: <span class="ident">Float</span> <span class="op">=</span> <span class="ident">Float::with_val</span>(<span class="number">60</span>, <span class="number">2</span>).<span class="ident">pow</span>(<span class="number">512</span>);
+    <span class="kw">let</span> <span class="ident">ev_max</span>: <span class="ident">Float</span> <span class="op">=</span> <span class="ident">Float::with_val</span>(<span class="number">117</span>, <span class="number">2</span>).<span class="ident">pow</span>(<span class="number">512</span>);
     <span class="kw">let</span> <span class="ident">q</span> <span class="op">=</span> <span class="ident">ev</span> <span class="op">/</span> <span class="ident">ev_max</span>;
 
-    <span class="kw">let</span> <span class="ident">w</span> <span class="op">=</span> <span class="ident">Float::with_val</span>(<span class="number">60</span>, <span class="ident">stake</span>) <span class="op">/</span> <span class="ident">Float::with_val</span>(<span class="number">60</span>, <span class="ident">total_stake</span>);
-    <span class="kw">let</span> <span class="ident">phi</span> <span class="op">=</span> <span class="ident">Float::with_val</span>(<span class="number">60</span>, <span class="number">1.0</span>) <span class="op">-</span> <span class="ident">Float::with_val</span>(<span class="number">60</span>, <span class="number">1.0</span> <span class="op">-</span> <span class="ident">phi_f</span>).<span class="ident">pow</span>(<span class="ident">w</span>);
+    <span class="kw">let</span> <span class="ident">w</span> <span class="op">=</span> <span class="ident">Float::with_val</span>(<span class="number">117</span>, <span class="ident">stake</span>) <span class="op">/</span> <span class="ident">Float::with_val</span>(<span class="number">117</span>, <span class="ident">total_stake</span>);
+    <span class="kw">let</span> <span class="ident">phi</span> <span class="op">=</span> <span class="ident">Float::with_val</span>(<span class="number">117</span>, <span class="number">1.0</span>) <span class="op">-</span> <span class="ident">Float::with_val</span>(<span class="number">117</span>, <span class="number">1.0</span> <span class="op">-</span> <span class="ident">phi_f</span>).<span class="ident">pow</span>(<span class="ident">w</span>);
 
     <span class="ident">q</span> <span class="op">&lt;</span> <span class="ident">phi</span>
 }
@@ -2624,7 +2654,7 @@
         <span class="kw">fn</span> <span class="ident">early_break_taylor</span>(
             <span class="ident">x</span> <span class="kw">in</span> <span class="op">-</span><span class="number">0.9</span>..<span class="number">0.9f64</span>,
         ) {
-            <span class="kw">let</span> <span class="ident">exponential</span> <span class="op">=</span> <span class="ident">Float::exp</span>(<span class="ident">x</span>);
+            <span class="kw">let</span> <span class="ident">exponential</span> <span class="op">=</span> <span class="ident">num_traits::float::Float::exp</span>(<span class="ident">x</span>);
             <span class="kw">let</span> <span class="ident">cmp_n</span> <span class="op">=</span> <span class="ident">Ratio::from_float</span>(<span class="ident">exponential</span> <span class="op">-</span> <span class="number">2e-10_f64</span>).<span class="ident">unwrap</span>();
             <span class="kw">let</span> <span class="ident">cmp_p</span> <span class="op">=</span> <span class="ident">Ratio::from_float</span>(<span class="ident">exponential</span> <span class="op">+</span> <span class="number">2e-10_f64</span>).<span class="ident">unwrap</span>();
             <span class="macro">assert!</span>(<span class="ident">taylor_comparison</span>(<span class="number">1000</span>, <span class="ident">cmp_n</span>, <span class="ident">Ratio::from_float</span>(<span class="ident">x</span>).<span class="ident">unwrap</span>()));
