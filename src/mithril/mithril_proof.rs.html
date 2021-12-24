@@ -316,7 +316,6 @@
 <span id="316">316</span>
 <span id="317">317</span>
 <span id="318">318</span>
-<span id="319">319</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Prove the validity of aggregated signatures.</span>
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::merkle_tree</span>::{<span class="ident">concat_avk_with_msg</span>, <span class="ident">MTHashLeaf</span>, <span class="ident">MerkleTree</span>, <span class="ident">Path</span>};
@@ -354,7 +353,7 @@
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MithrilWitness</span><span class="op">&lt;</span><span class="ident">PE</span>: <span class="ident">PairingEngine</span>, <span class="ident">H</span>: <span class="ident">MTHashLeaf</span><span class="op">&lt;</span><span class="ident">MTValue</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span> {
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">sigs</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">StmSig</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H::F</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">indices</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Index</span><span class="op">&gt;</span>,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">evals</span>: <span class="ident">Vec</span><span class="op">&lt;</span>[<span class="ident">u8</span>; <span class="number">64</span>]<span class="op">&gt;</span>,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">evals</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
 }
 
 <span class="doccomment">/// Errors which can be output by Mithril verification.</span>
@@ -379,8 +378,8 @@
     <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;The path of the Merkle Tree is invalid.&quot;</span>)]</span>
     <span class="ident">PathInvalid</span>(<span class="ident">Path</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>),
     <span class="doccomment">/// MSP.Eval was computed incorrectly</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;The claimed evaluation of function phi is incorrect.&quot;</span>)]</span>
-    <span class="ident">EvalInvalid</span>([<span class="ident">u8</span>; <span class="number">64</span>]),
+    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;The claimed evaluation of function phi, {0}, is incorrect.&quot;</span>)]</span>
+    <span class="ident">EvalInvalid</span>(<span class="ident">u64</span>),
     <span class="doccomment">/// A party did not actually win the lottery</span>
     <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;The current party did not win the lottery.&quot;</span>)]</span>
     <span class="ident">StakeInvalid</span>,
@@ -540,7 +539,7 @@
         <span class="kw">let</span> <span class="ident">n</span> <span class="op">=</span> <span class="ident">u64::read</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">reader</span>)<span class="question-mark">?</span>;
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">sigs</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">StmSig</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H::F</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Vec::with_capacity</span>(<span class="ident">n</span> <span class="kw">as</span> <span class="ident">usize</span>);
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">indices</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Index</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Vec::with_capacity</span>(<span class="ident">n</span> <span class="kw">as</span> <span class="ident">usize</span>);
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">evals</span>: <span class="ident">Vec</span><span class="op">&lt;</span>[<span class="ident">u8</span>; <span class="number">64</span>]<span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Vec::with_capacity</span>(<span class="ident">n</span> <span class="kw">as</span> <span class="ident">usize</span>);
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">evals</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Vec::with_capacity</span>(<span class="ident">n</span> <span class="kw">as</span> <span class="ident">usize</span>);
         <span class="kw">for</span> <span class="kw">_</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">n</span> {
             <span class="kw">let</span> <span class="ident">s</span> <span class="op">=</span> <span class="ident">StmSig</span>::<span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H::F</span><span class="op">&gt;</span><span class="ident">::read</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">reader</span>)<span class="question-mark">?</span>;
             <span class="ident">sigs</span>.<span class="ident">push</span>(<span class="ident">s</span>);
@@ -549,9 +548,8 @@
             <span class="kw">let</span> <span class="ident">idx</span> <span class="op">=</span> <span class="ident">Index::read</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">reader</span>)<span class="question-mark">?</span>;
             <span class="ident">indices</span>.<span class="ident">push</span>(<span class="ident">idx</span>);
         }
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ev</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">64</span>];
         <span class="kw">for</span> <span class="kw">_</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">n</span> {
-            <span class="ident">reader</span>.<span class="ident">read_exact</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">ev</span>)<span class="question-mark">?</span>;
+            <span class="kw">let</span> <span class="ident">ev</span> <span class="op">=</span> <span class="ident">u64::read</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">reader</span>)<span class="question-mark">?</span>;
             <span class="ident">evals</span>.<span class="ident">push</span>(<span class="ident">ev</span>);
         }
 
