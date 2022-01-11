@@ -12,7 +12,6 @@ sourcesIndex["ark_snark"] = {"name":"","files":["lib.rs"]};
 sourcesIndex["ark_std"] = {"name":"","files":["lib.rs","perf_trace.rs","rand_helper.rs"]};
 sourcesIndex["az"] = {"name":"","files":["float.rs","int.rs","lib.rs"]};
 sourcesIndex["blake2"] = {"name":"","dirs":[{"name":"simd","files":["simd_opt.rs","simdint.rs","simdop.rs","simdty.rs"]}],"files":["as_bytes.rs","blake2.rs","blake2b.rs","blake2s.rs","consts.rs","lib.rs","simd.rs"]};
-sourcesIndex["bytes"] = {"name":"","dirs":[{"name":"buf","files":["buf_impl.rs","buf_mut.rs","chain.rs","iter.rs","limit.rs","mod.rs","reader.rs","take.rs","uninit_slice.rs","vec_deque.rs","writer.rs"]},{"name":"fmt","files":["debug.rs","hex.rs","mod.rs"]}],"files":["bytes.rs","bytes_mut.rs","lib.rs","loom.rs"]};
 sourcesIndex["cfg_if"] = {"name":"","files":["lib.rs"]};
 sourcesIndex["crypto_mac"] = {"name":"","files":["errors.rs","lib.rs"]};
 sourcesIndex["derivative"] = {"name":"","files":["ast.rs","attr.rs","bound.rs","clone.rs","cmp.rs","debug.rs","default.rs","hash.rs","lib.rs","matcher.rs","paths.rs","utils.rs"]};
