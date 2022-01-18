@@ -1741,9 +1741,9 @@
         <span class="self">Self</span> {
             <span class="ident">party_id</span>,
             <span class="ident">stake</span>,
-            <span class="ident">pk</span>,
-            <span class="ident">sk</span>,
             <span class="ident">params</span>,
+            <span class="ident">sk</span>,
+            <span class="ident">pk</span>,
         }
     }
 
@@ -2287,9 +2287,9 @@
         })
     }
 
-    <span class="doccomment">/// Generate a vector of N stakes summing to N*tstake,</span>
-    <span class="doccomment">/// plus a subset S of 0..N such that the sum of the stakes at indices</span>
-    <span class="doccomment">/// in S is astake*N</span>
+    <span class="doccomment">/// Generate a vector of `num_parties` stakes summing to `num_parties * total_stake`,</span>
+    <span class="doccomment">/// plus a subset S of 0..num_parties such that the sum of the stakes at indices</span>
+    <span class="doccomment">/// in S is adversary_stake * N</span>
     <span class="kw">fn</span> <span class="ident">arb_parties_with_adversaries</span>(
         <span class="ident">num_parties</span>: <span class="ident">usize</span>,
         <span class="ident">num_adversaries</span>: <span class="ident">usize</span>,
@@ -2304,7 +2304,7 @@
                     .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">a</span>, <span class="ident">stake</span>)<span class="op">|</span> (<span class="kw-2">*</span><span class="ident">a</span>, (<span class="ident">stake</span> <span class="op">*</span> <span class="ident">adversary_stake</span>) <span class="op">/</span> <span class="ident">adversary_sum</span>))
                     .<span class="ident">collect</span>();
 
-                <span class="kw">let</span> <span class="ident">adversaries</span> <span class="op">=</span> <span class="ident">adversaries</span>.<span class="ident">into_keys</span>().<span class="ident">collect</span>();
+                <span class="kw">let</span> <span class="ident">adversaries</span> <span class="op">=</span> <span class="ident">adversaries</span>.<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">key</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="ident">key</span>).<span class="ident">collect</span>();
                 (
                     <span class="ident">Just</span>(<span class="ident">adversaries</span>),
                     <span class="ident">arb_honest_for_adversaries</span>(
