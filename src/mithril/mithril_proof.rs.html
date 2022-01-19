@@ -318,6 +318,12 @@
 <span id="317">317</span>
 <span id="318">318</span>
 <span id="319">319</span>
+<span id="320">320</span>
+<span id="321">321</span>
+<span id="322">322</span>
+<span id="323">323</span>
+<span id="324">324</span>
+<span id="325">325</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Prove the validity of aggregated signatures.</span>
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::merkle_tree</span>::{<span class="ident">concat_avk_with_msg</span>, <span class="ident">MTHashLeaf</span>, <span class="ident">MerkleTree</span>, <span class="ident">Path</span>};
@@ -329,7 +335,6 @@
 <span class="kw">use</span> <span class="ident">std::collections::HashSet</span>;
 <span class="kw">use</span> <span class="ident">std::convert::TryInto</span>;
 <span class="kw">use</span> <span class="ident">std::io</span>::{<span class="ident">Read</span>, <span class="ident">Write</span>};
-<span class="kw">use</span> <span class="ident">std::iter::FromIterator</span>;
 <span class="kw">use</span> <span class="ident">std::rc::Rc</span>;
 
 <span class="doccomment">/// The statement we want to prove, namely that</span>
@@ -452,7 +457,14 @@
 
     <span class="doccomment">/// \forall i. \forall j. (i == j || index[i] != index[j])</span>
     <span class="kw">fn</span> <span class="ident">check_index_unique</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MithrilWitnessError</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H::F</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="kw">if</span> <span class="ident">HashSet</span>::<span class="op">&lt;</span><span class="ident">Index</span><span class="op">&gt;</span><span class="ident">::from_iter</span>(<span class="self">self</span>.<span class="ident">indices</span>.<span class="ident">iter</span>().<span class="ident">cloned</span>()).<span class="ident">len</span>() <span class="op">!</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">indices</span>.<span class="ident">len</span>() {
+        <span class="kw">if</span> <span class="self">self</span>
+            .<span class="ident">indices</span>
+            .<span class="ident">iter</span>()
+            .<span class="ident">cloned</span>()
+            .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">HashSet</span><span class="op">&lt;</span><span class="ident">Index</span><span class="op">&gt;</span><span class="op">&gt;</span>()
+            .<span class="ident">len</span>()
+            <span class="op">!</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">indices</span>.<span class="ident">len</span>()
+        {
             <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">MithrilWitnessError::IndexNotUnique</span>);
         }
         <span class="prelude-val">Ok</span>(())
