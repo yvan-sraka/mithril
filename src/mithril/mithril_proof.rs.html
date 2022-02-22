@@ -326,7 +326,7 @@
 <span id="325">325</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Prove the validity of aggregated signatures.</span>
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::merkle_tree</span>::{<span class="ident">concat_avk_with_msg</span>, <span class="ident">MTHashLeaf</span>, <span class="ident">MerkleTree</span>, <span class="ident">Path</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::merkle_tree</span>::{<span class="ident">concat_avk_with_msg</span>, <span class="ident">MTHashLeaf</span>, <span class="ident">MerkleTreeCommitment</span>, <span class="ident">Path</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::msp</span>::{<span class="ident">Msp</span>, <span class="ident">MspMvk</span>, <span class="ident">MspSig</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::proof::Proof</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::stm</span>::{<span class="ident">ev_lt_phi</span>, <span class="ident">Index</span>, <span class="ident">MTValue</span>, <span class="ident">StmParameters</span>, <span class="ident">StmSig</span>};
@@ -347,7 +347,7 @@
     <span class="comment">// Statement by a lifetime ends up bubbling the lifetime to whoever is</span>
     <span class="comment">// producing proofs, effectively tying the lifetime of the proof to that of</span>
     <span class="comment">// the prover, which is undesirable.</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">avk</span>: <span class="ident">Rc</span><span class="op">&lt;</span><span class="ident">MerkleTree</span><span class="op">&lt;</span><span class="ident">MTValue</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span>, <span class="ident">H</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">avk</span>: <span class="ident">Rc</span><span class="op">&lt;</span><span class="ident">MerkleTreeCommitment</span><span class="op">&lt;</span><span class="ident">MTValue</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span>, <span class="ident">H</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">ivk</span>: <span class="ident">MspMvk</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span>,
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">mu</span>: <span class="ident">MspSig</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span>,
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">msg</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>,
@@ -482,7 +482,7 @@
     <span class="doccomment">/// \forall i : [0..k]. path[i] is a witness for (mvk[i]), stake[i] in avk</span>
     <span class="kw">fn</span> <span class="ident">check_path</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">avk</span>: <span class="kw-2">&amp;</span><span class="ident">MerkleTree</span><span class="op">&lt;</span><span class="ident">MTValue</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span>, <span class="ident">H</span><span class="op">&gt;</span>,
+        <span class="ident">avk</span>: <span class="kw-2">&amp;</span><span class="ident">MerkleTreeCommitment</span><span class="op">&lt;</span><span class="ident">MTValue</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span>, <span class="ident">H</span><span class="op">&gt;</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MithrilWitnessError</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H::F</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="kw">for</span> <span class="ident">sig</span> <span class="kw">in</span> <span class="self">self</span>.<span class="ident">sigs</span>.<span class="ident">iter</span>() {
             <span class="kw">if</span> <span class="op">!</span><span class="ident">avk</span>.<span class="ident">check</span>(<span class="kw-2">&amp;</span><span class="ident">MTValue</span>(<span class="ident">sig</span>.<span class="ident">pk</span>.<span class="ident">mvk</span>, <span class="ident">sig</span>.<span class="ident">stake</span>), <span class="ident">sig</span>.<span class="ident">party</span>, <span class="kw-2">&amp;</span><span class="ident">sig</span>.<span class="ident">path</span>) {
@@ -495,7 +495,7 @@
     <span class="doccomment">/// \forall i : [1..k]. ev[i] = MSP.Eval(msg, index[i], sig[i])</span>
     <span class="kw">fn</span> <span class="ident">check_eval</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">avk</span>: <span class="kw-2">&amp;</span><span class="ident">MerkleTree</span><span class="op">&lt;</span><span class="ident">MTValue</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span>, <span class="ident">H</span><span class="op">&gt;</span>,
+        <span class="ident">avk</span>: <span class="kw-2">&amp;</span><span class="ident">MerkleTreeCommitment</span><span class="op">&lt;</span><span class="ident">MTValue</span><span class="op">&lt;</span><span class="ident">PE</span><span class="op">&gt;</span>, <span class="ident">H</span><span class="op">&gt;</span>,
         <span class="ident">msg</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MithrilWitnessError</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H::F</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">msp_evals</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">indices</span>.<span class="ident">iter</span>().<span class="ident">zip</span>(<span class="self">self</span>.<span class="ident">sigs</span>.<span class="ident">iter</span>()).<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">idx</span>, <span class="ident">sig</span>)<span class="op">|</span> {

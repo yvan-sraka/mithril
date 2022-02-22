@@ -669,11 +669,16 @@
 <span id="668">668</span>
 <span id="669">669</span>
 <span id="670">670</span>
+<span id="671">671</span>
+<span id="672">672</span>
+<span id="673">673</span>
+<span id="674">674</span>
+<span id="675">675</span>
 </pre><pre class="rust"><code><span class="doccomment">//! C api. All functions return an i64, with 0 upon success, and -99 if the returned pointer</span>
 <span class="doccomment">//! is null. Other error codes are function dependent.</span>
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::key_reg</span>::{<span class="ident">ClosedKeyReg</span>, <span class="ident">KeyReg</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::{
-    <span class="ident">merkle_tree</span>::{<span class="ident">MTHashLeaf</span>, <span class="ident">MerkleTree</span>},
+    <span class="ident">merkle_tree</span>::{<span class="ident">MTHashLeaf</span>, <span class="ident">MerkleTreeCommitment</span>},
     <span class="ident">mithril_proof::concat_proofs</span>::{<span class="ident">ConcatProof</span>, <span class="ident">TrivialEnv</span>},
     <span class="ident">msp</span>::{<span class="ident">MspPk</span>, <span class="ident">MspSk</span>},
     <span class="ident">stm</span>::<span class="kw-2">*</span>,
@@ -694,7 +699,7 @@
 <span class="kw">type</span> <span class="ident">StmInitializerPtr</span> <span class="op">=</span> <span class="kw-2">*mut</span> <span class="ident">StmInitializer</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>;
 <span class="kw">type</span> <span class="ident">StmSignerPtr</span> <span class="op">=</span> <span class="kw-2">*mut</span> <span class="ident">StmSigner</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">C</span><span class="op">&gt;</span>;
 <span class="kw">type</span> <span class="ident">StmClerkPtr</span> <span class="op">=</span> <span class="kw-2">*mut</span> <span class="ident">StmClerk</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">C</span>, <span class="ident">TrivialEnv</span><span class="op">&gt;</span>;
-<span class="kw">type</span> <span class="ident">MerkleTreePtr</span> <span class="op">=</span> <span class="kw-2">*mut</span> <span class="ident">MerkleTree</span><span class="op">&lt;</span><span class="ident">MTValue</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>, <span class="ident">H</span><span class="op">&gt;</span>;
+<span class="kw">type</span> <span class="ident">MerkleTreeCommitmentPtr</span> <span class="op">=</span> <span class="kw-2">*mut</span> <span class="ident">MerkleTreeCommitment</span><span class="op">&lt;</span><span class="ident">MTValue</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>, <span class="ident">H</span><span class="op">&gt;</span>;
 <span class="kw">type</span> <span class="ident">KeyRegPtr</span> <span class="op">=</span> <span class="kw-2">*mut</span> <span class="ident">KeyReg</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>;
 <span class="kw">type</span> <span class="ident">ClosedKeyRegPtr</span> <span class="op">=</span> <span class="kw-2">*mut</span> <span class="ident">ClosedKeyReg</span><span class="op">&lt;</span><span class="ident">C</span>, <span class="ident">H</span><span class="op">&gt;</span>;
 
@@ -1120,7 +1125,9 @@
 }
 
 <span class="kw">mod</span> <span class="ident">key_reg</span> {
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::c_api</span>::{<span class="ident">ClosedKeyRegPtr</span>, <span class="ident">KeyRegPtr</span>, <span class="ident">MerkleTreePtr</span>, <span class="ident">MspPkPtr</span>, <span class="ident">NULLPOINTERERR</span>};
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::c_api</span>::{
+        <span class="ident">ClosedKeyRegPtr</span>, <span class="ident">KeyRegPtr</span>, <span class="ident">MerkleTreeCommitmentPtr</span>, <span class="ident">MspPkPtr</span>, <span class="ident">NULLPOINTERERR</span>,
+    };
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::key_reg</span>::{<span class="ident">KeyReg</span>, <span class="ident">RegisterError</span>};
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::stm</span>::{<span class="ident">PartyId</span>, <span class="ident">Stake</span>};
     <span class="kw">use</span> <span class="ident">std::slice</span>;
@@ -1179,10 +1186,13 @@
     }
 
     <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-    <span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">generate_avk</span>(<span class="ident">key_reg</span>: <span class="ident">ClosedKeyRegPtr</span>, <span class="ident">mk_tree</span>: <span class="kw-2">*mut</span> <span class="ident">MerkleTreePtr</span>) -&gt; <span class="ident">i64</span> {
+    <span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">generate_avk</span>(
+        <span class="ident">key_reg</span>: <span class="ident">ClosedKeyRegPtr</span>,
+        <span class="ident">mk_tree</span>: <span class="kw-2">*mut</span> <span class="ident">MerkleTreeCommitmentPtr</span>,
+    ) -&gt; <span class="ident">i64</span> {
         <span class="kw">unsafe</span> {
             <span class="kw">if</span> <span class="kw">let</span> (<span class="prelude-val">Some</span>(<span class="ident">key_reg</span>), <span class="prelude-val">Some</span>(<span class="ident">mk_tree</span>)) <span class="op">=</span> (<span class="ident">key_reg</span>.<span class="ident">as_ref</span>(), <span class="ident">mk_tree</span>.<span class="ident">as_mut</span>()) {
-                <span class="kw-2">*</span><span class="ident">mk_tree</span> <span class="op">=</span> <span class="ident">Box::into_raw</span>(<span class="ident">Box::new</span>(<span class="ident">key_reg</span>.<span class="ident">avk</span>.<span class="ident">clone</span>()));
+                <span class="kw-2">*</span><span class="ident">mk_tree</span> <span class="op">=</span> <span class="ident">Box::into_raw</span>(<span class="ident">Box::new</span>(<span class="ident">key_reg</span>.<span class="ident">avk</span>.<span class="ident">to_commitment</span>()));
                 <span class="kw">return</span> <span class="number">0</span>;
             }
             <span class="ident">NULLPOINTERERR</span>

@@ -1331,6 +1331,7 @@
 <span id="1330">1330</span>
 <span id="1331">1331</span>
 <span id="1332">1332</span>
+<span id="1333">1333</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Top-level API for Mithril Stake-based Threshold Multisignature scheme.</span>
 <span class="doccomment">//! See figure 6 of [the paper](https://eprint.iacr.org/2021/916) for most of the</span>
 <span class="doccomment">//! protocol.</span>
@@ -1854,7 +1855,7 @@
         <span class="comment">// sigma &lt;- MSP.Sig(msk, msg&#39;)</span>
         <span class="comment">// ev &lt;- MSP.Eval(msg&#39;, index, sigma)</span>
         <span class="comment">// return 1 if ev &lt; phi(stake) else return 0</span>
-        <span class="kw">let</span> <span class="ident">msgp</span> <span class="op">=</span> <span class="ident">concat_avk_with_msg</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">avk</span>, <span class="ident">msg</span>);
+        <span class="kw">let</span> <span class="ident">msgp</span> <span class="op">=</span> <span class="ident">concat_avk_with_msg</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">avk</span>.<span class="ident">to_commitment</span>(), <span class="ident">msg</span>);
         <span class="kw">let</span> <span class="ident">sigma</span> <span class="op">=</span> <span class="ident">Msp::sig</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">sk</span>, <span class="kw-2">&amp;</span><span class="ident">msgp</span>);
         <span class="kw">let</span> <span class="ident">ev</span> <span class="op">=</span> <span class="ident">Msp::eval</span>(<span class="kw-2">&amp;</span><span class="ident">msgp</span>, <span class="ident">index</span>, <span class="kw-2">&amp;</span><span class="ident">sigma</span>);
         <span class="ident">ev_lt_phi</span>(<span class="self">self</span>.<span class="ident">params</span>.<span class="ident">phi_f</span>, <span class="ident">ev</span>, <span class="self">self</span>.<span class="ident">stake</span>, <span class="self">self</span>.<span class="ident">total_stake</span>)
@@ -1869,7 +1870,7 @@
             <span class="comment">//      p_i is the users path inside the merkle tree AVK</span>
             <span class="comment">//      reg_i is (mvk_i, stake_i)</span>
             <span class="comment">// return pi</span>
-            <span class="kw">let</span> <span class="ident">msgp</span> <span class="op">=</span> <span class="ident">concat_avk_with_msg</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">avk</span>, <span class="ident">msg</span>);
+            <span class="kw">let</span> <span class="ident">msgp</span> <span class="op">=</span> <span class="ident">concat_avk_with_msg</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">avk</span>.<span class="ident">to_commitment</span>(), <span class="ident">msg</span>);
             <span class="kw">let</span> <span class="ident">sigma</span> <span class="op">=</span> <span class="ident">Msp::sig</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">sk</span>, <span class="kw-2">&amp;</span><span class="ident">msgp</span>);
             <span class="kw">let</span> <span class="ident">path</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">avk</span>.<span class="ident">get_path</span>(<span class="self">self</span>.<span class="ident">avk_idx</span>);
             <span class="prelude-val">Some</span>(<span class="ident">StmSig</span> {
@@ -1952,15 +1953,16 @@
         <span class="ident">index</span>: <span class="ident">Index</span>,
         <span class="ident">msg</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">VerificationFailure</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H::F</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">msgp</span> <span class="op">=</span> <span class="ident">concat_avk_with_msg</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">avk</span>, <span class="ident">msg</span>);
+        <span class="kw">let</span> <span class="ident">msgp</span> <span class="op">=</span> <span class="ident">concat_avk_with_msg</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">avk</span>.<span class="ident">to_commitment</span>(), <span class="ident">msg</span>);
         <span class="kw">let</span> <span class="ident">ev</span> <span class="op">=</span> <span class="ident">Msp::eval</span>(<span class="kw-2">&amp;</span><span class="ident">msgp</span>, <span class="ident">index</span>, <span class="kw-2">&amp;</span><span class="ident">sig</span>.<span class="ident">sigma</span>);
 
         <span class="kw">if</span> <span class="op">!</span><span class="ident">ev_lt_phi</span>(<span class="self">self</span>.<span class="ident">params</span>.<span class="ident">phi_f</span>, <span class="ident">ev</span>, <span class="ident">sig</span>.<span class="ident">stake</span>, <span class="self">self</span>.<span class="ident">total_stake</span>) {
             <span class="prelude-val">Err</span>(<span class="ident">VerificationFailure::LotteryLost</span>)
-        } <span class="kw">else</span> <span class="kw">if</span> <span class="op">!</span><span class="self">self</span>
-            .<span class="ident">avk</span>
-            .<span class="ident">check</span>(<span class="kw-2">&amp;</span><span class="ident">MTValue</span>(<span class="ident">sig</span>.<span class="ident">pk</span>.<span class="ident">mvk</span>, <span class="ident">sig</span>.<span class="ident">stake</span>), <span class="ident">sig</span>.<span class="ident">party</span>, <span class="kw-2">&amp;</span><span class="ident">sig</span>.<span class="ident">path</span>)
-        {
+        } <span class="kw">else</span> <span class="kw">if</span> <span class="op">!</span><span class="self">self</span>.<span class="ident">avk</span>.<span class="ident">to_commitment</span>().<span class="ident">check</span>(
+            <span class="kw-2">&amp;</span><span class="ident">MTValue</span>(<span class="ident">sig</span>.<span class="ident">pk</span>.<span class="ident">mvk</span>, <span class="ident">sig</span>.<span class="ident">stake</span>),
+            <span class="ident">sig</span>.<span class="ident">party</span>,
+            <span class="kw-2">&amp;</span><span class="ident">sig</span>.<span class="ident">path</span>,
+        ) {
             <span class="prelude-val">Err</span>(<span class="ident">VerificationFailure::InvalidMerkleTree</span>(<span class="ident">sig</span>.<span class="ident">path</span>.<span class="ident">clone</span>()))
         } <span class="kw">else</span> <span class="kw">if</span> <span class="op">!</span><span class="ident">Msp::ver</span>(<span class="kw-2">&amp;</span><span class="ident">msgp</span>, <span class="kw-2">&amp;</span><span class="ident">sig</span>.<span class="ident">pk</span>.<span class="ident">mvk</span>, <span class="kw-2">&amp;</span><span class="ident">sig</span>.<span class="ident">sigma</span>) {
             <span class="prelude-val">Err</span>(<span class="ident">VerificationFailure::InvalidSignature</span>(<span class="ident">sig</span>.<span class="ident">sigma</span>))
@@ -1985,7 +1987,7 @@
         <span class="ident">Proof::Statement</span>: <span class="ident">From</span><span class="op">&lt;</span><span class="ident">MithrilStatement</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H</span><span class="op">&gt;</span><span class="op">&gt;</span>,
         <span class="ident">Proof::Witness</span>: <span class="ident">From</span><span class="op">&lt;</span><span class="ident">MithrilWitness</span><span class="op">&lt;</span><span class="ident">PE</span>, <span class="ident">H</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     {
-        <span class="kw">let</span> <span class="ident">msgp</span> <span class="op">=</span> <span class="ident">concat_avk_with_msg</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">avk</span>, <span class="ident">msg</span>);
+        <span class="kw">let</span> <span class="ident">msgp</span> <span class="op">=</span> <span class="ident">concat_avk_with_msg</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">avk</span>.<span class="ident">to_commitment</span>(), <span class="ident">msg</span>);
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">evals</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mvks</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">sigmas</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
@@ -2004,7 +2006,7 @@
         <span class="kw">let</span> <span class="ident">mu</span> <span class="op">=</span> <span class="ident">Msp::aggregate_sigs</span>(<span class="kw-2">&amp;</span><span class="ident">sigmas</span>);
 
         <span class="kw">let</span> <span class="ident">statement</span> <span class="op">=</span> <span class="ident">MithrilStatement</span> {
-            <span class="ident">avk</span>: <span class="self">self</span>.<span class="ident">avk</span>.<span class="ident">clone</span>(),
+            <span class="ident">avk</span>: <span class="ident">Rc::new</span>(<span class="self">self</span>.<span class="ident">avk</span>.<span class="ident">to_commitment</span>()),
             <span class="ident">ivk</span>,
             <span class="ident">mu</span>,
             <span class="ident">msg</span>: <span class="ident">msg</span>.<span class="ident">to_vec</span>(),
@@ -2050,7 +2052,7 @@
             <span class="ident">mu</span>: <span class="ident">msig</span>.<span class="ident">mu</span>,
             <span class="ident">msg</span>: <span class="ident">msg</span>.<span class="ident">to_vec</span>(),
             <span class="comment">// These are &quot;background&quot; information&quot;</span>
-            <span class="ident">avk</span>: <span class="self">self</span>.<span class="ident">avk</span>.<span class="ident">clone</span>(),
+            <span class="ident">avk</span>: <span class="ident">Rc::new</span>(<span class="self">self</span>.<span class="ident">avk</span>.<span class="ident">to_commitment</span>()),
             <span class="ident">params</span>: <span class="self">self</span>.<span class="ident">params</span>,
             <span class="ident">total_stake</span>: <span class="self">self</span>.<span class="ident">total_stake</span>,
         };
@@ -2062,7 +2064,7 @@
         ) {
             <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">MultiVerificationFailure::ProofError</span>(<span class="ident">e</span>));
         }
-        <span class="kw">let</span> <span class="ident">msgp</span> <span class="op">=</span> <span class="ident">concat_avk_with_msg</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">avk</span>, <span class="ident">msg</span>);
+        <span class="kw">let</span> <span class="ident">msgp</span> <span class="op">=</span> <span class="ident">concat_avk_with_msg</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">avk</span>.<span class="ident">to_commitment</span>(), <span class="ident">msg</span>);
         <span class="kw">if</span> <span class="op">!</span><span class="ident">Msp::aggregate_ver</span>(<span class="kw-2">&amp;</span><span class="ident">msgp</span>, <span class="kw-2">&amp;</span><span class="ident">msig</span>.<span class="ident">ivk</span>, <span class="kw-2">&amp;</span><span class="ident">msig</span>.<span class="ident">mu</span>) {
             <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">MultiVerificationFailure::InvalidAggregate</span>(<span class="ident">msig</span>.<span class="ident">mu</span>));
         }
