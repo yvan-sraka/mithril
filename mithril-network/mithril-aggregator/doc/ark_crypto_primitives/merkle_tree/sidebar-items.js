@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["MerkleTree","Defines a merkle tree data structure. This merkle tree has runtime fixed height, and assumes number of leaves is 2^height."],["Path","Stores the hashes of a particular path (in order) from root to leaf. For example:"]],"trait":[["Config",""]],"type":[["LeafDigest",""],["LeafParam",""],["TwoToOneDigest",""],["TwoToOneParam",""]]});

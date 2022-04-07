@@ -1,0 +1,651 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `&#x2F;home&#x2F;runner&#x2F;.cargo&#x2F;registry&#x2F;src&#x2F;github.com-1ecc6299db9ec823&#x2F;rug-1.14.0&#x2F;src&#x2F;complex&#x2F;cmp.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>cmp.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
+    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a class="sidebar-logo" href="../../../rug/index.html"><div class="logo-container"><img src="data:image&#x2F;svg+xml;base64,
+PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPCEtLSBDcmVhdGVkIHdpdGggSW5rc2NhcGUgKGh0dHA6Ly93
+d3cuaW5rc2NhcGUub3JnLykgLS0+Cjxzdmcgd2lkdGg9IjEyOCIgaGVpZ2h0PSIxMjgiIHZlcnNpb249IjEuMSIgdmlld0JveD0i
+MCAwIDMzLjg2NjY2NiAzMy44NjY2NjgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6Y2M9Imh0dHA6
+Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL25zIyIgeG1sbnM6ZGM9Imh0dHA6Ly9wdXJsLm9yZy9kYy9lbGVtZW50cy8xLjEvIiB4bWxu
+czpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiPgogPG1ldGFkYXRhPgogIDxyZGY6UkRG
+PgogICA8Y2M6V29yayByZGY6YWJvdXQ9IiI+CiAgICA8ZGM6Zm9ybWF0PmltYWdlL3N2Zyt4bWw8L2RjOmZvcm1hdD4KICAgIDxk
+Yzp0eXBlIHJkZjpyZXNvdXJjZT0iaHR0cDovL3B1cmwub3JnL2RjL2RjbWl0eXBlL1N0aWxsSW1hZ2UiLz4KICAgIDxkYzp0aXRs
+ZS8+CiAgIDwvY2M6V29yaz4KICA8L3JkZjpSREY+CiA8L21ldGFkYXRhPgogPGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCAtMjYz
+LjEzKSI+CiAgPHBhdGggZD0ibTMzLjg2NyAyODAuMDdhMTYuOTMzIDE2LjkzMyAwIDAgMSAtMTYuOTMzIDE2LjkzMyAxNi45MzMg
+MTYuOTMzIDAgMCAxIC0xNi45MzMgLTE2LjkzMyAxNi45MzMgMTYuOTMzIDAgMCAxIDE2LjkzMyAtMTYuOTMzIDE2LjkzMyAxNi45
+MzMgMCAwIDEgMTYuOTMzIDE2LjkzM3oiIGZpbGw9IiNmZmZmYzAiLz4KICA8ZyBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAiIHN0
+cm9rZS13aWR0aD0iLjI2NDU4cHgiPgogICA8ZyBhcmlhLWxhYmVsPSI2Ij4KICAgIDxwYXRoIGQ9Im0xNC40NzEgMjg0LjA3YzIu
+MjAxMyAwIDQuMDM1OC0xLjQ2NzYgNC4wMzU4LTMuOTYyNCAwLTIuNDk0OC0xLjU0MDktMy41OTU1LTMuNTIyMS0zLjU5NTUtMC42
+MjM3MSAwLTEuNjE0MyAwLjQwMzU4LTIuMTgzIDEuMTU1NyAwLjEyODQxLTIuMzQ4MSAxLjAwODktMy4xMzY5IDIuMTQ2My0zLjEz
+NjkgMC42NjA0IDAgMS4zOTQyIDAuNDAzNTggMS43NjExIDAuODA3MTZsMS42NTEtMS44NzExYy0wLjc3MDQ3LTAuNzcwNDctMS45
+ODEyLTEuNDY3Ni0zLjYzMjItMS40Njc2LTIuNDk0OCAwLTQuODA2MiAyLjAxNzktNC44MDYyIDYuMjM3MXMyLjMxMTQgNS44MzM1
+IDQuNTQ5NCA1LjgzMzV6bS0wLjA3MzM4LTIuMzQ4MWMtMC41Njg2OCAwLTEuMjY1OC0wLjM4NTI0LTEuNTIyNi0yLjAxNzkgMC4z
+NjY4OS0wLjY5NzA5IDAuOTM1NTctMC45OTA2IDEuNDg1OS0wLjk5MDYgMC42NjA0IDAgMS4yODQxIDAuMjc1MTYgMS4yODQxIDEu
+Mzk0MiAwIDEuMjI5MS0wLjU4NzAyIDEuNjE0My0xLjI0NzQgMS42MTQzeiIgZmlsbD0iIzAwMTAzMCIgc3Ryb2tlPSJub25lIi8+
+CiAgIDwvZz4KICAgPGcgdHJhbnNmb3JtPSJyb3RhdGUoMTUuNTE1KSIgYXJpYS1sYWJlbD0iMiI+CiAgICA8cGF0aCBkPSJtOTgu
+MDM1IDI2Ny45NWg1LjA0NjF2LTEuMzk5OGgtMS40NDVjLTAuMzM4NjcgMC0wLjgzNTM4IDAuMDQ1Mi0xLjE5NjYgMC4wOTAzIDEu
+MTYyOC0xLjIxOTIgMi4yOTE2LTIuNTA2MSAyLjI5MTYtMy43MTQgMC0xLjM3NzItMC45NTk1NS0yLjI4MDQtMi4zNzA3LTIuMjgw
+NC0xLjAyNzMgMC0xLjY5MzMgMC4zODM4Mi0yLjQwNDUgMS4xNDAybDAuOTAzMTEgMC44OTE4MmMwLjM2MTI0LTAuMzgzODIgMC43
+NTYzNi0wLjczMzc4IDEuMjc1Ni0wLjczMzc4IDAuNjIwODkgMCAxLjAxNiAwLjM4MzgzIDEuMDE2IDEuMDgzNyAwIDEuMDE2LTEu
+Mjg2OSAyLjI0NjUtMy4xMTU3IDMuOTczN3oiIGZpbGw9IiMwMDEwMzAiIGZpbGwtb3BhY2l0eT0iLjk3MjU1IiBzdHJva2U9Im5v
+bmUiLz4KICAgPC9nPgogICA8ZyB0cmFuc2Zvcm09InJvdGF0ZSgtMTEuMDMzKSIgYXJpYS1sYWJlbD0iOCI+CiAgICA8cGF0aCBk
+PSJtLTM4LjkyIDI5MC43NmMxLjI3NDIgMCAyLjEyMzctMC43NDA4MyAyLjEyMzctMS43MDg4IDAtMC44Mzk2Mi0wLjUwMzc3LTEu
+MzAzOS0xLjA4NjYtMS42Mjk4di0wLjAzOTVjMC40MDQ5OS0wLjI5NjMzIDAuODM5NjEtMC44MTk4NSAwLjgzOTYxLTEuNDQyMiAw
+LTEuMDE3NC0wLjcyMTA4LTEuNjk5LTEuODQ3MS0xLjY5OS0xLjA4NjYgMC0xLjg5NjUgMC42NTE5My0xLjg5NjUgMS42NjkzIDAg
+MC42NjE4MSAwLjM4NTIzIDEuMTI2MSAwLjg2OTI0IDEuNDcxOHYwLjAzOTVjLTAuNTkyNjcgMC4zMTYwOS0xLjEzNTkgMC44Mjk3
+NC0xLjEzNTkgMS42MTAxIDAgMS4wMTc0IDAuOTA4NzYgMS43Mjg2IDIuMTMzNiAxLjcyODZ6bTAuNDE0ODctMy42NjQ2Yy0wLjcw
+MTMyLTAuMjc2NTgtMS4yNjQ0LTAuNTUzMTYtMS4yNjQ0LTEuMTg1MyAwLTAuNTQzMjggMC4zNzUzNi0wLjg1OTM2IDAuODU5Mzct
+MC44NTkzNiAwLjU4Mjc5IDAgMC45Mjg1MSAwLjQwNDk4IDAuOTI4NTEgMC45NTgxNCAwIDAuMzk1MTEtMC4xODc2OCAwLjc1MDcx
+LTAuNTIzNTIgMS4wODY2em0tMC4zOTUxMSAyLjg1NDdjLTAuNjQyMDYgMC0xLjE1NTctMC40MTQ4Ni0xLjE1NTctMS4wMzcyIDAt
+MC40ODQwMSAwLjI4NjQ2LTAuODg5IDAuNjgxNTctMS4xNzU1IDAuODQ5NDkgMC4zNDU3MiAxLjUxMTMgMC41OTI2NyAxLjUxMTMg
+MS4yNzQyIDAgMC41ODI3OS0wLjQzNDYyIDAuOTM4MzktMS4wMzcyIDAuOTM4Mzl6IiBmaWxsPSIjMDAxMDMwIiBmaWxsLW9wYWNp
+dHk9Ii45NDExOCIgc3Ryb2tlPSJub25lIi8+CiAgIDwvZz4KICAgPGcgdHJhbnNmb3JtPSJyb3RhdGUoNi41MDA4KSIgYXJpYS1s
+YWJlbD0iMyI+CiAgICA8cGF0aCBkPSJtMzkuMzAyIDI4My42NGMxLjAzMjkgMCAxLjg4ODEtMC41NzU3MyAxLjg4ODEtMS41NTc5
+IDAtMC43MTEyLTAuNDgyNi0xLjE2ODQtMS4xMTc2LTEuMzM3N3YtMC4wMzM5YzAuNTg0Mi0wLjIyODYgMC45Mzk4LTAuNjM1IDAu
+OTM5OC0xLjIzNjEgMC0wLjkxNDQtMC43MTEyLTEuNDIyNC0xLjc0NDEtMS40MjI0LTAuNjQzNDcgMC0xLjE1OTkgMC4yNzA5My0x
+LjYxNzEgMC42NzczM2wwLjQ5OTUzIDAuNjAxMTRjMC4zMzAyLTAuMzA0OCAwLjY2MDQtMC41MDggMS4wODM3LTAuNTA4IDAuNDkx
+MDcgMCAwLjc5NTg3IDAuMjcwOTMgMC43OTU4NyAwLjcxOTY3IDAgMC40OTk1My0wLjM0NzEzIDAuODYzNi0xLjQwNTUgMC44NjM2
+djAuNzExMmMxLjIyNzcgMCAxLjU4MzMgMC4zNTU2IDEuNTgzMyAwLjkxNDQgMCAwLjUwOC0wLjQwNjQgMC44MTI4LTAuOTkwNiAw
+LjgxMjgtMC41NDE4NyAwLTAuOTU2NzMtMC4yNjI0Ny0xLjI3ODUtMC41OTI2N2wtMC40NjU2NyAwLjYyNjUzYzAuMzgxIDAuNDIz
+MzQgMC45NTY3MyAwLjc2MiAxLjgyODggMC43NjJ6IiBmaWxsPSIjMDAxMDMwIiBmaWxsLW9wYWNpdHk9Ii44Nzg0MyIgc3Ryb2tl
+PSJub25lIi8+CiAgIDwvZz4KICAgPGcgdHJhbnNmb3JtPSJyb3RhdGUoOC4zNTYpIiBhcmlhLWxhYmVsPSIxIj4KICAgIDxwYXRo
+IGQ9Im00Ni40MDUgMjY4LjloMy4yNDI3di0wLjc5NTg3aC0xLjA1ODN2LTQuNTg4OWgtMC43MjgxM2MtMC4zMzg2NyAwLjIwMzIt
+MC43MTEyIDAuMzM4NjYtMS4yNDQ2IDAuNDQwMjZ2MC42MDk2aDAuOTkwNnYzLjUzOTFoLTEuMjAyM3oiIGZpbGw9IiMwMDEwMzAi
+IGZpbGwtb3BhY2l0eT0iLjc1Mjk0IiBzdHJva2U9Im5vbmUiLz4KICAgPC9nPgogICA8ZyB0cmFuc2Zvcm09InJvdGF0ZSgxMi44
+NjEpIiBhcmlhLWxhYmVsPSI4Ij4KICAgIDxwYXRoIGQ9Im04NS4wMzYgMjYxLjYzYzEuMDkyMiAwIDEuODIwMy0wLjYzNSAxLjgy
+MDMtMS40NjQ3IDAtMC43MTk2Ny0wLjQzMTgtMS4xMTc2LTAuOTMxMzMtMS4zOTd2LTAuMDMzOWMwLjM0NzEzLTAuMjU0IDAuNzE5
+NjctMC43MDI3MyAwLjcxOTY3LTEuMjM2MSAwLTAuODcyMDctMC42MTgwNy0xLjQ1NjMtMS41ODMzLTEuNDU2My0wLjkzMTMzIDAt
+MS42MjU2IDAuNTU4OC0xLjYyNTYgMS40MzA5IDAgMC41NjcyNiAwLjMzMDIgMC45NjUyIDAuNzQ1MDcgMS4yNjE1djAuMDMzOWMt
+MC41MDggMC4yNzA5My0wLjk3MzY3IDAuNzExMi0wLjk3MzY3IDEuMzgwMSAwIDAuODcyMDcgMC43Nzg5MyAxLjQ4MTcgMS44Mjg4
+IDEuNDgxN3ptMC4zNTU2LTMuMTQxMWMtMC42MDExMy0wLjIzNzA3LTEuMDgzNy0wLjQ3NDE0LTEuMDgzNy0xLjAxNiAwLTAuNDY1
+NjcgMC4zMjE3My0wLjczNjYgMC43MzY2LTAuNzM2NiAwLjQ5OTUzIDAgMC43OTU4NyAwLjM0NzEzIDAuNzk1ODcgMC44MjEyNiAw
+IDAuMzM4NjctMC4xNjA4NyAwLjY0MzQ3LTAuNDQ4NzMgMC45MzEzNHptLTAuMzM4NjcgMi40NDY5Yy0wLjU1MDMzIDAtMC45OTA2
+LTAuMzU1Ni0wLjk5MDYtMC44ODkgMC0wLjQxNDg2IDAuMjQ1NTMtMC43NjIgMC41ODQyLTEuMDA3NSAwLjcyODEzIDAuMjk2MzMg
+MS4yOTU0IDAuNTA4IDEuMjk1NCAxLjA5MjIgMCAwLjQ5OTUzLTAuMzcyNTMgMC44MDQzMy0wLjg4OSAwLjgwNDMzeiIgZmlsbD0i
+IzAwMTAzMCIgZmlsbC1vcGFjaXR5PSIuNjI3NDUiIHN0cm9rZT0ibm9uZSIvPgogICA8L2c+CiAgIDxnIHRyYW5zZm9ybT0icm90
+YXRlKDQuMzA5OSkiIGFyaWEtbGFiZWw9IjUiPgogICAgPHBhdGggZD0ibTQ2LjM0MSAyODkuNDljMC45OTA2IDAgMS44OTY1LTAu
+Njc3MzQgMS44OTY1LTEuODU0MiAwLTEuMTU5OS0wLjc3MDQ3LTEuNjg0OS0xLjY5MzMtMS42ODQ5LTAuMjc5NCAwLTAuNDgyNiAw
+LjA2NzctMC43MTEyIDAuMTc3OGwwLjExMDA3LTEuMzAzOWgyLjAzMnYtMC44MjEyN2gtMi44Nzg3bC0wLjE2MDg3IDIuNjU4NSAw
+LjQ2NTY3IDAuMjk2MzNjMC4zMjE3My0wLjIxMTY3IDAuNTE2NDctMC4zMDQ4IDAuODYzNi0wLjMwNDggMC41OTI2NyAwIDAuOTkw
+NiAwLjM2NDA3IDAuOTkwNiAxLjAwNzUgMCAwLjY1MTk0LTAuNDQwMjcgMS4wMzI5LTEuMDQxNCAxLjAzMjktMC41NDE4NyAwLTAu
+OTM5OC0wLjI3MDk0LTEuMjYxNS0wLjU3NTc0bC0wLjQ0ODczIDAuNjI2NTRjMC4zOTc5MyAwLjM5NzkzIDAuOTY1MiAwLjc0NTA3
+IDEuODM3MyAwLjc0NTA3eiIgZmlsbD0iIzAwMTAzMCIgZmlsbC1vcGFjaXR5PSIuNTAxOTYiIHN0cm9rZT0ibm9uZSIvPgogICA8
+L2c+CiAgPC9nPgogIDxnIGZpbGw9IiMwMDEwMzAiIGZpbGwtb3BhY2l0eT0iLjM3NjQ3IiBzdHJva2U9IiMwMDAiIHN0cm9rZS13
+aWR0aD0iLjI2NDU4cHgiIGFyaWEtbGFiZWw9IjMiPgogICA8cGF0aCBkPSJtOS44ODU5IDI5My40NmMxLjAzMjkgMCAxLjg4ODEt
+MC41NzU3NCAxLjg4ODEtMS41NTc5IDAtMC43MTEyLTAuNDgyNi0xLjE2ODQtMS4xMTc2LTEuMzM3N3YtMC4wMzM5YzAuNTg0Mi0w
+LjIyODYgMC45Mzk4LTAuNjM1IDAuOTM5OC0xLjIzNjEgMC0wLjkxNDQtMC43MTEyLTEuNDIyNC0xLjc0NDEtMS40MjI0LTAuNjQz
+NDcgMC0xLjE1OTkgMC4yNzA5My0xLjYxNzEgMC42NzczM2wwLjQ5OTUzIDAuNjAxMTNjMC4zMzAyLTAuMzA0OCAwLjY2MDQtMC41
+MDggMS4wODM3LTAuNTA4IDAuNDkxMDcgMCAwLjc5NTg3IDAuMjcwOTQgMC43OTU4NyAwLjcxOTY3IDAgMC40OTk1My0wLjM0NzEz
+IDAuODYzNi0xLjQwNTUgMC44NjM2djAuNzExMmMxLjIyNzcgMCAxLjU4MzMgMC4zNTU2IDEuNTgzMyAwLjkxNDQgMCAwLjUwOC0w
+LjQwNjQgMC44MTI4LTAuOTkwNiAwLjgxMjgtMC41NDE4NyAwLTAuOTU2NzMtMC4yNjI0Ny0xLjI3ODUtMC41OTI2N2wtMC40NjU2
+NyAwLjYyNjU0YzAuMzgxIDAuNDIzMzMgMC45NTY3MyAwLjc2MiAxLjgyODggMC43NjJ6IiBmaWxsPSIjMDAxMDMwIiBmaWxsLW9w
+YWNpdHk9Ii4zNzY0NyIgc3Ryb2tlPSJub25lIi8+CiAgPC9nPgogIDxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwMCIgc3Ryb2tl
+LXdpZHRoPSIuMjY0NThweCI+CiAgIDxnIHRyYW5zZm9ybT0icm90YXRlKC0xMS4zNTIpIiBhcmlhLWxhYmVsPSIwIj4KICAgIDxw
+YXRoIGQ9Im0tNTEuNDcxIDI3Ni4xN2MxLjExNzYgMCAxLjgyODgtMC45OTkwNyAxLjgyODgtMi44MTk0IDAtMS44MTE5LTAuNzEx
+Mi0yLjc2ODYtMS44Mjg4LTIuNzY4NnMtMS44Mjg4IDAuOTQ4MjctMS44Mjg4IDIuNzY4NiAwLjcxMTIgMi44MTk0IDEuODI4OCAy
+LjgxOTR6bTAtMC43NjJjLTAuNTE2NDcgMC0wLjg5NzQ3LTAuNTMzNC0wLjg5NzQ3LTIuMDU3NHMwLjM4MS0yLjAwNjYgMC44OTc0
+Ny0yLjAwNjZjMC41MjQ5MyAwIDAuODk3NDcgMC40ODI2IDAuODk3NDcgMi4wMDY2cy0wLjM3MjUzIDIuMDU3NC0wLjg5NzQ3IDIu
+MDU3NHoiIGZpbGw9IiMwMDEwMzAiIGZpbGwtb3BhY2l0eT0iLjI1MDk4IiBzdHJva2U9Im5vbmUiLz4KICAgPC9nPgogICA8ZyB0
+cmFuc2Zvcm09InJvdGF0ZSgyMi41MDYpIiBhcmlhLWxhYmVsPSI3Ij4KICAgIDxwYXRoIGQ9Im0xMTguMjEgMjQzLjA4aDAuOTkw
+NmMwLjA5MzEtMi4wOTk3IDAuMzEzMjctMy4yMjU4IDEuNTc0OC00Ljc5MjF2LTAuNTkyNjdoLTMuNjE1M3YwLjgyMTI3aDIuNTQ4
+NWMtMS4wNDE0IDEuNDQ3OC0xLjQwNTUgMi42NTAxLTEuNDk4NiA0LjU2MzV6IiBmaWxsPSIjMDAxMDMwIiBmaWxsLW9wYWNpdHk9
+Ii4xMjU0OSIgc3Ryb2tlPSJub25lIi8+CiAgIDwvZz4KICAgPGcgdHJhbnNmb3JtPSJyb3RhdGUoLTkuNzI3MykiIGFyaWEtbGFi
+ZWw9IjEiPgogICAgPHBhdGggZD0ibS0xOC4yOTkgMjgyLjc5aDMuMjQyN3YtMC43OTU4N2gtMS4wNTgzdi00LjU4ODloLTAuNzI4
+MTNjLTAuMzM4NjcgMC4yMDMyLTAuNzExMiAwLjMzODY3LTEuMjQ0NiAwLjQ0MDI3djAuNjA5NmgwLjk5MDZ2My41MzkxaC0xLjIw
+MjN6IiBmaWxsPSIjMDAxMDMwIiBmaWxsLW9wYWNpdHk9Ii4wNjI3NDUiIHN0cm9rZT0ibm9uZSIvPgogICA8L2c+CiAgPC9nPgog
+IDxnIGZpbGw9IiMyNDEwMzAiIGFyaWEtbGFiZWw9Ii4iPgogICA8cGF0aCBkPSJtMjAuOTIgMjgzLjk4YzAuNjU0NzYgMCAxLjEy
+ODktMC41MTkyOSAxLjEyODktMS4xNzQgMC0wLjY1NDc2LTAuNDc0MTMtMS4xNzQtMS4xMjg5LTEuMTc0LTAuNjU0NzYgMC0xLjEy
+ODkgMC41MTkyOS0xLjEyODkgMS4xNzQgMCAwLjY1NDc1IDAuNDc0MTMgMS4xNzQgMS4xMjg5IDEuMTc0eiIgZmlsbD0iIzAwMTAz
+MCIvPgogIDwvZz4KIDwvZz4KPC9zdmc+Cg==
+" alt="logo"></div>
+        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../rug/index.html"><img src="data:image&#x2F;svg+xml;base64,
+PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPCEtLSBDcmVhdGVkIHdpdGggSW5rc2NhcGUgKGh0dHA6Ly93
+d3cuaW5rc2NhcGUub3JnLykgLS0+Cjxzdmcgd2lkdGg9IjEyOCIgaGVpZ2h0PSIxMjgiIHZlcnNpb249IjEuMSIgdmlld0JveD0i
+MCAwIDMzLjg2NjY2NiAzMy44NjY2NjgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6Y2M9Imh0dHA6
+Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL25zIyIgeG1sbnM6ZGM9Imh0dHA6Ly9wdXJsLm9yZy9kYy9lbGVtZW50cy8xLjEvIiB4bWxu
+czpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiPgogPG1ldGFkYXRhPgogIDxyZGY6UkRG
+PgogICA8Y2M6V29yayByZGY6YWJvdXQ9IiI+CiAgICA8ZGM6Zm9ybWF0PmltYWdlL3N2Zyt4bWw8L2RjOmZvcm1hdD4KICAgIDxk
+Yzp0eXBlIHJkZjpyZXNvdXJjZT0iaHR0cDovL3B1cmwub3JnL2RjL2RjbWl0eXBlL1N0aWxsSW1hZ2UiLz4KICAgIDxkYzp0aXRs
+ZS8+CiAgIDwvY2M6V29yaz4KICA8L3JkZjpSREY+CiA8L21ldGFkYXRhPgogPGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCAtMjYz
+LjEzKSI+CiAgPHBhdGggZD0ibTMzLjg2NyAyODAuMDdhMTYuOTMzIDE2LjkzMyAwIDAgMSAtMTYuOTMzIDE2LjkzMyAxNi45MzMg
+MTYuOTMzIDAgMCAxIC0xNi45MzMgLTE2LjkzMyAxNi45MzMgMTYuOTMzIDAgMCAxIDE2LjkzMyAtMTYuOTMzIDE2LjkzMyAxNi45
+MzMgMCAwIDEgMTYuOTMzIDE2LjkzM3oiIGZpbGw9IiNmZmZmYzAiLz4KICA8ZyBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAiIHN0
+cm9rZS13aWR0aD0iLjI2NDU4cHgiPgogICA8ZyBhcmlhLWxhYmVsPSI2Ij4KICAgIDxwYXRoIGQ9Im0xNC40NzEgMjg0LjA3YzIu
+MjAxMyAwIDQuMDM1OC0xLjQ2NzYgNC4wMzU4LTMuOTYyNCAwLTIuNDk0OC0xLjU0MDktMy41OTU1LTMuNTIyMS0zLjU5NTUtMC42
+MjM3MSAwLTEuNjE0MyAwLjQwMzU4LTIuMTgzIDEuMTU1NyAwLjEyODQxLTIuMzQ4MSAxLjAwODktMy4xMzY5IDIuMTQ2My0zLjEz
+NjkgMC42NjA0IDAgMS4zOTQyIDAuNDAzNTggMS43NjExIDAuODA3MTZsMS42NTEtMS44NzExYy0wLjc3MDQ3LTAuNzcwNDctMS45
+ODEyLTEuNDY3Ni0zLjYzMjItMS40Njc2LTIuNDk0OCAwLTQuODA2MiAyLjAxNzktNC44MDYyIDYuMjM3MXMyLjMxMTQgNS44MzM1
+IDQuNTQ5NCA1LjgzMzV6bS0wLjA3MzM4LTIuMzQ4MWMtMC41Njg2OCAwLTEuMjY1OC0wLjM4NTI0LTEuNTIyNi0yLjAxNzkgMC4z
+NjY4OS0wLjY5NzA5IDAuOTM1NTctMC45OTA2IDEuNDg1OS0wLjk5MDYgMC42NjA0IDAgMS4yODQxIDAuMjc1MTYgMS4yODQxIDEu
+Mzk0MiAwIDEuMjI5MS0wLjU4NzAyIDEuNjE0My0xLjI0NzQgMS42MTQzeiIgZmlsbD0iIzAwMTAzMCIgc3Ryb2tlPSJub25lIi8+
+CiAgIDwvZz4KICAgPGcgdHJhbnNmb3JtPSJyb3RhdGUoMTUuNTE1KSIgYXJpYS1sYWJlbD0iMiI+CiAgICA8cGF0aCBkPSJtOTgu
+MDM1IDI2Ny45NWg1LjA0NjF2LTEuMzk5OGgtMS40NDVjLTAuMzM4NjcgMC0wLjgzNTM4IDAuMDQ1Mi0xLjE5NjYgMC4wOTAzIDEu
+MTYyOC0xLjIxOTIgMi4yOTE2LTIuNTA2MSAyLjI5MTYtMy43MTQgMC0xLjM3NzItMC45NTk1NS0yLjI4MDQtMi4zNzA3LTIuMjgw
+NC0xLjAyNzMgMC0xLjY5MzMgMC4zODM4Mi0yLjQwNDUgMS4xNDAybDAuOTAzMTEgMC44OTE4MmMwLjM2MTI0LTAuMzgzODIgMC43
+NTYzNi0wLjczMzc4IDEuMjc1Ni0wLjczMzc4IDAuNjIwODkgMCAxLjAxNiAwLjM4MzgzIDEuMDE2IDEuMDgzNyAwIDEuMDE2LTEu
+Mjg2OSAyLjI0NjUtMy4xMTU3IDMuOTczN3oiIGZpbGw9IiMwMDEwMzAiIGZpbGwtb3BhY2l0eT0iLjk3MjU1IiBzdHJva2U9Im5v
+bmUiLz4KICAgPC9nPgogICA8ZyB0cmFuc2Zvcm09InJvdGF0ZSgtMTEuMDMzKSIgYXJpYS1sYWJlbD0iOCI+CiAgICA8cGF0aCBk
+PSJtLTM4LjkyIDI5MC43NmMxLjI3NDIgMCAyLjEyMzctMC43NDA4MyAyLjEyMzctMS43MDg4IDAtMC44Mzk2Mi0wLjUwMzc3LTEu
+MzAzOS0xLjA4NjYtMS42Mjk4di0wLjAzOTVjMC40MDQ5OS0wLjI5NjMzIDAuODM5NjEtMC44MTk4NSAwLjgzOTYxLTEuNDQyMiAw
+LTEuMDE3NC0wLjcyMTA4LTEuNjk5LTEuODQ3MS0xLjY5OS0xLjA4NjYgMC0xLjg5NjUgMC42NTE5My0xLjg5NjUgMS42NjkzIDAg
+MC42NjE4MSAwLjM4NTIzIDEuMTI2MSAwLjg2OTI0IDEuNDcxOHYwLjAzOTVjLTAuNTkyNjcgMC4zMTYwOS0xLjEzNTkgMC44Mjk3
+NC0xLjEzNTkgMS42MTAxIDAgMS4wMTc0IDAuOTA4NzYgMS43Mjg2IDIuMTMzNiAxLjcyODZ6bTAuNDE0ODctMy42NjQ2Yy0wLjcw
+MTMyLTAuMjc2NTgtMS4yNjQ0LTAuNTUzMTYtMS4yNjQ0LTEuMTg1MyAwLTAuNTQzMjggMC4zNzUzNi0wLjg1OTM2IDAuODU5Mzct
+MC44NTkzNiAwLjU4Mjc5IDAgMC45Mjg1MSAwLjQwNDk4IDAuOTI4NTEgMC45NTgxNCAwIDAuMzk1MTEtMC4xODc2OCAwLjc1MDcx
+LTAuNTIzNTIgMS4wODY2em0tMC4zOTUxMSAyLjg1NDdjLTAuNjQyMDYgMC0xLjE1NTctMC40MTQ4Ni0xLjE1NTctMS4wMzcyIDAt
+MC40ODQwMSAwLjI4NjQ2LTAuODg5IDAuNjgxNTctMS4xNzU1IDAuODQ5NDkgMC4zNDU3MiAxLjUxMTMgMC41OTI2NyAxLjUxMTMg
+MS4yNzQyIDAgMC41ODI3OS0wLjQzNDYyIDAuOTM4MzktMS4wMzcyIDAuOTM4Mzl6IiBmaWxsPSIjMDAxMDMwIiBmaWxsLW9wYWNp
+dHk9Ii45NDExOCIgc3Ryb2tlPSJub25lIi8+CiAgIDwvZz4KICAgPGcgdHJhbnNmb3JtPSJyb3RhdGUoNi41MDA4KSIgYXJpYS1s
+YWJlbD0iMyI+CiAgICA8cGF0aCBkPSJtMzkuMzAyIDI4My42NGMxLjAzMjkgMCAxLjg4ODEtMC41NzU3MyAxLjg4ODEtMS41NTc5
+IDAtMC43MTEyLTAuNDgyNi0xLjE2ODQtMS4xMTc2LTEuMzM3N3YtMC4wMzM5YzAuNTg0Mi0wLjIyODYgMC45Mzk4LTAuNjM1IDAu
+OTM5OC0xLjIzNjEgMC0wLjkxNDQtMC43MTEyLTEuNDIyNC0xLjc0NDEtMS40MjI0LTAuNjQzNDcgMC0xLjE1OTkgMC4yNzA5My0x
+LjYxNzEgMC42NzczM2wwLjQ5OTUzIDAuNjAxMTRjMC4zMzAyLTAuMzA0OCAwLjY2MDQtMC41MDggMS4wODM3LTAuNTA4IDAuNDkx
+MDcgMCAwLjc5NTg3IDAuMjcwOTMgMC43OTU4NyAwLjcxOTY3IDAgMC40OTk1My0wLjM0NzEzIDAuODYzNi0xLjQwNTUgMC44NjM2
+djAuNzExMmMxLjIyNzcgMCAxLjU4MzMgMC4zNTU2IDEuNTgzMyAwLjkxNDQgMCAwLjUwOC0wLjQwNjQgMC44MTI4LTAuOTkwNiAw
+LjgxMjgtMC41NDE4NyAwLTAuOTU2NzMtMC4yNjI0Ny0xLjI3ODUtMC41OTI2N2wtMC40NjU2NyAwLjYyNjUzYzAuMzgxIDAuNDIz
+MzQgMC45NTY3MyAwLjc2MiAxLjgyODggMC43NjJ6IiBmaWxsPSIjMDAxMDMwIiBmaWxsLW9wYWNpdHk9Ii44Nzg0MyIgc3Ryb2tl
+PSJub25lIi8+CiAgIDwvZz4KICAgPGcgdHJhbnNmb3JtPSJyb3RhdGUoOC4zNTYpIiBhcmlhLWxhYmVsPSIxIj4KICAgIDxwYXRo
+IGQ9Im00Ni40MDUgMjY4LjloMy4yNDI3di0wLjc5NTg3aC0xLjA1ODN2LTQuNTg4OWgtMC43MjgxM2MtMC4zMzg2NyAwLjIwMzIt
+MC43MTEyIDAuMzM4NjYtMS4yNDQ2IDAuNDQwMjZ2MC42MDk2aDAuOTkwNnYzLjUzOTFoLTEuMjAyM3oiIGZpbGw9IiMwMDEwMzAi
+IGZpbGwtb3BhY2l0eT0iLjc1Mjk0IiBzdHJva2U9Im5vbmUiLz4KICAgPC9nPgogICA8ZyB0cmFuc2Zvcm09InJvdGF0ZSgxMi44
+NjEpIiBhcmlhLWxhYmVsPSI4Ij4KICAgIDxwYXRoIGQ9Im04NS4wMzYgMjYxLjYzYzEuMDkyMiAwIDEuODIwMy0wLjYzNSAxLjgy
+MDMtMS40NjQ3IDAtMC43MTk2Ny0wLjQzMTgtMS4xMTc2LTAuOTMxMzMtMS4zOTd2LTAuMDMzOWMwLjM0NzEzLTAuMjU0IDAuNzE5
+NjctMC43MDI3MyAwLjcxOTY3LTEuMjM2MSAwLTAuODcyMDctMC42MTgwNy0xLjQ1NjMtMS41ODMzLTEuNDU2My0wLjkzMTMzIDAt
+MS42MjU2IDAuNTU4OC0xLjYyNTYgMS40MzA5IDAgMC41NjcyNiAwLjMzMDIgMC45NjUyIDAuNzQ1MDcgMS4yNjE1djAuMDMzOWMt
+MC41MDggMC4yNzA5My0wLjk3MzY3IDAuNzExMi0wLjk3MzY3IDEuMzgwMSAwIDAuODcyMDcgMC43Nzg5MyAxLjQ4MTcgMS44Mjg4
+IDEuNDgxN3ptMC4zNTU2LTMuMTQxMWMtMC42MDExMy0wLjIzNzA3LTEuMDgzNy0wLjQ3NDE0LTEuMDgzNy0xLjAxNiAwLTAuNDY1
+NjcgMC4zMjE3My0wLjczNjYgMC43MzY2LTAuNzM2NiAwLjQ5OTUzIDAgMC43OTU4NyAwLjM0NzEzIDAuNzk1ODcgMC44MjEyNiAw
+IDAuMzM4NjctMC4xNjA4NyAwLjY0MzQ3LTAuNDQ4NzMgMC45MzEzNHptLTAuMzM4NjcgMi40NDY5Yy0wLjU1MDMzIDAtMC45OTA2
+LTAuMzU1Ni0wLjk5MDYtMC44ODkgMC0wLjQxNDg2IDAuMjQ1NTMtMC43NjIgMC41ODQyLTEuMDA3NSAwLjcyODEzIDAuMjk2MzMg
+MS4yOTU0IDAuNTA4IDEuMjk1NCAxLjA5MjIgMCAwLjQ5OTUzLTAuMzcyNTMgMC44MDQzMy0wLjg4OSAwLjgwNDMzeiIgZmlsbD0i
+IzAwMTAzMCIgZmlsbC1vcGFjaXR5PSIuNjI3NDUiIHN0cm9rZT0ibm9uZSIvPgogICA8L2c+CiAgIDxnIHRyYW5zZm9ybT0icm90
+YXRlKDQuMzA5OSkiIGFyaWEtbGFiZWw9IjUiPgogICAgPHBhdGggZD0ibTQ2LjM0MSAyODkuNDljMC45OTA2IDAgMS44OTY1LTAu
+Njc3MzQgMS44OTY1LTEuODU0MiAwLTEuMTU5OS0wLjc3MDQ3LTEuNjg0OS0xLjY5MzMtMS42ODQ5LTAuMjc5NCAwLTAuNDgyNiAw
+LjA2NzctMC43MTEyIDAuMTc3OGwwLjExMDA3LTEuMzAzOWgyLjAzMnYtMC44MjEyN2gtMi44Nzg3bC0wLjE2MDg3IDIuNjU4NSAw
+LjQ2NTY3IDAuMjk2MzNjMC4zMjE3My0wLjIxMTY3IDAuNTE2NDctMC4zMDQ4IDAuODYzNi0wLjMwNDggMC41OTI2NyAwIDAuOTkw
+NiAwLjM2NDA3IDAuOTkwNiAxLjAwNzUgMCAwLjY1MTk0LTAuNDQwMjcgMS4wMzI5LTEuMDQxNCAxLjAzMjktMC41NDE4NyAwLTAu
+OTM5OC0wLjI3MDk0LTEuMjYxNS0wLjU3NTc0bC0wLjQ0ODczIDAuNjI2NTRjMC4zOTc5MyAwLjM5NzkzIDAuOTY1MiAwLjc0NTA3
+IDEuODM3MyAwLjc0NTA3eiIgZmlsbD0iIzAwMTAzMCIgZmlsbC1vcGFjaXR5PSIuNTAxOTYiIHN0cm9rZT0ibm9uZSIvPgogICA8
+L2c+CiAgPC9nPgogIDxnIGZpbGw9IiMwMDEwMzAiIGZpbGwtb3BhY2l0eT0iLjM3NjQ3IiBzdHJva2U9IiMwMDAiIHN0cm9rZS13
+aWR0aD0iLjI2NDU4cHgiIGFyaWEtbGFiZWw9IjMiPgogICA8cGF0aCBkPSJtOS44ODU5IDI5My40NmMxLjAzMjkgMCAxLjg4ODEt
+MC41NzU3NCAxLjg4ODEtMS41NTc5IDAtMC43MTEyLTAuNDgyNi0xLjE2ODQtMS4xMTc2LTEuMzM3N3YtMC4wMzM5YzAuNTg0Mi0w
+LjIyODYgMC45Mzk4LTAuNjM1IDAuOTM5OC0xLjIzNjEgMC0wLjkxNDQtMC43MTEyLTEuNDIyNC0xLjc0NDEtMS40MjI0LTAuNjQz
+NDcgMC0xLjE1OTkgMC4yNzA5My0xLjYxNzEgMC42NzczM2wwLjQ5OTUzIDAuNjAxMTNjMC4zMzAyLTAuMzA0OCAwLjY2MDQtMC41
+MDggMS4wODM3LTAuNTA4IDAuNDkxMDcgMCAwLjc5NTg3IDAuMjcwOTQgMC43OTU4NyAwLjcxOTY3IDAgMC40OTk1My0wLjM0NzEz
+IDAuODYzNi0xLjQwNTUgMC44NjM2djAuNzExMmMxLjIyNzcgMCAxLjU4MzMgMC4zNTU2IDEuNTgzMyAwLjkxNDQgMCAwLjUwOC0w
+LjQwNjQgMC44MTI4LTAuOTkwNiAwLjgxMjgtMC41NDE4NyAwLTAuOTU2NzMtMC4yNjI0Ny0xLjI3ODUtMC41OTI2N2wtMC40NjU2
+NyAwLjYyNjU0YzAuMzgxIDAuNDIzMzMgMC45NTY3MyAwLjc2MiAxLjgyODggMC43NjJ6IiBmaWxsPSIjMDAxMDMwIiBmaWxsLW9w
+YWNpdHk9Ii4zNzY0NyIgc3Ryb2tlPSJub25lIi8+CiAgPC9nPgogIDxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwMCIgc3Ryb2tl
+LXdpZHRoPSIuMjY0NThweCI+CiAgIDxnIHRyYW5zZm9ybT0icm90YXRlKC0xMS4zNTIpIiBhcmlhLWxhYmVsPSIwIj4KICAgIDxw
+YXRoIGQ9Im0tNTEuNDcxIDI3Ni4xN2MxLjExNzYgMCAxLjgyODgtMC45OTkwNyAxLjgyODgtMi44MTk0IDAtMS44MTE5LTAuNzEx
+Mi0yLjc2ODYtMS44Mjg4LTIuNzY4NnMtMS44Mjg4IDAuOTQ4MjctMS44Mjg4IDIuNzY4NiAwLjcxMTIgMi44MTk0IDEuODI4OCAy
+LjgxOTR6bTAtMC43NjJjLTAuNTE2NDcgMC0wLjg5NzQ3LTAuNTMzNC0wLjg5NzQ3LTIuMDU3NHMwLjM4MS0yLjAwNjYgMC44OTc0
+Ny0yLjAwNjZjMC41MjQ5MyAwIDAuODk3NDcgMC40ODI2IDAuODk3NDcgMi4wMDY2cy0wLjM3MjUzIDIuMDU3NC0wLjg5NzQ3IDIu
+MDU3NHoiIGZpbGw9IiMwMDEwMzAiIGZpbGwtb3BhY2l0eT0iLjI1MDk4IiBzdHJva2U9Im5vbmUiLz4KICAgPC9nPgogICA8ZyB0
+cmFuc2Zvcm09InJvdGF0ZSgyMi41MDYpIiBhcmlhLWxhYmVsPSI3Ij4KICAgIDxwYXRoIGQ9Im0xMTguMjEgMjQzLjA4aDAuOTkw
+NmMwLjA5MzEtMi4wOTk3IDAuMzEzMjctMy4yMjU4IDEuNTc0OC00Ljc5MjF2LTAuNTkyNjdoLTMuNjE1M3YwLjgyMTI3aDIuNTQ4
+NWMtMS4wNDE0IDEuNDQ3OC0xLjQwNTUgMi42NTAxLTEuNDk4NiA0LjU2MzV6IiBmaWxsPSIjMDAxMDMwIiBmaWxsLW9wYWNpdHk9
+Ii4xMjU0OSIgc3Ryb2tlPSJub25lIi8+CiAgIDwvZz4KICAgPGcgdHJhbnNmb3JtPSJyb3RhdGUoLTkuNzI3MykiIGFyaWEtbGFi
+ZWw9IjEiPgogICAgPHBhdGggZD0ibS0xOC4yOTkgMjgyLjc5aDMuMjQyN3YtMC43OTU4N2gtMS4wNTgzdi00LjU4ODloLTAuNzI4
+MTNjLTAuMzM4NjcgMC4yMDMyLTAuNzExMiAwLjMzODY3LTEuMjQ0NiAwLjQ0MDI3djAuNjA5NmgwLjk5MDZ2My41MzkxaC0xLjIw
+MjN6IiBmaWxsPSIjMDAxMDMwIiBmaWxsLW9wYWNpdHk9Ii4wNjI3NDUiIHN0cm9rZT0ibm9uZSIvPgogICA8L2c+CiAgPC9nPgog
+IDxnIGZpbGw9IiMyNDEwMzAiIGFyaWEtbGFiZWw9Ii4iPgogICA8cGF0aCBkPSJtMjAuOTIgMjgzLjk4YzAuNjU0NzYgMCAxLjEy
+ODktMC41MTkyOSAxLjEyODktMS4xNzQgMC0wLjY1NDc2LTAuNDc0MTMtMS4xNzQtMS4xMjg5LTEuMTc0LTAuNjU0NzYgMC0xLjEy
+ODkgMC41MTkyOS0xLjEyODkgMS4xNzQgMCAwLjY1NDc1IDAuNDc0MTMgMS4xNzQgMS4xMjg5IDEuMTc0eiIgZmlsbD0iIzAwMTAz
+MCIvPgogIDwvZz4KIDwvZz4KPC9zdmc+Cg==
+" alt="logo"></a><nav class="sub"><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="18" height="18" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="18" height="18" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
+<span id="2">  2</span>
+<span id="3">  3</span>
+<span id="4">  4</span>
+<span id="5">  5</span>
+<span id="6">  6</span>
+<span id="7">  7</span>
+<span id="8">  8</span>
+<span id="9">  9</span>
+<span id="10"> 10</span>
+<span id="11"> 11</span>
+<span id="12"> 12</span>
+<span id="13"> 13</span>
+<span id="14"> 14</span>
+<span id="15"> 15</span>
+<span id="16"> 16</span>
+<span id="17"> 17</span>
+<span id="18"> 18</span>
+<span id="19"> 19</span>
+<span id="20"> 20</span>
+<span id="21"> 21</span>
+<span id="22"> 22</span>
+<span id="23"> 23</span>
+<span id="24"> 24</span>
+<span id="25"> 25</span>
+<span id="26"> 26</span>
+<span id="27"> 27</span>
+<span id="28"> 28</span>
+<span id="29"> 29</span>
+<span id="30"> 30</span>
+<span id="31"> 31</span>
+<span id="32"> 32</span>
+<span id="33"> 33</span>
+<span id="34"> 34</span>
+<span id="35"> 35</span>
+<span id="36"> 36</span>
+<span id="37"> 37</span>
+<span id="38"> 38</span>
+<span id="39"> 39</span>
+<span id="40"> 40</span>
+<span id="41"> 41</span>
+<span id="42"> 42</span>
+<span id="43"> 43</span>
+<span id="44"> 44</span>
+<span id="45"> 45</span>
+<span id="46"> 46</span>
+<span id="47"> 47</span>
+<span id="48"> 48</span>
+<span id="49"> 49</span>
+<span id="50"> 50</span>
+<span id="51"> 51</span>
+<span id="52"> 52</span>
+<span id="53"> 53</span>
+<span id="54"> 54</span>
+<span id="55"> 55</span>
+<span id="56"> 56</span>
+<span id="57"> 57</span>
+<span id="58"> 58</span>
+<span id="59"> 59</span>
+<span id="60"> 60</span>
+<span id="61"> 61</span>
+<span id="62"> 62</span>
+<span id="63"> 63</span>
+<span id="64"> 64</span>
+<span id="65"> 65</span>
+<span id="66"> 66</span>
+<span id="67"> 67</span>
+<span id="68"> 68</span>
+<span id="69"> 69</span>
+<span id="70"> 70</span>
+<span id="71"> 71</span>
+<span id="72"> 72</span>
+<span id="73"> 73</span>
+<span id="74"> 74</span>
+<span id="75"> 75</span>
+<span id="76"> 76</span>
+<span id="77"> 77</span>
+<span id="78"> 78</span>
+<span id="79"> 79</span>
+<span id="80"> 80</span>
+<span id="81"> 81</span>
+<span id="82"> 82</span>
+<span id="83"> 83</span>
+<span id="84"> 84</span>
+<span id="85"> 85</span>
+<span id="86"> 86</span>
+<span id="87"> 87</span>
+<span id="88"> 88</span>
+<span id="89"> 89</span>
+<span id="90"> 90</span>
+<span id="91"> 91</span>
+<span id="92"> 92</span>
+<span id="93"> 93</span>
+<span id="94"> 94</span>
+<span id="95"> 95</span>
+<span id="96"> 96</span>
+<span id="97"> 97</span>
+<span id="98"> 98</span>
+<span id="99"> 99</span>
+<span id="100">100</span>
+<span id="101">101</span>
+<span id="102">102</span>
+<span id="103">103</span>
+<span id="104">104</span>
+<span id="105">105</span>
+<span id="106">106</span>
+<span id="107">107</span>
+<span id="108">108</span>
+<span id="109">109</span>
+<span id="110">110</span>
+<span id="111">111</span>
+<span id="112">112</span>
+<span id="113">113</span>
+<span id="114">114</span>
+<span id="115">115</span>
+<span id="116">116</span>
+<span id="117">117</span>
+<span id="118">118</span>
+<span id="119">119</span>
+<span id="120">120</span>
+<span id="121">121</span>
+<span id="122">122</span>
+<span id="123">123</span>
+<span id="124">124</span>
+<span id="125">125</span>
+<span id="126">126</span>
+<span id="127">127</span>
+<span id="128">128</span>
+<span id="129">129</span>
+<span id="130">130</span>
+<span id="131">131</span>
+<span id="132">132</span>
+<span id="133">133</span>
+<span id="134">134</span>
+<span id="135">135</span>
+<span id="136">136</span>
+<span id="137">137</span>
+<span id="138">138</span>
+<span id="139">139</span>
+<span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
+<span id="147">147</span>
+<span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
+<span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
+<span id="157">157</span>
+<span id="158">158</span>
+<span id="159">159</span>
+<span id="160">160</span>
+<span id="161">161</span>
+<span id="162">162</span>
+<span id="163">163</span>
+<span id="164">164</span>
+<span id="165">165</span>
+<span id="166">166</span>
+<span id="167">167</span>
+<span id="168">168</span>
+<span id="169">169</span>
+<span id="170">170</span>
+<span id="171">171</span>
+<span id="172">172</span>
+<span id="173">173</span>
+<span id="174">174</span>
+<span id="175">175</span>
+<span id="176">176</span>
+<span id="177">177</span>
+<span id="178">178</span>
+<span id="179">179</span>
+<span id="180">180</span>
+<span id="181">181</span>
+<span id="182">182</span>
+<span id="183">183</span>
+<span id="184">184</span>
+<span id="185">185</span>
+<span id="186">186</span>
+<span id="187">187</span>
+<span id="188">188</span>
+<span id="189">189</span>
+<span id="190">190</span>
+<span id="191">191</span>
+<span id="192">192</span>
+<span id="193">193</span>
+<span id="194">194</span>
+<span id="195">195</span>
+<span id="196">196</span>
+<span id="197">197</span>
+<span id="198">198</span>
+<span id="199">199</span>
+<span id="200">200</span>
+<span id="201">201</span>
+<span id="202">202</span>
+<span id="203">203</span>
+<span id="204">204</span>
+<span id="205">205</span>
+<span id="206">206</span>
+<span id="207">207</span>
+<span id="208">208</span>
+<span id="209">209</span>
+<span id="210">210</span>
+<span id="211">211</span>
+<span id="212">212</span>
+<span id="213">213</span>
+<span id="214">214</span>
+<span id="215">215</span>
+<span id="216">216</span>
+<span id="217">217</span>
+<span id="218">218</span>
+<span id="219">219</span>
+<span id="220">220</span>
+<span id="221">221</span>
+<span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
+<span id="226">226</span>
+<span id="227">227</span>
+<span id="228">228</span>
+</pre><pre class="rust"><code><span class="comment">// Copyright © 2016–2021 Trevor Spiteri</span>
+
+<span class="comment">// This program is free software: you can redistribute it and/or modify it under</span>
+<span class="comment">// the terms of the GNU Lesser General Public License as published by the Free</span>
+<span class="comment">// Software Foundation, either version 3 of the License, or (at your option) any</span>
+<span class="comment">// later version.</span>
+<span class="comment">//</span>
+<span class="comment">// This program is distributed in the hope that it will be useful, but WITHOUT</span>
+<span class="comment">// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS</span>
+<span class="comment">// FOR A PARTICULAR PURPOSE. See the GNU General Public License for more</span>
+<span class="comment">// details.</span>
+<span class="comment">//</span>
+<span class="comment">// You should have received a copy of the GNU Lesser General Public License and</span>
+<span class="comment">// a copy of the GNU General Public License along with this program. If not, see</span>
+<span class="comment">// &lt;https://www.gnu.org/licenses/&gt;.</span>
+
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;integer&quot;</span>)]</span>
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::Integer</span>;
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rational&quot;</span>)]</span>
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::Rational</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">float::Special</span>, <span class="ident">Complex</span>, <span class="ident">Float</span>};
+
+<span class="kw">impl</span> <span class="ident">PartialEq</span> <span class="kw">for</span> <span class="ident">Complex</span> {
+    <span class="attribute">#[<span class="ident">inline</span>]</span>
+    <span class="kw">fn</span> <span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="ident">Complex</span>) -&gt; <span class="ident">bool</span> {
+        <span class="self">self</span>.<span class="ident">real</span>().<span class="ident">eq</span>(<span class="ident">other</span>.<span class="ident">real</span>()) <span class="op">&amp;&amp;</span> <span class="self">self</span>.<span class="ident">imag</span>().<span class="ident">eq</span>(<span class="ident">other</span>.<span class="ident">imag</span>())
+    }
+}
+
+<span class="macro">macro_rules!</span> <span class="ident">eq_re_im</span> {
+    (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">Re</span>:<span class="ident">ty</span>; $(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">Im</span>:<span class="ident">ty</span>)<span class="kw-2">*</span>) =&gt; { $(
+        <span class="kw">impl</span> <span class="ident">PartialEq</span><span class="op">&lt;</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">Re</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Im</span>)<span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Complex</span> {
+            <span class="attribute">#[<span class="ident">inline</span>]</span>
+            <span class="kw">fn</span> <span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">Re</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Im</span>)) -&gt; <span class="ident">bool</span> {
+                <span class="self">self</span>.<span class="ident">real</span>().<span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="ident">other</span>.<span class="number">0</span>) <span class="op">&amp;&amp;</span> <span class="self">self</span>.<span class="ident">imag</span>().<span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="ident">other</span>.<span class="number">1</span>)
+            }
+        }
+
+        <span class="kw">impl</span> <span class="ident">PartialEq</span><span class="op">&lt;</span><span class="ident">Complex</span><span class="op">&gt;</span> <span class="kw">for</span> (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">Re</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Im</span>) {
+            <span class="attribute">#[<span class="ident">inline</span>]</span>
+            <span class="kw">fn</span> <span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="ident">Complex</span>) -&gt; <span class="ident">bool</span> {
+                <span class="ident">other</span>.<span class="ident">real</span>().<span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>) <span class="op">&amp;&amp;</span> <span class="ident">other</span>.<span class="ident">imag</span>().<span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">1</span>)
+            }
+        }
+    )<span class="op">*</span> };
+}
+
+<span class="macro">macro_rules!</span> <span class="ident">eq_re</span> {
+    ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">Re</span>:<span class="ident">ty</span>)<span class="kw-2">*</span>) =&gt; { $(
+        <span class="kw">impl</span> <span class="ident">PartialEq</span><span class="op">&lt;</span><span class="macro-nonterminal">$</span><span class="macro-nonterminal">Re</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Complex</span> {
+            <span class="attribute">#[<span class="ident">inline</span>]</span>
+            <span class="kw">fn</span> <span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="macro-nonterminal">$</span><span class="macro-nonterminal">Re</span>) -&gt; <span class="ident">bool</span> {
+                <span class="self">self</span>.<span class="ident">imag</span>().<span class="ident">is_zero</span>() <span class="op">&amp;&amp;</span> <span class="self">self</span>.<span class="ident">real</span>().<span class="ident">eq</span>(<span class="ident">other</span>)
+            }
+        }
+
+        <span class="kw">impl</span> <span class="ident">PartialEq</span><span class="op">&lt;</span><span class="ident">Complex</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Re</span> {
+            <span class="attribute">#[<span class="ident">inline</span>]</span>
+            <span class="kw">fn</span> <span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="ident">Complex</span>) -&gt; <span class="ident">bool</span> {
+                <span class="ident">other</span>.<span class="ident">imag</span>().<span class="ident">is_zero</span>() <span class="op">&amp;&amp;</span> <span class="ident">other</span>.<span class="ident">real</span>().<span class="ident">eq</span>(<span class="self">self</span>)
+            }
+        }
+
+        <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;integer&quot;</span>)]</span>
+        <span class="macro">eq_re_im!</span> { <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Re</span>; <span class="ident">Integer</span> }
+        <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rational&quot;</span>)]</span>
+        <span class="macro">eq_re_im!</span> { <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Re</span>; <span class="ident">Rational</span> }
+        <span class="macro">eq_re_im!</span> { <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Re</span>; <span class="ident">Float</span> <span class="ident">Special</span> }
+        <span class="macro">eq_re_im!</span> { <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Re</span>; <span class="ident">i8</span> <span class="ident">i16</span> <span class="ident">i32</span> <span class="ident">i64</span> <span class="ident">i128</span> <span class="ident">isize</span> }
+        <span class="macro">eq_re_im!</span> { <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Re</span>; <span class="ident">u8</span> <span class="ident">u16</span> <span class="ident">u32</span> <span class="ident">u64</span> <span class="ident">u128</span> <span class="ident">usize</span> }
+        <span class="macro">eq_re_im!</span> { <span class="macro-nonterminal">$</span><span class="macro-nonterminal">Re</span>; <span class="ident">f32</span> <span class="ident">f64</span> }
+    )<span class="op">*</span> };
+}
+
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;integer&quot;</span>)]</span>
+<span class="macro">eq_re!</span> { <span class="ident">Integer</span> }
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rational&quot;</span>)]</span>
+<span class="macro">eq_re!</span> { <span class="ident">Rational</span> }
+<span class="macro">eq_re!</span> { <span class="ident">Float</span> <span class="ident">Special</span> }
+<span class="macro">eq_re!</span> { <span class="ident">i8</span> <span class="ident">i16</span> <span class="ident">i32</span> <span class="ident">i64</span> <span class="ident">i128</span> <span class="ident">isize</span> }
+<span class="macro">eq_re!</span> { <span class="ident">u8</span> <span class="ident">u16</span> <span class="ident">u32</span> <span class="ident">u64</span> <span class="ident">u128</span> <span class="ident">usize</span> }
+<span class="macro">eq_re!</span> { <span class="ident">f32</span> <span class="ident">f64</span> }
+
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
+<span class="kw">mod</span> <span class="ident">tests</span> {
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rational&quot;</span>)]</span>
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::Rational</span>;
+    <span class="kw">use</span> <span class="kw">crate</span>::{
+        <span class="ident">float</span>::{<span class="self">self</span>, <span class="ident">FreeCache</span>, <span class="ident">Special</span>},
+        <span class="ident">Assign</span>, <span class="ident">Complex</span>, <span class="ident">Float</span>,
+    };
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;integer&quot;</span>)]</span>
+    <span class="kw">use</span> {<span class="ident"><span class="kw">crate</span>::Integer</span>, <span class="ident">core::str::FromStr</span>};
+
+    <span class="kw">fn</span> <span class="ident">check_eq_prim</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(<span class="ident">s</span>: <span class="kw-2">&amp;</span>[<span class="ident">T</span>], <span class="ident">against</span>: <span class="kw-2">&amp;</span>[<span class="ident">Complex</span>])
+    <span class="kw">where</span>
+        <span class="ident">Complex</span>: <span class="ident">Assign</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Assign</span><span class="op">&lt;</span>(<span class="ident">T</span>, <span class="ident">T</span>)<span class="op">&gt;</span> <span class="op">+</span> <span class="ident">PartialEq</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">PartialEq</span><span class="op">&lt;</span>(<span class="ident">T</span>, <span class="ident">T</span>)<span class="op">&gt;</span>,
+        <span class="ident">T</span>: <span class="ident">Copy</span> <span class="op">+</span> <span class="ident">PartialEq</span><span class="op">&lt;</span><span class="ident">Complex</span><span class="op">&gt;</span>,
+        (<span class="ident">T</span>, <span class="ident">T</span>): <span class="ident">Copy</span> <span class="op">+</span> <span class="ident">PartialEq</span><span class="op">&lt;</span><span class="ident">Complex</span><span class="op">&gt;</span>,
+    {
+        <span class="kw">for</span> <span class="ident">op</span> <span class="kw">in</span> <span class="ident">s</span> {
+            <span class="kw">let</span> <span class="ident">fop</span> <span class="op">=</span> <span class="ident">Complex::with_val</span>(<span class="number">150</span>, <span class="kw-2">*</span><span class="ident">op</span>);
+            <span class="kw">for</span> <span class="ident">b</span> <span class="kw">in</span> <span class="ident">against</span> {
+                <span class="macro">assert_eq!</span>(<span class="ident">b</span>.<span class="ident">eq</span>(<span class="ident">op</span>), <span class="ident">b</span>.<span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="ident">fop</span>));
+                <span class="macro">assert_eq!</span>(<span class="ident">op</span>.<span class="ident">eq</span>(<span class="ident">b</span>), <span class="ident">fop</span>.<span class="ident">eq</span>(<span class="ident">b</span>));
+                <span class="macro">assert_eq!</span>(<span class="ident">b</span>.<span class="ident">eq</span>(<span class="ident">op</span>), <span class="ident">op</span>.<span class="ident">eq</span>(<span class="ident">b</span>));
+            }
+        }
+        <span class="kw">for</span> <span class="ident">op</span> <span class="kw">in</span> <span class="ident">combinations</span>(<span class="ident">s</span>) {
+            <span class="kw">let</span> <span class="ident">fop</span> <span class="op">=</span> <span class="ident">Complex::with_val</span>(<span class="number">150</span>, <span class="ident">op</span>);
+            <span class="kw">for</span> <span class="ident">b</span> <span class="kw">in</span> <span class="ident">against</span> {
+                <span class="macro">assert_eq!</span>(<span class="ident">b</span>.<span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="ident">op</span>), <span class="ident">b</span>.<span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="ident">fop</span>));
+                <span class="macro">assert_eq!</span>(<span class="ident">op</span>.<span class="ident">eq</span>(<span class="ident">b</span>), <span class="ident">fop</span>.<span class="ident">eq</span>(<span class="ident">b</span>));
+                <span class="macro">assert_eq!</span>(<span class="ident">b</span>.<span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="ident">op</span>), <span class="ident">op</span>.<span class="ident">eq</span>(<span class="ident">b</span>));
+            }
+        }
+    }
+
+    <span class="kw">fn</span> <span class="ident">check_eq_big</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span><span class="op">&gt;</span>(<span class="ident">s</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">T</span>], <span class="ident">against</span>: <span class="kw-2">&amp;</span>[<span class="ident">Complex</span>])
+    <span class="kw">where</span>
+        <span class="ident">Complex</span>:
+            <span class="kw">for</span><span class="op">&lt;</span><span class="lifetime">&#39;b</span><span class="op">&gt;</span> <span class="ident">Assign</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;b</span> <span class="ident">T</span><span class="op">&gt;</span> <span class="op">+</span> <span class="kw">for</span><span class="op">&lt;</span><span class="lifetime">&#39;b</span><span class="op">&gt;</span> <span class="ident">Assign</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;b</span> (<span class="ident">T</span>, <span class="ident">T</span>)<span class="op">&gt;</span> <span class="op">+</span> <span class="ident">PartialEq</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">PartialEq</span><span class="op">&lt;</span>(<span class="ident">T</span>, <span class="ident">T</span>)<span class="op">&gt;</span>,
+        <span class="ident">T</span>: <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">PartialEq</span><span class="op">&lt;</span><span class="ident">Complex</span><span class="op">&gt;</span>,
+        (<span class="ident">T</span>, <span class="ident">T</span>): <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">PartialEq</span><span class="op">&lt;</span><span class="ident">Complex</span><span class="op">&gt;</span>,
+    {
+        <span class="kw">for</span> <span class="ident">op</span> <span class="kw">in</span> <span class="ident">s</span> {
+            <span class="kw">let</span> <span class="ident">fop</span> <span class="op">=</span> <span class="ident">Complex::with_val</span>(<span class="number">150</span>, <span class="ident">op</span>);
+            <span class="kw">for</span> <span class="ident">b</span> <span class="kw">in</span> <span class="ident">against</span> {
+                <span class="macro">assert_eq!</span>(<span class="ident">b</span>.<span class="ident">eq</span>(<span class="ident">op</span>), <span class="ident">b</span>.<span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="ident">fop</span>));
+                <span class="macro">assert_eq!</span>(<span class="ident">op</span>.<span class="ident">eq</span>(<span class="ident">b</span>), <span class="ident">fop</span>.<span class="ident">eq</span>(<span class="ident">b</span>));
+                <span class="macro">assert_eq!</span>(<span class="ident">b</span>.<span class="ident">eq</span>(<span class="ident">op</span>), <span class="ident">op</span>.<span class="ident">eq</span>(<span class="ident">b</span>));
+            }
+        }
+        <span class="kw">for</span> <span class="ident">op</span> <span class="kw">in</span> <span class="ident">combinations</span>(<span class="ident">s</span>) {
+            <span class="kw">let</span> <span class="ident">fop</span> <span class="op">=</span> <span class="ident">Complex::with_val</span>(<span class="number">150</span>, <span class="kw-2">&amp;</span><span class="ident">op</span>);
+            <span class="kw">for</span> <span class="ident">b</span> <span class="kw">in</span> <span class="ident">against</span> {
+                <span class="macro">assert_eq!</span>(<span class="ident">b</span>.<span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="ident">op</span>), <span class="ident">b</span>.<span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="ident">fop</span>));
+                <span class="macro">assert_eq!</span>(<span class="ident">op</span>.<span class="ident">eq</span>(<span class="ident">b</span>), <span class="ident">fop</span>.<span class="ident">eq</span>(<span class="ident">b</span>));
+                <span class="macro">assert_eq!</span>(<span class="ident">b</span>.<span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="ident">op</span>), <span class="ident">op</span>.<span class="ident">eq</span>(<span class="ident">b</span>));
+            }
+        }
+    }
+
+    <span class="kw">fn</span> <span class="ident">combinations</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Clone</span><span class="op">&gt;</span>(<span class="ident">t</span>: <span class="kw-2">&amp;</span>[<span class="ident">T</span>]) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">T</span>, <span class="ident">T</span>)<span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ret</span> <span class="op">=</span> <span class="ident">Vec::with_capacity</span>(<span class="ident">t</span>.<span class="ident">len</span>() <span class="op">*</span> <span class="ident">t</span>.<span class="ident">len</span>());
+        <span class="kw">for</span> <span class="ident">re</span> <span class="kw">in</span> <span class="ident">t</span> {
+            <span class="kw">for</span> <span class="ident">im</span> <span class="kw">in</span> <span class="ident">t</span> {
+                <span class="ident">ret</span>.<span class="ident">push</span>((<span class="ident">re</span>.<span class="ident">clone</span>(), <span class="ident">im</span>.<span class="ident">clone</span>()));
+            }
+        }
+        <span class="ident">ret</span>
+    }
+
+    <span class="kw">fn</span> <span class="ident">to_complex</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(<span class="ident">t</span>: <span class="ident">T</span>) -&gt; <span class="ident">Complex</span>
+    <span class="kw">where</span>
+        <span class="ident">Complex</span>: <span class="ident">Assign</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>,
+    {
+        <span class="ident">Complex::with_val</span>(<span class="number">20</span>, <span class="ident">t</span>)
+    }
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">check_eq_others</span>() {
+        <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::tests</span>::{<span class="ident">F32</span>, <span class="ident">F64</span>, <span class="ident">I128</span>, <span class="ident">I32</span>, <span class="ident">I64</span>, <span class="ident">U128</span>, <span class="ident">U32</span>, <span class="ident">U64</span>};
+        <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;integer&quot;</span>)]</span>
+        <span class="kw">let</span> <span class="ident">z</span> <span class="op">=</span> [
+            <span class="ident">Integer::from</span>(<span class="number">0</span>),
+            <span class="ident">Integer::from</span>(<span class="number">1</span>),
+            <span class="ident">Integer::from</span>(<span class="op">-</span><span class="number">1</span>),
+            <span class="ident">Integer::from_str</span>(<span class="string">&quot;-1000000000000&quot;</span>).<span class="ident">unwrap</span>(),
+            <span class="ident">Integer::from_str</span>(<span class="string">&quot;1000000000000&quot;</span>).<span class="ident">unwrap</span>(),
+        ];
+        <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rational&quot;</span>)]</span>
+        <span class="kw">let</span> <span class="ident">q</span> <span class="op">=</span> [
+            <span class="ident">Rational::from</span>(<span class="number">0</span>),
+            <span class="ident">Rational::from</span>(<span class="number">1</span>),
+            <span class="ident">Rational::from</span>(<span class="op">-</span><span class="number">1</span>),
+            <span class="ident">Rational::from_str</span>(<span class="string">&quot;-1000000000000/33333333333&quot;</span>).<span class="ident">unwrap</span>(),
+            <span class="ident">Rational::from_str</span>(<span class="string">&quot;1000000000000/33333333333&quot;</span>).<span class="ident">unwrap</span>(),
+        ];
+        <span class="kw">let</span> <span class="ident">f</span> <span class="op">=</span> [
+            <span class="ident">Float::with_val</span>(<span class="number">20</span>, <span class="ident">Special::Zero</span>),
+            <span class="ident">Float::with_val</span>(<span class="number">20</span>, <span class="ident">Special::NegZero</span>),
+            <span class="ident">Float::with_val</span>(<span class="number">20</span>, <span class="ident">Special::Infinity</span>),
+            <span class="ident">Float::with_val</span>(<span class="number">20</span>, <span class="ident">Special::NegInfinity</span>),
+            <span class="ident">Float::with_val</span>(<span class="number">20</span>, <span class="ident">Special::Nan</span>),
+            <span class="ident">Float::with_val</span>(<span class="number">20</span>, <span class="number">1</span>),
+            <span class="ident">Float::with_val</span>(<span class="number">20</span>, <span class="op">-</span><span class="number">1</span>),
+            <span class="ident">Float::with_val</span>(<span class="number">20</span>, <span class="number">999_999e100</span>),
+            <span class="ident">Float::with_val</span>(<span class="number">20</span>, <span class="number">999_999e-100</span>),
+            <span class="ident">Float::with_val</span>(<span class="number">20</span>, <span class="op">-</span><span class="number">999_999e100</span>),
+            <span class="ident">Float::with_val</span>(<span class="number">20</span>, <span class="op">-</span><span class="number">999_999e-100</span>),
+        ];
+
+        <span class="kw">let</span> <span class="ident">against</span> <span class="op">=</span> <span class="ident">combinations</span>(<span class="kw-2">&amp;</span><span class="ident">f</span>)
+            .<span class="ident">iter</span>()
+            .<span class="ident">map</span>(<span class="ident">to_complex</span>)
+            .<span class="ident">chain</span>(<span class="ident">combinations</span>(<span class="ident">U32</span>).<span class="ident">iter</span>().<span class="ident">map</span>(<span class="ident">to_complex</span>))
+            .<span class="ident">chain</span>(<span class="ident">combinations</span>(<span class="ident">I32</span>).<span class="ident">iter</span>().<span class="ident">map</span>(<span class="ident">to_complex</span>))
+            .<span class="ident">chain</span>(<span class="ident">combinations</span>(<span class="ident">U64</span>).<span class="ident">iter</span>().<span class="ident">map</span>(<span class="ident">to_complex</span>))
+            .<span class="ident">chain</span>(<span class="ident">combinations</span>(<span class="ident">I64</span>).<span class="ident">iter</span>().<span class="ident">map</span>(<span class="ident">to_complex</span>))
+            .<span class="ident">chain</span>(<span class="ident">combinations</span>(<span class="ident">U128</span>).<span class="ident">iter</span>().<span class="ident">map</span>(<span class="ident">to_complex</span>))
+            .<span class="ident">chain</span>(<span class="ident">combinations</span>(<span class="ident">I128</span>).<span class="ident">iter</span>().<span class="ident">map</span>(<span class="ident">to_complex</span>))
+            .<span class="ident">chain</span>(<span class="ident">combinations</span>(<span class="ident">F32</span>).<span class="ident">iter</span>().<span class="ident">map</span>(<span class="ident">to_complex</span>))
+            .<span class="ident">chain</span>(<span class="ident">combinations</span>(<span class="ident">F64</span>).<span class="ident">iter</span>().<span class="ident">map</span>(<span class="ident">to_complex</span>))
+            .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Complex</span><span class="op">&gt;</span><span class="op">&gt;</span>();
+        <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;integer&quot;</span>)]</span>
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">against</span> <span class="op">=</span> <span class="ident">against</span>;
+        <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;integer&quot;</span>)]</span>
+        <span class="ident">against</span>.<span class="ident">extend</span>(<span class="ident">combinations</span>(<span class="kw-2">&amp;</span><span class="ident">z</span>).<span class="ident">iter</span>().<span class="ident">map</span>(<span class="ident">to_complex</span>));
+        <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rational&quot;</span>)]</span>
+        <span class="ident">against</span>.<span class="ident">extend</span>(<span class="ident">combinations</span>(<span class="kw-2">&amp;</span><span class="ident">q</span>).<span class="ident">iter</span>().<span class="ident">map</span>(<span class="ident">to_complex</span>));
+        <span class="ident">check_eq_prim</span>(<span class="ident">U32</span>, <span class="kw-2">&amp;</span><span class="ident">against</span>);
+        <span class="ident">check_eq_prim</span>(<span class="ident">I32</span>, <span class="kw-2">&amp;</span><span class="ident">against</span>);
+        <span class="ident">check_eq_prim</span>(<span class="ident">U64</span>, <span class="kw-2">&amp;</span><span class="ident">against</span>);
+        <span class="ident">check_eq_prim</span>(<span class="ident">I64</span>, <span class="kw-2">&amp;</span><span class="ident">against</span>);
+        <span class="ident">check_eq_prim</span>(<span class="ident">U128</span>, <span class="kw-2">&amp;</span><span class="ident">against</span>);
+        <span class="ident">check_eq_prim</span>(<span class="ident">I128</span>, <span class="kw-2">&amp;</span><span class="ident">against</span>);
+        <span class="ident">check_eq_prim</span>(<span class="ident">F32</span>, <span class="kw-2">&amp;</span><span class="ident">against</span>);
+        <span class="ident">check_eq_prim</span>(<span class="ident">F64</span>, <span class="kw-2">&amp;</span><span class="ident">against</span>);
+        <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;integer&quot;</span>)]</span>
+        <span class="ident">check_eq_big</span>(<span class="kw-2">&amp;</span><span class="ident">z</span>, <span class="kw-2">&amp;</span><span class="ident">against</span>);
+        <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rational&quot;</span>)]</span>
+        <span class="ident">check_eq_big</span>(<span class="kw-2">&amp;</span><span class="ident">q</span>, <span class="kw-2">&amp;</span><span class="ident">against</span>);
+        <span class="ident">check_eq_big</span>(<span class="kw-2">&amp;</span><span class="ident">f</span>, <span class="kw-2">&amp;</span><span class="ident">against</span>);
+
+        <span class="ident">float::free_cache</span>(<span class="ident">FreeCache::All</span>);
+    }
+}
+</code></pre></div>
+</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="rug" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.59.0 (9d1b2106e 2022-02-23)" ></div>
+</body></html>

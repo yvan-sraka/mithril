@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["QuadExtField","An element of a quadratic extension field F_p[X]/(X^2 - P::NONRESIDUE) is represented as c0 + c1 * X, for c0, c1 in `P::BaseField`."]],"trait":[["QuadExtParameters","Defines a Quadratic extension field from a quadratic non-residue."]]});

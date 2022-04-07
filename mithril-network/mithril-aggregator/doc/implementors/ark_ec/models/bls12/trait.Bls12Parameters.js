@@ -1,0 +1,4 @@
+(function() {var implementors = {};
+implementors["ark_bls12_377"] = [{"text":"impl <a class=\"trait\" href=\"ark_ec/models/bls12/trait.Bls12Parameters.html\" title=\"trait ark_ec::models::bls12::Bls12Parameters\">Bls12Parameters</a> for <a class=\"struct\" href=\"ark_bls12_377/struct.Parameters.html\" title=\"struct ark_bls12_377::Parameters\">Parameters</a>","synthetic":false,"types":["ark_bls12_377::curves::Parameters"]}];
+implementors["ark_bls12_381"] = [{"text":"impl <a class=\"trait\" href=\"ark_ec/models/bls12/trait.Bls12Parameters.html\" title=\"trait ark_ec::models::bls12::Bls12Parameters\">Bls12Parameters</a> for <a class=\"struct\" href=\"ark_bls12_381/struct.Parameters.html\" title=\"struct ark_bls12_381::Parameters\">Parameters</a>","synthetic":false,"types":["ark_bls12_381::curves::Parameters"]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
