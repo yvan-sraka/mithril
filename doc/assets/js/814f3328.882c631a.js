@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkmithril_doc=self.webpackChunkmithril_doc||[]).push([[535],{5641:function(e){e.exports=JSON.parse('{"title":"Milestones","items":[{"title":"Milestone Report n\xb01","permalink":"/doc/milestones/2022-01-report"}]}')}}]);
