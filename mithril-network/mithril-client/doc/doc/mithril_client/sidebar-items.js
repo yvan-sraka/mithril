@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["Commands","CLI command list"]],"fn":[["main",""],["pretty_print_error","Pretty print error"]],"mod":[["aggregator",""],["aggregator_fake",""],["client",""],["entities",""],["errors",""]],"struct":[["Args","CLI args"]]});

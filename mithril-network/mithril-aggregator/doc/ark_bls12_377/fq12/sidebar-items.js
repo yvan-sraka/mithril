@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["Fq12Parameters",""]],"type":[["Fq12",""]]});

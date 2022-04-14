@@ -1,1 +1,0 @@
-initSidebarItems({"fn":[["k_adicity","Calculates the k-adicity of n, i.e., the number of trailing 0s in a base-k representation."]]});

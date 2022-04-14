@@ -1,1 +1,0 @@
-initSidebarItems({"fn":[["bytes_to_bits",""]],"struct":[["Parameters",""],["Schnorr",""],["SecretKey",""],["Signature",""]],"type":[["PublicKey",""]]});

@@ -1,1 +1,0 @@
-initSidebarItems({"type":[["ConcatEnv","Set the env to the TrivialEnv."],["ConcatProof","The proof is a TrivialProof."],["ConcatRel","The relation is a function outputting an error or not."]]});

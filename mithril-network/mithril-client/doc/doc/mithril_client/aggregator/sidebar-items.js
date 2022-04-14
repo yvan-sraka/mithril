@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["AggregatorHTTPClient","AggregatorHTTPClient is a http client for an aggregator"]],"trait":[["AggregatorHandler","AggregatorHandler represents a read interactor with an aggregator"]]});

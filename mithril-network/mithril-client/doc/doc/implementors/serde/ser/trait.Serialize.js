@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["mithril_client"] = [{"text":"impl <a class=\"trait\" href=\"https://docs.rs/serde/1.0.136/serde/ser/trait.Serialize.html\" title=\"trait serde::ser::Serialize\">Serialize</a> for <a class=\"struct\" href=\"mithril_client/entities/struct.Config.html\" title=\"struct mithril_client::entities::Config\">Config</a>","synthetic":false,"types":["mithril_client::entities::Config"]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

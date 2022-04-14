@@ -1,1 +1,0 @@
-initSidebarItems({"mod":[["bowe_hopwood",""],["injective_map",""],["pedersen",""],["poseidon",""]],"trait":[["CRH","Interface to CRH. Note that in this release, while all implementations of `CRH` have fixed length, variable length CRH may also implement this trait in future."],["TwoToOneCRH",""]]});

@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["CubicExtField",""]],"trait":[["CubicExtParameters",""]]});

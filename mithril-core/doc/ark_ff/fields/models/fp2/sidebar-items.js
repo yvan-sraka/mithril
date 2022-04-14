@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["Fp2ParamsWrapper",""]],"trait":[["Fp2Parameters",""]],"type":[["Fp2",""]]});

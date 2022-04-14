@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["Blake2s",""],["Blake2sWithParameterBlock",""]]});

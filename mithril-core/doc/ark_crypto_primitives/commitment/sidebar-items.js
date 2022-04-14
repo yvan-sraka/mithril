@@ -1,1 +1,0 @@
-initSidebarItems({"mod":[["blake2s",""],["injective_map",""],["pedersen",""]],"trait":[["CommitmentScheme",""]]});

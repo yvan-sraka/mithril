@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["convert_to_field_items","Convert Snapshot to SnapshotFieldItems routine"],["convert_to_list_item","Convert Snapshot to SnapshotListItem routine"]],"struct":[["Client","Mithril client wrapper"]]});

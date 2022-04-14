@@ -1,1 +1,0 @@
-initSidebarItems({"macro":[["lc","Generate a `LinearCombination` from arithmetic expressions involving `Variable`s."],["ns","Generate a `Namespace` with name `name` from `ConstraintSystem` `cs`. `name` must be a `&'static str`."]],"mod":[["r1cs","Core interface for working with Rank-1 Constraint Systems (R1CS)."]]});
