@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["AggregatorHTTPClient","AggregatorHTTPClient is a http client for an aggregator"]],"trait":[["AggregatorHandler","AggregatorHandler represents a read interactor with an aggregator"]]});
+initSidebarItems({"fn":[["archive_file_path","Computes local archive filepath"]],"struct":[["AggregatorHTTPClient","AggregatorHTTPClient is a http client for an aggregator"]],"trait":[["AggregatorHandler","AggregatorHandler represents a read interactor with an aggregator"]]});
