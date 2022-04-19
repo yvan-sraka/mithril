@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["Messages","Message sent to Snapshotter"]],"struct":[["Snapshotter","Snapshotter"],["Stopper",""]]});
