@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkmithril_doc=self.webpackChunkmithril_doc||[]).push([[885],{7337:function(a){a.exports=JSON.parse('{"allTagsPath":"/doc/adr/tags","name":"Accepted","count":1,"permalink":"/doc/adr/tags/accepted"}')}}]);
