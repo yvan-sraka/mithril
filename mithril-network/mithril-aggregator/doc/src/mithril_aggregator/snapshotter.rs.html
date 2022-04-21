@@ -287,6 +287,7 @@
 <span id="282">282</span>
 <span id="283">283</span>
 <span id="284">284</span>
+<span id="285">285</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::entities::Snapshot</span>;
 <span class="kw">use</span> <span class="ident">chrono::prelude</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident">cloud_storage::bucket::Entity</span>;
@@ -350,11 +351,12 @@
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">run</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
         <span class="macro">info!</span>(<span class="string">&quot;Starting Snapshotter&quot;</span>);
         <span class="kw">loop</span> {
-            <span class="ident">sleep</span>(<span class="ident">Duration::from_millis</span>(<span class="self">self</span>.<span class="ident">interval</span>.<span class="ident">into</span>())).<span class="kw">await</span>;
             <span class="macro">info!</span>(<span class="string">&quot;Snapshotting&quot;</span>);
             <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">snapshot</span>().<span class="kw">await</span> {
                 <span class="macro">error!</span>(<span class="string">&quot;{:?}&quot;</span>, <span class="ident">e</span>)
             }
+            <span class="macro">info!</span>(<span class="string">&quot;Sleeping for {}&quot;</span>, <span class="self">self</span>.<span class="ident">interval</span>);
+            <span class="ident">sleep</span>(<span class="ident">Duration::from_millis</span>(<span class="self">self</span>.<span class="ident">interval</span>.<span class="ident">into</span>())).<span class="kw">await</span>;
         }
     }
 
