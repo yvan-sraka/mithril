@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["entities",""],["fake_data",""],["http_server",""],["snapshotter",""]]});
+initSidebarItems({"mod":[["entities",""],["fake_data",""],["snapshotter",""]]});
