@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["entities",""],["fake_data",""],["snapshotter",""]]});
+initSidebarItems({"mod":[["entities",""],["fake_data",""],["multi_signer",""],["snapshotter",""]]});

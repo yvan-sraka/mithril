@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["Config","Client configuration"]]});
+initSidebarItems({"constant":[["_IMPL_DESERIALIZE_FOR_Config",""],["_IMPL_SERIALIZE_FOR_Config",""]],"struct":[["Config","Client configuration"]]});
