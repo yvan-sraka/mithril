@@ -150,13 +150,17 @@
 <span id="145">145</span>
 <span id="146">146</span>
 <span id="147">147</span>
+<span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
 </pre><pre class="rust"><code><span class="attribute">#![<span class="ident">doc</span> <span class="op">=</span> <span class="macro">include_str!</span>(<span class="string">&quot;../README.md&quot;</span>)]</span>
 
 <span class="kw">mod</span> <span class="ident">aggregator</span>;
-<span class="kw">mod</span> <span class="ident">aggregator_fake</span>;
 <span class="kw">mod</span> <span class="ident">client</span>;
 <span class="kw">mod</span> <span class="ident">entities</span>;
-<span class="kw">mod</span> <span class="ident">errors</span>;
+<span class="kw">mod</span> <span class="ident">verifier</span>;
 
 <span class="kw">use</span> <span class="ident">clap</span>::{<span class="ident">Parser</span>, <span class="ident">Subcommand</span>};
 <span class="kw">use</span> <span class="ident">clap_verbosity_flag</span>::{<span class="ident">InfoLevel</span>, <span class="ident">Verbosity</span>};
@@ -167,6 +171,7 @@
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::aggregator</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::client::Client</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::entities::Config</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::verifier</span>::<span class="kw-2">*</span>;
 
 <span class="doccomment">/// CLI args</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Parser</span>)]</span>
@@ -246,12 +251,17 @@
     <span class="macro">debug!</span>(<span class="string">&quot;{:?}&quot;</span>, <span class="ident">config</span>);
 
     <span class="comment">// Init dependencies</span>
-    <span class="kw">let</span> <span class="ident">aggregator_handler</span> <span class="op">=</span>
-        <span class="ident">AggregatorHTTPClient::new</span>(<span class="ident">config</span>.<span class="ident">network</span>.<span class="ident">clone</span>(), <span class="ident">config</span>.<span class="ident">aggregator_endpoint</span>.<span class="ident">clone</span>());
+    <span class="kw">let</span> <span class="ident">aggregator_handler</span> <span class="op">=</span> <span class="ident">Box::new</span>(<span class="ident">AggregatorHTTPClient::new</span>(
+        <span class="ident">config</span>.<span class="ident">network</span>.<span class="ident">clone</span>(),
+        <span class="ident">config</span>.<span class="ident">aggregator_endpoint</span>.<span class="ident">clone</span>(),
+    ));
+    <span class="kw">let</span> <span class="ident">verifier</span> <span class="op">=</span> <span class="ident">Box::new</span>(<span class="ident">VerifierImpl::new</span>());
 
     <span class="comment">// Init client</span>
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">client</span> <span class="op">=</span> <span class="ident">Client::new</span>(<span class="ident">config</span>.<span class="ident">network</span>.<span class="ident">clone</span>());
-    <span class="ident">client</span>.<span class="ident">with_aggregator_handler</span>(<span class="ident">aggregator_handler</span>);
+    <span class="ident">client</span>
+        .<span class="ident">with_aggregator_handler</span>(<span class="ident">aggregator_handler</span>)
+        .<span class="ident">with_verifier</span>(<span class="ident">verifier</span>);
 
     <span class="comment">// Execute commands</span>
     <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="ident">args</span>.<span class="ident">command</span> {

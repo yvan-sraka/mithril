@@ -217,70 +217,222 @@
 <span id="212">212</span>
 <span id="213">213</span>
 <span id="214">214</span>
+<span id="215">215</span>
+<span id="216">216</span>
+<span id="217">217</span>
+<span id="218">218</span>
+<span id="219">219</span>
+<span id="220">220</span>
+<span id="221">221</span>
+<span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
+<span id="226">226</span>
+<span id="227">227</span>
+<span id="228">228</span>
+<span id="229">229</span>
+<span id="230">230</span>
+<span id="231">231</span>
+<span id="232">232</span>
+<span id="233">233</span>
+<span id="234">234</span>
+<span id="235">235</span>
+<span id="236">236</span>
+<span id="237">237</span>
+<span id="238">238</span>
+<span id="239">239</span>
+<span id="240">240</span>
+<span id="241">241</span>
+<span id="242">242</span>
+<span id="243">243</span>
+<span id="244">244</span>
+<span id="245">245</span>
+<span id="246">246</span>
+<span id="247">247</span>
+<span id="248">248</span>
+<span id="249">249</span>
+<span id="250">250</span>
+<span id="251">251</span>
+<span id="252">252</span>
+<span id="253">253</span>
+<span id="254">254</span>
+<span id="255">255</span>
+<span id="256">256</span>
+<span id="257">257</span>
+<span id="258">258</span>
+<span id="259">259</span>
+<span id="260">260</span>
+<span id="261">261</span>
+<span id="262">262</span>
+<span id="263">263</span>
+<span id="264">264</span>
+<span id="265">265</span>
+<span id="266">266</span>
+<span id="267">267</span>
+<span id="268">268</span>
+<span id="269">269</span>
+<span id="270">270</span>
+<span id="271">271</span>
+<span id="272">272</span>
+<span id="273">273</span>
+<span id="274">274</span>
+<span id="275">275</span>
+<span id="276">276</span>
+<span id="277">277</span>
+<span id="278">278</span>
+<span id="279">279</span>
+<span id="280">280</span>
+<span id="281">281</span>
+<span id="282">282</span>
+<span id="283">283</span>
+<span id="284">284</span>
+<span id="285">285</span>
+<span id="286">286</span>
+<span id="287">287</span>
+<span id="288">288</span>
+<span id="289">289</span>
+<span id="290">290</span>
+<span id="291">291</span>
+<span id="292">292</span>
+<span id="293">293</span>
+<span id="294">294</span>
+<span id="295">295</span>
+<span id="296">296</span>
+<span id="297">297</span>
+<span id="298">298</span>
+<span id="299">299</span>
+<span id="300">300</span>
+<span id="301">301</span>
+<span id="302">302</span>
+<span id="303">303</span>
+<span id="304">304</span>
+<span id="305">305</span>
+<span id="306">306</span>
+<span id="307">307</span>
+<span id="308">308</span>
+<span id="309">309</span>
+<span id="310">310</span>
+<span id="311">311</span>
+<span id="312">312</span>
+<span id="313">313</span>
+<span id="314">314</span>
+<span id="315">315</span>
+<span id="316">316</span>
+<span id="317">317</span>
+<span id="318">318</span>
+<span id="319">319</span>
+<span id="320">320</span>
+<span id="321">321</span>
+<span id="322">322</span>
+<span id="323">323</span>
+<span id="324">324</span>
+<span id="325">325</span>
+<span id="326">326</span>
+<span id="327">327</span>
+<span id="328">328</span>
+<span id="329">329</span>
+<span id="330">330</span>
+<span id="331">331</span>
+<span id="332">332</span>
+<span id="333">333</span>
+<span id="334">334</span>
+<span id="335">335</span>
+<span id="336">336</span>
+<span id="337">337</span>
+<span id="338">338</span>
+<span id="339">339</span>
+<span id="340">340</span>
+<span id="341">341</span>
+<span id="342">342</span>
+<span id="343">343</span>
+<span id="344">344</span>
+<span id="345">345</span>
+<span id="346">346</span>
+<span id="347">347</span>
+<span id="348">348</span>
+<span id="349">349</span>
+<span id="350">350</span>
+<span id="351">351</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">log::debug</span>;
+<span class="kw">use</span> <span class="ident">mithril_aggregator::fake_data</span>;
+<span class="kw">use</span> <span class="ident">std::str</span>;
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::aggregator::AggregatorHandler</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::entities</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::errors</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::verifier::Verifier</span>;
+
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MISSING_AGGREGATOR_HANDLER</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;missing aggregator handler&quot;</span>;
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MISSING_VERIFIER</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;missing verifier&quot;</span>;
+
+<span class="doccomment">/// AggregatorHandlerWrapper wraps an AggregatorHandler</span>
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">AggregatorHandlerWrapper</span> <span class="op">=</span> <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">AggregatorHandler</span><span class="op">&gt;</span>;
+
+<span class="doccomment">/// VerifierWrapper wraps a Verifier</span>
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">VerifierWrapper</span> <span class="op">=</span> <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Verifier</span><span class="op">&gt;</span>;
 
 <span class="doccomment">/// Mithril client wrapper</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Client</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">R</span>: <span class="ident">AggregatorHandler</span>,
-{
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Client</span> {
     <span class="kw">pub</span> <span class="ident">network</span>: <span class="ident">String</span>,
-    <span class="kw">pub</span> <span class="ident">aggregator_handler</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">aggregator_handler</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">AggregatorHandlerWrapper</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">verifier</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">VerifierWrapper</span><span class="op">&gt;</span>,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span> <span class="ident">Client</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">R</span>: <span class="ident">AggregatorHandler</span>,
-{
+<span class="kw">impl</span> <span class="ident">Client</span> {
     <span class="doccomment">/// Client factory</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">network</span>: <span class="ident">String</span>) -&gt; <span class="self">Self</span> {
         <span class="self">Self</span> {
             <span class="ident">network</span>,
             <span class="ident">aggregator_handler</span>: <span class="prelude-val">None</span>,
+            <span class="ident">verifier</span>: <span class="prelude-val">None</span>,
         }
     }
 
     <span class="doccomment">/// With AggregatorHandler</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">with_aggregator_handler</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">aggregator_handler</span>: <span class="ident">R</span>) -&gt; <span class="kw-2">&amp;mut</span> <span class="self">Self</span> {
-        <span class="self">self</span>.<span class="ident">aggregator_handler</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">Box::new</span>(<span class="ident">aggregator_handler</span>));
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">with_aggregator_handler</span>(
+        <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
+        <span class="ident">aggregator_handler</span>: <span class="ident">AggregatorHandlerWrapper</span>,
+    ) -&gt; <span class="kw-2">&amp;mut</span> <span class="self">Self</span> {
+        <span class="self">self</span>.<span class="ident">aggregator_handler</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">aggregator_handler</span>);
         <span class="self">self</span>
     }
-}
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span> <span class="ident">Client</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">R</span>: <span class="ident">AggregatorHandler</span>,
-{
+    <span class="doccomment">/// With Verifier</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">with_verifier</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">verifier</span>: <span class="ident">VerifierWrapper</span>) -&gt; <span class="kw-2">&amp;mut</span> <span class="self">Self</span> {
+        <span class="self">self</span>.<span class="ident">verifier</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">verifier</span>);
+        <span class="self">self</span>
+    }
+
     <span class="doccomment">/// List snapshots</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">list_snapshots</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">SnapshotListItem</span><span class="op">&gt;</span>, <span class="ident">String</span><span class="op">&gt;</span> {
         <span class="macro">debug!</span>(<span class="string">&quot;List snapshots&quot;</span>);
-        <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">aggregator_handler</span> {
-            <span class="prelude-val">Some</span>(<span class="ident">aggregator_handler</span>) =&gt; <span class="kw">match</span> <span class="ident">aggregator_handler</span>.<span class="ident">list_snapshots</span>().<span class="kw">await</span> {
-                <span class="prelude-val">Ok</span>(<span class="ident">snapshots</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">snapshots</span>
-                    .<span class="ident">iter</span>()
-                    .<span class="ident">map</span>(<span class="op">|</span><span class="ident">snapshot</span><span class="op">|</span> <span class="ident">convert_to_list_item</span>(<span class="ident">snapshot</span>, <span class="self">self</span>.<span class="ident">network</span>.<span class="ident">clone</span>()))
-                    .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">SnapshotListItem</span><span class="op">&gt;</span><span class="op">&gt;</span>()),
-                <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">err</span>),
-            },
-            <span class="prelude-val">None</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">errors::MISSING_AGGREGATOR_HANDLER</span>.<span class="ident">to_string</span>()),
-        }
+        <span class="kw">let</span> <span class="ident">aggregator_handler</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>
+            .<span class="ident">aggregator_handler</span>
+            .<span class="ident">as_ref</span>()
+            .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">MISSING_AGGREGATOR_HANDLER</span>.<span class="ident">to_string</span>())<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(<span class="ident">aggregator_handler</span>
+            .<span class="ident">list_snapshots</span>()
+            .<span class="kw">await</span>
+            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">e</span>.<span class="ident">to_string</span>())<span class="question-mark">?</span>
+            .<span class="ident">iter</span>()
+            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">snapshot</span><span class="op">|</span> <span class="ident">convert_to_list_item</span>(<span class="ident">snapshot</span>, <span class="self">self</span>.<span class="ident">network</span>.<span class="ident">clone</span>()))
+            .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">SnapshotListItem</span><span class="op">&gt;</span><span class="op">&gt;</span>())
     }
 
     <span class="doccomment">/// Show a snapshot</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">show_snapshot</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">digest</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">SnapshotFieldItem</span><span class="op">&gt;</span>, <span class="ident">String</span><span class="op">&gt;</span> {
         <span class="macro">debug!</span>(<span class="string">&quot;Show snapshot {}&quot;</span>, <span class="ident">digest</span>);
-        <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">aggregator_handler</span> {
-            <span class="prelude-val">Some</span>(<span class="ident">aggregator_handler</span>) =&gt; <span class="kw">match</span> <span class="ident">aggregator_handler</span>.<span class="ident">get_snapshot_details</span>(<span class="ident">digest</span>).<span class="kw">await</span>
-            {
-                <span class="prelude-val">Ok</span>(<span class="ident">snapshot</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">convert_to_field_items</span>(<span class="kw-2">&amp;</span><span class="ident">snapshot</span>, <span class="self">self</span>.<span class="ident">network</span>.<span class="ident">clone</span>())),
-                <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">err</span>),
-            },
-            <span class="prelude-val">None</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">errors::MISSING_AGGREGATOR_HANDLER</span>.<span class="ident">to_string</span>()),
-        }
+        <span class="kw">let</span> <span class="ident">aggregator_handler</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>
+            .<span class="ident">aggregator_handler</span>
+            .<span class="ident">as_ref</span>()
+            .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">MISSING_AGGREGATOR_HANDLER</span>.<span class="ident">to_string</span>())<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(<span class="ident">convert_to_field_items</span>(
+            <span class="kw-2">&amp;</span><span class="ident">aggregator_handler</span>
+                .<span class="ident">get_snapshot_details</span>(<span class="ident">digest</span>)
+                .<span class="kw">await</span>
+                .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">e</span>.<span class="ident">to_string</span>())<span class="question-mark">?</span>,
+            <span class="self">self</span>.<span class="ident">network</span>.<span class="ident">clone</span>(),
+        ))
     }
 
     <span class="doccomment">/// Download a snapshot by digest</span>
@@ -290,36 +442,55 @@
         <span class="ident">location_index</span>: <span class="ident">isize</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">String</span>, <span class="ident">String</span>), <span class="ident">String</span><span class="op">&gt;</span> {
         <span class="macro">debug!</span>(<span class="string">&quot;Download snapshot {}&quot;</span>, <span class="ident">digest</span>);
-        <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">aggregator_handler</span> {
-            <span class="prelude-val">Some</span>(<span class="ident">aggregator_handler</span>) =&gt; <span class="kw">match</span> <span class="ident">aggregator_handler</span>.<span class="ident">get_snapshot_details</span>(<span class="ident">digest</span>).<span class="kw">await</span>
-            {
-                <span class="prelude-val">Ok</span>(<span class="ident">snapshot</span>) =&gt; {
-                    <span class="kw">let</span> <span class="ident">from</span> <span class="op">=</span> <span class="ident">snapshot</span>
-                        .<span class="ident">locations</span>
-                        .<span class="ident">get</span>((<span class="ident">location_index</span> <span class="op">-</span> <span class="number">1</span>) <span class="kw">as</span> <span class="ident">usize</span>)
-                        .<span class="ident">unwrap</span>()
-                        .<span class="ident">to_owned</span>();
-                    <span class="kw">match</span> <span class="ident">aggregator_handler</span>.<span class="ident">download_snapshot</span>(<span class="ident">digest</span>, <span class="kw-2">&amp;</span><span class="ident">from</span>).<span class="kw">await</span> {
-                        <span class="prelude-val">Ok</span>(<span class="ident">to</span>) =&gt; <span class="prelude-val">Ok</span>((<span class="ident">from</span>, <span class="ident">to</span>)),
-                        <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">err</span>),
-                    }
-                }
-                <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">err</span>),
-            },
-            <span class="prelude-val">None</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">errors::MISSING_AGGREGATOR_HANDLER</span>.<span class="ident">to_string</span>()),
+        <span class="kw">let</span> <span class="ident">aggregator_handler</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>
+            .<span class="ident">aggregator_handler</span>
+            .<span class="ident">as_ref</span>()
+            .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">MISSING_AGGREGATOR_HANDLER</span>.<span class="ident">to_string</span>())<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">snapshot</span> <span class="op">=</span> <span class="ident">aggregator_handler</span>
+            .<span class="ident">get_snapshot_details</span>(<span class="ident">digest</span>)
+            .<span class="kw">await</span>
+            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">e</span>.<span class="ident">to_string</span>())<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">from</span> <span class="op">=</span> <span class="ident">snapshot</span>
+            .<span class="ident">locations</span>
+            .<span class="ident">get</span>((<span class="ident">location_index</span> <span class="op">-</span> <span class="number">1</span>) <span class="kw">as</span> <span class="ident">usize</span>)
+            .<span class="ident">unwrap</span>()
+            .<span class="ident">to_owned</span>();
+        <span class="kw">match</span> <span class="ident">aggregator_handler</span>.<span class="ident">download_snapshot</span>(<span class="ident">digest</span>, <span class="kw-2">&amp;</span><span class="ident">from</span>).<span class="kw">await</span> {
+            <span class="prelude-val">Ok</span>(<span class="ident">to</span>) =&gt; <span class="prelude-val">Ok</span>((<span class="ident">from</span>, <span class="ident">to</span>)),
+            <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">err</span>.<span class="ident">to_string</span>()),
         }
     }
 
-    <span class="doccomment">/// Restore a snapshot by hash</span>
+    <span class="doccomment">/// Restore a snapshot by digest</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">restore_snapshot</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">digest</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">String</span><span class="op">&gt;</span> {
         <span class="macro">debug!</span>(<span class="string">&quot;Restore snapshot {}&quot;</span>, <span class="ident">digest</span>);
-        <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">aggregator_handler</span> {
-            <span class="prelude-val">Some</span>(<span class="ident">aggregator_handler</span>) =&gt; <span class="kw">match</span> <span class="ident">aggregator_handler</span>.<span class="ident">unpack_snapshot</span>(<span class="ident">digest</span>).<span class="kw">await</span> {
-                <span class="prelude-val">Ok</span>(<span class="ident">to</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">to</span>),
-                <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">err</span>),
-            },
-            <span class="prelude-val">None</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">errors::MISSING_AGGREGATOR_HANDLER</span>.<span class="ident">to_string</span>()),
-        }
+        <span class="kw">let</span> <span class="ident">aggregator_handler</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>
+            .<span class="ident">aggregator_handler</span>
+            .<span class="ident">as_ref</span>()
+            .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">MISSING_AGGREGATOR_HANDLER</span>.<span class="ident">to_string</span>())<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">verifier</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>
+            .<span class="ident">verifier</span>
+            .<span class="ident">as_ref</span>()
+            .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">MISSING_VERIFIER</span>.<span class="ident">to_string</span>())<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">fake_digest</span> <span class="op">=</span> <span class="ident">fake_data::digest</span>();
+        <span class="macro">debug!</span>(<span class="string">&quot;Fake digest {:?}&quot;</span>, <span class="ident">fake_digest</span>);
+        <span class="kw">let</span> <span class="ident">certificate_hash</span> <span class="op">=</span> <span class="ident">str::from_utf8</span>(<span class="kw-2">&amp;</span><span class="ident">fake_digest</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">e</span>.<span class="ident">to_string</span>())<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">certificate_details</span> <span class="op">=</span> <span class="ident">aggregator_handler</span>
+            .<span class="ident">get_certificate_details</span>(<span class="ident">certificate_hash</span>)
+            .<span class="kw">await</span>
+            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">e</span>.<span class="ident">to_string</span>())<span class="question-mark">?</span>;
+        <span class="ident">verifier</span>
+            .<span class="ident">verify_multi_signature</span>(
+                <span class="kw-2">&amp;</span><span class="ident">fake_digest</span>,
+                <span class="ident">certificate_details</span>.<span class="ident">multisignature</span>.<span class="ident">as_ref</span>(),
+                <span class="kw-2">&amp;</span><span class="ident">certificate_details</span>.<span class="ident">participants</span>,
+                <span class="kw-2">&amp;</span><span class="ident">certificate_details</span>.<span class="ident">protocol_parameters</span>,
+            )
+            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">e</span>.<span class="ident">to_string</span>())<span class="question-mark">?</span>;
+        <span class="ident">aggregator_handler</span>
+            .<span class="ident">unpack_snapshot</span>(<span class="ident">digest</span>)
+            .<span class="kw">await</span>
+            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">e</span>.<span class="ident">to_string</span>())
     }
 }
 
@@ -361,27 +532,30 @@
 <span class="kw">mod</span> <span class="ident">tests</span> {
     <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
 
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::aggregator::MockAggregatorHandler</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::aggregator</span>::{<span class="ident">AggregatorHandlerError</span>, <span class="ident">MockAggregatorHandler</span>};
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::verifier</span>::{<span class="ident">MockVerifier</span>, <span class="ident">ProtocolError</span>};
     <span class="kw">use</span> <span class="ident">mithril_aggregator::fake_data</span>;
 
     <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_list_snapshots_ok</span>() {
         <span class="kw">let</span> <span class="ident">network</span> <span class="op">=</span> <span class="string">&quot;testnet&quot;</span>.<span class="ident">to_string</span>();
         <span class="kw">let</span> <span class="ident">fake_snapshots</span> <span class="op">=</span> <span class="ident">fake_data::snapshots</span>(<span class="number">5</span>);
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_aggregator_handler</span> <span class="op">=</span> <span class="ident">MockAggregatorHandler::new</span>();
-        <span class="ident">mock_aggregator_handler</span>
-            .<span class="ident">expect_list_snapshots</span>()
-            .<span class="ident">return_const</span>(<span class="prelude-val">Ok</span>(<span class="ident">fake_snapshots</span>.<span class="ident">clone</span>()))
-            .<span class="ident">once</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">client</span> <span class="op">=</span> <span class="ident">Client::new</span>(<span class="ident">network</span>.<span class="ident">clone</span>());
-        <span class="ident">client</span>.<span class="ident">with_aggregator_handler</span>(<span class="ident">mock_aggregator_handler</span>);
-        <span class="kw">let</span> <span class="ident">snapshot_list_items</span> <span class="op">=</span> <span class="ident">client</span>.<span class="ident">list_snapshots</span>().<span class="kw">await</span>;
-        <span class="ident">snapshot_list_items</span>.<span class="ident">as_ref</span>().<span class="ident">expect</span>(<span class="string">&quot;unexpected error&quot;</span>);
         <span class="kw">let</span> <span class="ident">snapshot_list_items_expected</span> <span class="op">=</span> <span class="ident">fake_snapshots</span>
             .<span class="ident">iter</span>()
             .<span class="ident">map</span>(<span class="op">|</span><span class="ident">snapshot</span><span class="op">|</span> <span class="ident">convert_to_list_item</span>(<span class="ident">snapshot</span>, <span class="ident">network</span>.<span class="ident">clone</span>()))
             .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">SnapshotListItem</span><span class="op">&gt;</span><span class="op">&gt;</span>();
-        <span class="macro">assert_eq!</span>(<span class="ident">snapshot_list_items</span>.<span class="ident">unwrap</span>(), <span class="ident">snapshot_list_items_expected</span>);
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_aggregator_handler</span> <span class="op">=</span> <span class="ident">MockAggregatorHandler::new</span>();
+        <span class="ident">mock_aggregator_handler</span>
+            .<span class="ident">expect_list_snapshots</span>()
+            .<span class="ident">return_once</span>(<span class="kw">move</span> <span class="op">|</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="ident">fake_snapshots</span>));
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">client</span> <span class="op">=</span> <span class="ident">Client::new</span>(<span class="ident">network</span>.<span class="ident">clone</span>());
+        <span class="ident">client</span>.<span class="ident">with_aggregator_handler</span>(<span class="ident">Box::new</span>(<span class="ident">mock_aggregator_handler</span>));
+        <span class="kw">let</span> <span class="ident">snapshot_list_items</span> <span class="op">=</span> <span class="ident">client</span>.<span class="ident">list_snapshots</span>().<span class="kw">await</span>;
+        <span class="ident">snapshot_list_items</span>.<span class="ident">as_ref</span>().<span class="ident">expect</span>(<span class="string">&quot;unexpected error&quot;</span>);
+        <span class="macro">assert_eq!</span>(
+            <span class="ident">snapshot_list_items</span>.<span class="ident">unwrap</span>(),
+            <span class="ident">snapshot_list_items_expected</span>.<span class="ident">to_owned</span>()
+        );
     }
 
     <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
@@ -389,10 +563,13 @@
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_aggregator_handler</span> <span class="op">=</span> <span class="ident">MockAggregatorHandler::new</span>();
         <span class="ident">mock_aggregator_handler</span>
             .<span class="ident">expect_list_snapshots</span>()
-            .<span class="ident">return_const</span>(<span class="prelude-val">Err</span>(<span class="string">&quot;error occurred&quot;</span>.<span class="ident">to_string</span>()))
-            .<span class="ident">once</span>();
+            .<span class="ident">return_once</span>(<span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
+                <span class="prelude-val">Err</span>(<span class="ident">AggregatorHandlerError::RemoteServerTechnical</span>(
+                    <span class="string">&quot;error occurred&quot;</span>.<span class="ident">to_string</span>(),
+                ))
+            });
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">client</span> <span class="op">=</span> <span class="ident">Client::new</span>(<span class="string">&quot;testnet&quot;</span>.<span class="ident">to_string</span>());
-        <span class="ident">client</span>.<span class="ident">with_aggregator_handler</span>(<span class="ident">mock_aggregator_handler</span>);
+        <span class="ident">client</span>.<span class="ident">with_aggregator_handler</span>(<span class="ident">Box::new</span>(<span class="ident">mock_aggregator_handler</span>));
         <span class="kw">let</span> <span class="ident">snapshot_list_items</span> <span class="op">=</span> <span class="ident">client</span>.<span class="ident">list_snapshots</span>().<span class="kw">await</span>;
         <span class="macro">assert!</span>(
             <span class="ident">snapshot_list_items</span>.<span class="ident">is_err</span>(),
@@ -404,16 +581,15 @@
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_show_snapshot_ok</span>() {
         <span class="kw">let</span> <span class="ident">digest</span> <span class="op">=</span> <span class="string">&quot;digest123&quot;</span>;
         <span class="kw">let</span> <span class="ident">fake_snapshot</span> <span class="op">=</span> <span class="ident">fake_data::snapshots</span>(<span class="number">1</span>).<span class="ident">first</span>().<span class="ident">unwrap</span>().<span class="ident">to_owned</span>();
+        <span class="kw">let</span> <span class="ident">snapshot_item_expected</span> <span class="op">=</span> <span class="ident">convert_to_field_items</span>(<span class="kw-2">&amp;</span><span class="ident">fake_snapshot</span>, <span class="string">&quot;testnet&quot;</span>.<span class="ident">to_string</span>());
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_aggregator_handler</span> <span class="op">=</span> <span class="ident">MockAggregatorHandler::new</span>();
         <span class="ident">mock_aggregator_handler</span>
             .<span class="ident">expect_get_snapshot_details</span>()
-            .<span class="ident">return_const</span>(<span class="prelude-val">Ok</span>(<span class="ident">fake_snapshot</span>.<span class="ident">clone</span>()))
-            .<span class="ident">once</span>();
+            .<span class="ident">return_once</span>(<span class="kw">move</span> <span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="ident">fake_snapshot</span>));
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">client</span> <span class="op">=</span> <span class="ident">Client::new</span>(<span class="string">&quot;testnet&quot;</span>.<span class="ident">to_string</span>());
-        <span class="ident">client</span>.<span class="ident">with_aggregator_handler</span>(<span class="ident">mock_aggregator_handler</span>);
+        <span class="ident">client</span>.<span class="ident">with_aggregator_handler</span>(<span class="ident">Box::new</span>(<span class="ident">mock_aggregator_handler</span>));
         <span class="kw">let</span> <span class="ident">snapshot_item</span> <span class="op">=</span> <span class="ident">client</span>.<span class="ident">show_snapshot</span>(<span class="ident">digest</span>).<span class="kw">await</span>;
         <span class="ident">snapshot_item</span>.<span class="ident">as_ref</span>().<span class="ident">expect</span>(<span class="string">&quot;unexpected error&quot;</span>);
-        <span class="kw">let</span> <span class="ident">snapshot_item_expected</span> <span class="op">=</span> <span class="ident">convert_to_field_items</span>(<span class="kw-2">&amp;</span><span class="ident">fake_snapshot</span>, <span class="string">&quot;testnet&quot;</span>.<span class="ident">to_string</span>());
         <span class="macro">assert_eq!</span>(<span class="ident">snapshot_item</span>.<span class="ident">unwrap</span>(), <span class="ident">snapshot_item_expected</span>);
     }
 
@@ -423,12 +599,110 @@
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_aggregator_handler</span> <span class="op">=</span> <span class="ident">MockAggregatorHandler::new</span>();
         <span class="ident">mock_aggregator_handler</span>
             .<span class="ident">expect_get_snapshot_details</span>()
-            .<span class="ident">return_const</span>(<span class="prelude-val">Err</span>(<span class="string">&quot;error occurred&quot;</span>.<span class="ident">to_string</span>()))
-            .<span class="ident">once</span>();
+            .<span class="ident">return_once</span>(<span class="kw">move</span> <span class="op">|</span><span class="kw">_</span><span class="op">|</span> {
+                <span class="prelude-val">Err</span>(<span class="ident">AggregatorHandlerError::RemoteServerTechnical</span>(
+                    <span class="string">&quot;error occurred&quot;</span>.<span class="ident">to_string</span>(),
+                ))
+            });
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">client</span> <span class="op">=</span> <span class="ident">Client::new</span>(<span class="string">&quot;testnet&quot;</span>.<span class="ident">to_string</span>());
-        <span class="ident">client</span>.<span class="ident">with_aggregator_handler</span>(<span class="ident">mock_aggregator_handler</span>);
+        <span class="ident">client</span>.<span class="ident">with_aggregator_handler</span>(<span class="ident">Box::new</span>(<span class="ident">mock_aggregator_handler</span>));
         <span class="kw">let</span> <span class="ident">snapshot_item</span> <span class="op">=</span> <span class="ident">client</span>.<span class="ident">show_snapshot</span>(<span class="ident">digest</span>).<span class="kw">await</span>;
         <span class="macro">assert!</span>(<span class="ident">snapshot_item</span>.<span class="ident">is_err</span>(), <span class="string">&quot;an error should have occurred&quot;</span>);
+    }
+
+    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_restore_snapshot_ok</span>() {
+        <span class="kw">let</span> <span class="ident">certificate_hash</span> <span class="op">=</span> <span class="string">&quot;certhash123&quot;</span>;
+        <span class="kw">let</span> <span class="ident">fake_certificate</span> <span class="op">=</span> <span class="ident">fake_data::certificate</span>(<span class="ident">certificate_hash</span>.<span class="ident">to_string</span>());
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_aggregator_handler</span> <span class="op">=</span> <span class="ident">MockAggregatorHandler::new</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_verifier</span> <span class="op">=</span> <span class="ident">MockVerifier::new</span>();
+        <span class="ident">mock_aggregator_handler</span>
+            .<span class="ident">expect_get_certificate_details</span>()
+            .<span class="ident">return_once</span>(<span class="kw">move</span> <span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="ident">fake_certificate</span>));
+        <span class="ident">mock_aggregator_handler</span>
+            .<span class="ident">expect_unpack_snapshot</span>()
+            .<span class="ident">return_once</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="string">&quot;&quot;</span>.<span class="ident">to_string</span>()));
+        <span class="ident">mock_verifier</span>
+            .<span class="ident">expect_verify_multi_signature</span>()
+            .<span class="ident">return_once</span>(<span class="op">|</span><span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(()));
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">client</span> <span class="op">=</span> <span class="ident">Client::new</span>(<span class="string">&quot;testnet&quot;</span>.<span class="ident">to_string</span>());
+        <span class="ident">client</span>
+            .<span class="ident">with_aggregator_handler</span>(<span class="ident">Box::new</span>(<span class="ident">mock_aggregator_handler</span>))
+            .<span class="ident">with_verifier</span>(<span class="ident">Box::new</span>(<span class="ident">mock_verifier</span>));
+        <span class="kw">let</span> <span class="ident">restore</span> <span class="op">=</span> <span class="ident">client</span>.<span class="ident">restore_snapshot</span>(<span class="ident">certificate_hash</span>).<span class="kw">await</span>;
+        <span class="ident">restore</span>.<span class="ident">expect</span>(<span class="string">&quot;unexpected error&quot;</span>);
+    }
+
+    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_restore_snapshot_ko_get_certificate_details</span>() {
+        <span class="kw">let</span> <span class="ident">certificate_hash</span> <span class="op">=</span> <span class="string">&quot;certhash123&quot;</span>;
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_aggregator_handler</span> <span class="op">=</span> <span class="ident">MockAggregatorHandler::new</span>();
+        <span class="kw">let</span> <span class="ident">mock_verifier</span> <span class="op">=</span> <span class="ident">MockVerifier::new</span>();
+        <span class="ident">mock_aggregator_handler</span>
+            .<span class="ident">expect_get_certificate_details</span>()
+            .<span class="ident">return_once</span>(<span class="kw">move</span> <span class="op">|</span><span class="kw">_</span><span class="op">|</span> {
+                <span class="prelude-val">Err</span>(<span class="ident">AggregatorHandlerError::RemoteServerTechnical</span>(
+                    <span class="string">&quot;error occurred&quot;</span>.<span class="ident">to_string</span>(),
+                ))
+            });
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">client</span> <span class="op">=</span> <span class="ident">Client::new</span>(<span class="string">&quot;testnet&quot;</span>.<span class="ident">to_string</span>());
+        <span class="ident">client</span>
+            .<span class="ident">with_aggregator_handler</span>(<span class="ident">Box::new</span>(<span class="ident">mock_aggregator_handler</span>))
+            .<span class="ident">with_verifier</span>(<span class="ident">Box::new</span>(<span class="ident">mock_verifier</span>));
+        <span class="kw">let</span> <span class="ident">restore</span> <span class="op">=</span> <span class="ident">client</span>.<span class="ident">restore_snapshot</span>(<span class="ident">certificate_hash</span>).<span class="kw">await</span>;
+        <span class="macro">assert!</span>(<span class="ident">restore</span>.<span class="ident">is_err</span>(), <span class="string">&quot;an error should have occurred&quot;</span>);
+    }
+
+    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_restore_snapshot_ko_verify_multi_signature</span>() {
+        <span class="kw">let</span> <span class="ident">certificate_hash</span> <span class="op">=</span> <span class="string">&quot;certhash123&quot;</span>;
+        <span class="kw">let</span> <span class="ident">fake_certificate</span> <span class="op">=</span> <span class="ident">fake_data::certificate</span>(<span class="ident">certificate_hash</span>.<span class="ident">to_string</span>());
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_aggregator_handler</span> <span class="op">=</span> <span class="ident">MockAggregatorHandler::new</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_verifier</span> <span class="op">=</span> <span class="ident">MockVerifier::new</span>();
+        <span class="ident">mock_aggregator_handler</span>
+            .<span class="ident">expect_get_certificate_details</span>()
+            .<span class="ident">return_once</span>(<span class="kw">move</span> <span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="ident">fake_certificate</span>));
+
+        <span class="ident">mock_verifier</span>
+            .<span class="ident">expect_verify_multi_signature</span>()
+            .<span class="ident">return_once</span>(<span class="kw">move</span> <span class="op">|</span><span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span><span class="op">|</span> {
+                <span class="prelude-val">Err</span>(<span class="ident">ProtocolError::VerifyMultiSignatureError</span>(
+                    <span class="string">&quot;error occurred&quot;</span>.<span class="ident">to_string</span>(),
+                ))
+            });
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">client</span> <span class="op">=</span> <span class="ident">Client::new</span>(<span class="string">&quot;testnet&quot;</span>.<span class="ident">to_string</span>());
+        <span class="ident">client</span>
+            .<span class="ident">with_aggregator_handler</span>(<span class="ident">Box::new</span>(<span class="ident">mock_aggregator_handler</span>))
+            .<span class="ident">with_verifier</span>(<span class="ident">Box::new</span>(<span class="ident">mock_verifier</span>));
+        <span class="kw">let</span> <span class="ident">restore</span> <span class="op">=</span> <span class="ident">client</span>.<span class="ident">restore_snapshot</span>(<span class="ident">certificate_hash</span>).<span class="kw">await</span>;
+        <span class="macro">assert!</span>(<span class="ident">restore</span>.<span class="ident">is_err</span>(), <span class="string">&quot;an error should have occurred&quot;</span>);
+    }
+
+    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_restore_unpack_snapshot</span>() {
+        <span class="kw">let</span> <span class="ident">certificate_hash</span> <span class="op">=</span> <span class="string">&quot;certhash123&quot;</span>;
+        <span class="kw">let</span> <span class="ident">fake_certificate</span> <span class="op">=</span> <span class="ident">fake_data::certificate</span>(<span class="ident">certificate_hash</span>.<span class="ident">to_string</span>());
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_aggregator_handler</span> <span class="op">=</span> <span class="ident">MockAggregatorHandler::new</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_verifier</span> <span class="op">=</span> <span class="ident">MockVerifier::new</span>();
+        <span class="ident">mock_aggregator_handler</span>
+            .<span class="ident">expect_get_certificate_details</span>()
+            .<span class="ident">return_once</span>(<span class="kw">move</span> <span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="ident">fake_certificate</span>));
+        <span class="ident">mock_aggregator_handler</span>
+            .<span class="ident">expect_unpack_snapshot</span>()
+            .<span class="ident">return_once</span>(<span class="kw">move</span> <span class="op">|</span><span class="kw">_</span><span class="op">|</span> {
+                <span class="prelude-val">Err</span>(<span class="ident">AggregatorHandlerError::RemoteServerTechnical</span>(
+                    <span class="string">&quot;error occurred&quot;</span>.<span class="ident">to_string</span>(),
+                ))
+            });
+        <span class="ident">mock_verifier</span>
+            .<span class="ident">expect_verify_multi_signature</span>()
+            .<span class="ident">return_once</span>(<span class="op">|</span><span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(()));
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">client</span> <span class="op">=</span> <span class="ident">Client::new</span>(<span class="string">&quot;testnet&quot;</span>.<span class="ident">to_string</span>());
+        <span class="ident">client</span>
+            .<span class="ident">with_aggregator_handler</span>(<span class="ident">Box::new</span>(<span class="ident">mock_aggregator_handler</span>))
+            .<span class="ident">with_verifier</span>(<span class="ident">Box::new</span>(<span class="ident">mock_verifier</span>));
+        <span class="kw">let</span> <span class="ident">restore</span> <span class="op">=</span> <span class="ident">client</span>.<span class="ident">restore_snapshot</span>(<span class="ident">certificate_hash</span>).<span class="kw">await</span>;
+        <span class="macro">assert!</span>(<span class="ident">restore</span>.<span class="ident">is_err</span>(), <span class="string">&quot;an error should have occurred&quot;</span>);
     }
 }
 </code></pre></div>
