@@ -262,14 +262,13 @@
 <span id="257">257</span>
 <span id="258">258</span>
 <span id="259">259</span>
-<span id="260">260</span>
-<span id="261">261</span>
-<span id="262">262</span>
-</pre><pre class="rust"><code><span class="comment">// @todo: remove this</span>
+</pre><pre class="rust"><code><span class="comment">// TODO: remove this</span>
 <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span>
 
 <span class="kw">use</span> <span class="ident">ark_bls12_377::Bls12_377</span>;
 <span class="kw">use</span> <span class="ident">hex</span>::{<span class="ident">FromHex</span>, <span class="ident">ToHex</span>};
+
+<span class="kw">use</span> <span class="ident">slog_scope</span>::{<span class="ident">trace</span>, <span class="ident">warn</span>};
 <span class="kw">use</span> <span class="ident">std::io::Cursor</span>;
 <span class="kw">use</span> <span class="ident">thiserror::Error</span>;
 
@@ -281,7 +280,7 @@
     <span class="ident">Index</span>, <span class="ident">MTValue</span>, <span class="ident">PartyId</span>, <span class="ident">Stake</span>, <span class="ident">StmClerk</span>, <span class="ident">StmInitializer</span>, <span class="ident">StmMultiSig</span>, <span class="ident">StmParameters</span>, <span class="ident">StmSig</span>,
     <span class="ident">StmSigner</span>,
 };
-<span class="kw">use</span> <span class="ident">mithril_aggregator::entities</span>;
+<span class="kw">use</span> <span class="ident">mithril_aggregator::entities</span>::{<span class="self">self</span>, <span class="ident">SignerWithStake</span>, <span class="ident">SingleSignature</span>};
 
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">Bytes</span> <span class="op">=</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>;
 
@@ -303,12 +302,8 @@
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ProtocolSignerVerificationKey</span> <span class="op">=</span> <span class="ident">MspPk</span><span class="op">&lt;</span><span class="ident">Bls12_377</span><span class="op">&gt;</span>;
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ProtocolSignerSecretKey</span> <span class="op">=</span> <span class="ident">MspSk</span><span class="op">&lt;</span><span class="ident">Bls12_377</span><span class="op">&gt;</span>;
 
-<span class="kw">use</span> <span class="ident">mithril_aggregator::entities</span>::{<span class="ident">SignerWithStake</span>, <span class="ident">SingleSignature</span>};
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="kw">use</span> <span class="ident">mockall::automock</span>;
-<span class="kw">use</span> <span class="ident">rand_chacha::ChaCha20Rng</span>;
-<span class="kw">use</span> <span class="ident">rand_core::SeedableRng</span>;
-<span class="kw">use</span> <span class="ident">slog_scope</span>::{<span class="ident">trace</span>, <span class="ident">warn</span>};
 
 <span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">test</span>, <span class="ident">automock</span>)]</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">SingleSigner</span> {
@@ -370,8 +365,7 @@
         }
         <span class="kw">let</span> <span class="ident">closed_reg</span> <span class="op">=</span> <span class="ident">key_reg</span>.<span class="ident">close</span>();
 
-        <span class="kw">let</span> <span class="ident">seed</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">32</span>];
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">rng</span> <span class="op">=</span> <span class="ident">ChaCha20Rng::from_seed</span>(<span class="ident">seed</span>);
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">rng</span> <span class="op">=</span> <span class="ident">rand_core::OsRng</span>;
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">initializer</span> <span class="op">=</span> <span class="ident">StmInitializer::setup</span>(
             <span class="ident">protocol_parameters</span>,
             <span class="self">self</span>.<span class="ident">party_id</span> <span class="kw">as</span> <span class="ident">ProtocolPartyId</span>,
