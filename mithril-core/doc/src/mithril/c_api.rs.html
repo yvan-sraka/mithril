@@ -678,34 +678,78 @@
 <span id="673">673</span>
 <span id="674">674</span>
 <span id="675">675</span>
+<span id="676">676</span>
+<span id="677">677</span>
+<span id="678">678</span>
+<span id="679">679</span>
+<span id="680">680</span>
+<span id="681">681</span>
+<span id="682">682</span>
+<span id="683">683</span>
+<span id="684">684</span>
+<span id="685">685</span>
+<span id="686">686</span>
+<span id="687">687</span>
+<span id="688">688</span>
+<span id="689">689</span>
+<span id="690">690</span>
+<span id="691">691</span>
+<span id="692">692</span>
+<span id="693">693</span>
+<span id="694">694</span>
+<span id="695">695</span>
+<span id="696">696</span>
+<span id="697">697</span>
+<span id="698">698</span>
+<span id="699">699</span>
+<span id="700">700</span>
+<span id="701">701</span>
+<span id="702">702</span>
+<span id="703">703</span>
+<span id="704">704</span>
+<span id="705">705</span>
+<span id="706">706</span>
+<span id="707">707</span>
+<span id="708">708</span>
+<span id="709">709</span>
+<span id="710">710</span>
+<span id="711">711</span>
+<span id="712">712</span>
+<span id="713">713</span>
+<span id="714">714</span>
+<span id="715">715</span>
+<span id="716">716</span>
+<span id="717">717</span>
+<span id="718">718</span>
+<span id="719">719</span>
+<span id="720">720</span>
+<span id="721">721</span>
+<span id="722">722</span>
+<span id="723">723</span>
+<span id="724">724</span>
+<span id="725">725</span>
+<span id="726">726</span>
 </pre><pre class="rust"><code><span class="doccomment">//! C api. All functions return an i64, with 0 upon success, and -99 if the returned pointer</span>
 <span class="doccomment">//! is null. Other error codes are function dependent.</span>
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::key_reg</span>::{<span class="ident">ClosedKeyReg</span>, <span class="ident">KeyReg</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::{
-    <span class="ident">merkle_tree</span>::{<span class="ident">MTHashLeaf</span>, <span class="ident">MerkleTreeCommitment</span>},
-    <span class="ident">mithril_proof::concat_proofs</span>::{<span class="ident">ConcatProof</span>, <span class="ident">TrivialEnv</span>},
-    <span class="ident">msp</span>::{<span class="ident">MspPk</span>, <span class="ident">MspSk</span>},
-    <span class="ident">stm</span>::<span class="kw-2">*</span>,
-};
+<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">merkle_tree::MerkleTreeCommitment</span>, <span class="ident">msp::MspPk</span>, <span class="ident">stm</span>::<span class="kw-2">*</span>};
 <span class="kw">use</span> <span class="ident">rand_core::OsRng</span>;
 <span class="kw">use</span> <span class="ident">std::ffi::CStr</span>;
 <span class="kw">use</span> <span class="ident">std::os::raw::c_char</span>;
 
 <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">NULLPOINTERERR</span>: <span class="ident">i64</span> <span class="op">=</span> <span class="op">-</span><span class="number">99</span>;
 
-<span class="kw">type</span> <span class="ident">C</span> <span class="op">=</span> <span class="ident">ark_bls12_377::Bls12_377</span>;
 <span class="kw">type</span> <span class="ident">H</span> <span class="op">=</span> <span class="ident">blake2::Blake2b</span>;
-<span class="kw">type</span> <span class="ident">F</span> <span class="op">=</span> <span class="op">&lt;</span><span class="ident">H</span> <span class="kw">as</span> <span class="ident">MTHashLeaf</span><span class="op">&lt;</span><span class="ident">MTValue</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="ident">::F</span>;
-<span class="kw">type</span> <span class="ident">MspSkPtr</span> <span class="op">=</span> <span class="kw-2">*mut</span> <span class="ident">MspSk</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>;
-<span class="kw">type</span> <span class="ident">MspPkPtr</span> <span class="op">=</span> <span class="kw-2">*mut</span> <span class="ident">MspPk</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>;
-<span class="kw">type</span> <span class="ident">SigPtr</span> <span class="op">=</span> <span class="kw-2">*mut</span> <span class="ident">StmSig</span><span class="op">&lt;</span><span class="ident">C</span>, <span class="ident">F</span><span class="op">&gt;</span>;
-<span class="kw">type</span> <span class="ident">MultiSigPtr</span> <span class="op">=</span> <span class="kw-2">*mut</span> <span class="ident">StmMultiSig</span><span class="op">&lt;</span><span class="ident">C</span>, <span class="ident">ConcatProof</span><span class="op">&lt;</span><span class="ident">C</span>, <span class="ident">H</span>, <span class="ident">F</span><span class="op">&gt;</span><span class="op">&gt;</span>;
-<span class="kw">type</span> <span class="ident">StmInitializerPtr</span> <span class="op">=</span> <span class="kw-2">*mut</span> <span class="ident">StmInitializer</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>;
-<span class="kw">type</span> <span class="ident">StmSignerPtr</span> <span class="op">=</span> <span class="kw-2">*mut</span> <span class="ident">StmSigner</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">C</span><span class="op">&gt;</span>;
-<span class="kw">type</span> <span class="ident">StmClerkPtr</span> <span class="op">=</span> <span class="kw-2">*mut</span> <span class="ident">StmClerk</span><span class="op">&lt;</span><span class="ident">H</span>, <span class="ident">C</span>, <span class="ident">TrivialEnv</span><span class="op">&gt;</span>;
-<span class="kw">type</span> <span class="ident">MerkleTreeCommitmentPtr</span> <span class="op">=</span> <span class="kw-2">*mut</span> <span class="ident">MerkleTreeCommitment</span><span class="op">&lt;</span><span class="ident">MTValue</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>, <span class="ident">H</span><span class="op">&gt;</span>;
-<span class="kw">type</span> <span class="ident">KeyRegPtr</span> <span class="op">=</span> <span class="kw-2">*mut</span> <span class="ident">KeyReg</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>;
-<span class="kw">type</span> <span class="ident">ClosedKeyRegPtr</span> <span class="op">=</span> <span class="kw-2">*mut</span> <span class="ident">ClosedKeyReg</span><span class="op">&lt;</span><span class="ident">C</span>, <span class="ident">H</span><span class="op">&gt;</span>;
+<span class="kw">type</span> <span class="ident">MspPkPtr</span> <span class="op">=</span> <span class="kw-2">*mut</span> <span class="ident">MspPk</span>;
+<span class="kw">type</span> <span class="ident">SigPtr</span> <span class="op">=</span> <span class="kw-2">*mut</span> <span class="ident">StmSig</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>;
+<span class="kw">type</span> <span class="ident">MultiSigPtr</span> <span class="op">=</span> <span class="kw-2">*mut</span> <span class="ident">StmMultiSig</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>;
+<span class="kw">type</span> <span class="ident">StmInitializerPtr</span> <span class="op">=</span> <span class="kw-2">*mut</span> <span class="ident">StmInitializer</span>;
+<span class="kw">type</span> <span class="ident">StmSignerPtr</span> <span class="op">=</span> <span class="kw-2">*mut</span> <span class="ident">StmSigner</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>;
+<span class="kw">type</span> <span class="ident">StmClerkPtr</span> <span class="op">=</span> <span class="kw-2">*mut</span> <span class="ident">StmClerk</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>;
+<span class="kw">type</span> <span class="ident">StmVerifierPtr</span> <span class="op">=</span> <span class="kw-2">*mut</span> <span class="ident">StmVerifier</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>;
+<span class="kw">type</span> <span class="ident">MerkleTreeCommitmentPtr</span> <span class="op">=</span> <span class="kw-2">*mut</span> <span class="ident">MerkleTreeCommitment</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>;
+<span class="kw">type</span> <span class="ident">KeyRegPtr</span> <span class="op">=</span> <span class="kw-2">*mut</span> <span class="ident">KeyReg</span>;
+<span class="kw">type</span> <span class="ident">ClosedKeyRegPtr</span> <span class="op">=</span> <span class="kw-2">*mut</span> <span class="ident">ClosedKeyReg</span><span class="op">&lt;</span><span class="ident">H</span><span class="op">&gt;</span>;
 
 <span class="comment">// A macro would be nice for the below, but macros do not</span>
 <span class="comment">// seem to work properly with cbindgen:</span>
@@ -765,143 +809,166 @@
     }
 }
 
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">serialize</span> {
-    <span class="doccomment">//! Serialisation functions</span>
-    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
-    <span class="kw">use</span> <span class="ident">ark_ff</span>::{<span class="ident">FromBytes</span>, <span class="ident">ToBytes</span>};
-    <span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">intrinsics::copy_nonoverlapping</span>, <span class="ident">slice</span>};
-
-    <span class="doccomment">/// Sets *key_bytes to the serialization</span>
-    <span class="doccomment">/// Sets *key_size to the size of the buffer</span>
-    <span class="doccomment">/// The caller is responsible for freeing this buffer</span>
-    <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-    <span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">msp_serialize_verification_key</span>(
-        <span class="ident">kptr</span>: <span class="ident">MspPkPtr</span>,
-        <span class="ident">key_size</span>: <span class="kw-2">*mut</span> <span class="ident">usize</span>,
-        <span class="ident">key_bytes</span>: <span class="kw-2">*mut</span> <span class="kw-2">*mut</span> <span class="ident">u8</span>,
-    ) -&gt; <span class="ident">i64</span> {
-        <span class="ident">c_serialize</span>(<span class="ident">kptr</span>, <span class="ident">key_size</span>, <span class="ident">key_bytes</span>)
-    }
-    <span class="doccomment">/// Given a pointer and its size, deserialize into a MSP verification/public key</span>
-    <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-    <span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">msp_deserialize_verification_key</span>(
-        <span class="ident">key_size</span>: <span class="ident">usize</span>,
-        <span class="ident">key_bytes</span>: <span class="kw-2">*mut</span> <span class="ident">u8</span>,
-        <span class="ident">output_struct</span>: <span class="kw-2">*mut</span> <span class="ident">MspPkPtr</span>,
-    ) -&gt; <span class="ident">i64</span> {
-        <span class="ident">c_deserialize</span>(<span class="ident">key_size</span>, <span class="ident">key_bytes</span>, <span class="ident">output_struct</span>)
-    }
-    <span class="doccomment">/// Sets *key_bytes to the serialization</span>
-    <span class="doccomment">/// Sets *key_size to the size of the buffer</span>
-    <span class="doccomment">/// The caller is responsible for freeing this buffer</span>
-    <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-    <span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">msp_serialize_secret_key</span>(
-        <span class="ident">kptr</span>: <span class="ident">MspSkPtr</span>,
-        <span class="ident">key_size</span>: <span class="kw-2">*mut</span> <span class="ident">usize</span>,
-        <span class="ident">key_bytes</span>: <span class="kw-2">*mut</span> <span class="kw-2">*mut</span> <span class="ident">u8</span>,
-    ) -&gt; <span class="ident">i64</span> {
-        <span class="ident">c_serialize</span>(<span class="ident">kptr</span>, <span class="ident">key_size</span>, <span class="ident">key_bytes</span>)
-    }
-    <span class="doccomment">/// Given a pointer and its size, deserialize into a MSP secret key</span>
-    <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-    <span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">msp_deserialize_secret_key</span>(
-        <span class="ident">key_size</span>: <span class="ident">usize</span>,
-        <span class="ident">key_bytes</span>: <span class="kw-2">*mut</span> <span class="ident">u8</span>,
-        <span class="ident">output_struct</span>: <span class="kw-2">*mut</span> <span class="ident">MspSkPtr</span>,
-    ) -&gt; <span class="ident">i64</span> {
-        <span class="ident">c_deserialize</span>(<span class="ident">key_size</span>, <span class="ident">key_bytes</span>, <span class="ident">output_struct</span>)
-    }
-    <span class="doccomment">/// Sets *sig_bytes to the serialization</span>
-    <span class="doccomment">/// Sets *sig_size to the size of the buffer</span>
-    <span class="doccomment">/// The caller is responsible for freeing this buffer</span>
-    <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-    <span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">stm_serialize_sig</span>(
-        <span class="ident">sptr</span>: <span class="ident">SigPtr</span>,
-        <span class="ident">sig_size</span>: <span class="kw-2">*mut</span> <span class="ident">usize</span>,
-        <span class="ident">sig_bytes</span>: <span class="kw-2">*mut</span> <span class="kw-2">*mut</span> <span class="ident">u8</span>,
-    ) -&gt; <span class="ident">i64</span> {
-        <span class="ident">c_serialize</span>(<span class="ident">sptr</span>, <span class="ident">sig_size</span>, <span class="ident">sig_bytes</span>)
-    }
-    <span class="doccomment">/// Given a pointer and its size, deserialize into an STM signature</span>
-    <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-    <span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">stm_deserialize_sig</span>(
-        <span class="ident">sig_size</span>: <span class="ident">usize</span>,
-        <span class="ident">sig_bytes</span>: <span class="kw-2">*mut</span> <span class="ident">u8</span>,
-        <span class="ident">output_struct</span>: <span class="kw-2">*mut</span> <span class="ident">SigPtr</span>,
-    ) -&gt; <span class="ident">i64</span> {
-        <span class="ident">c_deserialize</span>(<span class="ident">sig_size</span>, <span class="ident">sig_bytes</span>, <span class="ident">output_struct</span>)
-    }
-    <span class="doccomment">/// Sets *msig_bytes to the serialization</span>
-    <span class="doccomment">/// Sets *msig_size to the size of the buffer</span>
-    <span class="doccomment">/// The caller is responsible for freeing this buffer</span>
-    <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-    <span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">stm_serialize_multi_sig</span>(
-        <span class="ident">msig_ptr</span>: <span class="ident">MultiSigPtr</span>,
-        <span class="ident">msig_size</span>: <span class="kw-2">*mut</span> <span class="ident">usize</span>,
-        <span class="ident">msig_bytes</span>: <span class="kw-2">*mut</span> <span class="kw-2">*mut</span> <span class="ident">u8</span>,
-    ) -&gt; <span class="ident">i64</span> {
-        <span class="ident">c_serialize</span>(<span class="ident">msig_ptr</span>, <span class="ident">msig_size</span>, <span class="ident">msig_bytes</span>)
-    }
-    <span class="doccomment">/// Given a pointer and its size, deserialize into an STM multi signature</span>
-    <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-    <span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">stm_deserialize_multi_sig</span>(
-        <span class="ident">sig_size</span>: <span class="ident">usize</span>,
-        <span class="ident">sig_bytes</span>: <span class="kw-2">*mut</span> <span class="ident">u8</span>,
-        <span class="ident">output_struct</span>: <span class="kw-2">*mut</span> <span class="ident">MultiSigPtr</span>,
-    ) -&gt; <span class="ident">i64</span> {
-        <span class="ident">c_deserialize</span>(<span class="ident">sig_size</span>, <span class="ident">sig_bytes</span>, <span class="ident">output_struct</span>)
-    }
-
-    <span class="doccomment">/// Sets *init_bytes to the serialization</span>
-    <span class="doccomment">/// Sets *init_size to the size of the buffer</span>
-    <span class="doccomment">/// The caller is responsible for freeing this buffer</span>
-    <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-    <span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">stm_serialize_initializer</span>(
-        <span class="ident">init_ptr</span>: <span class="ident">StmInitializerPtr</span>,
-        <span class="ident">init_size</span>: <span class="kw-2">*mut</span> <span class="ident">usize</span>,
-        <span class="ident">init_bytes</span>: <span class="kw-2">*mut</span> <span class="kw-2">*mut</span> <span class="ident">u8</span>,
-    ) -&gt; <span class="ident">i64</span> {
-        <span class="ident">c_serialize</span>(<span class="ident">init_ptr</span>, <span class="ident">init_size</span>, <span class="ident">init_bytes</span>)
-    }
-
-    <span class="doccomment">/// Given a pointer and its size, deserialize into an STM initializer</span>
-    <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-    <span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">stm_deserialize_initializer</span>(
-        <span class="ident">init_size</span>: <span class="ident">usize</span>,
-        <span class="ident">init_bytes</span>: <span class="kw-2">*mut</span> <span class="ident">u8</span>,
-        <span class="ident">output_struct</span>: <span class="kw-2">*mut</span> <span class="ident">StmInitializerPtr</span>,
-    ) -&gt; <span class="ident">i64</span> {
-        <span class="ident">c_deserialize</span>(<span class="ident">init_size</span>, <span class="ident">init_bytes</span>, <span class="ident">output_struct</span>)
-    }
-
-    <span class="kw">fn</span> <span class="ident">c_serialize</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">ToBytes</span><span class="op">&gt;</span>(<span class="ident">ptr</span>: <span class="kw-2">*mut</span> <span class="ident">T</span>, <span class="ident">size</span>: <span class="kw-2">*mut</span> <span class="ident">usize</span>, <span class="ident">out_bytes</span>: <span class="kw-2">*mut</span> <span class="kw-2">*mut</span> <span class="ident">u8</span>) -&gt; <span class="ident">i64</span> {
-        <span class="kw">unsafe</span> {
-            <span class="kw">if</span> <span class="kw">let</span> (<span class="prelude-val">Some</span>(<span class="ident">v</span>), <span class="prelude-val">Some</span>(<span class="ident">size_checked</span>), <span class="prelude-val">Some</span>(<span class="ident">out_checked</span>)) <span class="op">=</span>
-                (<span class="ident">ptr</span>.<span class="ident">as_ref</span>(), <span class="ident">size</span>.<span class="ident">as_mut</span>(), <span class="ident">out_bytes</span>.<span class="ident">as_mut</span>())
-            {
-                <span class="kw">let</span> <span class="ident">bytes</span> <span class="op">=</span> <span class="macro">ark_ff::to_bytes!</span>(<span class="ident">v</span>).<span class="ident">unwrap</span>();
-                <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="ident">bytes</span>.<span class="ident">len</span>();
-                <span class="kw-2">*</span><span class="ident">size_checked</span> <span class="op">=</span> <span class="ident">len</span>;
-                <span class="kw">let</span> <span class="ident">dst</span> <span class="op">=</span> <span class="ident">libc::malloc</span>(<span class="ident">len</span>) <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">u8</span>;
-                <span class="ident">copy_nonoverlapping</span>(<span class="ident">bytes</span>.<span class="ident">as_ptr</span>(), <span class="ident">dst</span>, <span class="ident">len</span>);
-                <span class="kw-2">*</span><span class="ident">out_checked</span> <span class="op">=</span> <span class="ident">dst</span>;
-                <span class="kw">return</span> <span class="number">0</span>;
-            }
-            <span class="ident">NULLPOINTERERR</span>
+<span class="attribute">#[<span class="ident">no_mangle</span>]</span>
+<span class="doccomment">/// Frees an STM verifier pointer</span>
+<span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">free_stm_verifier</span>(<span class="ident">p</span>: <span class="ident">StmVerifierPtr</span>) -&gt; <span class="ident">i64</span> {
+    <span class="kw">unsafe</span> {
+        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">p</span>) <span class="op">=</span> <span class="ident">p</span>.<span class="ident">as_mut</span>() {
+            <span class="ident">Box::from_raw</span>(<span class="ident">p</span>);
+            <span class="kw">return</span> <span class="number">0</span>;
         }
-    }
-
-    <span class="kw">fn</span> <span class="ident">c_deserialize</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">FromBytes</span><span class="op">&gt;</span>(<span class="ident">size</span>: <span class="ident">usize</span>, <span class="ident">bytes</span>: <span class="kw-2">*const</span> <span class="ident">u8</span>, <span class="ident">result</span>: <span class="kw-2">*mut</span> <span class="kw-2">*mut</span> <span class="ident">T</span>) -&gt; <span class="ident">i64</span> {
-        <span class="kw">unsafe</span> {
-            <span class="kw">if</span> <span class="kw">let</span> (<span class="prelude-val">Some</span>(<span class="ident">res</span>), <span class="prelude-val">Some</span>(<span class="ident">bytes</span>)) <span class="op">=</span> (<span class="ident">result</span>.<span class="ident">as_mut</span>(), <span class="ident">bytes</span>.<span class="ident">as_ref</span>()) {
-                <span class="kw">let</span> <span class="ident">val</span> <span class="op">=</span> <span class="ident">T::read</span>(<span class="ident">slice::from_raw_parts</span>(<span class="ident">bytes</span>, <span class="ident">size</span>)).<span class="ident">unwrap</span>();
-                <span class="kw-2">*</span><span class="ident">res</span> <span class="op">=</span> <span class="ident">Box::into_raw</span>(<span class="ident">Box::new</span>(<span class="ident">val</span>));
-                <span class="kw">return</span> <span class="number">0</span>;
-            }
-            <span class="ident">NULLPOINTERERR</span>
-        }
+        <span class="ident">NULLPOINTERERR</span>
     }
 }
+
+<span class="attribute">#[<span class="ident">no_mangle</span>]</span>
+<span class="doccomment">/// Frees a closed registration pointer</span>
+<span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">free_closed_reg</span>(<span class="ident">p</span>: <span class="ident">ClosedKeyRegPtr</span>) -&gt; <span class="ident">i64</span> {
+    <span class="kw">unsafe</span> {
+        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">p</span>) <span class="op">=</span> <span class="ident">p</span>.<span class="ident">as_mut</span>() {
+            <span class="ident">Box::from_raw</span>(<span class="ident">p</span>);
+            <span class="kw">return</span> <span class="number">0</span>;
+        }
+        <span class="ident">NULLPOINTERERR</span>
+    }
+}
+
+<span class="comment">// pub mod serialize {</span>
+<span class="comment">//     //! Serialisation functions</span>
+<span class="comment">//     use super::*;</span>
+<span class="comment">//     use std::{intrinsics::copy_nonoverlapping, slice};</span>
+<span class="comment">//</span>
+<span class="comment">//     /// Sets *key_bytes to the serialization</span>
+<span class="comment">//     /// Sets *key_size to the size of the buffer</span>
+<span class="comment">//     /// The caller is responsible for freeing this buffer</span>
+<span class="comment">//     #[no_mangle]</span>
+<span class="comment">//     pub extern &quot;C&quot; fn msp_serialize_verification_key(</span>
+<span class="comment">//         kptr: MspPkPtr,</span>
+<span class="comment">//         key_size: *mut usize,</span>
+<span class="comment">//         key_bytes: *mut *mut u8,</span>
+<span class="comment">//     ) -&gt; i64 {</span>
+<span class="comment">//         c_serialize(kptr, key_size, key_bytes)</span>
+<span class="comment">//     }</span>
+<span class="comment">//     /// Given a pointer and its size, deserialize into a MSP verification/public key</span>
+<span class="comment">//     #[no_mangle]</span>
+<span class="comment">//     pub extern &quot;C&quot; fn msp_deserialize_verification_key(</span>
+<span class="comment">//         key_size: usize,</span>
+<span class="comment">//         key_bytes: *mut u8,</span>
+<span class="comment">//         output_struct: *mut MspPkPtr,</span>
+<span class="comment">//     ) -&gt; i64 {</span>
+<span class="comment">//         c_deserialize(key_size, key_bytes, output_struct)</span>
+<span class="comment">//     }</span>
+<span class="comment">//     /// Sets *key_bytes to the serialization</span>
+<span class="comment">//     /// Sets *key_size to the size of the buffer</span>
+<span class="comment">//     /// The caller is responsible for freeing this buffer</span>
+<span class="comment">//     #[no_mangle]</span>
+<span class="comment">//     pub extern &quot;C&quot; fn msp_serialize_secret_key(</span>
+<span class="comment">//         kptr: MspSkPtr,</span>
+<span class="comment">//         key_size: *mut usize,</span>
+<span class="comment">//         key_bytes: *mut *mut u8,</span>
+<span class="comment">//     ) -&gt; i64 {</span>
+<span class="comment">//         c_serialize(kptr, key_size, key_bytes)</span>
+<span class="comment">//     }</span>
+<span class="comment">//     /// Given a pointer and its size, deserialize into a MSP secret key</span>
+<span class="comment">//     #[no_mangle]</span>
+<span class="comment">//     pub extern &quot;C&quot; fn msp_deserialize_secret_key(</span>
+<span class="comment">//         key_size: usize,</span>
+<span class="comment">//         key_bytes: *mut u8,</span>
+<span class="comment">//         output_struct: *mut MspSkPtr,</span>
+<span class="comment">//     ) -&gt; i64 {</span>
+<span class="comment">//         c_deserialize(key_size, key_bytes, output_struct)</span>
+<span class="comment">//     }</span>
+<span class="comment">//     /// Sets *sig_bytes to the serialization</span>
+<span class="comment">//     /// Sets *sig_size to the size of the buffer</span>
+<span class="comment">//     /// The caller is responsible for freeing this buffer</span>
+<span class="comment">//     #[no_mangle]</span>
+<span class="comment">//     pub extern &quot;C&quot; fn stm_serialize_sig(</span>
+<span class="comment">//         sptr: SigPtr,</span>
+<span class="comment">//         sig_size: *mut usize,</span>
+<span class="comment">//         sig_bytes: *mut *mut u8,</span>
+<span class="comment">//     ) -&gt; i64 {</span>
+<span class="comment">//         c_serialize(sptr, sig_size, sig_bytes)</span>
+<span class="comment">//     }</span>
+<span class="comment">//     /// Given a pointer and its size, deserialize into an STM signature</span>
+<span class="comment">//     #[no_mangle]</span>
+<span class="comment">//     pub extern &quot;C&quot; fn stm_deserialize_sig(</span>
+<span class="comment">//         sig_size: usize,</span>
+<span class="comment">//         sig_bytes: *mut u8,</span>
+<span class="comment">//         output_struct: *mut SigPtr,</span>
+<span class="comment">//     ) -&gt; i64 {</span>
+<span class="comment">//         c_deserialize(sig_size, sig_bytes, output_struct)</span>
+<span class="comment">//     }</span>
+<span class="comment">//     /// Sets *msig_bytes to the serialization</span>
+<span class="comment">//     /// Sets *msig_size to the size of the buffer</span>
+<span class="comment">//     /// The caller is responsible for freeing this buffer</span>
+<span class="comment">//     #[no_mangle]</span>
+<span class="comment">//     pub extern &quot;C&quot; fn stm_serialize_multi_sig(</span>
+<span class="comment">//         msig_ptr: MultiSigPtr,</span>
+<span class="comment">//         msig_size: *mut usize,</span>
+<span class="comment">//         msig_bytes: *mut *mut u8,</span>
+<span class="comment">//     ) -&gt; i64 {</span>
+<span class="comment">//         c_serialize(msig_ptr, msig_size, msig_bytes)</span>
+<span class="comment">//     }</span>
+<span class="comment">//     /// Given a pointer and its size, deserialize into an STM multi signature</span>
+<span class="comment">//     #[no_mangle]</span>
+<span class="comment">//     pub extern &quot;C&quot; fn stm_deserialize_multi_sig(</span>
+<span class="comment">//         sig_size: usize,</span>
+<span class="comment">//         sig_bytes: *mut u8,</span>
+<span class="comment">//         output_struct: *mut MultiSigPtr,</span>
+<span class="comment">//     ) -&gt; i64 {</span>
+<span class="comment">//         c_deserialize(sig_size, sig_bytes, output_struct)</span>
+<span class="comment">//     }</span>
+<span class="comment">//</span>
+<span class="comment">//     /// Sets *init_bytes to the serialization</span>
+<span class="comment">//     /// Sets *init_size to the size of the buffer</span>
+<span class="comment">//     /// The caller is responsible for freeing this buffer</span>
+<span class="comment">//     #[no_mangle]</span>
+<span class="comment">//     pub extern &quot;C&quot; fn stm_serialize_initializer(</span>
+<span class="comment">//         init_ptr: StmInitializerPtr,</span>
+<span class="comment">//         init_size: *mut usize,</span>
+<span class="comment">//         init_bytes: *mut *mut u8,</span>
+<span class="comment">//     ) -&gt; i64 {</span>
+<span class="comment">//         c_serialize(init_ptr, init_size, init_bytes)</span>
+<span class="comment">//     }</span>
+<span class="comment">//</span>
+<span class="comment">//     /// Given a pointer and its size, deserialize into an STM initializer</span>
+<span class="comment">//     #[no_mangle]</span>
+<span class="comment">//     pub extern &quot;C&quot; fn stm_deserialize_initializer(</span>
+<span class="comment">//         init_size: usize,</span>
+<span class="comment">//         init_bytes: *mut u8,</span>
+<span class="comment">//         output_struct: *mut StmInitializerPtr,</span>
+<span class="comment">//     ) -&gt; i64 {</span>
+<span class="comment">//         c_deserialize(init_size, init_bytes, output_struct)</span>
+<span class="comment">//     }</span>
+<span class="comment">//</span>
+<span class="comment">//     fn c_serialize&lt;T: ToBytes&gt;(ptr: *mut T, size: *mut usize, out_bytes: *mut *mut u8) -&gt; i64 {</span>
+<span class="comment">//         unsafe {</span>
+<span class="comment">//             if let (Some(v), Some(size_checked), Some(out_checked)) =</span>
+<span class="comment">//                 (ptr.as_ref(), size.as_mut(), out_bytes.as_mut())</span>
+<span class="comment">//             {</span>
+<span class="comment">//                 let bytes = ark_ff::to_bytes!(v).unwrap();</span>
+<span class="comment">//                 let len = bytes.len();</span>
+<span class="comment">//                 *size_checked = len;</span>
+<span class="comment">//                 let dst = libc::malloc(len) as *mut u8;</span>
+<span class="comment">//                 copy_nonoverlapping(bytes.as_ptr(), dst, len);</span>
+<span class="comment">//                 *out_checked = dst;</span>
+<span class="comment">//                 return 0;</span>
+<span class="comment">//             }</span>
+<span class="comment">//             NULLPOINTERERR</span>
+<span class="comment">//         }</span>
+<span class="comment">//     }</span>
+<span class="comment">//</span>
+<span class="comment">//     fn c_deserialize&lt;T: FromBytes&gt;(size: usize, bytes: *const u8, result: *mut *mut T) -&gt; i64 {</span>
+<span class="comment">//         unsafe {</span>
+<span class="comment">//             if let (Some(res), Some(bytes)) = (result.as_mut(), bytes.as_ref()) {</span>
+<span class="comment">//                 let val = T::read(slice::from_raw_parts(bytes, size)).unwrap();</span>
+<span class="comment">//                 *res = Box::into_raw(Box::new(val));</span>
+<span class="comment">//                 return 0;</span>
+<span class="comment">//             }</span>
+<span class="comment">//             NULLPOINTERERR</span>
+<span class="comment">//         }</span>
+<span class="comment">//     }</span>
+<span class="comment">// }</span>
 
 <span class="kw">mod</span> <span class="ident">initializer</span> {
     <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
@@ -977,17 +1044,6 @@
     }
 
     <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-    <span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">stm_initializer_secret_key</span>(<span class="ident">me</span>: <span class="ident">StmInitializerPtr</span>, <span class="ident">sk</span>: <span class="kw-2">*mut</span> <span class="ident">MspSkPtr</span>) -&gt; <span class="ident">i64</span> {
-        <span class="kw">unsafe</span> {
-            <span class="kw">if</span> <span class="kw">let</span> (<span class="prelude-val">Some</span>(<span class="ident">ref_me</span>), <span class="prelude-val">Some</span>(<span class="ident">ref_sk</span>)) <span class="op">=</span> (<span class="ident">me</span>.<span class="ident">as_ref</span>(), <span class="ident">sk</span>.<span class="ident">as_mut</span>()) {
-                <span class="kw-2">*</span><span class="ident">ref_sk</span> <span class="op">=</span> <span class="ident">Box::into_raw</span>(<span class="ident">Box::new</span>(<span class="ident">ref_me</span>.<span class="ident">secret_key</span>()));
-                <span class="kw">return</span> <span class="number">0</span>;
-            }
-            <span class="ident">NULLPOINTERERR</span>
-        }
-    }
-
-    <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
     <span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">stm_initializer_verification_key</span>(
         <span class="ident">me</span>: <span class="ident">StmInitializerPtr</span>,
         <span class="ident">pk</span>: <span class="kw-2">*mut</span> <span class="ident">MspPkPtr</span>,
@@ -1020,17 +1076,6 @@
         <span class="kw">unsafe</span> {
             <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">ref_me</span>) <span class="op">=</span> <span class="ident">me</span>.<span class="ident">as_mut</span>() {
                 <span class="ident">ref_me</span>.<span class="ident">set_params</span>(<span class="ident">params</span>);
-                <span class="kw">return</span> <span class="number">0</span>;
-            }
-            <span class="ident">NULLPOINTERERR</span>
-        }
-    }
-
-    <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-    <span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">stm_initializer_set_keys</span>(<span class="ident">me</span>: <span class="ident">StmInitializerPtr</span>, <span class="ident">key</span>: <span class="ident">MspSkPtr</span>) -&gt; <span class="ident">i64</span> {
-        <span class="kw">unsafe</span> {
-            <span class="kw">if</span> <span class="kw">let</span> (<span class="prelude-val">Some</span>(<span class="ident">ref_me</span>), <span class="prelude-val">Some</span>(<span class="ident">ref_key</span>)) <span class="op">=</span> (<span class="ident">me</span>.<span class="ident">as_mut</span>(), <span class="ident">key</span>.<span class="ident">as_ref</span>()) {
-                <span class="ident">ref_me</span>.<span class="ident">set_key</span>(<span class="ident">ref_key</span>);
                 <span class="kw">return</span> <span class="number">0</span>;
             }
             <span class="ident">NULLPOINTERERR</span>
@@ -1132,7 +1177,8 @@
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::c_api</span>::{
         <span class="ident">ClosedKeyRegPtr</span>, <span class="ident">KeyRegPtr</span>, <span class="ident">MerkleTreeCommitmentPtr</span>, <span class="ident">MspPkPtr</span>, <span class="ident">NULLPOINTERERR</span>,
     };
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::key_reg</span>::{<span class="ident">KeyReg</span>, <span class="ident">RegisterError</span>};
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::error::RegisterError</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::key_reg::KeyReg</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::stm</span>::{<span class="ident">PartyId</span>, <span class="ident">Stake</span>};
     <span class="kw">use</span> <span class="ident">std::slice</span>;
 
@@ -1217,10 +1263,22 @@
             <span class="ident">NULLPOINTERERR</span>
         }
     }
+
+    <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
+    <span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">total_stake</span>(<span class="ident">closed_reg</span>: <span class="ident">ClosedKeyRegPtr</span>, <span class="ident">stake</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Stake</span>) -&gt; <span class="ident">i64</span> {
+        <span class="kw">unsafe</span> {
+            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">closed_reg</span>) <span class="op">=</span> <span class="ident">closed_reg</span>.<span class="ident">as_ref</span>() {
+                <span class="kw-2">*</span><span class="ident">stake</span> <span class="op">=</span> <span class="ident">closed_reg</span>.<span class="ident">total_stake</span>;
+                <span class="kw">return</span> <span class="number">0</span>;
+            }
+            <span class="ident">NULLPOINTERERR</span>
+        }
+    }
 }
 
 <span class="kw">mod</span> <span class="ident">clerk</span> {
     <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::error</span>::{<span class="ident">AggregationFailure</span>, <span class="ident">VerificationFailure</span>};
     <span class="kw">use</span> <span class="ident">core::slice</span>;
 
     <span class="doccomment">/// A clerk can only be generated out of a `ClosedKeyReg` instance, or out of an `StmSigner`.</span>
@@ -1232,10 +1290,11 @@
         <span class="ident">clerk</span>: <span class="kw-2">*mut</span> <span class="ident">StmClerkPtr</span>,
     ) -&gt; <span class="ident">i64</span> {
         <span class="kw">unsafe</span> {
-            <span class="kw">if</span> <span class="kw">let</span> (<span class="prelude-val">Some</span>(<span class="ident">ref_closed_reg</span>), <span class="prelude-val">Some</span>(<span class="ident">ref_clerk</span>)) <span class="op">=</span> (<span class="ident">closed_reg</span>.<span class="ident">as_mut</span>(), <span class="ident">clerk</span>.<span class="ident">as_mut</span>()) {
-                <span class="kw">let</span> <span class="ident">closed_reg</span> <span class="op">=</span> <span class="kw-2">*</span><span class="ident">Box::from_raw</span>(<span class="ident">ref_closed_reg</span>);
+            <span class="kw">if</span> <span class="kw">let</span> (<span class="prelude-val">Some</span>(<span class="ident">ref_closed_reg</span>), <span class="prelude-val">Some</span>(<span class="ident">ref_clerk</span>)) <span class="op">=</span> (<span class="ident">closed_reg</span>.<span class="ident">as_ref</span>(), <span class="ident">clerk</span>.<span class="ident">as_mut</span>()) {
+                <span class="kw">let</span> <span class="ident">closed_reg</span> <span class="op">=</span> <span class="ident">ref_closed_reg</span>;
                 <span class="kw-2">*</span><span class="ident">ref_clerk</span> <span class="op">=</span> <span class="ident">Box::into_raw</span>(<span class="ident">Box::new</span>(<span class="ident">StmClerk::from_registration</span>(
-                    <span class="ident">params</span>, <span class="ident">TrivialEnv</span>, <span class="ident">closed_reg</span>,
+                    <span class="ident">params</span>,
+                    <span class="ident">closed_reg</span>.<span class="ident">clone</span>(),
                 )));
                 <span class="kw">return</span> <span class="number">0</span>;
             }
@@ -1247,7 +1306,7 @@
     <span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">stm_clerk_from_signer</span>(<span class="ident">signer</span>: <span class="ident">StmSignerPtr</span>, <span class="ident">clerk</span>: <span class="kw-2">*mut</span> <span class="ident">StmClerkPtr</span>) -&gt; <span class="ident">i64</span> {
         <span class="kw">unsafe</span> {
             <span class="kw">if</span> <span class="kw">let</span> (<span class="prelude-val">Some</span>(<span class="ident">ref_signer</span>), <span class="prelude-val">Some</span>(<span class="ident">ref_clerk</span>)) <span class="op">=</span> (<span class="ident">signer</span>.<span class="ident">as_ref</span>(), <span class="ident">clerk</span>.<span class="ident">as_mut</span>()) {
-                <span class="kw-2">*</span><span class="ident">ref_clerk</span> <span class="op">=</span> <span class="ident">Box::into_raw</span>(<span class="ident">Box::new</span>(<span class="ident">StmClerk::from_signer</span>(<span class="ident">ref_signer</span>, <span class="ident">TrivialEnv</span>)));
+                <span class="kw-2">*</span><span class="ident">ref_clerk</span> <span class="op">=</span> <span class="ident">Box::into_raw</span>(<span class="ident">Box::new</span>(<span class="ident">StmClerk::from_signer</span>(<span class="ident">ref_signer</span>)));
                 <span class="kw">return</span> <span class="number">0</span>;
             }
             <span class="ident">NULLPOINTERERR</span>
@@ -1266,7 +1325,6 @@
     <span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">stm_clerk_verify_sig</span>(
         <span class="ident">me</span>: <span class="ident">StmClerkPtr</span>,
         <span class="ident">sig</span>: <span class="ident">SigPtr</span>,
-        <span class="ident">index</span>: <span class="ident">Index</span>,
         <span class="ident">msg</span>: <span class="kw-2">*const</span> <span class="ident">c_char</span>,
     ) -&gt; <span class="ident">i64</span> {
         <span class="kw">unsafe</span> {
@@ -1274,7 +1332,7 @@
                 (<span class="ident">me</span>.<span class="ident">as_ref</span>(), <span class="ident">msg</span>.<span class="ident">as_ref</span>(), <span class="ident">sig</span>.<span class="ident">as_ref</span>())
             {
                 <span class="kw">let</span> <span class="ident">msg_str</span> <span class="op">=</span> <span class="ident">CStr::from_ptr</span>(<span class="ident">msg</span>);
-                <span class="kw">let</span> <span class="ident">out</span> <span class="op">=</span> <span class="ident">ref_me</span>.<span class="ident">verify_sig</span>(<span class="ident">ref_sig</span>, <span class="ident">index</span>, <span class="ident">msg_str</span>.<span class="ident">to_bytes</span>());
+                <span class="kw">let</span> <span class="ident">out</span> <span class="op">=</span> <span class="ident">ref_me</span>.<span class="ident">verify_sig</span>(<span class="ident">ref_sig</span>, <span class="ident">msg_str</span>.<span class="ident">to_bytes</span>());
                 <span class="kw">return</span> <span class="kw">match</span> <span class="ident">out</span> {
                     <span class="prelude-val">Ok</span>(()) =&gt; <span class="number">0</span>,
                     <span class="prelude-val">Err</span>(<span class="ident">VerificationFailure::LotteryLost</span>) =&gt; <span class="op">-</span><span class="number">1</span>,
@@ -1295,25 +1353,19 @@
         <span class="ident">me</span>: <span class="ident">StmClerkPtr</span>,
         <span class="ident">n_sigs</span>: <span class="ident">usize</span>,
         <span class="ident">sigs</span>: <span class="kw-2">*const</span> <span class="ident">SigPtr</span>,
-        <span class="ident">indices</span>: <span class="kw-2">*const</span> <span class="ident">Index</span>,
         <span class="ident">msg</span>: <span class="kw-2">*const</span> <span class="ident">c_char</span>,
         <span class="ident">sig</span>: <span class="kw-2">*mut</span> <span class="ident">MultiSigPtr</span>,
     ) -&gt; <span class="ident">i64</span> {
         <span class="kw">unsafe</span> {
-            <span class="kw">if</span> <span class="kw">let</span> (<span class="prelude-val">Some</span>(<span class="ident">ref_me</span>), <span class="prelude-val">Some</span>(<span class="ident">sigs</span>), <span class="prelude-val">Some</span>(<span class="ident">indices</span>), <span class="prelude-val">Some</span>(<span class="ident">msg</span>), <span class="prelude-val">Some</span>(<span class="ident">ref_sig</span>)) <span class="op">=</span> (
-                <span class="ident">me</span>.<span class="ident">as_ref</span>(),
-                <span class="ident">sigs</span>.<span class="ident">as_ref</span>(),
-                <span class="ident">indices</span>.<span class="ident">as_ref</span>(),
-                <span class="ident">msg</span>.<span class="ident">as_ref</span>(),
-                <span class="ident">sig</span>.<span class="ident">as_mut</span>(),
-            ) {
+            <span class="kw">if</span> <span class="kw">let</span> (<span class="prelude-val">Some</span>(<span class="ident">ref_me</span>), <span class="prelude-val">Some</span>(<span class="ident">sigs</span>), <span class="prelude-val">Some</span>(<span class="ident">msg</span>), <span class="prelude-val">Some</span>(<span class="ident">ref_sig</span>)) <span class="op">=</span>
+                (<span class="ident">me</span>.<span class="ident">as_ref</span>(), <span class="ident">sigs</span>.<span class="ident">as_ref</span>(), <span class="ident">msg</span>.<span class="ident">as_ref</span>(), <span class="ident">sig</span>.<span class="ident">as_mut</span>())
+            {
                 <span class="kw">let</span> <span class="ident">sigs</span> <span class="op">=</span> <span class="ident">slice::from_raw_parts</span>(<span class="ident">sigs</span>, <span class="ident">n_sigs</span>)
                     .<span class="ident">iter</span>()
                     .<span class="ident">map</span>(<span class="op">|</span><span class="ident">p</span><span class="op">|</span> (<span class="kw-2">*</span><span class="kw-2">*</span><span class="ident">p</span>).<span class="ident">clone</span>())
                     .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
-                <span class="kw">let</span> <span class="ident">indices</span> <span class="op">=</span> <span class="ident">slice::from_raw_parts</span>(<span class="ident">indices</span>, <span class="ident">n_sigs</span>);
                 <span class="kw">let</span> <span class="ident">msg_str</span> <span class="op">=</span> <span class="ident">CStr::from_ptr</span>(<span class="ident">msg</span>);
-                <span class="kw">let</span> <span class="ident">aggr</span> <span class="op">=</span> <span class="ident">ref_me</span>.<span class="ident">aggregate</span>(<span class="kw-2">&amp;</span><span class="ident">sigs</span>, <span class="ident">indices</span>, <span class="ident">msg_str</span>.<span class="ident">to_bytes</span>());
+                <span class="kw">let</span> <span class="ident">aggr</span> <span class="op">=</span> <span class="ident">ref_me</span>.<span class="ident">aggregate</span>(<span class="kw-2">&amp;</span><span class="ident">sigs</span>, <span class="ident">msg_str</span>.<span class="ident">to_bytes</span>());
                 <span class="kw">return</span> <span class="kw">match</span> <span class="ident">aggr</span> {
                     <span class="prelude-val">Ok</span>(<span class="ident">msig</span>) =&gt; {
                         <span class="kw-2">*</span><span class="ident">ref_sig</span> <span class="op">=</span> <span class="ident">Box::into_raw</span>(<span class="ident">Box::new</span>(<span class="ident">msig</span>));
@@ -1345,8 +1397,58 @@
                 <span class="kw">let</span> <span class="ident">out</span> <span class="op">=</span> <span class="ident">ref_me</span>.<span class="ident">verify_msig</span>(<span class="ident">ref_msig</span>, <span class="ident">msg_str</span>.<span class="ident">to_bytes</span>());
                 <span class="kw">return</span> <span class="kw">match</span> <span class="ident">out</span> {
                     <span class="prelude-val">Ok</span>(()) =&gt; <span class="number">0</span>,
-                    <span class="prelude-val">Err</span>(<span class="ident">MultiVerificationFailure::InvalidAggregate</span>(<span class="kw">_</span>)) =&gt; <span class="op">-</span><span class="number">1</span>,
-                    <span class="prelude-val">Err</span>(<span class="ident">MultiVerificationFailure::ProofError</span>(<span class="ident">e</span>)) =&gt; <span class="ident">e</span>.<span class="ident">into</span>(),
+                    <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="ident">e</span>.<span class="ident">into</span>(),
+                };
+            }
+            <span class="ident">NULLPOINTERERR</span>
+        }
+    }
+}
+
+<span class="kw">mod</span> <span class="ident">verifier</span> {
+    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
+
+    <span class="doccomment">/// A verifier can be generated from a merkle tree commitment, `StmParameters` and</span>
+    <span class="doccomment">/// the total stake.</span>
+    <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
+    <span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">stm_verifier_new</span>(
+        <span class="ident">avk_commitment_ptr</span>: <span class="ident">MerkleTreeCommitmentPtr</span>,
+        <span class="ident">params</span>: <span class="ident">StmParameters</span>,
+        <span class="ident">total_stake</span>: <span class="ident">Stake</span>,
+        <span class="ident">verifier_ptr</span>: <span class="kw-2">*mut</span> <span class="ident">StmVerifierPtr</span>,
+    ) -&gt; <span class="ident">i64</span> {
+        <span class="kw">unsafe</span> {
+            <span class="kw">if</span> <span class="kw">let</span> (<span class="prelude-val">Some</span>(<span class="ident">avk_commitment</span>), <span class="prelude-val">Some</span>(<span class="ident">verifier</span>)) <span class="op">=</span>
+                (<span class="ident">avk_commitment_ptr</span>.<span class="ident">as_ref</span>(), <span class="ident">verifier_ptr</span>.<span class="ident">as_mut</span>())
+            {
+                <span class="kw">let</span> <span class="ident">stm_verifier</span> <span class="op">=</span> <span class="ident">StmVerifier::new</span>(<span class="ident">avk_commitment</span>.<span class="ident">clone</span>(), <span class="ident">params</span>, <span class="ident">total_stake</span>);
+                <span class="kw-2">*</span><span class="ident">verifier</span> <span class="op">=</span> <span class="ident">Box::into_raw</span>(<span class="ident">Box::new</span>(<span class="ident">stm_verifier</span>));
+                <span class="kw">return</span> <span class="number">0</span>;
+            }
+            <span class="ident">NULLPOINTERERR</span>
+        }
+    }
+
+    <span class="doccomment">/// Try to verify a multisignature.</span>
+    <span class="doccomment">/// returns 0 if the signature is valid</span>
+    <span class="doccomment">/// returns -1 if the aggregation is invalid</span>
+    <span class="doccomment">/// returns n &gt; 0 if the proof verification failed, where n is the error number</span>
+    <span class="doccomment">/// from the proof system.</span>
+    <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
+    <span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">stm_verifier_verify_msig</span>(
+        <span class="ident">me</span>: <span class="ident">StmVerifierPtr</span>,
+        <span class="ident">msig</span>: <span class="ident">MultiSigPtr</span>,
+        <span class="ident">msg</span>: <span class="kw-2">*const</span> <span class="ident">c_char</span>,
+    ) -&gt; <span class="ident">i64</span> {
+        <span class="kw">unsafe</span> {
+            <span class="kw">if</span> <span class="kw">let</span> (<span class="prelude-val">Some</span>(<span class="ident">ref_me</span>), <span class="prelude-val">Some</span>(<span class="ident">ref_msig</span>), <span class="prelude-val">Some</span>(<span class="ident">msg</span>)) <span class="op">=</span>
+                (<span class="ident">me</span>.<span class="ident">as_ref</span>(), <span class="ident">msig</span>.<span class="ident">as_ref</span>(), <span class="ident">msg</span>.<span class="ident">as_ref</span>())
+            {
+                <span class="kw">let</span> <span class="ident">msg_str</span> <span class="op">=</span> <span class="ident">CStr::from_ptr</span>(<span class="ident">msg</span>);
+                <span class="kw">let</span> <span class="ident">out</span> <span class="op">=</span> <span class="ident">ref_me</span>.<span class="ident">verify_msig</span>(<span class="ident">msg_str</span>.<span class="ident">to_bytes</span>(), <span class="ident">ref_msig</span>);
+                <span class="kw">return</span> <span class="kw">match</span> <span class="ident">out</span> {
+                    <span class="prelude-val">Ok</span>(()) =&gt; <span class="number">0</span>,
+                    <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="ident">e</span>.<span class="ident">into</span>(),
                 };
             }
             <span class="ident">NULLPOINTERERR</span>
