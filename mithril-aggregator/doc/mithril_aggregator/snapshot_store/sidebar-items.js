@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["SnapshotStoreHTTPClient","SnapshotStoreHTTPClient is a http client for an remote snapshot manifest"]],"trait":[["SnapshotStorer","SnapshotStorer represents a snapshot store interactor"]]});

@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["DependencyManager","DependencyManager handles the dependencies"]],"type":[["MultiSignerWrapper","MultiSignerWrapper wraps a MultiSigner"],["SnapshotStorerWrapper","SnapshotStorerWrapper wraps a SnapshotStorer"]]});

@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["entities",""],["fake_data",""],["multi_signer",""],["snapshotter",""]]});
+initSidebarItems({"fn":[["build_logger",""],["init_multi_signer","Init multi signer dependency"],["main",""]],"mod":[["dependency",""],["entities",""],["http_server",""],["multi_signer",""],["snapshot_store",""]],"struct":[["Args","Node args"]]});

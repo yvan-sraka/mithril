@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["APISpec","APISpec helps validate conformity to an OpenAPI specification"]]});
