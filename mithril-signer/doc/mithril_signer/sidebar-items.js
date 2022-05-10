@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["key_decode_hex","Decode key from hex helper"]],"struct":[["CertificateHandlerHTTPClient","CertificateHandlerHTTPClient is a http client for an aggregator"],["Config","Client configuration"],["MithrilSingleSigner",""],["Signer",""]]});
+initSidebarItems({"struct":[["CertificateHandlerHTTPClient","CertificateHandlerHTTPClient is a http client for an aggregator"],["Config","Client configuration"],["MithrilSingleSigner",""],["Signer",""]]});

@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["setup_message",""],["setup_protocol_parameters",""],["setup_signers",""]]});
