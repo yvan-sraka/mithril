@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["build_logger",""],["main",""]],"mod":[["certificate_handler",""],["entities",""],["signer",""],["single_signer",""]],"struct":[["Args","CLI args"]]});
+initSidebarItems({"fn":[["key_decode_hex","Decode key from hex helper"]],"struct":[["CertificateHandlerHTTPClient","CertificateHandlerHTTPClient is a http client for an aggregator"],["Config","Client configuration"],["MithrilSingleSigner",""],["Signer",""]]});

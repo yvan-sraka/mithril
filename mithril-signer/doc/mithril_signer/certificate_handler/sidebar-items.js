@@ -1,1 +1,0 @@
-initSidebarItems({"enum":[["CertificateHandlerError",""]],"struct":[["CertificateHandlerHTTPClient","CertificateHandlerHTTPClient is a http client for an aggregator"]],"trait":[["CertificateHandler",""]]});
