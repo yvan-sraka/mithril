@@ -222,170 +222,65 @@
 <span id="217">217</span>
 <span id="218">218</span>
 <span id="219">219</span>
-<span id="220">220</span>
-<span id="221">221</span>
-<span id="222">222</span>
-<span id="223">223</span>
-<span id="224">224</span>
-<span id="225">225</span>
-<span id="226">226</span>
-<span id="227">227</span>
-<span id="228">228</span>
-<span id="229">229</span>
-<span id="230">230</span>
-<span id="231">231</span>
-<span id="232">232</span>
-<span id="233">233</span>
-<span id="234">234</span>
-<span id="235">235</span>
-<span id="236">236</span>
-<span id="237">237</span>
-<span id="238">238</span>
-<span id="239">239</span>
-<span id="240">240</span>
-<span id="241">241</span>
-<span id="242">242</span>
-<span id="243">243</span>
-<span id="244">244</span>
-<span id="245">245</span>
-<span id="246">246</span>
-<span id="247">247</span>
-<span id="248">248</span>
-<span id="249">249</span>
-<span id="250">250</span>
-<span id="251">251</span>
-<span id="252">252</span>
-<span id="253">253</span>
-<span id="254">254</span>
-<span id="255">255</span>
-<span id="256">256</span>
-<span id="257">257</span>
-<span id="258">258</span>
-<span id="259">259</span>
-<span id="260">260</span>
-<span id="261">261</span>
-<span id="262">262</span>
-<span id="263">263</span>
-<span id="264">264</span>
-<span id="265">265</span>
-<span id="266">266</span>
-<span id="267">267</span>
-<span id="268">268</span>
-<span id="269">269</span>
-<span id="270">270</span>
-<span id="271">271</span>
-<span id="272">272</span>
-<span id="273">273</span>
-<span id="274">274</span>
-<span id="275">275</span>
-<span id="276">276</span>
-<span id="277">277</span>
-<span id="278">278</span>
-<span id="279">279</span>
-<span id="280">280</span>
-<span id="281">281</span>
-<span id="282">282</span>
-<span id="283">283</span>
-<span id="284">284</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Placeholder key registration functionality.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Key registration functionality.</span>
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::error::RegisterError</span>;
 <span class="kw">use</span> <span class="ident">digest</span>::{<span class="ident">Digest</span>, <span class="ident">FixedOutput</span>};
 <span class="kw">use</span> <span class="ident">std::collections</span>::{<span class="ident">HashMap</span>, <span class="ident">HashSet</span>};
+<span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
 
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::msp</span>::{<span class="ident">Msp</span>, <span class="ident">MspPk</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::multi_sig::VerificationKeyPoP</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::stm</span>::{<span class="ident">PartyId</span>, <span class="ident">Stake</span>};
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::merkle_tree::MerkleTree</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::stm::MTValue</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::merkle_tree</span>::{<span class="ident">MTLeaf</span>, <span class="ident">MerkleTree</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::multi_sig::VerificationKey</span>;
 
-<span class="doccomment">/// Simple struct that collects pubkeys and stakes of parties. Placeholder for a more</span>
-<span class="doccomment">/// realistic distributed key registration protocol.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
+<span class="doccomment">/// Struct that collects public keys and stakes of parties. Each participant (both the</span>
+<span class="doccomment">/// signers and the clerks) need to run their own instance of the key registration.</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">KeyReg</span> {
     <span class="ident">parties</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">PartyId</span>, <span class="ident">Party</span><span class="op">&gt;</span>,
     <span class="comment">// `keys` is just the set of all of the keys that have been registered</span>
-    <span class="comment">// (i.e., in `parties`)</span>
-    <span class="ident">keys</span>: <span class="ident">HashSet</span><span class="op">&lt;</span><span class="ident">MspPk</span><span class="op">&gt;</span>,
+    <span class="comment">// which allows us for a check check on whether the key already exists.</span>
+    <span class="ident">keys</span>: <span class="ident">HashSet</span><span class="op">&lt;</span><span class="ident">VerificationKey</span><span class="op">&gt;</span>,
 }
 
 <span class="doccomment">/// Structure generated out of a closed registration. One can only get a global `avk` out of</span>
 <span class="doccomment">/// a closed key registration.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ClosedKeyReg</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>
 <span class="kw">where</span>
     <span class="ident">D</span>: <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span>,
 {
-    <span class="ident">key_reg</span>: <span class="ident">KeyReg</span>,
+    <span class="doccomment">/// Ordered list of registered parties</span>
+    <span class="kw">pub</span> <span class="ident">reg_parties</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">RegParty</span><span class="op">&gt;</span>,
     <span class="doccomment">/// Total stake of the registered parties.</span>
     <span class="kw">pub</span> <span class="ident">total_stake</span>: <span class="ident">Stake</span>,
     <span class="doccomment">/// Unique public key out of the key registration instance.</span>
-    <span class="kw">pub</span> <span class="ident">avk</span>: <span class="ident">MerkleTree</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">avk</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">MerkleTree</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span><span class="op">&gt;</span>,
 }
 
 <span class="doccomment">/// Represents the status of a known participant in the protocol who is allowed</span>
 <span class="doccomment">/// to register their key. `RegParty` values will be produced from mappings</span>
 <span class="doccomment">/// (id |-&gt; Party { stake, Some(key) }) in key_reg.parties</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
 <span class="kw">struct</span> <span class="ident">Party</span> {
     <span class="doccomment">/// The stake of of the party.</span>
-    <span class="kw">pub</span> <span class="ident">stake</span>: <span class="ident">Stake</span>,
+    <span class="ident">stake</span>: <span class="ident">Stake</span>,
     <span class="doccomment">/// The public key of the party.</span>
-    <span class="kw">pub</span> <span class="ident">pk</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">MspPk</span><span class="op">&gt;</span>,
+    <span class="ident">vk</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">VerificationKey</span><span class="op">&gt;</span>,
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>)]</span>
-<span class="doccomment">/// A registered party, i.e. an id associated with its stake and public key</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">RegParty</span> {
-    <span class="doccomment">/// The id for the registered party.</span>
-    <span class="comment">// todo: I don&#39;t see the goal of the identifier</span>
-    <span class="kw">pub</span> <span class="ident">party_id</span>: <span class="ident">PartyId</span>,
-    <span class="doccomment">/// The pubkey for the registered party.</span>
-    <span class="kw">pub</span> <span class="ident">pk</span>: <span class="ident">MspPk</span>,
-    <span class="doccomment">/// The stake for the registered party.</span>
-    <span class="kw">pub</span> <span class="ident">stake</span>: <span class="ident">Stake</span>,
-}
-
-<span class="kw">impl</span> <span class="ident">RegParty</span> {
-    <span class="doccomment">/// Convert to bytes</span>
-    <span class="doccomment">/// # Layout</span>
-    <span class="doccomment">/// The layout of a `RegParty` encoding is</span>
-    <span class="doccomment">/// * Party index (position in the merkle tree)</span>
-    <span class="doccomment">/// * Public key</span>
-    <span class="doccomment">/// * Stake (as an 8 byte tuple)</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_bytes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; [<span class="ident">u8</span>; <span class="number">208</span>] {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">output</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">208</span>];
-        <span class="ident">output</span>[..<span class="number">8</span>].<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">party_id</span>.<span class="ident">to_be_bytes</span>());
-        <span class="ident">output</span>[<span class="number">8</span>..<span class="number">200</span>].<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">pk</span>.<span class="ident">to_bytes</span>());
-        <span class="ident">output</span>[<span class="number">200</span>..].<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">stake</span>.<span class="ident">to_be_bytes</span>());
-        <span class="ident">output</span>
-    }
-
-    <span class="doccomment">/// Convert an array of bytes to a `RegParty`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_bytes</span>(<span class="ident">bytes</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">RegisterError</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">u64_bytes</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">8</span>];
-        <span class="ident">u64_bytes</span>.<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[..<span class="number">8</span>]);
-        <span class="kw">let</span> <span class="ident">party_id</span> <span class="op">=</span> <span class="ident">u64::from_be_bytes</span>(<span class="ident">u64_bytes</span>);
-
-        <span class="kw">let</span> <span class="ident">pk</span> <span class="op">=</span> <span class="ident">MspPk::from_bytes</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[<span class="number">8</span>..])<span class="question-mark">?</span>;
-        <span class="ident">u64_bytes</span>.<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[<span class="number">200</span>..]);
-        <span class="kw">let</span> <span class="ident">stake</span> <span class="op">=</span> <span class="ident">u64::from_be_bytes</span>(<span class="ident">u64_bytes</span>);
-
-        <span class="prelude-val">Ok</span>(<span class="self">Self</span> {
-            <span class="ident">party_id</span>,
-            <span class="ident">pk</span>,
-            <span class="ident">stake</span>,
-        })
-    }
-}
+<span class="doccomment">/// A registered party, a stake associated with its public key</span>
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">RegParty</span> <span class="op">=</span> <span class="ident">MTLeaf</span>;
 
 <span class="kw">impl</span> <span class="ident">KeyReg</span> {
-    <span class="doccomment">/// Create a new KeyReg with all parties and stakes known.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">players</span>: <span class="kw-2">&amp;</span>[(<span class="ident">PartyId</span>, <span class="ident">Stake</span>)]) -&gt; <span class="self">Self</span> {
+    <span class="doccomment">/// Initialise a KeyReg with all eligible parties and stakes known.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">init</span>(<span class="ident">players</span>: <span class="kw-2">&amp;</span>[(<span class="ident">PartyId</span>, <span class="ident">Stake</span>)]) -&gt; <span class="self">Self</span> {
         <span class="kw">let</span> <span class="ident">parties</span> <span class="op">=</span> <span class="ident">players</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">id</span>, <span class="ident">stake</span>)<span class="op">|</span> {
             <span class="kw">let</span> <span class="ident">party</span> <span class="op">=</span> <span class="ident">Party</span> {
                 <span class="ident">stake</span>: <span class="kw-2">*</span><span class="ident">stake</span>,
-                <span class="ident">pk</span>: <span class="prelude-val">None</span>,
+                <span class="ident">vk</span>: <span class="prelude-val">None</span>,
             };
             (<span class="kw-2">*</span><span class="ident">id</span>, <span class="ident">party</span>)
         });
@@ -396,15 +291,19 @@
     }
 
     <span class="doccomment">/// Register the pubkey for a particular party.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">register</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">party_id</span>: <span class="ident">PartyId</span>, <span class="ident">pk</span>: <span class="ident">MspPk</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">RegisterError</span><span class="op">&gt;</span> {
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">keys</span>.<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="ident">pk</span>) {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">RegisterError::KeyRegistered</span>(<span class="ident">pk</span>.<span class="ident">mvk</span>.<span class="ident">to_bytes</span>()));
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">register</span>(
+        <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
+        <span class="ident">party_id</span>: <span class="ident">PartyId</span>,
+        <span class="ident">pk</span>: <span class="ident">VerificationKeyPoP</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">RegisterError</span><span class="op">&gt;</span> {
+        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">keys</span>.<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="ident">pk</span>.<span class="ident">vk</span>) {
+            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">RegisterError::KeyRegistered</span>(<span class="ident">pk</span>.<span class="ident">vk</span>));
         }
 
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="kw-2">mut</span> <span class="ident">party</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">parties</span>.<span class="ident">get_mut</span>(<span class="kw-2">&amp;</span><span class="ident">party_id</span>) {
-            <span class="kw">if</span> <span class="ident">Msp::check</span>(<span class="kw-2">&amp;</span><span class="ident">pk</span>).<span class="ident">is_ok</span>() {
-                <span class="ident">party</span>.<span class="ident">pk</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">pk</span>);
-                <span class="self">self</span>.<span class="ident">keys</span>.<span class="ident">insert</span>(<span class="ident">pk</span>);
+            <span class="kw">if</span> <span class="ident">pk</span>.<span class="ident">check</span>().<span class="ident">is_ok</span>() {
+                <span class="ident">party</span>.<span class="ident">vk</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">pk</span>.<span class="ident">vk</span>);
+                <span class="self">self</span>.<span class="ident">keys</span>.<span class="ident">insert</span>(<span class="ident">pk</span>.<span class="ident">vk</span>);
                 <span class="prelude-val">Ok</span>(())
             } <span class="kw">else</span> {
                 <span class="prelude-val">Err</span>(<span class="ident">RegisterError::InvalidKey</span>(<span class="ident">Box::new</span>(<span class="ident">pk</span>)))
@@ -414,87 +313,45 @@
         }
     }
 
-    <span class="doccomment">/// Retrieve the pubkey and stake for a party.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">retrieve</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">party_id</span>: <span class="ident">PartyId</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">RegParty</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">party</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">parties</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">party_id</span>)<span class="question-mark">?</span>;
-        <span class="ident">party</span>.<span class="ident">pk</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">pk</span><span class="op">|</span> <span class="ident">RegParty</span> {
-            <span class="ident">party_id</span>,
-            <span class="ident">pk</span>,
-            <span class="ident">stake</span>: <span class="ident">party</span>.<span class="ident">stake</span>,
-        })
-    }
-
-    <span class="doccomment">/// Retrieve the pubkey and stake for all parties. The keys are ordered,</span>
-    <span class="doccomment">/// to provide a consistent merkle commitment.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">retrieve_all</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">RegParty</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">out</span> <span class="op">=</span> <span class="macro">vec!</span>[];
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ps</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">parties</span>.<span class="ident">keys</span>().<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
-        <span class="ident">ps</span>.<span class="ident">sort</span>();
-        <span class="kw">for</span> <span class="ident">party_id</span> <span class="kw">in</span> <span class="ident">ps</span> {
-            <span class="kw">let</span> <span class="ident">party</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">parties</span>[<span class="ident">party_id</span>];
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">pk</span>) <span class="op">=</span> <span class="ident">party</span>.<span class="ident">pk</span> {
-                <span class="ident">out</span>.<span class="ident">push</span>(<span class="ident">RegParty</span> {
-                    <span class="ident">party_id</span>: <span class="kw-2">*</span><span class="ident">party_id</span>,
-                    <span class="ident">pk</span>,
-                    <span class="ident">stake</span>: <span class="ident">party</span>.<span class="ident">stake</span>,
-                })
-            }
-        }
-
-        <span class="ident">out</span>
-    }
-
     <span class="doccomment">/// End registration. Disables `KeyReg::register`. Consumes the instance of `self` and returns</span>
     <span class="doccomment">/// a `ClosedKeyReg`.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">close</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>(<span class="self">self</span>) -&gt; <span class="ident">ClosedKeyReg</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>
     <span class="kw">where</span>
         <span class="ident">D</span>: <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span>,
     {
-        <span class="kw">let</span> <span class="ident">mtvals</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">MTValue</span><span class="op">&gt;</span> <span class="op">=</span> <span class="self">self</span>
-            .<span class="ident">retrieve_all</span>()
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">total_stake</span> <span class="op">=</span> <span class="number">0</span>;
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">reg_parties</span> <span class="op">=</span> <span class="self">self</span>
+            .<span class="ident">parties</span>
             .<span class="ident">iter</span>()
-            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">rp</span><span class="op">|</span> <span class="ident">MTValue</span>(<span class="ident">rp</span>.<span class="ident">pk</span>.<span class="ident">mvk</span>, <span class="ident">rp</span>.<span class="ident">stake</span>))
-            .<span class="ident">collect</span>();
+            .<span class="ident">filter_map</span>(<span class="op">|</span>(<span class="kw">_</span>, <span class="ident">party</span>)<span class="op">|</span> {
+                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">vk</span>) <span class="op">=</span> <span class="ident">party</span>.<span class="ident">vk</span> {
+                    <span class="ident">total_stake</span> <span class="op">+</span><span class="op">=</span> <span class="ident">party</span>.<span class="ident">stake</span>;
+                    <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="ident">MTLeaf</span>(<span class="ident">vk</span>, <span class="ident">party</span>.<span class="ident">stake</span>));
+                }
+                <span class="prelude-val">None</span>
+            })
+            .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">RegParty</span><span class="op">&gt;</span><span class="op">&gt;</span>();
+        <span class="ident">reg_parties</span>.<span class="ident">sort</span>();
 
         <span class="ident">ClosedKeyReg</span> {
-            <span class="ident">key_reg</span>: <span class="self">self</span>,
-            <span class="ident">total_stake</span>: <span class="ident">mtvals</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="number">1</span>).<span class="ident">sum</span>(),
-            <span class="ident">avk</span>: <span class="ident">MerkleTree::create</span>(
-                <span class="kw-2">&amp;</span><span class="ident">mtvals</span>
-                    .<span class="ident">iter</span>()
-                    .<span class="ident">map</span>(<span class="op">|</span><span class="kw-2">&amp;</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">to_bytes</span>().<span class="ident">to_vec</span>())
-                    .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>(),
-            ),
+            <span class="ident">avk</span>: <span class="ident">Arc::new</span>(<span class="ident">MerkleTree::create</span>(<span class="kw-2">&amp;</span><span class="ident">reg_parties</span>)),
+            <span class="ident">reg_parties</span>,
+            <span class="ident">total_stake</span>,
         }
     }
 }
 
 <span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">KeyReg</span> {
     <span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> {
-        <span class="ident"><span class="self">Self</span>::new</span>(<span class="kw-2">&amp;</span>[])
-    }
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> <span class="ident">ClosedKeyReg</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">D</span>: <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span>,
-{
-    <span class="doccomment">/// Retrieve the pubkey and stake for a party.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">retrieve</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">party_id</span>: <span class="ident">PartyId</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">RegParty</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">key_reg</span>.<span class="ident">retrieve</span>(<span class="ident">party_id</span>)
-    }
-
-    <span class="doccomment">/// Retrieve the pubkey and stake for all parties.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">retrieve_all</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">RegParty</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">key_reg</span>.<span class="ident">retrieve_all</span>()
+        <span class="ident"><span class="self">Self</span>::init</span>(<span class="kw-2">&amp;</span>[])
     }
 }
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="kw">mod</span> <span class="ident">tests</span> {
     <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::msp::Msp</span>;
-    <span class="kw">use</span> <span class="ident">blst::blst_p1_generator</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::multi_sig::SigningKey</span>;
+    <span class="kw">use</span> <span class="ident">blake2::Blake2b</span>;
     <span class="kw">use</span> <span class="ident">proptest::collection::vec</span>;
     <span class="kw">use</span> <span class="ident">proptest::prelude</span>::<span class="kw-2">*</span>;
     <span class="kw">use</span> <span class="ident">rand_chacha::ChaCha20Rng</span>;
@@ -516,11 +373,17 @@
                        <span class="ident">fake_it</span> <span class="kw">in</span> <span class="number">0</span>..<span class="number">4usize</span>,
                        <span class="ident">seed</span> <span class="kw">in</span> <span class="ident">any</span>::<span class="op">&lt;</span>[<span class="ident">u8</span>;<span class="number">32</span>]<span class="op">&gt;</span>()) {
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">rng</span> <span class="op">=</span> <span class="ident">ChaCha20Rng::from_seed</span>(<span class="ident">seed</span>);
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">kr</span> <span class="op">=</span> <span class="ident">KeyReg::new</span>(<span class="kw-2">&amp;</span><span class="ident">ps</span>);
+            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">kr</span> <span class="op">=</span> <span class="ident">KeyReg::init</span>(<span class="kw-2">&amp;</span><span class="ident">ps</span>);
 
             <span class="kw">let</span> <span class="ident">gen_keys</span> <span class="op">=</span> (<span class="number">1</span>..<span class="ident">nkeys</span>).<span class="ident">map</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> {
-                <span class="ident">Msp::gen</span>(<span class="kw-2">&amp;mut</span> <span class="ident">rng</span>).<span class="number">1</span>
+                <span class="kw">let</span> <span class="ident">sk</span> <span class="op">=</span> <span class="ident">SigningKey::gen</span>(<span class="kw-2">&amp;mut</span> <span class="ident">rng</span>);
+                <span class="ident">VerificationKeyPoP::from</span>(<span class="kw-2">&amp;</span><span class="ident">sk</span>)
             }).<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
+
+            <span class="kw">let</span> <span class="ident">fake_key</span> <span class="op">=</span> {
+                <span class="kw">let</span> <span class="ident">sk</span> <span class="op">=</span> <span class="ident">SigningKey::gen</span>(<span class="kw-2">&amp;mut</span> <span class="ident">rng</span>);
+                <span class="ident">VerificationKeyPoP::from</span>(<span class="kw-2">&amp;</span><span class="ident">sk</span>)
+            };
 
             <span class="comment">// Record successful registrations</span>
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">keys</span> <span class="op">=</span> <span class="ident">HashSet::new</span>();
@@ -530,7 +393,7 @@
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pk</span> <span class="op">=</span> <span class="ident">gen_keys</span>[<span class="ident">i</span> <span class="op">%</span> <span class="ident">gen_keys</span>.<span class="ident">len</span>()];
 
                 <span class="kw">if</span> <span class="ident">fake_it</span> <span class="op">==</span> <span class="number">0</span> {
-                   <span class="ident">pk</span>.<span class="ident">pop</span>.<span class="ident">k2</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="kw-2">*</span><span class="ident">blst_p1_generator</span>() };
+                   <span class="ident">pk</span>.<span class="ident">pop</span> <span class="op">=</span> <span class="ident">fake_key</span>.<span class="ident">pop</span>;
                 }
 
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">id</span> <span class="op">=</span> <span class="ident">p</span>.<span class="number">0</span>;
@@ -541,12 +404,12 @@
                 <span class="kw">let</span> <span class="ident">reg</span> <span class="op">=</span> <span class="ident">kr</span>.<span class="ident">register</span>(<span class="ident">id</span>, <span class="ident">pk</span>);
                 <span class="kw">match</span> <span class="ident">reg</span> {
                     <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; {
-                        <span class="macro">assert!</span>(<span class="ident">keys</span>.<span class="ident">insert</span>(<span class="ident">pk</span>));
+                        <span class="macro">assert!</span>(<span class="ident">keys</span>.<span class="ident">insert</span>(<span class="ident">pk</span>.<span class="ident">vk</span>));
                         <span class="macro">assert!</span>(<span class="ident">parties</span>.<span class="ident">insert</span>(<span class="ident">p</span>.<span class="number">0</span>));
                     },
                     <span class="prelude-val">Err</span>(<span class="ident">RegisterError::KeyRegistered</span>(<span class="ident">pk1</span>)) =&gt; {
-                        <span class="macro">assert!</span>(<span class="ident">pk1</span> <span class="op">==</span> <span class="ident">pk</span>.<span class="ident">mvk</span>.<span class="ident">to_bytes</span>());
-                        <span class="macro">assert!</span>(<span class="ident">keys</span>.<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="ident">pk</span>));
+                        <span class="macro">assert!</span>(<span class="ident">pk1</span> <span class="op">==</span> <span class="ident">pk</span>.<span class="ident">vk</span>);
+                        <span class="macro">assert!</span>(<span class="ident">keys</span>.<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="ident">pk</span>.<span class="ident">vk</span>));
                     }
                     <span class="prelude-val">Err</span>(<span class="ident">RegisterError::PartyRegistered</span>(<span class="ident">party</span>)) =&gt; {
                         <span class="macro">assert!</span>(<span class="ident">party</span> <span class="op">==</span> <span class="ident">p</span>.<span class="number">0</span>);
@@ -554,19 +417,26 @@
                     }
                     <span class="prelude-val">Err</span>(<span class="ident">RegisterError::InvalidKey</span>(<span class="ident">a</span>)) =&gt; {
                         <span class="macro">assert_eq!</span>(<span class="ident">fake_it</span>, <span class="number">0</span>);
-                        <span class="macro">assert!</span>(<span class="ident">Msp::check</span>(<span class="kw-2">&amp;</span><span class="ident">a</span>).<span class="ident">is_err</span>());
+                        <span class="macro">assert!</span>(<span class="ident">a</span>.<span class="ident">check</span>().<span class="ident">is_err</span>());
                     }
                     <span class="prelude-val">Err</span>(<span class="ident">RegisterError::UnknownPartyId</span>(<span class="kw">_</span>)) =&gt; <span class="macro">assert_eq!</span>(<span class="ident">fake_it</span>, <span class="number">1</span>),
                     <span class="prelude-val">Err</span>(<span class="ident">RegisterError::SerializationError</span>) =&gt; <span class="macro">unreachable!</span>(),
                 }
             }
 
-            <span class="kw">let</span> <span class="ident">registered</span> <span class="op">=</span> <span class="ident">kr</span>.<span class="ident">retrieve_all</span>();
-            <span class="kw">let</span> <span class="ident">retrieved_keys</span> <span class="op">=</span> <span class="ident">registered</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">r</span><span class="op">|</span> <span class="ident">r</span>.<span class="ident">pk</span>).<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">HashSet</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
-            <span class="kw">let</span> <span class="ident">retrieved_ids</span> <span class="op">=</span> <span class="ident">registered</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">r</span><span class="op">|</span> <span class="ident">r</span>.<span class="ident">party_id</span>).<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">HashSet</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
+            <span class="kw">let</span> <span class="ident">retrieved_ids</span> <span class="op">=</span> <span class="ident">kr</span>.<span class="ident">parties</span>.<span class="ident">iter</span>().<span class="ident">filter_map</span>(<span class="op">|</span>(<span class="ident">key</span>, <span class="ident">value</span>)<span class="op">|</span> {
+                <span class="kw">if</span> <span class="ident">value</span>.<span class="ident">vk</span>.<span class="ident">is_some</span>() {
+                    <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="kw-2">*</span><span class="ident">key</span>);
+                }
+                <span class="prelude-val">None</span>
+            } ).<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">HashSet</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
+            <span class="kw">if</span> <span class="op">!</span><span class="ident">retrieved_ids</span>.<span class="ident">is_empty</span>() {
+                <span class="kw">let</span> <span class="ident">closed</span> <span class="op">=</span> <span class="ident">kr</span>.<span class="ident">close</span>::<span class="op">&lt;</span><span class="ident">Blake2b</span><span class="op">&gt;</span>();
+                <span class="kw">let</span> <span class="ident">retrieved_keys</span> <span class="op">=</span> <span class="ident">closed</span>.<span class="ident">reg_parties</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">r</span><span class="op">|</span> <span class="ident">r</span>.<span class="number">0</span>).<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">HashSet</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
+                <span class="macro">assert!</span>(<span class="ident">retrieved_keys</span> <span class="op">==</span> <span class="ident">keys</span>);
+            }
 
             <span class="macro">assert!</span>(<span class="ident">retrieved_ids</span> <span class="op">==</span> <span class="ident">parties</span>);
-            <span class="macro">assert!</span>(<span class="ident">retrieved_keys</span> <span class="op">==</span> <span class="ident">keys</span>);
 
         }
     }

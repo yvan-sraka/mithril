@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/msp.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>msp.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/multi_sig.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>multi_sig.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
     <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../mithril/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
         </a><h2 class="location"></h2>
     </nav>
@@ -629,94 +629,61 @@
 <span id="624">624</span>
 <span id="625">625</span>
 <span id="626">626</span>
-<span id="627">627</span>
-<span id="628">628</span>
-<span id="629">629</span>
-<span id="630">630</span>
-<span id="631">631</span>
-<span id="632">632</span>
-<span id="633">633</span>
-<span id="634">634</span>
-<span id="635">635</span>
-<span id="636">636</span>
-<span id="637">637</span>
-<span id="638">638</span>
-<span id="639">639</span>
-<span id="640">640</span>
-<span id="641">641</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Base multisignature scheme, used as a primitive for STM.</span>
 <span class="doccomment">//! See Section 2.4 of [the paper](https://eprint.iacr.org/2021/916).</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! The following is an example showing how to use Msp with the BLS12 curve.</span>
-<span class="doccomment">//! It creates 10 signatures of the same (arbitrary) message, then shows how to combine</span>
-<span class="doccomment">//! those signatures into an aggregate signature.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! ```rust</span>
-<span class="doccomment">//! # fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {</span>
-<span class="doccomment">//!     use mithril::msp::Msp; // Import the Msp module</span>
-<span class="doccomment">//!     use rand_chacha::rand_core::{RngCore, SeedableRng}; // For RNG functionality</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//!     // We will create and aggregate 10 signatures in this example</span>
-<span class="doccomment">//!     let num_sigs = 10;</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//!     // create and initialize the RNG</span>
-<span class="doccomment">//!     let mut rng = rand_chacha::ChaCha8Rng::seed_from_u64(42);</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//!     // The message will just be some arbitrary data</span>
-<span class="doccomment">//!     let mut msg = [0; 16];</span>
-<span class="doccomment">//!     rng.fill_bytes(&amp;mut msg);</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//!     let mut mvks = Vec::new(); // vec of verification keys</span>
-<span class="doccomment">//!     let mut sigs = Vec::new(); // vec of signatures</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//!     for _ in 0..num_sigs {</span>
-<span class="doccomment">//!         // Create a new keypair using the BLS12_377 curve</span>
-<span class="doccomment">//!         let (sk, pk) = Msp::gen(&amp;mut rng);</span>
-<span class="doccomment">//!         // Sign the message using an individual secret key</span>
-<span class="doccomment">//!         let sig = Msp::sig(&amp;sk, &amp;msg);</span>
-<span class="doccomment">//!         // Check that the individual verification is valid</span>
-<span class="doccomment">//!         assert!(Msp::ver(&amp;msg, &amp;pk.mvk, &amp;sig));</span>
-<span class="doccomment">//!         sigs.push(sig);</span>
-<span class="doccomment">//!         mvks.push(pk.mvk);</span>
-<span class="doccomment">//!     }</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//!     // Aggregate the verification keys</span>
-<span class="doccomment">//!     let ivk = Msp::aggregate_keys(&amp;mvks);</span>
-<span class="doccomment">//!     // Aggregate the signatures keys</span>
-<span class="doccomment">//!     let mu = Msp::aggregate_sigs(&amp;sigs);</span>
-<span class="doccomment">//!     // Check that the aggregated signature is valid</span>
-<span class="doccomment">//!     assert!(Msp::aggregate_ver(&amp;msg, &amp;ivk, &amp;mu));</span>
-<span class="doccomment">//! # Ok(())</span>
-<span class="doccomment">//! # }</span>
 <span class="doccomment">//! ```</span>
 
 <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::stm::Index</span>;
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::error</span>::{<span class="ident">blst_err_to_atms</span>, <span class="ident">MultiSignatureError</span>};
 <span class="kw">use</span> <span class="ident">blake2</span>::{<span class="ident">Blake2b</span>, <span class="ident">Digest</span>};
+
+<span class="comment">// We use `min_sig` resulting in signatures of 48 bytes and public keys of</span>
+<span class="comment">// 96. We can switch that around if desired by using `min_pk`.</span>
+<span class="comment">// todo: Maybe we want this as a compilation flag?</span>
 <span class="kw">use</span> <span class="ident">blst::min_sig</span>::{
     <span class="ident">AggregatePublicKey</span>, <span class="ident">AggregateSignature</span>, <span class="ident">PublicKey</span> <span class="kw">as</span> <span class="ident">BlstPk</span>, <span class="ident">SecretKey</span> <span class="kw">as</span> <span class="ident">BlstSk</span>,
     <span class="ident">Signature</span> <span class="kw">as</span> <span class="ident">BlstSig</span>,
 };
 <span class="kw">use</span> <span class="ident">blst</span>::{<span class="ident">blst_p1</span>, <span class="ident">blst_p1_affine</span>, <span class="ident">blst_p1_compress</span>, <span class="ident">blst_p1_from_affine</span>, <span class="ident">blst_p1_uncompress</span>};
+
 <span class="kw">use</span> <span class="ident">rand_core</span>::{<span class="ident">CryptoRng</span>, <span class="ident">RngCore</span>};
-<span class="kw">use</span> <span class="ident">serde::de::Visitor</span>;
-<span class="kw">use</span> <span class="ident">serde::ser::SerializeSeq</span>;
-<span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Deserializer</span>, <span class="ident">Serialize</span>, <span class="ident">Serializer</span>};
-<span class="kw">use</span> <span class="ident">std::cmp::Ordering</span>;
-<span class="kw">use</span> <span class="ident">std::hash</span>::{<span class="ident">Hash</span>, <span class="ident">Hasher</span>};
-<span class="kw">use</span> <span class="ident">std::iter::Sum</span>;
-<span class="kw">use</span> <span class="ident">std::ops::Sub</span>;
+<span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">de::Visitor</span>, <span class="ident">Deserialize</span>, <span class="ident">Deserializer</span>, <span class="ident">Serialize</span>, <span class="ident">Serializer</span>};
+<span class="kw">use</span> <span class="ident">std</span>::{
+    <span class="ident">cmp::Ordering</span>,
+    <span class="ident">hash</span>::{<span class="ident">Hash</span>, <span class="ident">Hasher</span>},
+    <span class="ident">iter::Sum</span>,
+    <span class="ident">ops::Sub</span>,
+};
 
-<span class="doccomment">/// Struct used to namespace the functions.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Msp</span> {}
+<span class="doccomment">/// String used to generate the proofs of possession.</span>
+<span class="kw">const</span> <span class="ident">POP</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>] <span class="op">=</span> <span class="string">b&quot;PoP&quot;</span>;
 
-<span class="doccomment">/// MSP secret key.</span>
+<span class="comment">// ---------------------------------------------------------------------</span>
+<span class="comment">// Multi signature keys</span>
+<span class="comment">// ---------------------------------------------------------------------</span>
+
+<span class="doccomment">/// MultiSig secret key, which is a wrapper over the BlstSk type from the blst</span>
+<span class="doccomment">/// library.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MspSk</span>(<span class="ident">BlstSk</span>);
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">SigningKey</span>(<span class="ident">BlstSk</span>);
 
-<span class="kw">impl</span> <span class="ident">MspSk</span> {
+<span class="kw">impl</span> <span class="ident">SigningKey</span> {
+    <span class="doccomment">/// Generate a secret key</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">gen</span>(<span class="ident">rng</span>: <span class="kw-2">&amp;mut</span> (<span class="kw">impl</span> <span class="ident">RngCore</span> <span class="op">+</span> <span class="ident">CryptoRng</span>)) -&gt; <span class="self">Self</span> {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ikm</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">32</span>];
+        <span class="ident">rng</span>.<span class="ident">fill_bytes</span>(<span class="kw-2">&amp;mut</span> <span class="ident">ikm</span>);
+        <span class="ident">SigningKey</span>(
+            <span class="ident">BlstSk::key_gen</span>(<span class="kw-2">&amp;</span><span class="ident">ikm</span>, <span class="kw-2">&amp;</span>[])
+                .<span class="ident">expect</span>(<span class="string">&quot;Error occurs when the length of ikm &lt; 32. This will not happen here.&quot;</span>),
+        )
+    }
+
+    <span class="doccomment">/// Sign a message with the given secret key</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">sign</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">msg</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="ident">Signature</span> {
+        <span class="ident">Signature</span>(<span class="self">self</span>.<span class="number">0</span>.<span class="ident">sign</span>(<span class="ident">msg</span>, <span class="kw-2">&amp;</span>[], <span class="kw-2">&amp;</span>[]))
+    }
+
     <span class="doccomment">/// Convert the secret key into byte string.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_bytes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; [<span class="ident">u8</span>; <span class="number">32</span>] {
         <span class="self">self</span>.<span class="number">0</span>.<span class="ident">to_bytes</span>()
@@ -734,20 +701,37 @@
     }
 }
 
-<span class="doccomment">/// MSP verification key.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MspMvk</span>(<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">BlstPk</span>);
+<span class="doccomment">/// MultiSig verification key, which iss a wrapper over the BlstPk (element in G2)</span>
+<span class="doccomment">/// from the blst library.</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">Default</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">VerificationKey</span>(<span class="ident">BlstPk</span>);
 
-<span class="kw">impl</span> <span class="ident">MspMvk</span> {
-    <span class="doccomment">/// Convert an `PublicKey` to its compressed byte representation.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_bytes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; [<span class="ident">u8</span>; <span class="number">96</span>] {
+<span class="kw">impl</span> <span class="ident">Hash</span> <span class="kw">for</span> <span class="ident">VerificationKey</span> {
+    <span class="kw">fn</span> <span class="ident">hash</span><span class="op">&lt;</span><span class="ident">H</span>: <span class="ident">Hasher</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">state</span>: <span class="kw-2">&amp;mut</span> <span class="ident">H</span>) {
+        <span class="ident">Hash::hash_slice</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">to_bytes</span>(), <span class="ident">state</span>)
+    }
+}
+
+<span class="comment">// We need to implement PartialEq instead of deriving it because we are implementing Hash.</span>
+<span class="kw">impl</span> <span class="ident">PartialEq</span> <span class="kw">for</span> <span class="ident">VerificationKey</span> {
+    <span class="kw">fn</span> <span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="ident">bool</span> {
+        <span class="self">self</span>.<span class="number">0</span> <span class="op">==</span> <span class="ident">other</span>.<span class="number">0</span>
+    }
+}
+
+<span class="kw">impl</span> <span class="ident">Eq</span> <span class="kw">for</span> <span class="ident">VerificationKey</span> {}
+
+<span class="kw">impl</span> <span class="ident">VerificationKey</span> {
+    <span class="doccomment">/// Convert an `VerificationKey` to its compressed byte representation.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_bytes</span>(<span class="self">self</span>) -&gt; [<span class="ident">u8</span>; <span class="number">96</span>] {
         <span class="self">self</span>.<span class="number">0</span>.<span class="ident">to_bytes</span>()
     }
 
-    <span class="doccomment">/// Convert a compressed byte string into a `PublicKey`.</span>
+    <span class="doccomment">/// Convert a compressed byte string into a `VerificationKey`.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// # Error</span>
     <span class="doccomment">/// This function fails if the bytes do not represent a compressed point of the curve.</span>
+    <span class="comment">// todo: check that whether this checks that the point is in the prime order group.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_bytes</span>(<span class="ident">bytes</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">MultiSignatureError</span><span class="op">&gt;</span> {
         <span class="kw">match</span> <span class="ident">BlstPk::from_bytes</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[..<span class="number">96</span>]) {
             <span class="prelude-val">Ok</span>(<span class="ident">pk</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>(<span class="ident">pk</span>)),
@@ -756,9 +740,9 @@
         }
     }
 
-    <span class="doccomment">/// Compare two `MspMvk`. Used for PartialOrd impl, used to order signatures. The comparison</span>
+    <span class="doccomment">/// Compare two `VerificationKey`. Used for PartialOrd impl, used to order signatures. The comparison</span>
     <span class="doccomment">/// function can be anything, as long as it is consistent.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cmp_msp_mvk</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="ident">MspMvk</span>) -&gt; <span class="ident">Ordering</span> {
+    <span class="kw">fn</span> <span class="ident">cmp_msp_mvk</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="ident">VerificationKey</span>) -&gt; <span class="ident">Ordering</span> {
         <span class="kw">let</span> <span class="ident">self_bytes</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">to_bytes</span>();
         <span class="kw">let</span> <span class="ident">other_bytes</span> <span class="op">=</span> <span class="ident">other</span>.<span class="ident">to_bytes</span>();
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">Ordering::Equal</span>;
@@ -774,41 +758,39 @@
     }
 }
 
-<span class="kw">impl</span> <span class="ident">PartialOrd</span> <span class="kw">for</span> <span class="ident">MspMvk</span> {
+<span class="kw">impl</span> <span class="ident">PartialOrd</span> <span class="kw">for</span> <span class="ident">VerificationKey</span> {
     <span class="kw">fn</span> <span class="ident">partial_cmp</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Ordering</span><span class="op">&gt;</span> {
         <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">cmp_msp_mvk</span>(<span class="ident">other</span>))
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Ord</span> <span class="kw">for</span> <span class="ident">MspMvk</span> {
+<span class="kw">impl</span> <span class="ident">Ord</span> <span class="kw">for</span> <span class="ident">VerificationKey</span> {
     <span class="kw">fn</span> <span class="ident">cmp</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="ident">Ordering</span> {
         <span class="self">self</span>.<span class="ident">cmp_msp_mvk</span>(<span class="ident">other</span>)
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">Sum</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">Self</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">MspMvk</span> {
+<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">Sum</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">Self</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">VerificationKey</span> {
     <span class="kw">fn</span> <span class="ident">sum</span><span class="op">&lt;</span><span class="ident">I</span><span class="op">&gt;</span>(<span class="ident">iter</span>: <span class="ident">I</span>) -&gt; <span class="self">Self</span>
     <span class="kw">where</span>
         <span class="ident">I</span>: <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">Self</span><span class="op">&gt;</span>,
     {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">aggregate_key</span> <span class="op">=</span> <span class="ident">BlstPk::default</span>();
         <span class="kw">let</span> <span class="ident">keys</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">BlstPk</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">iter</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> <span class="kw-2">&amp;</span><span class="ident">x</span>.<span class="number">0</span>).<span class="ident">collect</span>();
 
-        <span class="kw">if</span> <span class="op">!</span><span class="ident">keys</span>.<span class="ident">is_empty</span>() {
-            <span class="ident">aggregate_key</span> <span class="op">=</span> <span class="ident">AggregatePublicKey::aggregate</span>(<span class="kw-2">&amp;</span><span class="ident">keys</span>, <span class="bool-val">false</span>)
-                .<span class="ident">expect</span>(<span class="string">&quot;An MspMvk is always a valid key. This function only fails if keys is empty or if the keys are invalid, none of which can happen.&quot;</span>)
-                .<span class="ident">to_public_key</span>();
-        }
+        <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">keys</span>.<span class="ident">is_empty</span>(), <span class="string">&quot;One cannot add an empty vector&quot;</span>);
+        <span class="kw">let</span> <span class="ident">aggregate_key</span> <span class="op">=</span> <span class="ident">AggregatePublicKey::aggregate</span>(<span class="kw-2">&amp;</span><span class="ident">keys</span>, <span class="bool-val">false</span>)
+            .<span class="ident">expect</span>(<span class="string">&quot;An MspMvk is always a valid key. This function only fails if keys is empty or if the keys are invalid, none of which can happen.&quot;</span>)
+            .<span class="ident">to_public_key</span>();
 
         <span class="self">Self</span>(<span class="ident">aggregate_key</span>)
     }
 }
 
-<span class="comment">// We need some unsafe code here due to what is being expoed in the rust FFI.</span>
+<span class="comment">// We need some unsafe code here due to what is being exposed in the rust FFI.</span>
 <span class="comment">// todo: Take particular care reviewing this</span>
-<span class="kw">impl</span> <span class="ident">Sub</span> <span class="kw">for</span> <span class="ident">MspMvk</span> {
+<span class="kw">impl</span> <span class="ident">Sub</span> <span class="kw">for</span> <span class="ident">VerificationKey</span> {
     <span class="kw">type</span> <span class="ident">Output</span> <span class="op">=</span> <span class="self">Self</span>;
-    <span class="kw">fn</span> <span class="ident">sub</span>(<span class="self">self</span>, <span class="ident">rhs</span>: <span class="self">Self</span>) -&gt; <span class="ident">MspMvk</span> {
+    <span class="kw">fn</span> <span class="ident">sub</span>(<span class="self">self</span>, <span class="ident">rhs</span>: <span class="self">Self</span>) -&gt; <span class="ident">VerificationKey</span> {
         <span class="kw">use</span> <span class="ident">blst</span>::{<span class="ident">blst_bendian_from_fp</span>, <span class="ident">blst_fp</span>, <span class="ident">blst_fp_cneg</span>, <span class="ident">blst_fp_from_bendian</span>};
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">rhs_bytes</span> <span class="op">=</span> <span class="ident">rhs</span>.<span class="number">0</span>.<span class="ident">serialize</span>();
         <span class="kw">unsafe</span> {
@@ -822,7 +804,7 @@
         }
         <span class="kw">let</span> <span class="ident">neg_rhs</span> <span class="op">=</span> <span class="ident">BlstPk::deserialize</span>(<span class="kw-2">&amp;</span><span class="ident">rhs_bytes</span>)
             .<span class="ident">expect</span>(<span class="string">&quot;The negative of a valid point is also a valid point.&quot;</span>);
-        <span class="ident">MspMvk</span>(
+        <span class="ident">VerificationKey</span>(
             <span class="ident">AggregatePublicKey::aggregate</span>(<span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span><span class="ident">neg_rhs</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>], <span class="bool-val">false</span>)
                 .<span class="ident">expect</span>(<span class="string">&quot;Points are valid&quot;</span>)
                 .<span class="ident">to_public_key</span>(),
@@ -830,158 +812,84 @@
     }
 }
 
-<span class="doccomment">/// MSP proof of possession</span>
+<span class="doccomment">/// MultiSig proof of possession, which contains two elements from G1. However,</span>
+<span class="doccomment">/// the two elements have different types: `k1` is represented as a BlstSig</span>
+<span class="doccomment">/// as it has the same structure, and this facilitates its verification. On</span>
+<span class="doccomment">/// the other hand, `k2` is a G1 point, as it does not share structure with</span>
+<span class="doccomment">/// the BLS signature, and we need to have an ad-hoc verification mechanism.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MspPoP</span> {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">k1</span>: <span class="ident">BlstSig</span>,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">k2</span>: <span class="ident">blst_p1</span>,
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ProofOfPossession</span> {
+    <span class="ident">k1</span>: <span class="ident">BlstSig</span>,
+    <span class="ident">k2</span>: <span class="ident">blst_p1</span>,
 }
 
-<span class="doccomment">/// MSP public key, contains the verification key and proof of posession.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MspPk</span> {
+<span class="doccomment">/// MultiSig public key, contains the verification key and the proof of possession.</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">VerificationKeyPoP</span> {
     <span class="doccomment">/// The verification key.</span>
-    <span class="kw">pub</span> <span class="ident">mvk</span>: <span class="ident">MspMvk</span>,
+    <span class="kw">pub</span> <span class="ident">vk</span>: <span class="ident">VerificationKey</span>,
     <span class="doccomment">/// Proof of Possession.</span>
-    <span class="kw">pub</span> <span class="ident">pop</span>: <span class="ident">MspPoP</span>,
+    <span class="kw">pub</span> <span class="ident">pop</span>: <span class="ident">ProofOfPossession</span>,
 }
 
-<span class="kw">impl</span> <span class="ident">Hash</span> <span class="kw">for</span> <span class="ident">MspPk</span> {
-    <span class="kw">fn</span> <span class="ident">hash</span><span class="op">&lt;</span><span class="ident">H</span>: <span class="ident">Hasher</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">state</span>: <span class="kw-2">&amp;mut</span> <span class="ident">H</span>) {
-        <span class="ident">Hash::hash_slice</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">mvk</span>.<span class="ident">to_bytes</span>(), <span class="ident">state</span>)
-    }
-}
-
-<span class="comment">// We need to implement PartialEq instead of deriving it because we are implementing Hash.</span>
-<span class="kw">impl</span> <span class="ident">PartialEq</span> <span class="kw">for</span> <span class="ident">MspPk</span> {
-    <span class="kw">fn</span> <span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="self">self</span>.<span class="ident">mvk</span> <span class="op">==</span> <span class="ident">other</span>.<span class="ident">mvk</span>
-    }
-}
-
-<span class="kw">impl</span> <span class="ident">Eq</span> <span class="kw">for</span> <span class="ident">MspPk</span> {}
-
-<span class="doccomment">/// MSP signature.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MspSig</span>(<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">BlstSig</span>);
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">Sum</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">Self</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">MspSig</span> {
-    <span class="kw">fn</span> <span class="ident">sum</span><span class="op">&lt;</span><span class="ident">I</span><span class="op">&gt;</span>(<span class="ident">iter</span>: <span class="ident">I</span>) -&gt; <span class="self">Self</span>
-    <span class="kw">where</span>
-        <span class="ident">I</span>: <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">Self</span><span class="op">&gt;</span>,
-    {
-        <span class="kw">let</span> <span class="ident">signatures</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">BlstSig</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">iter</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> <span class="kw-2">&amp;</span><span class="ident">x</span>.<span class="number">0</span>).<span class="ident">collect</span>();
-        <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">signatures</span>.<span class="ident">is_empty</span>(), <span class="string">&quot;One cannot add an empty vector&quot;</span>);
-        <span class="kw">let</span> <span class="ident">aggregate</span> <span class="op">=</span> <span class="ident">AggregateSignature::aggregate</span>(<span class="kw-2">&amp;</span><span class="ident">signatures</span>, <span class="bool-val">false</span>)
-                .<span class="ident">expect</span>(<span class="string">&quot;Signatures are assumed verified before aggregation. If signatures are invalid, they should not be aggregated.&quot;</span>)
-                .<span class="ident">to_signature</span>();
-
-        <span class="self">Self</span>(<span class="ident">aggregate</span>)
-    }
-}
-
-<span class="kw">impl</span> <span class="ident">MspSig</span> {
-    <span class="doccomment">/// Convert an `Signature` to its compressed byte representation.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_bytes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; [<span class="ident">u8</span>; <span class="number">48</span>] {
-        <span class="self">self</span>.<span class="number">0</span>.<span class="ident">to_bytes</span>()
-    }
-
-    <span class="doccomment">/// Convert a string of bytes into a `Signature`.</span>
-    <span class="doccomment">/// # Error</span>
-    <span class="doccomment">/// Returns an error if the byte string does not represent a point in the curve.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_bytes</span>(<span class="ident">bytes</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">MultiSignatureError</span><span class="op">&gt;</span> {
-        <span class="kw">match</span> <span class="ident">BlstSig::from_bytes</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[..<span class="number">48</span>]) {
-            <span class="prelude-val">Ok</span>(<span class="ident">sig</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>(<span class="ident">sig</span>)),
-            <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">blst_err_to_atms</span>(<span class="ident">e</span>)
-                .<span class="ident">expect_err</span>(<span class="string">&quot;If deserialisation is not successful, blst returns and error different to SUCCESS.&quot;</span>))
-        }
-    }
-
-    <span class="doccomment">/// Compare two signatures. Used for PartialOrd impl, used to rank signatures. The comparison</span>
-    <span class="doccomment">/// function can be anything, as long as it is consistent across different nodes.</span>
-    <span class="kw">fn</span> <span class="ident">cmp_msp_sig</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="ident">Ordering</span> {
-        <span class="kw">let</span> <span class="ident">self_bytes</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">to_bytes</span>();
-        <span class="kw">let</span> <span class="ident">other_bytes</span> <span class="op">=</span> <span class="ident">other</span>.<span class="ident">to_bytes</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">Ordering::Equal</span>;
-
-        <span class="kw">for</span> (<span class="ident">i</span>, <span class="ident">j</span>) <span class="kw">in</span> <span class="ident">self_bytes</span>.<span class="ident">iter</span>().<span class="ident">zip</span>(<span class="ident">other_bytes</span>.<span class="ident">iter</span>()) {
-            <span class="ident">result</span> <span class="op">=</span> <span class="ident">i</span>.<span class="ident">cmp</span>(<span class="ident">j</span>);
-            <span class="kw">if</span> <span class="ident">result</span> <span class="op">!</span><span class="op">=</span> <span class="ident">Ordering::Equal</span> {
-                <span class="kw">return</span> <span class="ident">result</span>;
-            }
-        }
-        <span class="ident">result</span>
-    }
-}
-
-<span class="kw">impl</span> <span class="ident">PartialOrd</span> <span class="kw">for</span> <span class="ident">MspSig</span> {
-    <span class="kw">fn</span> <span class="ident">partial_cmp</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Ordering</span><span class="op">&gt;</span> {
-        <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">cmp_msp_sig</span>(<span class="ident">other</span>))
-    }
-}
-
-<span class="kw">impl</span> <span class="ident">Ord</span> <span class="kw">for</span> <span class="ident">MspSig</span> {
-    <span class="kw">fn</span> <span class="ident">cmp</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="ident">Ordering</span> {
-        <span class="self">self</span>.<span class="ident">cmp_msp_sig</span>(<span class="ident">other</span>)
-    }
-}
-
-<span class="kw">const</span> <span class="ident">POP</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>] <span class="op">=</span> <span class="string">b&quot;PoP&quot;</span>;
-
-<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">MspSk</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">MspMvk</span> {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">sk</span>: <span class="kw-2">&amp;</span><span class="ident">MspSk</span>) -&gt; <span class="self">Self</span> {
-        <span class="ident">MspMvk</span>(<span class="ident">sk</span>.<span class="number">0</span>.<span class="ident">sk_to_pk</span>())
+<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">SigningKey</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">VerificationKey</span> {
+    <span class="doccomment">/// Convert a secret key into an `MspMvk`. This is performed by computing</span>
+    <span class="doccomment">/// `MspMvk = g2 * sk`, where `g2` is the generator in G2. We can use the</span>
+    <span class="doccomment">/// blst built-in function `sk_to_pk`.</span>
+    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">sk</span>: <span class="kw-2">&amp;</span><span class="ident">SigningKey</span>) -&gt; <span class="self">Self</span> {
+        <span class="ident">VerificationKey</span>(<span class="ident">sk</span>.<span class="number">0</span>.<span class="ident">sk_to_pk</span>())
     }
 }
 
 <span class="comment">// Again, unsafe code to access the algebraic operations.</span>
-<span class="comment">// todo: particular care reviewing this</span>
-<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">MspSk</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">MspPoP</span> {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">sk</span>: <span class="kw-2">&amp;</span><span class="ident">MspSk</span>) -&gt; <span class="self">Self</span> {
-        <span class="kw">use</span> <span class="ident">blst</span>::{<span class="ident">blst_scalar</span>, <span class="ident">blst_scalar_from_bendian</span>, <span class="ident">blst_sk_to_pk_in_g1</span>};
+<span class="comment">// todo: particular care reviewing this (specially transmute)</span>
+<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">SigningKey</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">ProofOfPossession</span> {
+    <span class="doccomment">/// Convert a secret key into an `MspPoP`. This is performed by computing</span>
+    <span class="doccomment">/// `k1 =  H_G1(b&quot;PoP&quot; || mvk)` and `k2 = g1 * sk` where `H_G1` hashes into</span>
+    <span class="doccomment">/// `G1` and `g1` is the generator in `G1`.</span>
+    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">sk</span>: <span class="kw-2">&amp;</span><span class="ident">SigningKey</span>) -&gt; <span class="self">Self</span> {
+        <span class="kw">use</span> <span class="ident">blst</span>::{<span class="ident">blst_scalar</span>, <span class="ident">blst_sk_to_pk_in_g1</span>};
         <span class="kw">let</span> <span class="ident">k1</span> <span class="op">=</span> <span class="ident">sk</span>.<span class="number">0</span>.<span class="ident">sign</span>(<span class="ident">POP</span>, <span class="kw-2">&amp;</span>[], <span class="kw-2">&amp;</span>[]);
-        <span class="comment">// k2 &lt;- g1^x</span>
         <span class="kw">let</span> <span class="ident">k2</span> <span class="op">=</span> <span class="kw">unsafe</span> {
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">sk_scalar</span> <span class="op">=</span> <span class="ident">blst_scalar::default</span>();
-            <span class="ident">blst_scalar_from_bendian</span>(<span class="kw-2">&amp;mut</span> <span class="ident">sk_scalar</span>, <span class="kw-2">&amp;</span><span class="ident">sk</span>.<span class="number">0</span>.<span class="ident">to_bytes</span>()[<span class="number">0</span>]);
+            <span class="kw">let</span> <span class="ident">sk_scalar</span> <span class="op">=</span> <span class="ident">std::mem::transmute</span>::<span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">BlstSk</span>, <span class="kw-2">&amp;</span><span class="ident">blst_scalar</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="ident">sk</span>.<span class="number">0</span>);
 
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">out</span> <span class="op">=</span> <span class="ident">blst_p1::default</span>();
-            <span class="ident">blst_sk_to_pk_in_g1</span>(<span class="kw-2">&amp;mut</span> <span class="ident">out</span>, <span class="kw-2">&amp;</span><span class="ident">sk_scalar</span>);
+            <span class="ident">blst_sk_to_pk_in_g1</span>(<span class="kw-2">&amp;mut</span> <span class="ident">out</span>, <span class="ident">sk_scalar</span>);
             <span class="ident">out</span>
         };
-        <span class="comment">// return sk,mvk,k=(k1,k2)</span>
+
         <span class="self">Self</span> { <span class="ident">k1</span>, <span class="ident">k2</span> }
     }
 }
 
-<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">MspSk</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">MspPk</span> {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">sk</span>: <span class="kw-2">&amp;</span><span class="ident">MspSk</span>) -&gt; <span class="self">Self</span> {
+<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">SigningKey</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">VerificationKeyPoP</span> {
+    <span class="doccomment">/// Convert a secret key into an `MspPk` by simply converting to a</span>
+    <span class="doccomment">/// `MspMvk` and `MspPoP`.</span>
+    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">sk</span>: <span class="kw-2">&amp;</span><span class="ident">SigningKey</span>) -&gt; <span class="self">Self</span> {
         <span class="self">Self</span> {
-            <span class="ident">mvk</span>: <span class="ident">sk</span>.<span class="ident">into</span>(),
+            <span class="ident">vk</span>: <span class="ident">sk</span>.<span class="ident">into</span>(),
             <span class="ident">pop</span>: <span class="ident">sk</span>.<span class="ident">into</span>(),
         }
     }
 }
 
-<span class="kw">impl</span> <span class="ident">MspPk</span> {
-    <span class="doccomment">/// if e(k1,g2) = e(H_G1(&quot;PoP&quot;||mvk),mvk) and e(g1,mvk) = e(k2,g2)</span>
+<span class="kw">impl</span> <span class="ident">VerificationKeyPoP</span> {
+    <span class="doccomment">/// if `e(k1,g2) = e(H_G1(&quot;PoP&quot; || mvk),mvk)` and `e(g1,mvk) = e(k2,g2)`</span>
     <span class="doccomment">/// are both true, return 1. The first part is a signature verification</span>
     <span class="doccomment">/// of message &quot;PoP&quot;, while the second we need to compute the pairing</span>
     <span class="doccomment">/// manually.</span>
-    <span class="comment">// todo: review carefully. Unsafe to use algebraic operations</span>
-    <span class="kw">fn</span> <span class="ident">check</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MultiSignatureError</span><span class="op">&gt;</span> {
+    <span class="comment">// If we are really looking for performance improvements, we can combine the</span>
+    <span class="comment">// two final exponantiations (for verifying k1 and k2) into a single one.</span>
+    <span class="comment">// todo: review carefully. Unsafe to use algebraic operations and transmute</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">check</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MultiSignatureError</span><span class="op">&gt;</span> {
         <span class="kw">use</span> <span class="ident">blst</span>::{
             <span class="ident">blst_fp12</span>, <span class="ident">blst_fp12_finalverify</span>, <span class="ident">blst_p1_affine_generator</span>, <span class="ident">blst_p1_to_affine</span>,
-            <span class="ident">blst_p2_affine</span>, <span class="ident">blst_p2_affine_generator</span>, <span class="ident">blst_p2_uncompress</span>, <span class="ident">BLST_ERROR</span>,
+            <span class="ident">blst_p2_affine</span>, <span class="ident">blst_p2_affine_generator</span>, <span class="ident">BLST_ERROR</span>,
         };
         <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="kw">unsafe</span> {
             <span class="kw">let</span> <span class="ident">g1_p</span> <span class="op">=</span> <span class="kw-2">*</span><span class="ident">blst_p1_affine_generator</span>();
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mvk_p</span> <span class="op">=</span> <span class="ident">blst_p2_affine::default</span>();
-            <span class="macro">assert_eq!</span>(
-                <span class="ident">blst_p2_uncompress</span>(<span class="kw-2">&amp;mut</span> <span class="ident">mvk_p</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">mvk</span>.<span class="number">0</span>.<span class="ident">to_bytes</span>()[<span class="number">0</span>]),
-                <span class="ident">BLST_ERROR::BLST_SUCCESS</span>
-            );
-            <span class="kw">let</span> <span class="ident">ml_lhs</span> <span class="op">=</span> <span class="ident">blst_fp12::miller_loop</span>(<span class="kw-2">&amp;</span><span class="ident">mvk_p</span>, <span class="kw-2">&amp;</span><span class="ident">g1_p</span>);
+            <span class="kw">let</span> <span class="ident">mvk_p</span> <span class="op">=</span> <span class="ident">std::mem::transmute</span>::<span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">BlstPk</span>, <span class="kw-2">&amp;</span><span class="ident">blst_p2_affine</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">vk</span>.<span class="number">0</span>);
+            <span class="kw">let</span> <span class="ident">ml_lhs</span> <span class="op">=</span> <span class="ident">blst_fp12::miller_loop</span>(<span class="ident">mvk_p</span>, <span class="kw-2">&amp;</span><span class="ident">g1_p</span>);
 
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">k2_p</span> <span class="op">=</span> <span class="ident">blst_p1_affine::default</span>();
             <span class="ident">blst_p1_to_affine</span>(<span class="kw-2">&amp;mut</span> <span class="ident">k2_p</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">pop</span>.<span class="ident">k2</span>);
@@ -991,7 +899,7 @@
             <span class="ident">blst_fp12_finalverify</span>(<span class="kw-2">&amp;</span><span class="ident">ml_lhs</span>, <span class="kw-2">&amp;</span><span class="ident">ml_rhs</span>)
         };
 
-        <span class="kw">if</span> <span class="op">!</span>(<span class="self">self</span>.<span class="ident">pop</span>.<span class="ident">k1</span>.<span class="ident">verify</span>(<span class="bool-val">false</span>, <span class="ident">POP</span>, <span class="kw-2">&amp;</span>[], <span class="kw-2">&amp;</span>[], <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">mvk</span>.<span class="number">0</span>, <span class="bool-val">false</span>)
+        <span class="kw">if</span> <span class="op">!</span>(<span class="self">self</span>.<span class="ident">pop</span>.<span class="ident">k1</span>.<span class="ident">verify</span>(<span class="bool-val">false</span>, <span class="ident">POP</span>, <span class="kw-2">&amp;</span>[], <span class="kw-2">&amp;</span>[], <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">vk</span>.<span class="number">0</span>, <span class="bool-val">false</span>)
             <span class="op">==</span> <span class="ident">BLST_ERROR::BLST_SUCCESS</span>
             <span class="op">&amp;&amp;</span> <span class="ident">result</span>)
         {
@@ -1005,32 +913,31 @@
     <span class="doccomment">/// The layout of a `PublicKeyPoP` encoding is</span>
     <span class="doccomment">/// * Public key</span>
     <span class="doccomment">/// * Proof of Possession</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_bytes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; [<span class="ident">u8</span>; <span class="number">192</span>] {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_bytes</span>(<span class="self">self</span>) -&gt; [<span class="ident">u8</span>; <span class="number">192</span>] {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pkpop_bytes</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">192</span>];
-        <span class="ident">pkpop_bytes</span>[..<span class="number">96</span>].<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">mvk</span>.<span class="ident">to_bytes</span>());
+        <span class="ident">pkpop_bytes</span>[..<span class="number">96</span>].<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">vk</span>.<span class="ident">to_bytes</span>());
         <span class="ident">pkpop_bytes</span>[<span class="number">96</span>..].<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">pop</span>.<span class="ident">to_bytes</span>());
         <span class="ident">pkpop_bytes</span>
     }
 
     <span class="doccomment">/// Deserialise a byte string to a `PublicKeyPoP`.</span>
-    <span class="comment">// todo: deserialise only valid keys?</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_bytes</span>(<span class="ident">bytes</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">MultiSignatureError</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">mvk</span> <span class="op">=</span> <span class="ident">MspMvk::from_bytes</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[..<span class="number">96</span>])<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">mvk</span> <span class="op">=</span> <span class="ident">VerificationKey::from_bytes</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[..<span class="number">96</span>])<span class="question-mark">?</span>;
 
-        <span class="kw">let</span> <span class="ident">pop</span> <span class="op">=</span> <span class="ident">MspPoP::from_bytes</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[<span class="number">96</span>..])<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">pop</span> <span class="op">=</span> <span class="ident">ProofOfPossession::from_bytes</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[<span class="number">96</span>..])<span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(<span class="self">Self</span> { <span class="ident">mvk</span>, <span class="ident">pop</span> })
+        <span class="prelude-val">Ok</span>(<span class="self">Self</span> { <span class="ident">vk</span>: <span class="ident">mvk</span>, <span class="ident">pop</span> })
     }
 }
 
-<span class="kw">impl</span> <span class="ident">MspPoP</span> {
-    <span class="doccomment">/// Convert to a 144 byte string.</span>
+<span class="kw">impl</span> <span class="ident">ProofOfPossession</span> {
+    <span class="doccomment">/// Convert to a 96 byte string.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// # Layout</span>
     <span class="doccomment">/// The layout of a `MspPoP` encoding is</span>
     <span class="doccomment">/// * K1 (G1 point)</span>
     <span class="doccomment">/// * K2 (G1 point)</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_bytes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; [<span class="ident">u8</span>; <span class="number">96</span>] {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_bytes</span>(<span class="self">self</span>) -&gt; [<span class="ident">u8</span>; <span class="number">96</span>] {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pop_bytes</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">96</span>];
         <span class="ident">pop_bytes</span>[..<span class="number">48</span>].<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">k1</span>.<span class="ident">to_bytes</span>());
         <span class="kw">let</span> <span class="ident">k2_bytes</span> <span class="op">=</span> <span class="kw">unsafe</span> {
@@ -1064,63 +971,46 @@
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Msp</span> {
-    <span class="doccomment">/// Create a new pubkey/secretkey pair.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">gen</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>(<span class="ident">rng</span>: <span class="kw-2">&amp;mut</span> <span class="ident">R</span>) -&gt; (<span class="ident">MspSk</span>, <span class="ident">MspPk</span>)
+<span class="comment">// ---------------------------------------------------------------------</span>
+<span class="comment">// Multi signature</span>
+<span class="comment">// ---------------------------------------------------------------------</span>
+
+<span class="doccomment">/// MultiSig signature, which is a wrapper over the `BlstSig` type.</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Signature</span>(<span class="ident">BlstSig</span>);
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">Sum</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">Self</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Signature</span> {
+    <span class="kw">fn</span> <span class="ident">sum</span><span class="op">&lt;</span><span class="ident">I</span><span class="op">&gt;</span>(<span class="ident">iter</span>: <span class="ident">I</span>) -&gt; <span class="self">Self</span>
     <span class="kw">where</span>
-        <span class="ident">R</span>: <span class="ident">RngCore</span> <span class="op">+</span> <span class="ident">CryptoRng</span>,
+        <span class="ident">I</span>: <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">Self</span><span class="op">&gt;</span>,
     {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ikm</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">32</span>];
-        <span class="ident">rng</span>.<span class="ident">fill_bytes</span>(<span class="kw-2">&amp;mut</span> <span class="ident">ikm</span>);
-        <span class="kw">let</span> <span class="ident">sk</span> <span class="op">=</span> <span class="ident">MspSk</span>(
-            <span class="ident">BlstSk::key_gen</span>(<span class="kw-2">&amp;</span><span class="ident">ikm</span>, <span class="kw-2">&amp;</span>[])
-                .<span class="ident">expect</span>(<span class="string">&quot;Error occurs when the length of ikm &lt; 32. This will not happen here.&quot;</span>),
-        );
-        <span class="kw">let</span> <span class="ident">pk</span>: <span class="ident">MspPk</span> <span class="op">=</span> (<span class="kw-2">&amp;</span><span class="ident">sk</span>).<span class="ident">into</span>();
-        (<span class="ident">sk</span>, <span class="ident">pk</span>)
-    }
+        <span class="kw">let</span> <span class="ident">signatures</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">BlstSig</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">iter</span>.<span class="ident">map</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> <span class="kw-2">&amp;</span><span class="ident">x</span>.<span class="number">0</span>).<span class="ident">collect</span>();
+        <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">signatures</span>.<span class="ident">is_empty</span>(), <span class="string">&quot;One cannot add an empty vector&quot;</span>);
+        <span class="kw">let</span> <span class="ident">aggregate</span> <span class="op">=</span> <span class="ident">AggregateSignature::aggregate</span>(<span class="kw-2">&amp;</span><span class="ident">signatures</span>, <span class="bool-val">false</span>)
+                .<span class="ident">expect</span>(<span class="string">&quot;An MspSig is always a valid signature. This function only fails if signatures is empty or if the signatures are invalid, none of which can happen.&quot;</span>)
+                .<span class="ident">to_signature</span>();
 
-    <span class="doccomment">/// Check that a pubkey is well-formed.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">check</span>(<span class="ident">pk</span>: <span class="kw-2">&amp;</span><span class="ident">MspPk</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MultiSignatureError</span><span class="op">&gt;</span> {
-        <span class="ident">pk</span>.<span class="ident">check</span>()
+        <span class="self">Self</span>(<span class="ident">aggregate</span>)
     }
+}
 
-    <span class="doccomment">/// Sign a message using a secret key.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">sig</span>(<span class="ident">sk</span>: <span class="kw-2">&amp;</span><span class="ident">MspSk</span>, <span class="ident">msg</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="ident">MspSig</span> {
-        <span class="ident">MspSig</span>(<span class="ident">sk</span>.<span class="number">0</span>.<span class="ident">sign</span>(<span class="ident">msg</span>, <span class="kw-2">&amp;</span>[], <span class="kw-2">&amp;</span>[]))
-    }
-
+<span class="kw">impl</span> <span class="ident">Signature</span> {
     <span class="doccomment">/// Verify a signature against a verification key.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">ver</span>(<span class="ident">msg</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="ident">mvk</span>: <span class="kw-2">&amp;</span><span class="ident">MspMvk</span>, <span class="ident">sigma</span>: <span class="kw-2">&amp;</span><span class="ident">MspSig</span>) -&gt; <span class="ident">bool</span> {
-        <span class="kw">use</span> <span class="ident">blst::BLST_ERROR</span>;
-        <span class="ident">sigma</span>.<span class="number">0</span>.<span class="ident">verify</span>(<span class="bool-val">false</span>, <span class="ident">msg</span>, <span class="kw-2">&amp;</span>[], <span class="kw-2">&amp;</span>[], <span class="kw-2">&amp;</span><span class="ident">mvk</span>.<span class="number">0</span>, <span class="bool-val">false</span>) <span class="op">==</span> <span class="ident">BLST_ERROR::BLST_SUCCESS</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verify</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">msg</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="ident">mvk</span>: <span class="kw-2">&amp;</span><span class="ident">VerificationKey</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MultiSignatureError</span><span class="op">&gt;</span> {
+        <span class="ident">blst_err_to_atms</span>(<span class="self">self</span>.<span class="number">0</span>.<span class="ident">verify</span>(<span class="bool-val">false</span>, <span class="ident">msg</span>, <span class="kw-2">&amp;</span>[], <span class="kw-2">&amp;</span>[], <span class="kw-2">&amp;</span><span class="ident">mvk</span>.<span class="number">0</span>, <span class="bool-val">false</span>))
     }
 
-    <span class="doccomment">/// Aggregate verification keys.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">aggregate_keys</span>(<span class="ident">mvks</span>: <span class="kw-2">&amp;</span>[<span class="ident">MspMvk</span>]) -&gt; <span class="ident">MspMvk</span> {
-        <span class="ident">mvks</span>.<span class="ident">iter</span>().<span class="ident">sum</span>()
-    }
-
-    <span class="doccomment">/// Aggregate signatures.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">aggregate_sigs</span>(<span class="ident">sigmas</span>: <span class="kw-2">&amp;</span>[<span class="ident">MspSig</span>]) -&gt; <span class="ident">MspSig</span> {
-        <span class="ident">sigmas</span>.<span class="ident">iter</span>().<span class="ident">sum</span>()
-    }
-
-    <span class="doccomment">/// Verify an aggregate signature (identical to `Msp::ver`).</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">aggregate_ver</span>(<span class="ident">msg</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="ident">ivk</span>: <span class="kw-2">&amp;</span><span class="ident">MspMvk</span>, <span class="ident">mu</span>: <span class="kw-2">&amp;</span><span class="ident">MspSig</span>) -&gt; <span class="ident">bool</span> {
-        <span class="ident"><span class="self">Self</span>::ver</span>(<span class="ident">msg</span>, <span class="ident">ivk</span>, <span class="ident">mu</span>)
-    }
-
-    <span class="doccomment">/// Hash the signature to produce a 64 bytes integer. We follow the same mechanism as Shelley</span>
+    <span class="doccomment">/// Check if the signature is valid for the given index. We hash the signature to produce a</span>
+    <span class="doccomment">/// 64 bytes integer. We follow the same mechanism as Shelley</span>
     <span class="doccomment">/// for the lottery (i.e., we follow the VRF lottery mechanism as described in Section 16 of</span>
     <span class="doccomment">/// &lt;https://hydra.iohk.io/build/8201171/download/1/ledger-spec.pdf&gt;).</span>
     <span class="comment">// todo: if we are generic over the hash function, shouldn&#39;t we use the instance here?</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">eval</span>(<span class="ident">msg</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="ident">index</span>: <span class="ident">Index</span>, <span class="ident">sigma</span>: <span class="kw-2">&amp;</span><span class="ident">MspSig</span>) -&gt; [<span class="ident">u8</span>; <span class="number">64</span>] {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">eval</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">msg</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="ident">index</span>: <span class="ident">Index</span>) -&gt; [<span class="ident">u8</span>; <span class="number">64</span>] {
         <span class="kw">let</span> <span class="ident">hasher</span> <span class="op">=</span> <span class="ident">Blake2b::new</span>()
             .<span class="ident">chain</span>(<span class="string">b&quot;map&quot;</span>)
             .<span class="ident">chain</span>(<span class="ident">msg</span>)
             .<span class="ident">chain</span>(<span class="kw-2">&amp;</span><span class="ident">index</span>.<span class="ident">to_le_bytes</span>())
-            .<span class="ident">chain</span>(<span class="kw-2">&amp;</span><span class="ident">sigma</span>.<span class="ident">to_bytes</span>())
+            .<span class="ident">chain</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">to_bytes</span>())
             .<span class="ident">finalize</span>();
 
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">output</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">64</span>];
@@ -1128,7 +1018,56 @@
 
         <span class="ident">output</span>
     }
+
+    <span class="doccomment">/// Convert an `Signature` to its compressed byte representation.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_bytes</span>(<span class="self">self</span>) -&gt; [<span class="ident">u8</span>; <span class="number">48</span>] {
+        <span class="self">self</span>.<span class="number">0</span>.<span class="ident">to_bytes</span>()
+    }
+
+    <span class="doccomment">/// Convert a string of bytes into a `MspSig`.</span>
+    <span class="doccomment">/// # Error</span>
+    <span class="doccomment">/// Returns an error if the byte string does not represent a point in the curve.</span>
+    <span class="comment">// todo: check that whether this checks that the point is in the prime order group.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_bytes</span>(<span class="ident">bytes</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">MultiSignatureError</span><span class="op">&gt;</span> {
+        <span class="kw">match</span> <span class="ident">BlstSig::from_bytes</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[..<span class="number">48</span>]) {
+            <span class="prelude-val">Ok</span>(<span class="ident">sig</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>(<span class="ident">sig</span>)),
+            <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">blst_err_to_atms</span>(<span class="ident">e</span>)
+                .<span class="ident">expect_err</span>(<span class="string">&quot;If deserialisation is not successful, blst returns and error different to SUCCESS.&quot;</span>))
+        }
+    }
+
+    <span class="doccomment">/// Compare two signatures. Used for PartialOrd impl, used to rank signatures. The comparison</span>
+    <span class="doccomment">/// function can be anything, as long as it is consistent across different nodes.</span>
+    <span class="kw">fn</span> <span class="ident">cmp_msp_sig</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="ident">Ordering</span> {
+        <span class="kw">let</span> <span class="ident">self_bytes</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">to_bytes</span>();
+        <span class="kw">let</span> <span class="ident">other_bytes</span> <span class="op">=</span> <span class="ident">other</span>.<span class="ident">to_bytes</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">Ordering::Equal</span>;
+
+        <span class="kw">for</span> (<span class="ident">i</span>, <span class="ident">j</span>) <span class="kw">in</span> <span class="ident">self_bytes</span>.<span class="ident">iter</span>().<span class="ident">zip</span>(<span class="ident">other_bytes</span>.<span class="ident">iter</span>()) {
+            <span class="ident">result</span> <span class="op">=</span> <span class="ident">i</span>.<span class="ident">cmp</span>(<span class="ident">j</span>);
+            <span class="kw">if</span> <span class="ident">result</span> <span class="op">!</span><span class="op">=</span> <span class="ident">Ordering::Equal</span> {
+                <span class="kw">return</span> <span class="ident">result</span>;
+            }
+        }
+        <span class="ident">result</span>
+    }
 }
+
+<span class="kw">impl</span> <span class="ident">PartialOrd</span> <span class="kw">for</span> <span class="ident">Signature</span> {
+    <span class="kw">fn</span> <span class="ident">partial_cmp</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Ordering</span><span class="op">&gt;</span> {
+        <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">cmp_msp_sig</span>(<span class="ident">other</span>))
+    }
+}
+
+<span class="kw">impl</span> <span class="ident">Ord</span> <span class="kw">for</span> <span class="ident">Signature</span> {
+    <span class="kw">fn</span> <span class="ident">cmp</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="ident">Ordering</span> {
+        <span class="self">self</span>.<span class="ident">cmp_msp_sig</span>(<span class="ident">other</span>)
+    }
+}
+
+<span class="comment">// ---------------------------------------------------------------------</span>
+<span class="comment">// Serde implementation</span>
+<span class="comment">// ---------------------------------------------------------------------</span>
 
 <span class="macro">macro_rules!</span> <span class="ident">impl_serde</span> {
     (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">st</span>:<span class="ident">ty</span>,<span class="macro-nonterminal">$</span><span class="macro-nonterminal">visitor</span>:<span class="ident">ident</span>,<span class="macro-nonterminal">$</span><span class="macro-nonterminal">size</span>:<span class="ident">expr</span>) =&gt; {
@@ -1137,7 +1076,8 @@
             <span class="kw">where</span>
                 <span class="ident">S</span>: <span class="ident">Serializer</span>,
             {
-                <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">seq</span> <span class="op">=</span> <span class="ident">serializer</span>.<span class="ident">serialize_seq</span>(<span class="prelude-val">Some</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">size</span>))<span class="question-mark">?</span>;
+                <span class="kw">use</span> <span class="ident">serde::ser::SerializeTuple</span>;
+                <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">seq</span> <span class="op">=</span> <span class="ident">serializer</span>.<span class="ident">serialize_tuple</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">size</span>)<span class="question-mark">?</span>;
                 <span class="kw">for</span> <span class="ident">e</span> <span class="kw">in</span> <span class="self">self</span>.<span class="ident">to_bytes</span>().<span class="ident">iter</span>() {
                     <span class="ident">seq</span>.<span class="ident">serialize_element</span>(<span class="ident">e</span>)<span class="question-mark">?</span>;
                 }
@@ -1175,8 +1115,11 @@
                                     <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;expected bytes{}&quot;</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">size</span>.<span class="ident">to_string</span>()).<span class="ident">as_str</span>(),
                                 ))<span class="question-mark">?</span>;
                         }
-                        <span class="op">&lt;</span><span class="macro-nonterminal">$</span><span class="macro-nonterminal">st</span><span class="op">&gt;</span><span class="ident">::from_bytes</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>)
-                            .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">serde::de::Error::custom</span>(<span class="string">&quot;decompression failed&quot;</span>))
+                        <span class="op">&lt;</span><span class="macro-nonterminal">$</span><span class="macro-nonterminal">st</span><span class="op">&gt;</span><span class="ident">::from_bytes</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> {
+                            <span class="ident">serde::de::Error::custom</span>(
+                                <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;deserialization failed [{}]&quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">st</span>)).<span class="ident">as_str</span>(),
+                            )
+                        })
                     }
                 }
 
@@ -1185,10 +1128,10 @@
         }
     };
 }
-<span class="macro">impl_serde!</span>(<span class="ident">MspSk</span>, <span class="ident">MspSkVisitor</span>, <span class="number">32</span>);
-<span class="macro">impl_serde!</span>(<span class="ident">MspMvk</span>, <span class="ident">MspMvkVisitor</span>, <span class="number">96</span>);
-<span class="macro">impl_serde!</span>(<span class="ident">MspPoP</span>, <span class="ident">MspPoPVisitor</span>, <span class="number">96</span>);
-<span class="macro">impl_serde!</span>(<span class="ident">MspSig</span>, <span class="ident">MspSigVisitor</span>, <span class="number">48</span>);
+<span class="macro">impl_serde!</span>(<span class="ident">SigningKey</span>, <span class="ident">SigningKeyVisitor</span>, <span class="number">32</span>);
+<span class="macro">impl_serde!</span>(<span class="ident">VerificationKey</span>, <span class="ident">VerificationKeyVisitor</span>, <span class="number">96</span>);
+<span class="macro">impl_serde!</span>(<span class="ident">ProofOfPossession</span>, <span class="ident">ProofOfPossessionVisitor</span>, <span class="number">96</span>);
+<span class="macro">impl_serde!</span>(<span class="ident">Signature</span>, <span class="ident">SignatureVisitor</span>, <span class="number">48</span>);
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="kw">mod</span> <span class="ident">tests</span> {
@@ -1197,13 +1140,13 @@
     <span class="kw">use</span> <span class="ident">rand_chacha::ChaCha20Rng</span>;
     <span class="kw">use</span> <span class="ident">rand_core</span>::{<span class="ident">OsRng</span>, <span class="ident">SeedableRng</span>};
 
-    <span class="kw">impl</span> <span class="ident">PartialEq</span> <span class="kw">for</span> <span class="ident">MspSk</span> {
+    <span class="kw">impl</span> <span class="ident">PartialEq</span> <span class="kw">for</span> <span class="ident">SigningKey</span> {
         <span class="kw">fn</span> <span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="ident">bool</span> {
             <span class="self">self</span>.<span class="number">0</span>.<span class="ident">to_bytes</span>() <span class="op">==</span> <span class="ident">other</span>.<span class="number">0</span>.<span class="ident">to_bytes</span>()
         }
     }
 
-    <span class="kw">impl</span> <span class="ident">Eq</span> <span class="kw">for</span> <span class="ident">MspSk</span> {}
+    <span class="kw">impl</span> <span class="ident">Eq</span> <span class="kw">for</span> <span class="ident">SigningKey</span> {}
 
     <span class="macro">proptest!</span> {
         <span class="attribute">#![<span class="ident">proptest_config</span>(<span class="ident">ProptestConfig::with_cases</span>(<span class="number">1000</span>))]</span>
@@ -1213,9 +1156,10 @@
             <span class="ident">msg</span> <span class="kw">in</span> <span class="ident">prop::collection::vec</span>(<span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>(), <span class="number">1</span>..<span class="number">128</span>),
             <span class="ident">seed</span> <span class="kw">in</span> <span class="ident">any</span>::<span class="op">&lt;</span>[<span class="ident">u8</span>;<span class="number">32</span>]<span class="op">&gt;</span>(),
         ) {
-            <span class="kw">let</span> (<span class="ident">sk</span>, <span class="ident">pk</span>) <span class="op">=</span> <span class="ident">Msp::gen</span>(<span class="kw-2">&amp;mut</span> <span class="ident">ChaCha20Rng::from_seed</span>(<span class="ident">seed</span>));
-            <span class="kw">let</span> <span class="ident">sig</span> <span class="op">=</span> <span class="ident">Msp::sig</span>(<span class="kw-2">&amp;</span><span class="ident">sk</span>, <span class="kw-2">&amp;</span><span class="ident">msg</span>);
-            <span class="macro">assert!</span>(<span class="ident">Msp::ver</span>(<span class="kw-2">&amp;</span><span class="ident">msg</span>, <span class="kw-2">&amp;</span><span class="ident">pk</span>.<span class="ident">mvk</span>, <span class="kw-2">&amp;</span><span class="ident">sig</span>));
+            <span class="kw">let</span> <span class="ident">sk</span> <span class="op">=</span> <span class="ident">SigningKey::gen</span>(<span class="kw-2">&amp;mut</span> <span class="ident">ChaCha20Rng::from_seed</span>(<span class="ident">seed</span>));
+            <span class="kw">let</span> <span class="ident">pk</span> <span class="op">=</span> <span class="ident">VerificationKey::from</span>(<span class="kw-2">&amp;</span><span class="ident">sk</span>);
+            <span class="kw">let</span> <span class="ident">sig</span> <span class="op">=</span> <span class="ident">sk</span>.<span class="ident">sign</span>(<span class="kw-2">&amp;</span><span class="ident">msg</span>);
+            <span class="macro">assert!</span>(<span class="ident">sig</span>.<span class="ident">verify</span>(<span class="kw-2">&amp;</span><span class="ident">msg</span>, <span class="kw-2">&amp;</span><span class="ident">pk</span>).<span class="ident">is_ok</span>());
         }
 
         <span class="attribute">#[<span class="ident">test</span>]</span>
@@ -1223,10 +1167,11 @@
                             <span class="ident">seed</span> <span class="kw">in</span> <span class="ident">any</span>::<span class="op">&lt;</span>[<span class="ident">u8</span>;<span class="number">32</span>]<span class="op">&gt;</span>(),
         ) {
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">rng</span> <span class="op">=</span> <span class="ident">ChaCha20Rng::from_seed</span>(<span class="ident">seed</span>);
-            <span class="kw">let</span> (<span class="ident">_sk1</span>, <span class="ident">pk1</span>) <span class="op">=</span> <span class="ident">Msp::gen</span>(<span class="kw-2">&amp;mut</span> <span class="ident">rng</span>);
-            <span class="kw">let</span> (<span class="ident">sk2</span>, <span class="ident">_pk2</span>) <span class="op">=</span> <span class="ident">Msp::gen</span>(<span class="kw-2">&amp;mut</span> <span class="ident">rng</span>);
-            <span class="kw">let</span> <span class="ident">fake_sig</span> <span class="op">=</span> <span class="ident">Msp::sig</span>(<span class="kw-2">&amp;</span><span class="ident">sk2</span>, <span class="kw-2">&amp;</span><span class="ident">msg</span>);
-            <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">Msp::ver</span>(<span class="kw-2">&amp;</span><span class="ident">msg</span>, <span class="kw-2">&amp;</span><span class="ident">pk1</span>.<span class="ident">mvk</span>, <span class="kw-2">&amp;</span><span class="ident">fake_sig</span>));
+            <span class="kw">let</span> <span class="ident">sk1</span> <span class="op">=</span> <span class="ident">SigningKey::gen</span>(<span class="kw-2">&amp;mut</span> <span class="ident">rng</span>);
+            <span class="kw">let</span> <span class="ident">pk1</span> <span class="op">=</span> <span class="ident">VerificationKey::from</span>(<span class="kw-2">&amp;</span><span class="ident">sk1</span>);
+            <span class="kw">let</span> <span class="ident">sk2</span> <span class="op">=</span> <span class="ident">SigningKey::gen</span>(<span class="kw-2">&amp;mut</span> <span class="ident">rng</span>);
+            <span class="kw">let</span> <span class="ident">fake_sig</span> <span class="op">=</span> <span class="ident">sk2</span>.<span class="ident">sign</span>(<span class="kw-2">&amp;</span><span class="ident">msg</span>);
+            <span class="macro">assert!</span>(<span class="ident">fake_sig</span>.<span class="ident">verify</span>(<span class="kw-2">&amp;</span><span class="ident">msg</span>, <span class="kw-2">&amp;</span><span class="ident">pk1</span>).<span class="ident">is_err</span>());
         }
 
         <span class="attribute">#[<span class="ident">test</span>]</span>
@@ -1238,50 +1183,75 @@
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mvks</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">sigs</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
             <span class="kw">for</span> <span class="kw">_</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">num_sigs</span> {
-                <span class="kw">let</span> (<span class="ident">sk</span>, <span class="ident">pk</span>) <span class="op">=</span> <span class="ident">Msp::gen</span>(<span class="kw-2">&amp;mut</span> <span class="ident">rng</span>);
-                <span class="kw">let</span> <span class="ident">sig</span> <span class="op">=</span> <span class="ident">Msp::sig</span>(<span class="kw-2">&amp;</span><span class="ident">sk</span>, <span class="kw-2">&amp;</span><span class="ident">msg</span>);
-                <span class="macro">assert!</span>(<span class="ident">Msp::ver</span>(<span class="kw-2">&amp;</span><span class="ident">msg</span>, <span class="kw-2">&amp;</span><span class="ident">pk</span>.<span class="ident">mvk</span>, <span class="kw-2">&amp;</span><span class="ident">sig</span>));
+                <span class="kw">let</span> <span class="ident">sk</span> <span class="op">=</span> <span class="ident">SigningKey::gen</span>(<span class="kw-2">&amp;mut</span> <span class="ident">rng</span>);
+                <span class="kw">let</span> <span class="ident">pk</span> <span class="op">=</span> <span class="ident">VerificationKey::from</span>(<span class="kw-2">&amp;</span><span class="ident">sk</span>);
+                <span class="kw">let</span> <span class="ident">sig</span> <span class="op">=</span> <span class="ident">sk</span>.<span class="ident">sign</span>(<span class="kw-2">&amp;</span><span class="ident">msg</span>);
+                <span class="macro">assert!</span>(<span class="ident">sig</span>.<span class="ident">verify</span>(<span class="kw-2">&amp;</span><span class="ident">msg</span>, <span class="kw-2">&amp;</span><span class="ident">pk</span>).<span class="ident">is_ok</span>());
                 <span class="ident">sigs</span>.<span class="ident">push</span>(<span class="ident">sig</span>);
-                <span class="ident">mvks</span>.<span class="ident">push</span>(<span class="ident">pk</span>.<span class="ident">mvk</span>);
+                <span class="ident">mvks</span>.<span class="ident">push</span>(<span class="ident">pk</span>);
             }
-            <span class="kw">let</span> <span class="ident">ivk</span> <span class="op">=</span> <span class="ident">Msp::aggregate_keys</span>(<span class="kw-2">&amp;</span><span class="ident">mvks</span>);
-            <span class="kw">let</span> <span class="ident">mu</span> <span class="op">=</span> <span class="ident">Msp::aggregate_sigs</span>(<span class="kw-2">&amp;</span><span class="ident">sigs</span>);
-            <span class="macro">assert!</span>(<span class="ident">Msp::aggregate_ver</span>(<span class="kw-2">&amp;</span><span class="ident">msg</span>, <span class="kw-2">&amp;</span><span class="ident">ivk</span>, <span class="kw-2">&amp;</span><span class="ident">mu</span>));
+            <span class="kw">let</span> <span class="ident">ivk</span> <span class="op">=</span> <span class="ident">mvks</span>.<span class="ident">iter</span>().<span class="ident">sum</span>();
+            <span class="kw">let</span> <span class="ident">mu</span>: <span class="ident">Signature</span> <span class="op">=</span> <span class="ident">sigs</span>.<span class="ident">iter</span>().<span class="ident">sum</span>();
+            <span class="macro">assert!</span>(<span class="ident">mu</span>.<span class="ident">verify</span>(<span class="kw-2">&amp;</span><span class="ident">msg</span>, <span class="kw-2">&amp;</span><span class="ident">ivk</span>).<span class="ident">is_ok</span>());
         }
 
         <span class="attribute">#[<span class="ident">test</span>]</span>
         <span class="kw">fn</span> <span class="ident">test_eval_sanity_check</span>(<span class="ident">msg</span> <span class="kw">in</span> <span class="ident">prop::collection::vec</span>(<span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>(), <span class="number">1</span>..<span class="number">128</span>),
                                   <span class="ident">idx</span> <span class="kw">in</span> <span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>(),
                                   <span class="ident">seed</span> <span class="kw">in</span> <span class="ident">any</span>::<span class="op">&lt;</span>[<span class="ident">u8</span>;<span class="number">32</span>]<span class="op">&gt;</span>()) {
-            <span class="kw">let</span> (<span class="ident">sk</span>, <span class="ident">_pk</span>) <span class="op">=</span> <span class="ident">Msp::gen</span>(<span class="kw-2">&amp;mut</span> <span class="ident">ChaCha20Rng::from_seed</span>(<span class="ident">seed</span>));
-            <span class="kw">let</span> <span class="ident">sig</span> <span class="op">=</span> <span class="ident">Msp::sig</span>(<span class="kw-2">&amp;</span><span class="ident">sk</span>, <span class="kw-2">&amp;</span><span class="ident">msg</span>);
-            <span class="ident">Msp::eval</span>(<span class="kw-2">&amp;</span><span class="ident">msg</span>, <span class="ident">idx</span>, <span class="kw-2">&amp;</span><span class="ident">sig</span>);
+            <span class="kw">let</span> <span class="ident">sk</span> <span class="op">=</span> <span class="ident">SigningKey::gen</span>(<span class="kw-2">&amp;mut</span> <span class="ident">ChaCha20Rng::from_seed</span>(<span class="ident">seed</span>));
+            <span class="kw">let</span> <span class="ident">sig</span> <span class="op">=</span> <span class="ident">sk</span>.<span class="ident">sign</span>(<span class="kw-2">&amp;</span><span class="ident">msg</span>);
+            <span class="ident">sig</span>.<span class="ident">eval</span>(<span class="kw-2">&amp;</span><span class="ident">msg</span>, <span class="ident">idx</span>);
         }
 
         <span class="attribute">#[<span class="ident">test</span>]</span>
         <span class="kw">fn</span> <span class="ident">serialize_deserialize_pk</span>(<span class="ident">seed</span> <span class="kw">in</span> <span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>()) {
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">rng</span> <span class="op">=</span> <span class="ident">rand_chacha::ChaCha8Rng::seed_from_u64</span>(<span class="ident">seed</span>);
-            <span class="kw">let</span> (<span class="kw">_</span>, <span class="ident">pk</span>) <span class="op">=</span> <span class="ident">Msp::gen</span>(<span class="kw-2">&amp;mut</span> <span class="ident">rng</span>);
+            <span class="kw">let</span> <span class="ident">sk</span> <span class="op">=</span> <span class="ident">SigningKey::gen</span>(<span class="kw-2">&amp;mut</span> <span class="ident">rng</span>);
+            <span class="kw">let</span> <span class="ident">vk</span> <span class="op">=</span> <span class="ident">VerificationKey::from</span>(<span class="kw-2">&amp;</span><span class="ident">sk</span>);
+            <span class="kw">let</span> <span class="ident">vk_bytes</span> <span class="op">=</span> <span class="ident">vk</span>.<span class="ident">to_bytes</span>();
+            <span class="kw">let</span> <span class="ident">vk2</span> <span class="op">=</span> <span class="ident">VerificationKey::from_bytes</span>(<span class="kw-2">&amp;</span><span class="ident">vk_bytes</span>).<span class="ident">unwrap</span>();
+            <span class="macro">assert_eq!</span>(<span class="ident">vk</span>, <span class="ident">vk2</span>);
+            <span class="kw">let</span> <span class="ident">pk</span> <span class="op">=</span> <span class="ident">VerificationKeyPoP::from</span>(<span class="kw-2">&amp;</span><span class="ident">sk</span>);
             <span class="kw">let</span> <span class="ident">pk_bytes</span> <span class="op">=</span> <span class="ident">pk</span>.<span class="ident">to_bytes</span>();
-            <span class="kw">let</span> <span class="ident">pk2</span>: <span class="ident">MspPk</span> <span class="op">=</span> <span class="ident">MspPk::from_bytes</span>(<span class="kw-2">&amp;</span><span class="ident">pk_bytes</span>).<span class="ident">unwrap</span>();
-            <span class="macro">assert!</span>(<span class="ident">pk</span> <span class="op">==</span> <span class="ident">pk2</span>);
+            <span class="kw">let</span> <span class="ident">pk2</span>: <span class="ident">VerificationKeyPoP</span> <span class="op">=</span> <span class="ident">VerificationKeyPoP::from_bytes</span>(<span class="kw-2">&amp;</span><span class="ident">pk_bytes</span>).<span class="ident">unwrap</span>();
+            <span class="macro">assert_eq!</span>(<span class="ident">pk</span>, <span class="ident">pk2</span>);
+
+            <span class="comment">// Now we test serde</span>
+            <span class="kw">let</span> <span class="ident">encoded</span> <span class="op">=</span> <span class="ident">bincode::serialize</span>(<span class="kw-2">&amp;</span><span class="ident">vk</span>).<span class="ident">unwrap</span>();
+            <span class="macro">assert_eq!</span>(<span class="ident">encoded</span>, <span class="ident">vk_bytes</span>);
+            <span class="kw">let</span> <span class="ident">decoded</span>: <span class="ident">VerificationKey</span> <span class="op">=</span> <span class="ident">bincode::deserialize</span>(<span class="kw-2">&amp;</span><span class="ident">encoded</span>).<span class="ident">unwrap</span>();
+            <span class="macro">assert_eq!</span>(<span class="ident">vk</span>, <span class="ident">decoded</span>);
+            <span class="kw">let</span> <span class="ident">encoded</span> <span class="op">=</span> <span class="ident">bincode::serialize</span>(<span class="kw-2">&amp;</span><span class="ident">pk</span>).<span class="ident">unwrap</span>();
+            <span class="kw">let</span> <span class="ident">decoded</span>: <span class="ident">VerificationKeyPoP</span> <span class="op">=</span> <span class="ident">bincode::deserialize</span>(<span class="kw-2">&amp;</span><span class="ident">encoded</span>).<span class="ident">unwrap</span>();
+            <span class="macro">assert_eq!</span>(<span class="ident">pk</span>, <span class="ident">decoded</span>);
         }
 
         <span class="attribute">#[<span class="ident">test</span>]</span>
         <span class="kw">fn</span> <span class="ident">serialize_deserialize_sk</span>(<span class="ident">seed</span> <span class="kw">in</span> <span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>()) {
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">rng</span> <span class="op">=</span> <span class="ident">rand_chacha::ChaCha8Rng::seed_from_u64</span>(<span class="ident">seed</span>);
-            <span class="kw">let</span> (<span class="ident">sk</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="ident">Msp::gen</span>(<span class="kw-2">&amp;mut</span> <span class="ident">rng</span>);
+            <span class="kw">let</span> <span class="ident">sk</span> <span class="op">=</span> <span class="ident">SigningKey::gen</span>(<span class="kw-2">&amp;mut</span> <span class="ident">rng</span>);
             <span class="kw">let</span> <span class="ident">sk_bytes</span>: [<span class="ident">u8</span>; <span class="number">32</span>] <span class="op">=</span> <span class="ident">sk</span>.<span class="ident">to_bytes</span>();
-            <span class="kw">let</span> <span class="ident">sk2</span> <span class="op">=</span> <span class="ident">MspSk::from_bytes</span>(<span class="kw-2">&amp;</span><span class="ident">sk_bytes</span>).<span class="ident">unwrap</span>();
-            <span class="macro">assert!</span>(<span class="ident">sk</span> <span class="op">==</span> <span class="ident">sk2</span>);
+            <span class="kw">let</span> <span class="ident">sk2</span> <span class="op">=</span> <span class="ident">SigningKey::from_bytes</span>(<span class="kw-2">&amp;</span><span class="ident">sk_bytes</span>).<span class="ident">unwrap</span>();
+            <span class="macro">assert_eq!</span>(<span class="ident">sk</span>, <span class="ident">sk2</span>);
+
+            <span class="comment">// Now we test serde</span>
+            <span class="kw">let</span> <span class="ident">encoded</span> <span class="op">=</span> <span class="ident">bincode::serialize</span>(<span class="kw-2">&amp;</span><span class="ident">sk</span>).<span class="ident">unwrap</span>();
+            <span class="kw">let</span> <span class="ident">decoded</span>: <span class="ident">SigningKey</span> <span class="op">=</span> <span class="ident">bincode::deserialize</span>(<span class="kw-2">&amp;</span><span class="ident">encoded</span>).<span class="ident">unwrap</span>();
+            <span class="macro">assert_eq!</span>(<span class="ident">sk</span>, <span class="ident">decoded</span>);
+
+            <span class="comment">// See that it is consistent with raw serialisation</span>
+            <span class="kw">let</span> <span class="ident">decoded_bytes</span>: <span class="ident">SigningKey</span> <span class="op">=</span> <span class="ident">bincode::deserialize</span>(<span class="kw-2">&amp;</span><span class="ident">sk_bytes</span>).<span class="ident">unwrap</span>();
+            <span class="macro">assert_eq!</span>(<span class="ident">sk</span>, <span class="ident">decoded_bytes</span>);
         }
     }
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">test_gen</span>() {
         <span class="kw">for</span> <span class="kw">_</span> <span class="kw">in</span> <span class="number">0</span>..<span class="number">128</span> {
-            <span class="kw">let</span> (<span class="ident">_sk</span>, <span class="ident">pk</span>) <span class="op">=</span> <span class="ident">Msp::gen</span>(<span class="kw-2">&amp;mut</span> <span class="ident">OsRng</span>);
-            <span class="macro">assert!</span>(<span class="ident">Msp::check</span>(<span class="kw-2">&amp;</span><span class="ident">pk</span>).<span class="ident">is_ok</span>());
+            <span class="kw">let</span> <span class="ident">sk</span> <span class="op">=</span> <span class="ident">SigningKey::gen</span>(<span class="kw-2">&amp;mut</span> <span class="ident">OsRng</span>);
+            <span class="kw">let</span> <span class="ident">pk</span> <span class="op">=</span> <span class="ident">VerificationKeyPoP::from</span>(<span class="kw-2">&amp;</span><span class="ident">sk</span>);
+            <span class="macro">assert!</span>(<span class="ident">pk</span>.<span class="ident">check</span>().<span class="ident">is_ok</span>());
         }
     }
 }
