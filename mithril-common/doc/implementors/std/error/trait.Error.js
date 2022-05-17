@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["mithril_common"] = [{"text":"impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.60.0/std/error/trait.Error.html\" title=\"trait std::error::Error\">Error</a> for <a class=\"enum\" href=\"mithril_common/immutable_digester/enum.ImmutableDigesterError.html\" title=\"enum mithril_common::immutable_digester::ImmutableDigesterError\">ImmutableDigesterError</a>","synthetic":false,"types":["mithril_common::immutable_digester::ImmutableDigesterError"]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

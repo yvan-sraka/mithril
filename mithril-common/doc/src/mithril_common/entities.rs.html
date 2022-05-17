@@ -313,10 +313,14 @@
 <span id="308">308</span>
 <span id="309">309</span>
 <span id="310">310</span>
+<span id="311">311</span>
+<span id="312">312</span>
 </pre><pre class="rust"><code><span class="comment">// TODO: to be removed later</span>
 <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span>
 
 <span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
+
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ImmutableFileNumber</span> <span class="op">=</span> <span class="ident">u64</span>;
 
 <span class="doccomment">/// Beacon represents a point in the Cardano chain at which a Mithril certificate should be produced</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Default</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
@@ -329,18 +333,18 @@
     <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename</span> <span class="op">=</span> <span class="string">&quot;epoch&quot;</span>)]</span>
     <span class="kw">pub</span> <span class="ident">epoch</span>: <span class="ident">u64</span>,
 
-    <span class="doccomment">/// Cardano chain block number</span>
-    <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename</span> <span class="op">=</span> <span class="string">&quot;block&quot;</span>)]</span>
-    <span class="kw">pub</span> <span class="ident">block</span>: <span class="ident">u64</span>,
+    <span class="doccomment">/// Number of the last included immutable files for the digest computation</span>
+    <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename</span> <span class="op">=</span> <span class="string">&quot;immutable_file_number&quot;</span>)]</span>
+    <span class="kw">pub</span> <span class="ident">immutable_file_number</span>: <span class="ident">ImmutableFileNumber</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">Beacon</span> {
     <span class="doccomment">/// Beacon factory</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">network</span>: <span class="ident">String</span>, <span class="ident">epoch</span>: <span class="ident">u64</span>, <span class="ident">block</span>: <span class="ident">u64</span>) -&gt; <span class="ident">Beacon</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">network</span>: <span class="ident">String</span>, <span class="ident">epoch</span>: <span class="ident">u64</span>, <span class="ident">immutable_file_number</span>: <span class="ident">u64</span>) -&gt; <span class="ident">Beacon</span> {
         <span class="ident">Beacon</span> {
             <span class="ident">network</span>,
             <span class="ident">epoch</span>,
-            <span class="ident">block</span>,
+            <span class="ident">immutable_file_number</span>,
         }
     }
 }
@@ -393,9 +397,9 @@
     <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename</span> <span class="op">=</span> <span class="string">&quot;previous_hash&quot;</span>)]</span>
     <span class="kw">pub</span> <span class="ident">previous_hash</span>: <span class="ident">String</span>,
 
-    <span class="doccomment">/// Cardano chain block number</span>
-    <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename</span> <span class="op">=</span> <span class="string">&quot;block&quot;</span>)]</span>
-    <span class="kw">pub</span> <span class="ident">block</span>: <span class="ident">u64</span>,
+    <span class="doccomment">/// Cardano chain beacon</span>
+    <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename</span> <span class="op">=</span> <span class="string">&quot;beacon&quot;</span>)]</span>
+    <span class="kw">pub</span> <span class="ident">beacon</span>: <span class="ident">Beacon</span>,
 
     <span class="doccomment">/// Protocol parameters</span>
     <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename</span> <span class="op">=</span> <span class="string">&quot;protocol&quot;</span>)]</span>
@@ -428,7 +432,7 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(
         <span class="ident">hash</span>: <span class="ident">String</span>,
         <span class="ident">previous_hash</span>: <span class="ident">String</span>,
-        <span class="ident">block</span>: <span class="ident">u64</span>,
+        <span class="ident">beacon</span>: <span class="ident">Beacon</span>,
         <span class="ident">protocol_parameters</span>: <span class="ident">ProtocolParameters</span>,
         <span class="ident">digest</span>: <span class="ident">String</span>,
         <span class="ident">started_at</span>: <span class="ident">String</span>,
@@ -439,7 +443,7 @@
         <span class="ident">Certificate</span> {
             <span class="ident">hash</span>,
             <span class="ident">previous_hash</span>,
-            <span class="ident">block</span>,
+            <span class="ident">beacon</span>,
             <span class="ident">protocol_parameters</span>,
             <span class="ident">digest</span>,
             <span class="ident">started_at</span>,

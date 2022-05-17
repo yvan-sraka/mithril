@@ -690,6 +690,102 @@
 <span id="685">685</span>
 <span id="686">686</span>
 <span id="687">687</span>
+<span id="688">688</span>
+<span id="689">689</span>
+<span id="690">690</span>
+<span id="691">691</span>
+<span id="692">692</span>
+<span id="693">693</span>
+<span id="694">694</span>
+<span id="695">695</span>
+<span id="696">696</span>
+<span id="697">697</span>
+<span id="698">698</span>
+<span id="699">699</span>
+<span id="700">700</span>
+<span id="701">701</span>
+<span id="702">702</span>
+<span id="703">703</span>
+<span id="704">704</span>
+<span id="705">705</span>
+<span id="706">706</span>
+<span id="707">707</span>
+<span id="708">708</span>
+<span id="709">709</span>
+<span id="710">710</span>
+<span id="711">711</span>
+<span id="712">712</span>
+<span id="713">713</span>
+<span id="714">714</span>
+<span id="715">715</span>
+<span id="716">716</span>
+<span id="717">717</span>
+<span id="718">718</span>
+<span id="719">719</span>
+<span id="720">720</span>
+<span id="721">721</span>
+<span id="722">722</span>
+<span id="723">723</span>
+<span id="724">724</span>
+<span id="725">725</span>
+<span id="726">726</span>
+<span id="727">727</span>
+<span id="728">728</span>
+<span id="729">729</span>
+<span id="730">730</span>
+<span id="731">731</span>
+<span id="732">732</span>
+<span id="733">733</span>
+<span id="734">734</span>
+<span id="735">735</span>
+<span id="736">736</span>
+<span id="737">737</span>
+<span id="738">738</span>
+<span id="739">739</span>
+<span id="740">740</span>
+<span id="741">741</span>
+<span id="742">742</span>
+<span id="743">743</span>
+<span id="744">744</span>
+<span id="745">745</span>
+<span id="746">746</span>
+<span id="747">747</span>
+<span id="748">748</span>
+<span id="749">749</span>
+<span id="750">750</span>
+<span id="751">751</span>
+<span id="752">752</span>
+<span id="753">753</span>
+<span id="754">754</span>
+<span id="755">755</span>
+<span id="756">756</span>
+<span id="757">757</span>
+<span id="758">758</span>
+<span id="759">759</span>
+<span id="760">760</span>
+<span id="761">761</span>
+<span id="762">762</span>
+<span id="763">763</span>
+<span id="764">764</span>
+<span id="765">765</span>
+<span id="766">766</span>
+<span id="767">767</span>
+<span id="768">768</span>
+<span id="769">769</span>
+<span id="770">770</span>
+<span id="771">771</span>
+<span id="772">772</span>
+<span id="773">773</span>
+<span id="774">774</span>
+<span id="775">775</span>
+<span id="776">776</span>
+<span id="777">777</span>
+<span id="778">778</span>
+<span id="779">779</span>
+<span id="780">780</span>
+<span id="781">781</span>
+<span id="782">782</span>
+<span id="783">783</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">chrono::prelude</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident">mithril_common::crypto_helper</span>::{<span class="ident">key_decode_hex</span>, <span class="ident">key_encode_hex</span>};
 <span class="kw">use</span> <span class="ident">mithril_common::entities</span>;
@@ -702,7 +798,9 @@
 <span class="kw">use</span> <span class="ident">warp::Future</span>;
 <span class="kw">use</span> <span class="ident">warp</span>::{<span class="ident">http::Method</span>, <span class="ident">http::StatusCode</span>, <span class="ident">Filter</span>};
 
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::dependency</span>::{<span class="ident">DependencyManager</span>, <span class="ident">MultiSignerWrapper</span>, <span class="ident">SnapshotStorerWrapper</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::dependency</span>::{
+    <span class="ident">BeaconStoreWrapper</span>, <span class="ident">DependencyManager</span>, <span class="ident">MultiSignerWrapper</span>, <span class="ident">SnapshotStorerWrapper</span>,
+};
 <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::multi_signer</span>;
 
 <span class="kw">const</span> <span class="ident">SERVER_BASE_PATH</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;aggregator&quot;</span>;
@@ -759,10 +857,11 @@
 
     <span class="doccomment">/// GET /certificate-pending</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">certificate_pending</span>(
-        <span class="ident">_dependency_manager</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">DependencyManager</span><span class="op">&gt;</span>,
+        <span class="ident">dependency_manager</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">DependencyManager</span><span class="op">&gt;</span>,
     ) -&gt; <span class="kw">impl</span> <span class="ident">Filter</span><span class="op">&lt;</span><span class="ident">Extract</span> <span class="op">=</span> <span class="kw">impl</span> <span class="ident">warp::Reply</span>, <span class="ident">Error</span> <span class="op">=</span> <span class="ident">warp::Rejection</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Clone</span> {
         <span class="macro">warp::path!</span>(<span class="string">&quot;certificate-pending&quot;</span>)
             .<span class="ident">and</span>(<span class="ident">warp::get</span>())
+            .<span class="ident">and</span>(<span class="ident">with_beacon_store</span>(<span class="ident">dependency_manager</span>))
             .<span class="ident">and_then</span>(<span class="ident">handlers::certificate_pending</span>)
     }
 
@@ -772,6 +871,7 @@
     ) -&gt; <span class="kw">impl</span> <span class="ident">Filter</span><span class="op">&lt;</span><span class="ident">Extract</span> <span class="op">=</span> <span class="kw">impl</span> <span class="ident">warp::Reply</span>, <span class="ident">Error</span> <span class="op">=</span> <span class="ident">warp::Rejection</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Clone</span> {
         <span class="macro">warp::path!</span>(<span class="string">&quot;certificate&quot;</span> <span class="op">/</span> <span class="ident">String</span>)
             .<span class="ident">and</span>(<span class="ident">warp::get</span>())
+            .<span class="ident">and</span>(<span class="ident">with_beacon_store</span>(<span class="ident">dependency_manager</span>.<span class="ident">clone</span>()))
             .<span class="ident">and</span>(<span class="ident">with_multi_signer</span>(<span class="ident">dependency_manager</span>))
             .<span class="ident">and_then</span>(<span class="ident">handlers::certificate_certificate_hash</span>)
     }
@@ -830,24 +930,50 @@
     ) -&gt; <span class="kw">impl</span> <span class="ident">Filter</span><span class="op">&lt;</span><span class="ident">Extract</span> <span class="op">=</span> (<span class="ident">MultiSignerWrapper</span>,), <span class="ident">Error</span> <span class="op">=</span> <span class="ident">Infallible</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Clone</span> {
         <span class="ident">warp::any</span>().<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span><span class="op">|</span> <span class="ident">dependency_manager</span>.<span class="ident">multi_signer</span>.<span class="ident">as_ref</span>().<span class="ident">unwrap</span>().<span class="ident">clone</span>())
     }
+
+    <span class="doccomment">/// With beacon store middleware</span>
+    <span class="kw">fn</span> <span class="ident">with_beacon_store</span>(
+        <span class="ident">dependency_manager</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">DependencyManager</span><span class="op">&gt;</span>,
+    ) -&gt; <span class="kw">impl</span> <span class="ident">Filter</span><span class="op">&lt;</span><span class="ident">Extract</span> <span class="op">=</span> (<span class="ident">BeaconStoreWrapper</span>,), <span class="ident">Error</span> <span class="op">=</span> <span class="ident">Infallible</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Clone</span> {
+        <span class="ident">warp::any</span>().<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span><span class="op">|</span> <span class="ident">dependency_manager</span>.<span class="ident">beacon_store</span>.<span class="ident">as_ref</span>().<span class="ident">unwrap</span>().<span class="ident">clone</span>())
+    }
 }
 
 <span class="kw">mod</span> <span class="ident">handlers</span> {
     <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
 
     <span class="doccomment">/// Certificate Pending</span>
-    <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">certificate_pending</span>() -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw">impl</span> <span class="ident">warp::Reply</span>, <span class="ident">Infallible</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">certificate_pending</span>(
+        <span class="ident">beacon_store</span>: <span class="ident">BeaconStoreWrapper</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw">impl</span> <span class="ident">warp::Reply</span>, <span class="ident">Infallible</span><span class="op">&gt;</span> {
         <span class="macro">debug!</span>(<span class="string">&quot;certificate_pending&quot;</span>);
 
-        <span class="comment">// Certificate pending</span>
-        <span class="kw">let</span> <span class="ident">certificate_pending</span> <span class="op">=</span> <span class="ident">fake_data::certificate_pending</span>();
+        <span class="kw">let</span> <span class="ident">beacon_store</span> <span class="op">=</span> <span class="ident">beacon_store</span>.<span class="ident">read</span>().<span class="kw">await</span>;
+        <span class="kw">match</span> <span class="ident">beacon_store</span>.<span class="ident">get_current_beacon</span>().<span class="kw">await</span> {
+            <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">beacon</span>)) =&gt; {
+                <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">certificate_pending</span> <span class="op">=</span> <span class="ident">fake_data::certificate_pending</span>();
+                <span class="ident">certificate_pending</span>.<span class="ident">beacon</span> <span class="op">=</span> <span class="ident">beacon</span>;
 
-        <span class="prelude-val">Ok</span>(<span class="ident">warp::reply::json</span>(<span class="kw-2">&amp;</span><span class="ident">certificate_pending</span>))
+                <span class="prelude-val">Ok</span>(<span class="ident">warp::reply::with_status</span>(
+                    <span class="ident">warp::reply::json</span>(<span class="kw-2">&amp;</span><span class="ident">certificate_pending</span>),
+                    <span class="ident">StatusCode::OK</span>,
+                ))
+            }
+            <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">warp::reply::with_status</span>(
+                <span class="ident">warp::reply::json</span>(<span class="kw-2">&amp;</span><span class="ident">Null</span>),
+                <span class="ident">StatusCode::NO_CONTENT</span>,
+            )),
+            <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">warp::reply::with_status</span>(
+                <span class="ident">warp::reply::json</span>(<span class="kw-2">&amp;</span><span class="ident">entities::Error::new</span>(<span class="string">&quot;MITHRIL-E0006&quot;</span>.<span class="ident">to_string</span>(), <span class="ident">err</span>)),
+                <span class="ident">StatusCode::INTERNAL_SERVER_ERROR</span>,
+            )),
+        }
     }
 
     <span class="doccomment">/// Certificate by certificate hash</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">certificate_certificate_hash</span>(
         <span class="ident">certificate_hash</span>: <span class="ident">String</span>,
+        <span class="ident">beacon_store</span>: <span class="ident">BeaconStoreWrapper</span>,
         <span class="ident">multi_signer</span>: <span class="ident">MultiSignerWrapper</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw">impl</span> <span class="ident">warp::Reply</span>, <span class="ident">Infallible</span><span class="op">&gt;</span> {
         <span class="macro">debug!</span>(<span class="string">&quot;certificate_certificate_hash/{}&quot;</span>, <span class="ident">certificate_hash</span>);
@@ -858,12 +984,12 @@
         <span class="kw">let</span> <span class="ident">message</span> <span class="op">=</span> <span class="ident">certificate_hash</span>.<span class="ident">clone</span>();
         <span class="kw">match</span> <span class="ident">multi_signer</span>.<span class="ident">get_multi_signature</span>(<span class="ident">message</span>.<span class="ident">clone</span>()) {
             <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">multi_signature</span>)) =&gt; {
-                <span class="kw">let</span> <span class="ident">beacon</span> <span class="op">=</span> <span class="ident">fake_data::beacon</span>();
+                <span class="kw">let</span> <span class="ident">beacon_store</span> <span class="op">=</span> <span class="ident">beacon_store</span>.<span class="ident">read</span>().<span class="kw">await</span>;
+                <span class="kw">let</span> <span class="ident">beacon</span> <span class="op">=</span> <span class="ident">beacon_store</span>.<span class="ident">get_current_beacon</span>().<span class="kw">await</span>.<span class="ident">unwrap</span>().<span class="ident">unwrap</span>();
                 <span class="kw">let</span> <span class="ident">protocol_parameters</span> <span class="op">=</span> <span class="ident">fake_data::protocol_parameters</span>();
                 <span class="kw">let</span> <span class="ident">digest</span> <span class="op">=</span> <span class="ident">message</span>.<span class="ident">clone</span>();
                 <span class="kw">let</span> <span class="ident">certificate_hash</span> <span class="op">=</span> <span class="ident">message</span>;
                 <span class="kw">let</span> <span class="ident">previous_hash</span> <span class="op">=</span> <span class="string">&quot;&quot;</span>.<span class="ident">to_string</span>();
-                <span class="kw">let</span> <span class="ident">block</span> <span class="op">=</span> <span class="ident">beacon</span>.<span class="ident">block</span>;
                 <span class="kw">let</span> <span class="ident">timestamp</span>: <span class="ident">DateTime</span><span class="op">&lt;</span><span class="ident">Utc</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Utc::now</span>();
                 <span class="kw">let</span> <span class="ident">started_at</span> <span class="op">=</span> <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, <span class="ident">timestamp</span>);
                 <span class="kw">let</span> <span class="ident">completed_at</span> <span class="op">=</span> <span class="ident">started_at</span>.<span class="ident">clone</span>();
@@ -889,7 +1015,7 @@
                 <span class="kw">let</span> <span class="ident">certificate</span> <span class="op">=</span> <span class="ident">entities::Certificate::new</span>(
                     <span class="ident">certificate_hash</span>,
                     <span class="ident">previous_hash</span>,
-                    <span class="ident">block</span>,
+                    <span class="ident">beacon</span>,
                     <span class="ident">protocol_parameters</span>,
                     <span class="ident">digest</span>,
                     <span class="ident">started_at</span>,
@@ -975,8 +1101,6 @@
         <span class="macro">debug!</span>(<span class="string">&quot;register_signatures/{:?}&quot;</span>, <span class="ident">signatures</span>);
 
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">multi_signer</span> <span class="op">=</span> <span class="ident">multi_signer</span>.<span class="ident">write</span>().<span class="kw">await</span>;
-        <span class="kw">let</span> <span class="ident">message</span> <span class="op">=</span> <span class="ident">fake_data::digest</span>();
-        <span class="ident">multi_signer</span>.<span class="ident">update_current_message</span>(<span class="ident">message</span>).<span class="ident">unwrap</span>();
         <span class="kw">for</span> <span class="ident">signature</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="ident">signatures</span> {
             <span class="kw">match</span> <span class="ident">key_decode_hex</span>(<span class="kw-2">&amp;</span><span class="ident">signature</span>.<span class="ident">signature</span>) {
                 <span class="prelude-val">Ok</span>(<span class="ident">single_signature</span>) =&gt; {
@@ -1021,6 +1145,7 @@
     <span class="kw">use</span> <span class="ident">tokio::sync::RwLock</span>;
     <span class="kw">use</span> <span class="ident">warp::test::request</span>;
 
+    <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::beacon_store::MockBeaconStore</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::entities</span>::<span class="kw-2">*</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::multi_signer::MockMultiSigner</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::snapshot_store::MockSnapshotStorer</span>;
@@ -1037,9 +1162,66 @@
 
     <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_certificate_pending_get_ok</span>() {
-        <span class="kw">let</span> <span class="ident">dependency_manager</span> <span class="op">=</span> <span class="ident">setup_dependency_manager</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">beacon_store</span> <span class="op">=</span> <span class="ident">MockBeaconStore::new</span>();
+        <span class="ident">beacon_store</span>
+            .<span class="ident">expect_get_current_beacon</span>()
+            .<span class="ident">return_once</span>(<span class="op">|</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">fake_data::beacon</span>())));
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">dependency_manager</span> <span class="op">=</span> <span class="ident">setup_dependency_manager</span>();
         <span class="kw">let</span> <span class="ident">method</span> <span class="op">=</span> <span class="ident">Method::GET</span>.<span class="ident">as_str</span>();
         <span class="kw">let</span> <span class="ident">path</span> <span class="op">=</span> <span class="string">&quot;/certificate-pending&quot;</span>;
+        <span class="ident">dependency_manager</span>.<span class="ident">with_beacon_store</span>(<span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">beacon_store</span>)));
+
+        <span class="kw">let</span> <span class="ident">response</span> <span class="op">=</span> <span class="ident">request</span>()
+            .<span class="ident">method</span>(<span class="ident">method</span>)
+            .<span class="ident">path</span>(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;/{}{}&quot;</span>, <span class="ident">SERVER_BASE_PATH</span>, <span class="ident">path</span>))
+            .<span class="ident">reply</span>(<span class="kw-2">&amp;</span><span class="ident">router::routes</span>(<span class="ident">Arc::new</span>(<span class="ident">dependency_manager</span>)))
+            .<span class="kw">await</span>;
+
+        <span class="ident">APISpec::from_file</span>(<span class="ident">API_SPEC_FILE</span>)
+            .<span class="ident">method</span>(<span class="ident">method</span>)
+            .<span class="ident">path</span>(<span class="ident">path</span>)
+            .<span class="ident">validate_request</span>(<span class="kw-2">&amp;</span><span class="ident">Null</span>)
+            .<span class="ident">unwrap</span>()
+            .<span class="ident">validate_response</span>(<span class="kw-2">&amp;</span><span class="ident">response</span>)
+            .<span class="ident">expect</span>(<span class="string">&quot;OpenAPI error&quot;</span>);
+    }
+
+    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_certificate_pending_get_ok_204</span>() {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">beacon_store</span> <span class="op">=</span> <span class="ident">MockBeaconStore::new</span>();
+        <span class="ident">beacon_store</span>
+            .<span class="ident">expect_get_current_beacon</span>()
+            .<span class="ident">return_once</span>(<span class="op">|</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>));
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">dependency_manager</span> <span class="op">=</span> <span class="ident">setup_dependency_manager</span>();
+        <span class="kw">let</span> <span class="ident">method</span> <span class="op">=</span> <span class="ident">Method::GET</span>.<span class="ident">as_str</span>();
+        <span class="kw">let</span> <span class="ident">path</span> <span class="op">=</span> <span class="string">&quot;/certificate-pending&quot;</span>;
+        <span class="ident">dependency_manager</span>.<span class="ident">with_beacon_store</span>(<span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">beacon_store</span>)));
+
+        <span class="kw">let</span> <span class="ident">response</span> <span class="op">=</span> <span class="ident">request</span>()
+            .<span class="ident">method</span>(<span class="ident">method</span>)
+            .<span class="ident">path</span>(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;/{}{}&quot;</span>, <span class="ident">SERVER_BASE_PATH</span>, <span class="ident">path</span>))
+            .<span class="ident">reply</span>(<span class="kw-2">&amp;</span><span class="ident">router::routes</span>(<span class="ident">Arc::new</span>(<span class="ident">dependency_manager</span>)))
+            .<span class="kw">await</span>;
+
+        <span class="ident">APISpec::from_file</span>(<span class="ident">API_SPEC_FILE</span>)
+            .<span class="ident">method</span>(<span class="ident">method</span>)
+            .<span class="ident">path</span>(<span class="ident">path</span>)
+            .<span class="ident">validate_request</span>(<span class="kw-2">&amp;</span><span class="ident">Null</span>)
+            .<span class="ident">unwrap</span>()
+            .<span class="ident">validate_response</span>(<span class="kw-2">&amp;</span><span class="ident">response</span>)
+            .<span class="ident">expect</span>(<span class="string">&quot;OpenAPI error&quot;</span>);
+    }
+
+    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_certificate_pending_get_ko</span>() {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">beacon_store</span> <span class="op">=</span> <span class="ident">MockBeaconStore::new</span>();
+        <span class="ident">beacon_store</span>
+            .<span class="ident">expect_get_current_beacon</span>()
+            .<span class="ident">return_once</span>(<span class="op">|</span><span class="op">|</span> <span class="prelude-val">Err</span>(<span class="string">&quot;an error occurred&quot;</span>.<span class="ident">to_string</span>()));
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">dependency_manager</span> <span class="op">=</span> <span class="ident">setup_dependency_manager</span>();
+        <span class="kw">let</span> <span class="ident">method</span> <span class="op">=</span> <span class="ident">Method::GET</span>.<span class="ident">as_str</span>();
+        <span class="kw">let</span> <span class="ident">path</span> <span class="op">=</span> <span class="string">&quot;/certificate-pending&quot;</span>;
+        <span class="ident">dependency_manager</span>.<span class="ident">with_beacon_store</span>(<span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">beacon_store</span>)));
 
         <span class="kw">let</span> <span class="ident">response</span> <span class="op">=</span> <span class="ident">request</span>()
             .<span class="ident">method</span>(<span class="ident">method</span>)
@@ -1059,6 +1241,10 @@
     <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_certificate_certificate_hash_get_ok</span>() {
         <span class="kw">let</span> <span class="ident">multi_signature_hex</span> <span class="op">=</span> <span class="string">&quot;7b227369676e617475726573223a5b7b227369676d61223a5b3137312c3139352c3234322c3235332c3137392c32352c3138372c3135312c3132322c3133302c3230372c3132322c38342c3132352c3134322c3132332c3233352c3134312c3230362c3136392c382c3136302c3138382c36382c35312c3232302c3232342c3231312c3137312c3230372c3231362c3139332c3230352c3139312c3233372c3131312c3232392c3132392c3131392c36362c3134342c3234382c3235322c39322c3234372c35382c37312c39355d2c22706b223a7b22766b223a5b3134332c3136312c3235352c34382c37382c35372c3230342c3232302c32352c3232312c3136342c3235322c3234382c31342c35362c3132362c3138362c3133352c3232382c3138382c3134352c3138312c35322c3230302c39372c39392c3231332c34362c302c3139392c3139332c38392c3138372c38382c32392c3133352c3137332c3234342c38362c33362c38332c35342c36372c3136342c362c3133372c39342c37322c362c3130352c3132382c3132382c39332c34382c3137362c31312c342c3234362c3133382c34382c3138302c3133332c39302c3134322c3139322c32342c3139332c3131312c3134322c33312c37362c3131312c3131302c3233342c3135332c39302c3230382c3139322c33312c3132342c39352c3130322c34392c3135382c39392c35322c3232302c3136352c39342c3235312c36382c36392c3132312c31362c3232342c3139345d2c22706f70223a5b3136382c35302c3233332c3139332c31352c3133362c36352c37322c3132332c3134382c3132392c3137362c33382c3139382c3230392c34372c32382c3230342c3137362c3134342c35372c3235312c34322c32382c36362c37362c38392c39372c3135382c36332c35342c3139382c3139342c3137362c3133352c3232312c31342c3138352c3139372c3232352c3230322c39382c3234332c37342c3233332c3232352c3134332c3135312c3134372c3137372c3137302c3131372c36362c3136352c36362c36322c33332c3231362c3233322c37352c36382c3131342c3139352c32322c3130302c36352c34342c3139382c342c3136362c3130322c3233332c3235332c3234302c35392c3137352c36302c3131372c3134322c3131342c3134302c3132322c31372c38372c3131302c3138372c312c31372c31302c3139352c3135342c31332c3234392c38362c35342c3232365d7d2c227061727479223a302c227374616b65223a3832362c22696e646578223a33302c2270617468223a7b2276616c756573223a5b5b3235332c3135382c3135382c3232322c3233352c3137302c3137362c3139392c33332c3230302c36362c32362c3231312c3137392c3132362c3232362c35352c3234302c3138322c33302c3234362c3231352c37362c3135382c31362c3131342c342c3231392c36322c3131352c3235332c322c3139322c3231392c3135322c3137352c3131322c34352c36392c3131322c36382c3139352c31372c34342c3230352c3230342c37382c3233342c3130362c3234362c3230392c33312c3230302c3137312c3130382c32372c3136352c35382c3232392c37342c35382c3139312c3132352c3231385d2c5b3130382c39382c35322c3137372c3131332c3132392c3139342c37312c3133352c3137342c37342c3230352c38392c3137352c312c3230382c3234362c3136312c3132322c3233312c33302c3137382c32362c3234312c39382c35322c3133322c31342c33372c302c3138312c3232342c3130332c34362c3130312c3232322c3139392c36312c3231372c31322c39322c3231362c3139302c3131352c3233362c3134322c3138322c3235332c38312c32352c3138392c342c3235302c35382c34352c3234332c38302c37332c3130322c38332c32342c3130392c3131312c3138305d2c5b3138302c3230382c3234392c35312c3231362c3133352c34342c3134342c372c3132392c36302c36332c3234342c3130342c33362c3232392c34332c31312c3132332c38362c3131352c3131322c3138342c3230382c3135392c3138352c37332c31302c3136392c32372c39362c3231382c39392c3135322c3138312c36362c3230312c36302c3135342c31342c3231312c39342c3232392c3135382c3230382c3136362c3233302c37362c32332c3131382c3137382c3230382c38372c3131372c3233302c31392c3233312c32392c3230362c35382c3232352c32322c39352c3130335d5d2c22696e646578223a302c22686173686572223a6e756c6c7d7d2c7b227369676d61223a5b3137312c3139352c3234322c3235332c3137392c32352c3138372c3135312c3132322c3133302c3230372c3132322c38342c3132352c3134322c3132332c3233352c3134312c3230362c3136392c382c3136302c3138382c36382c35312c3232302c3232342c3231312c3137312c3230372c3231362c3139332c3230352c3139312c3233372c3131312c3232392c3132392c3131392c36362c3134342c3234382c3235322c39322c3234372c35382c37312c39355d2c22706b223a7b22766b223a5b3134332c3136312c3235352c34382c37382c35372c3230342c3232302c32352c3232312c3136342c3235322c3234382c31342c35362c3132362c3138362c3133352c3232382c3138382c3134352c3138312c35322c3230302c39372c39392c3231332c34362c302c3139392c3139332c38392c3138372c38382c32392c3133352c3137332c3234342c38362c33362c38332c35342c36372c3136342c362c3133372c39342c37322c362c3130352c3132382c3132382c39332c34382c3137362c31312c342c3234362c3133382c34382c3138302c3133332c39302c3134322c3139322c32342c3139332c3131312c3134322c33312c37362c3131312c3131302c3233342c3135332c39302c3230382c3139322c33312c3132342c39352c3130322c34392c3135382c39392c35322c3232302c3136352c39342c3235312c36382c36392c3132312c31362c3232342c3139345d2c22706f70223a5b3136382c35302c3233332c3139332c31352c3133362c36352c37322c3132332c3134382c3132392c3137362c33382c3139382c3230392c34372c32382c3230342c3137362c3134342c35372c3235312c34322c32382c36362c37362c38392c39372c3135382c36332c35342c3139382c3139342c3137362c3133352c3232312c31342c3138352c3139372c3232352c3230322c39382c3234332c37342c3233332c3232352c3134332c3135312c3134372c3137372c3137302c3131372c36362c3136352c36362c36322c33332c3231362c3233322c37352c36382c3131342c3139352c32322c3130302c36352c34342c3139382c342c3136362c3130322c3233332c3235332c3234302c35392c3137352c36302c3131372c3134322c3131342c3134302c3132322c31372c38372c3131302c3138372c312c31372c31302c3139352c3135342c31332c3234392c38362c35342c3232365d7d2c227061727479223a302c227374616b65223a3832362c22696e646578223a312c2270617468223a7b2276616c756573223a5b5b3235332c3135382c3135382c3232322c3233352c3137302c3137362c3139392c33332c3230302c36362c32362c3231312c3137392c3132362c3232362c35352c3234302c3138322c33302c3234362c3231352c37362c3135382c31362c3131342c342c3231392c36322c3131352c3235332c322c3139322c3231392c3135322c3137352c3131322c34352c36392c3131322c36382c3139352c31372c34342c3230352c3230342c37382c3233342c3130362c3234362c3230392c33312c3230302c3137312c3130382c32372c3136352c35382c3232392c37342c35382c3139312c3132352c3231385d2c5b3130382c39382c35322c3137372c3131332c3132392c3139342c37312c3133352c3137342c37342c3230352c38392c3137352c312c3230382c3234362c3136312c3132322c3233312c33302c3137382c32362c3234312c39382c35322c3133322c31342c33372c302c3138312c3232342c3130332c34362c3130312c3232322c3139392c36312c3231372c31322c39322c3231362c3139302c3131352c3233362c3134322c3138322c3235332c38312c32352c3138392c342c3235302c35382c34352c3234332c38302c37332c3130322c38332c32342c3130392c3131312c3138305d2c5b3138302c3230382c3234392c35312c3231362c3133352c34342c3134342c372c3132392c36302c36332c3234342c3130342c33362c3232392c34332c31312c3132332c38362c3131352c3131322c3138342c3230382c3135392c3138352c37332c31302c3136392c32372c39362c3231382c39392c3135322c3138312c36362c3230312c36302c3135342c31342c3231312c39342c3232392c3135382c3230382c3136362c3233302c37362c32332c3131382c3137382c3230382c38372c3131372c3233302c31392c3233312c32392c3230362c35382c3232352c32322c39352c3130335d5d2c22696e646578223a302c22686173686572223a6e756c6c7d7d2c7b227369676d61223a5b3137312c3139352c3234322c3235332c3137392c32352c3138372c3135312c3132322c3133302c3230372c3132322c38342c3132352c3134322c3132332c3233352c3134312c3230362c3136392c382c3136302c3138382c36382c35312c3232302c3232342c3231312c3137312c3230372c3231362c3139332c3230352c3139312c3233372c3131312c3232392c3132392c3131392c36362c3134342c3234382c3235322c39322c3234372c35382c37312c39355d2c22706b223a7b22766b223a5b3134332c3136312c3235352c34382c37382c35372c3230342c3232302c32352c3232312c3136342c3235322c3234382c31342c35362c3132362c3138362c3133352c3232382c3138382c3134352c3138312c35322c3230302c39372c39392c3231332c34362c302c3139392c3139332c38392c3138372c38382c32392c3133352c3137332c3234342c38362c33362c38332c35342c36372c3136342c362c3133372c39342c37322c362c3130352c3132382c3132382c39332c34382c3137362c31312c342c3234362c3133382c34382c3138302c3133332c39302c3134322c3139322c32342c3139332c3131312c3134322c33312c37362c3131312c3131302c3233342c3135332c39302c3230382c3139322c33312c3132342c39352c3130322c34392c3135382c39392c35322c3232302c3136352c39342c3235312c36382c36392c3132312c31362c3232342c3139345d2c22706f70223a5b3136382c35302c3233332c3139332c31352c3133362c36352c37322c3132332c3134382c3132392c3137362c33382c3139382c3230392c34372c32382c3230342c3137362c3134342c35372c3235312c34322c32382c36362c37362c38392c39372c3135382c36332c35342c3139382c3139342c3137362c3133352c3232312c31342c3138352c3139372c3232352c3230322c39382c3234332c37342c3233332c3232352c3134332c3135312c3134372c3137372c3137302c3131372c36362c3136352c36362c36322c33332c3231362c3233322c37352c36382c3131342c3139352c32322c3130302c36352c34342c3139382c342c3136362c3130322c3233332c3235332c3234302c35392c3137352c36302c3131372c3134322c3131342c3134302c3132322c31372c38372c3131302c3138372c312c31372c31302c3139352c3135342c31332c3234392c38362c35342c3232365d7d2c227061727479223a302c227374616b65223a3832362c22696e646578223a33322c2270617468223a7b2276616c756573223a5b5b3235332c3135382c3135382c3232322c3233352c3137302c3137362c3139392c33332c3230302c36362c32362c3231312c3137392c3132362c3232362c35352c3234302c3138322c33302c3234362c3231352c37362c3135382c31362c3131342c342c3231392c36322c3131352c3235332c322c3139322c3231392c3135322c3137352c3131322c34352c36392c3131322c36382c3139352c31372c34342c3230352c3230342c37382c3233342c3130362c3234362c3230392c33312c3230302c3137312c3130382c32372c3136352c35382c3232392c37342c35382c3139312c3132352c3231385d2c5b3130382c39382c35322c3137372c3131332c3132392c3139342c37312c3133352c3137342c37342c3230352c38392c3137352c312c3230382c3234362c3136312c3132322c3233312c33302c3137382c32362c3234312c39382c35322c3133322c31342c33372c302c3138312c3232342c3130332c34362c3130312c3232322c3139392c36312c3231372c31322c39322c3231362c3139302c3131352c3233362c3134322c3138322c3235332c38312c32352c3138392c342c3235302c35382c34352c3234332c38302c37332c3130322c38332c32342c3130392c3131312c3138305d2c5b3138302c3230382c3234392c35312c3231362c3133352c34342c3134342c372c3132392c36302c36332c3234342c3130342c33362c3232392c34332c31312c3132332c38362c3131352c3131322c3138342c3230382c3135392c3138352c37332c31302c3136392c32372c39362c3231382c39392c3135322c3138312c36362c3230312c36302c3135342c31342c3231312c39342c3232392c3135382c3230382c3136362c3233302c37362c32332c3131382c3137382c3230382c38372c3131372c3233302c31392c3233312c32392c3230362c35382c3232352c32322c39352c3130335d5d2c22696e646578223a302c22686173686572223a6e756c6c7d7d2c7b227369676d61223a5b3137312c3139352c3234322c3235332c3137392c32352c3138372c3135312c3132322c3133302c3230372c3132322c38342c3132352c3134322c3132332c3233352c3134312c3230362c3136392c382c3136302c3138382c36382c35312c3232302c3232342c3231312c3137312c3230372c3231362c3139332c3230352c3139312c3233372c3131312c3232392c3132392c3131392c36362c3134342c3234382c3235322c39322c3234372c35382c37312c39355d2c22706b223a7b22766b223a5b3134332c3136312c3235352c34382c37382c35372c3230342c3232302c32352c3232312c3136342c3235322c3234382c31342c35362c3132362c3138362c3133352c3232382c3138382c3134352c3138312c35322c3230302c39372c39392c3231332c34362c302c3139392c3139332c38392c3138372c38382c32392c3133352c3137332c3234342c38362c33362c38332c35342c36372c3136342c362c3133372c39342c37322c362c3130352c3132382c3132382c39332c34382c3137362c31312c342c3234362c3133382c34382c3138302c3133332c39302c3134322c3139322c32342c3139332c3131312c3134322c33312c37362c3131312c3131302c3233342c3135332c39302c3230382c3139322c33312c3132342c39352c3130322c34392c3135382c39392c35322c3232302c3136352c39342c3235312c36382c36392c3132312c31362c3232342c3139345d2c22706f70223a5b3136382c35302c3233332c3139332c31352c3133362c36352c37322c3132332c3134382c3132392c3137362c33382c3139382c3230392c34372c32382c3230342c3137362c3134342c35372c3235312c34322c32382c36362c37362c38392c39372c3135382c36332c35342c3139382c3139342c3137362c3133352c3232312c31342c3138352c3139372c3232352c3230322c39382c3234332c37342c3233332c3232352c3134332c3135312c3134372c3137372c3137302c3131372c36362c3136352c36362c36322c33332c3231362c3233322c37352c36382c3131342c3139352c32322c3130302c36352c34342c3139382c342c3136362c3130322c3233332c3235332c3234302c35392c3137352c36302c3131372c3134322c3131342c3134302c3132322c31372c38372c3131302c3138372c312c31372c31302c3139352c3135342c31332c3234392c38362c35342c3232365d7d2c227061727479223a302c227374616b65223a3832362c22696e646578223a332c2270617468223a7b2276616c756573223a5b5b3235332c3135382c3135382c3232322c3233352c3137302c3137362c3139392c33332c3230302c36362c32362c3231312c3137392c3132362c3232362c35352c3234302c3138322c33302c3234362c3231352c37362c3135382c31362c3131342c342c3231392c36322c3131352c3235332c322c3139322c3231392c3135322c3137352c3131322c34352c36392c3131322c36382c3139352c31372c34342c3230352c3230342c37382c3233342c3130362c3234362c3230392c33312c3230302c3137312c3130382c32372c3136352c35382c3232392c37342c35382c3139312c3132352c3231385d2c5b3130382c39382c35322c3137372c3131332c3132392c3139342c37312c3133352c3137342c37342c3230352c38392c3137352c312c3230382c3234362c3136312c3132322c3233312c33302c3137382c32362c3234312c39382c35322c3133322c31342c33372c302c3138312c3232342c3130332c34362c3130312c3232322c3139392c36312c3231372c31322c39322c3231362c3139302c3131352c3233362c3134322c3138322c3235332c38312c32352c3138392c342c3235302c35382c34352c3234332c38302c37332c3130322c38332c32342c3130392c3131312c3138305d2c5b3138302c3230382c3234392c35312c3231362c3133352c34342c3134342c372c3132392c36302c36332c3234342c3130342c33362c3232392c34332c31312c3132332c38362c3131352c3131322c3138342c3230382c3135392c3138352c37332c31302c3136392c32372c39362c3231382c39392c3135322c3138312c36362c3230312c36302c3135342c31342c3231312c39342c3232392c3135382c3230382c3136362c3233302c37362c32332c3131382c3137382c3230382c38372c3131372c3233302c31392c3233312c32392c3230362c35382c3232352c32322c39352c3130335d5d2c22696e646578223a302c22686173686572223a6e756c6c7d7d2c7b227369676d61223a5b3137312c3139352c3234322c3235332c3137392c32352c3138372c3135312c3132322c3133302c3230372c3132322c38342c3132352c3134322c3132332c3233352c3134312c3230362c3136392c382c3136302c3138382c36382c35312c3232302c3232342c3231312c3137312c3230372c3231362c3139332c3230352c3139312c3233372c3131312c3232392c3132392c3131392c36362c3134342c3234382c3235322c39322c3234372c35382c37312c39355d2c22706b223a7b22766b223a5b3134332c3136312c3235352c34382c37382c35372c3230342c3232302c32352c3232312c3136342c3235322c3234382c31342c35362c3132362c3138362c3133352c3232382c3138382c3134352c3138312c35322c3230302c39372c39392c3231332c34362c302c3139392c3139332c38392c3138372c38382c32392c3133352c3137332c3234342c38362c33362c38332c35342c36372c3136342c362c3133372c39342c37322c362c3130352c3132382c3132382c39332c34382c3137362c31312c342c3234362c3133382c34382c3138302c3133332c39302c3134322c3139322c32342c3139332c3131312c3134322c33312c37362c3131312c3131302c3233342c3135332c39302c3230382c3139322c33312c3132342c39352c3130322c34392c3135382c39392c35322c3232302c3136352c39342c3235312c36382c36392c3132312c31362c3232342c3139345d2c22706f70223a5b3136382c35302c3233332c3139332c31352c3133362c36352c37322c3132332c3134382c3132392c3137362c33382c3139382c3230392c34372c32382c3230342c3137362c3134342c35372c3235312c34322c32382c36362c37362c38392c39372c3135382c36332c35342c3139382c3139342c3137362c3133352c3232312c31342c3138352c3139372c3232352c3230322c39382c3234332c37342c3233332c3232352c3134332c3135312c3134372c3137372c3137302c3131372c36362c3136352c36362c36322c33332c3231362c3233322c37352c36382c3131342c3139352c32322c3130302c36352c34342c3139382c342c3136362c3130322c3233332c3235332c3234302c35392c3137352c36302c3131372c3134322c3131342c3134302c3132322c31372c38372c3131302c3138372c312c31372c31302c3139352c3135342c31332c3234392c38362c35342c3232365d7d2c227061727479223a302c227374616b65223a3832362c22696e646578223a352c2270617468223a7b2276616c756573223a5b5b3235332c3135382c3135382c3232322c3233352c3137302c3137362c3139392c33332c3230302c36362c32362c3231312c3137392c3132362c3232362c35352c3234302c3138322c33302c3234362c3231352c37362c3135382c31362c3131342c342c3231392c36322c3131352c3235332c322c3139322c3231392c3135322c3137352c3131322c34352c36392c3131322c36382c3139352c31372c34342c3230352c3230342c37382c3233342c3130362c3234362c3230392c33312c3230302c3137312c3130382c32372c3136352c35382c3232392c37342c35382c3139312c3132352c3231385d2c5b3130382c39382c35322c3137372c3131332c3132392c3139342c37312c3133352c3137342c37342c3230352c38392c3137352c312c3230382c3234362c3136312c3132322c3233312c33302c3137382c32362c3234312c39382c35322c3133322c31342c33372c302c3138312c3232342c3130332c34362c3130312c3232322c3139392c36312c3231372c31322c39322c3231362c3139302c3131352c3233362c3134322c3138322c3235332c38312c32352c3138392c342c3235302c35382c34352c3234332c38302c37332c3130322c38332c32342c3130392c3131312c3138305d2c5b3138302c3230382c3234392c35312c3231362c3133352c34342c3134342c372c3132392c36302c36332c3234342c3130342c33362c3232392c34332c31312c3132332c38362c3131352c3131322c3138342c3230382c3135392c3138352c37332c31302c3136392c32372c39362c3231382c39392c3135322c3138312c36362c3230312c36302c3135342c31342c3231312c39342c3232392c3135382c3230382c3136362c3233302c37362c32332c3131382c3137382c3230382c38372c3131372c3233302c31392c3233312c32392c3230362c35382c3232352c32322c39352c3130335d5d2c22696e646578223a302c22686173686572223a6e756c6c7d7d2c7b227369676d61223a5b3137312c3139352c3234322c3235332c3137392c32352c3138372c3135312c3132322c3133302c3230372c3132322c38342c3132352c3134322c3132332c3233352c3134312c3230362c3136392c382c3136302c3138382c36382c35312c3232302c3232342c3231312c3137312c3230372c3231362c3139332c3230352c3139312c3233372c3131312c3232392c3132392c3131392c36362c3134342c3234382c3235322c39322c3234372c35382c37312c39355d2c22706b223a7b22766b223a5b3134332c3136312c3235352c34382c37382c35372c3230342c3232302c32352c3232312c3136342c3235322c3234382c31342c35362c3132362c3138362c3133352c3232382c3138382c3134352c3138312c35322c3230302c39372c39392c3231332c34362c302c3139392c3139332c38392c3138372c38382c32392c3133352c3137332c3234342c38362c33362c38332c35342c36372c3136342c362c3133372c39342c37322c362c3130352c3132382c3132382c39332c34382c3137362c31312c342c3234362c3133382c34382c3138302c3133332c39302c3134322c3139322c32342c3139332c3131312c3134322c33312c37362c3131312c3131302c3233342c3135332c39302c3230382c3139322c33312c3132342c39352c3130322c34392c3135382c39392c35322c3232302c3136352c39342c3235312c36382c36392c3132312c31362c3232342c3139345d2c22706f70223a5b3136382c35302c3233332c3139332c31352c3133362c36352c37322c3132332c3134382c3132392c3137362c33382c3139382c3230392c34372c32382c3230342c3137362c3134342c35372c3235312c34322c32382c36362c37362c38392c39372c3135382c36332c35342c3139382c3139342c3137362c3133352c3232312c31342c3138352c3139372c3232352c3230322c39382c3234332c37342c3233332c3232352c3134332c3135312c3134372c3137372c3137302c3131372c36362c3136352c36362c36322c33332c3231362c3233322c37352c36382c3131342c3139352c32322c3130302c36352c34342c3139382c342c3136362c3130322c3233332c3235332c3234302c35392c3137352c36302c3131372c3134322c3131342c3134302c3132322c31372c38372c3131302c3138372c312c31372c31302c3139352c3135342c31332c3234392c38362c35342c3232365d7d2c227061727479223a302c227374616b65223a3832362c22696e646578223a35342c2270617468223a7b2276616c756573223a5b5b3235332c3135382c3135382c3232322c3233352c3137302c3137362c3139392c33332c3230302c36362c32362c3231312c3137392c3132362c3232362c35352c3234302c3138322c33302c3234362c3231352c37362c3135382c31362c3131342c342c3231392c36322c3131352c3235332c322c3139322c3231392c3135322c3137352c3131322c34352c36392c3131322c36382c3139352c31372c34342c3230352c3230342c37382c3233342c3130362c3234362c3230392c33312c3230302c3137312c3130382c32372c3136352c35382c3232392c37342c35382c3139312c3132352c3231385d2c5b3130382c39382c35322c3137372c3131332c3132392c3139342c37312c3133352c3137342c37342c3230352c38392c3137352c312c3230382c3234362c3136312c3132322c3233312c33302c3137382c32362c3234312c39382c35322c3133322c31342c33372c302c3138312c3232342c3130332c34362c3130312c3232322c3139392c36312c3231372c31322c39322c3231362c3139302c3131352c3233362c3134322c3138322c3235332c38312c32352c3138392c342c3235302c35382c34352c3234332c38302c37332c3130322c38332c32342c3130392c3131312c3138305d2c5b3138302c3230382c3234392c35312c3231362c3133352c34342c3134342c372c3132392c36302c36332c3234342c3130342c33362c3232392c34332c31312c3132332c38362c3131352c3131322c3138342c3230382c3135392c3138352c37332c31302c3136392c32372c39362c3231382c39392c3135322c3138312c36362c3230312c36302c3135342c31342c3231312c39342c3232392c3135382c3230382c3136362c3233302c37362c32332c3131382c3137382c3230382c38372c3131372c3233302c31392c3233312c32392c3230362c35382c3232352c32322c39352c3130335d5d2c22696e646578223a302c22686173686572223a6e756c6c7d7d2c7b227369676d61223a5b3137312c3139352c3234322c3235332c3137392c32352c3138372c3135312c3132322c3133302c3230372c3132322c38342c3132352c3134322c3132332c3233352c3134312c3230362c3136392c382c3136302c3138382c36382c35312c3232302c3232342c3231312c3137312c3230372c3231362c3139332c3230352c3139312c3233372c3131312c3232392c3132392c3131392c36362c3134342c3234382c3235322c39322c3234372c35382c37312c39355d2c22706b223a7b22766b223a5b3134332c3136312c3235352c34382c37382c35372c3230342c3232302c32352c3232312c3136342c3235322c3234382c31342c35362c3132362c3138362c3133352c3232382c3138382c3134352c3138312c35322c3230302c39372c39392c3231332c34362c302c3139392c3139332c38392c3138372c38382c32392c3133352c3137332c3234342c38362c33362c38332c35342c36372c3136342c362c3133372c39342c37322c362c3130352c3132382c3132382c39332c34382c3137362c31312c342c3234362c3133382c34382c3138302c3133332c39302c3134322c3139322c32342c3139332c3131312c3134322c33312c37362c3131312c3131302c3233342c3135332c39302c3230382c3139322c33312c3132342c39352c3130322c34392c3135382c39392c35322c3232302c3136352c39342c3235312c36382c36392c3132312c31362c3232342c3139345d2c22706f70223a5b3136382c35302c3233332c3139332c31352c3133362c36352c37322c3132332c3134382c3132392c3137362c33382c3139382c3230392c34372c32382c3230342c3137362c3134342c35372c3235312c34322c32382c36362c37362c38392c39372c3135382c36332c35342c3139382c3139342c3137362c3133352c3232312c31342c3138352c3139372c3232352c3230322c39382c3234332c37342c3233332c3232352c3134332c3135312c3134372c3137372c3137302c3131372c36362c3136352c36362c36322c33332c3231362c3233322c37352c36382c3131342c3139352c32322c3130302c36352c34342c3139382c342c3136362c3130322c3233332c3235332c3234302c35392c3137352c36302c3131372c3134322c3131342c3134302c3132322c31372c38372c3131302c3138372c312c31372c31302c3139352c3135342c31332c3234392c38362c35342c3232365d7d2c227061727479223a302c227374616b65223a3832362c22696e646578223a33352c2270617468223a7b2276616c756573223a5b5b3235332c3135382c3135382c3232322c3233352c3137302c3137362c3139392c33332c3230302c36362c32362c3231312c3137392c3132362c3232362c35352c3234302c3138322c33302c3234362c3231352c37362c3135382c31362c3131342c342c3231392c36322c3131352c3235332c322c3139322c3231392c3135322c3137352c3131322c34352c36392c3131322c36382c3139352c31372c34342c3230352c3230342c37382c3233342c3130362c3234362c3230392c33312c3230302c3137312c3130382c32372c3136352c35382c3232392c37342c35382c3139312c3132352c3231385d2c5b3130382c39382c35322c3137372c3131332c3132392c3139342c37312c3133352c3137342c37342c3230352c38392c3137352c312c3230382c3234362c3136312c3132322c3233312c33302c3137382c32362c3234312c39382c35322c3133322c31342c33372c302c3138312c3232342c3130332c34362c3130312c3232322c3139392c36312c3231372c31322c39322c3231362c3139302c3131352c3233362c3134322c3138322c3235332c38312c32352c3138392c342c3235302c35382c34352c3234332c38302c37332c3130322c38332c32342c3130392c3131312c3138305d2c5b3138302c3230382c3234392c35312c3231362c3133352c34342c3134342c372c3132392c36302c36332c3234342c3130342c33362c3232392c34332c31312c3132332c38362c3131352c3131322c3138342c3230382c3135392c3138352c37332c31302c3136392c32372c39362c3231382c39392c3135322c3138312c36362c3230312c36302c3135342c31342c3231312c39342c3232392c3135382c3230382c3136362c3233302c37362c32332c3131382c3137382c3230382c38372c3131372c3233302c31392c3233312c32392c3230362c35382c3232352c32322c39352c3130335d5d2c22696e646578223a302c22686173686572223a6e756c6c7d7d2c7b227369676d61223a5b3137312c3139352c3234322c3235332c3137392c32352c3138372c3135312c3132322c3133302c3230372c3132322c38342c3132352c3134322c3132332c3233352c3134312c3230362c3136392c382c3136302c3138382c36382c35312c3232302c3232342c3231312c3137312c3230372c3231362c3139332c3230352c3139312c3233372c3131312c3232392c3132392c3131392c36362c3134342c3234382c3235322c39322c3234372c35382c37312c39355d2c22706b223a7b22766b223a5b3134332c3136312c3235352c34382c37382c35372c3230342c3232302c32352c3232312c3136342c3235322c3234382c31342c35362c3132362c3138362c3133352c3232382c3138382c3134352c3138312c35322c3230302c39372c39392c3231332c34362c302c3139392c3139332c38392c3138372c38382c32392c3133352c3137332c3234342c38362c33362c38332c35342c36372c3136342c362c3133372c39342c37322c362c3130352c3132382c3132382c39332c34382c3137362c31312c342c3234362c3133382c34382c3138302c3133332c39302c3134322c3139322c32342c3139332c3131312c3134322c33312c37362c3131312c3131302c3233342c3135332c39302c3230382c3139322c33312c3132342c39352c3130322c34392c3135382c39392c35322c3232302c3136352c39342c3235312c36382c36392c3132312c31362c3232342c3139345d2c22706f70223a5b3136382c35302c3233332c3139332c31352c3133362c36352c37322c3132332c3134382c3132392c3137362c33382c3139382c3230392c34372c32382c3230342c3137362c3134342c35372c3235312c34322c32382c36362c37362c38392c39372c3135382c36332c35342c3139382c3139342c3137362c3133352c3232312c31342c3138352c3139372c3232352c3230322c39382c3234332c37342c3233332c3232352c3134332c3135312c3134372c3137372c3137302c3131372c36362c3136352c36362c36322c33332c3231362c3233322c37352c36382c3131342c3139352c32322c3130302c36352c34342c3139382c342c3136362c3130322c3233332c3235332c3234302c35392c3137352c36302c3131372c3134322c3131342c3134302c3132322c31372c38372c3131302c3138372c312c31372c31302c3139352c3135342c31332c3234392c38362c35342c3232365d7d2c227061727479223a302c227374616b65223a3832362c22696e646578223a35372c2270617468223a7b2276616c756573223a5b5b3235332c3135382c3135382c3232322c3233352c3137302c3137362c3139392c33332c3230302c36362c32362c3231312c3137392c3132362c3232362c35352c3234302c3138322c33302c3234362c3231352c37362c3135382c31362c3131342c342c3231392c36322c3131352c3235332c322c3139322c3231392c3135322c3137352c3131322c34352c36392c3131322c36382c3139352c31372c34342c3230352c3230342c37382c3233342c3130362c3234362c3230392c33312c3230302c3137312c3130382c32372c3136352c35382c3232392c37342c35382c3139312c3132352c3231385d2c5b3130382c39382c35322c3137372c3131332c3132392c3139342c37312c3133352c3137342c37342c3230352c38392c3137352c312c3230382c3234362c3136312c3132322c3233312c33302c3137382c32362c3234312c39382c35322c3133322c31342c33372c302c3138312c3232342c3130332c34362c3130312c3232322c3139392c36312c3231372c31322c39322c3231362c3139302c3131352c3233362c3134322c3138322c3235332c38312c32352c3138392c342c3235302c35382c34352c3234332c38302c37332c3130322c38332c32342c3130392c3131312c3138305d2c5b3138302c3230382c3234392c35312c3231362c3133352c34342c3134342c372c3132392c36302c36332c3234342c3130342c33362c3232392c34332c31312c3132332c38362c3131352c3131322c3138342c3230382c3135392c3138352c37332c31302c3136392c32372c39362c3231382c39392c3135322c3138312c36362c3230312c36302c3135342c31342c3231312c39342c3232392c3135382c3230382c3136362c3233302c37362c32332c3131382c3137382c3230382c38372c3131372c3233302c31392c3233312c32392c3230362c35382c3232352c32322c39352c3130335d5d2c22696e646578223a302c22686173686572223a6e756c6c7d7d2c7b227369676d61223a5b3137312c3139352c3234322c3235332c3137392c32352c3138372c3135312c3132322c3133302c3230372c3132322c38342c3132352c3134322c3132332c3233352c3134312c3230362c3136392c382c3136302c3138382c36382c35312c3232302c3232342c3231312c3137312c3230372c3231362c3139332c3230352c3139312c3233372c3131312c3232392c3132392c3131392c36362c3134342c3234382c3235322c39322c3234372c35382c37312c39355d2c22706b223a7b22766b223a5b3134332c3136312c3235352c34382c37382c35372c3230342c3232302c32352c3232312c3136342c3235322c3234382c31342c35362c3132362c3138362c3133352c3232382c3138382c3134352c3138312c35322c3230302c39372c39392c3231332c34362c302c3139392c3139332c38392c3138372c38382c32392c3133352c3137332c3234342c38362c33362c38332c35342c36372c3136342c362c3133372c39342c37322c362c3130352c3132382c3132382c39332c34382c3137362c31312c342c3234362c3133382c34382c3138302c3133332c39302c3134322c3139322c32342c3139332c3131312c3134322c33312c37362c3131312c3131302c3233342c3135332c39302c3230382c3139322c33312c3132342c39352c3130322c34392c3135382c39392c35322c3232302c3136352c39342c3235312c36382c36392c3132312c31362c3232342c3139345d2c22706f70223a5b3136382c35302c3233332c3139332c31352c3133362c36352c37322c3132332c3134382c3132392c3137362c33382c3139382c3230392c34372c32382c3230342c3137362c3134342c35372c3235312c34322c32382c36362c37362c38392c39372c3135382c36332c35342c3139382c3139342c3137362c3133352c3232312c31342c3138352c3139372c3232352c3230322c39382c3234332c37342c3233332c3232352c3134332c3135312c3134372c3137372c3137302c3131372c36362c3136352c36362c36322c33332c3231362c3233322c37352c36382c3131342c3139352c32322c3130302c36352c34342c3139382c342c3136362c3130322c3233332c3235332c3234302c35392c3137352c36302c3131372c3134322c3131342c3134302c3132322c31372c38372c3131302c3138372c312c31372c31302c3139352c3135342c31332c3234392c38362c35342c3232365d7d2c227061727479223a302c227374616b65223a3832362c22696e646578223a382c2270617468223a7b2276616c756573223a5b5b3235332c3135382c3135382c3232322c3233352c3137302c3137362c3139392c33332c3230302c36362c32362c3231312c3137392c3132362c3232362c35352c3234302c3138322c33302c3234362c3231352c37362c3135382c31362c3131342c342c3231392c36322c3131352c3235332c322c3139322c3231392c3135322c3137352c3131322c34352c36392c3131322c36382c3139352c31372c34342c3230352c3230342c37382c3233342c3130362c3234362c3230392c33312c3230302c3137312c3130382c32372c3136352c35382c3232392c37342c35382c3139312c3132352c3231385d2c5b3130382c39382c35322c3137372c3131332c3132392c3139342c37312c3133352c3137342c37342c3230352c38392c3137352c312c3230382c3234362c3136312c3132322c3233312c33302c3137382c32362c3234312c39382c35322c3133322c31342c33372c302c3138312c3232342c3130332c34362c3130312c3232322c3139392c36312c3231372c31322c39322c3231362c3139302c3131352c3233362c3134322c3138322c3235332c38312c32352c3138392c342c3235302c35382c34352c3234332c38302c37332c3130322c38332c32342c3130392c3131312c3138305d2c5b3138302c3230382c3234392c35312c3231362c3133352c34342c3134342c372c3132392c36302c36332c3234342c3130342c33362c3232392c34332c31312c3132332c38362c3131352c3131322c3138342c3230382c3135392c3138352c37332c31302c3136392c32372c39362c3231382c39392c3135322c3138312c36362c3230312c36302c3135342c31342c3231312c39342c3232392c3135382c3230382c3136362c3233302c37362c32332c3131382c3137382c3230382c38372c3131372c3233302c31392c3233312c32392c3230362c35382c3232352c32322c39352c3130335d5d2c22696e646578223a302c22686173686572223a6e756c6c7d7d2c7b227369676d61223a5b3137312c3139352c3234322c3235332c3137392c32352c3138372c3135312c3132322c3133302c3230372c3132322c38342c3132352c3134322c3132332c3233352c3134312c3230362c3136392c382c3136302c3138382c36382c35312c3232302c3232342c3231312c3137312c3230372c3231362c3139332c3230352c3139312c3233372c3131312c3232392c3132392c3131392c36362c3134342c3234382c3235322c39322c3234372c35382c37312c39355d2c22706b223a7b22766b223a5b3134332c3136312c3235352c34382c37382c35372c3230342c3232302c32352c3232312c3136342c3235322c3234382c31342c35362c3132362c3138362c3133352c3232382c3138382c3134352c3138312c35322c3230302c39372c39392c3231332c34362c302c3139392c3139332c38392c3138372c38382c32392c3133352c3137332c3234342c38362c33362c38332c35342c36372c3136342c362c3133372c39342c37322c362c3130352c3132382c3132382c39332c34382c3137362c31312c342c3234362c3133382c34382c3138302c3133332c39302c3134322c3139322c32342c3139332c3131312c3134322c33312c37362c3131312c3131302c3233342c3135332c39302c3230382c3139322c33312c3132342c39352c3130322c34392c3135382c39392c35322c3232302c3136352c39342c3235312c36382c36392c3132312c31362c3232342c3139345d2c22706f70223a5b3136382c35302c3233332c3139332c31352c3133362c36352c37322c3132332c3134382c3132392c3137362c33382c3139382c3230392c34372c32382c3230342c3137362c3134342c35372c3235312c34322c32382c36362c37362c38392c39372c3135382c36332c35342c3139382c3139342c3137362c3133352c3232312c31342c3138352c3139372c3232352c3230322c39382c3234332c37342c3233332c3232352c3134332c3135312c3134372c3137372c3137302c3131372c36362c3136352c36362c36322c33332c3231362c3233322c37352c36382c3131342c3139352c32322c3130302c36352c34342c3139382c342c3136362c3130322c3233332c3235332c3234302c35392c3137352c36302c3131372c3134322c3131342c3134302c3132322c31372c38372c3131302c3138372c312c31372c31302c3139352c3135342c31332c3234392c38362c35342c3232365d7d2c227061727479223a302c227374616b65223a3832362c22696e646578223a31312c2270617468223a7b2276616c756573223a5b5b3235332c3135382c3135382c3232322c3233352c3137302c3137362c3139392c33332c3230302c36362c32362c3231312c3137392c3132362c3232362c35352c3234302c3138322c33302c3234362c3231352c37362c3135382c31362c3131342c342c3231392c36322c3131352c3235332c322c3139322c3231392c3135322c3137352c3131322c34352c36392c3131322c36382c3139352c31372c34342c3230352c3230342c37382c3233342c3130362c3234362c3230392c33312c3230302c3137312c3130382c32372c3136352c35382c3232392c37342c35382c3139312c3132352c3231385d2c5b3130382c39382c35322c3137372c3131332c3132392c3139342c37312c3133352c3137342c37342c3230352c38392c3137352c312c3230382c3234362c3136312c3132322c3233312c33302c3137382c32362c3234312c39382c35322c3133322c31342c33372c302c3138312c3232342c3130332c34362c3130312c3232322c3139392c36312c3231372c31322c39322c3231362c3139302c3131352c3233362c3134322c3138322c3235332c38312c32352c3138392c342c3235302c35382c34352c3234332c38302c37332c3130322c38332c32342c3130392c3131312c3138305d2c5b3138302c3230382c3234392c35312c3231362c3133352c34342c3134342c372c3132392c36302c36332c3234342c3130342c33362c3232392c34332c31312c3132332c38362c3131352c3131322c3138342c3230382c3135392c3138352c37332c31302c3136392c32372c39362c3231382c39392c3135322c3138312c36362c3230312c36302c3135342c31342c3231312c39342c3232392c3135382c3230382c3136362c3233302c37362c32332c3131382c3137382c3230382c38372c3131372c3233302c31392c3233312c32392c3230362c35382c3232352c32322c39352c3130335d5d2c22696e646578223a302c22686173686572223a6e756c6c7d7d5d7d&quot;</span>.<span class="ident">to_string</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">beacon_store</span> <span class="op">=</span> <span class="ident">MockBeaconStore::new</span>();
+        <span class="ident">beacon_store</span>
+            .<span class="ident">expect_get_current_beacon</span>()
+            .<span class="ident">return_once</span>(<span class="op">|</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">fake_data::beacon</span>())));
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_multi_signer</span> <span class="op">=</span> <span class="ident">MockMultiSigner::new</span>();
         <span class="ident">mock_multi_signer</span>
             .<span class="ident">expect_get_multi_signature</span>()
@@ -1067,7 +1253,9 @@
             .<span class="ident">expect_get_stake_distribution</span>()
             .<span class="ident">return_once</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">Vec::new</span>());
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">dependency_manager</span> <span class="op">=</span> <span class="ident">setup_dependency_manager</span>();
-        <span class="ident">dependency_manager</span>.<span class="ident">with_multi_signer</span>(<span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">mock_multi_signer</span>)));
+        <span class="ident">dependency_manager</span>
+            .<span class="ident">with_multi_signer</span>(<span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">mock_multi_signer</span>)))
+            .<span class="ident">with_beacon_store</span>(<span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">beacon_store</span>)));
 
         <span class="kw">let</span> <span class="ident">method</span> <span class="op">=</span> <span class="ident">Method::GET</span>.<span class="ident">as_str</span>();
         <span class="kw">let</span> <span class="ident">path</span> <span class="op">=</span> <span class="string">&quot;/certificate/{certificate_hash}&quot;</span>;
@@ -1089,12 +1277,18 @@
 
     <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_certificate_certificate_hash_get_ok_404</span>() {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">beacon_store</span> <span class="op">=</span> <span class="ident">MockBeaconStore::new</span>();
+        <span class="ident">beacon_store</span>
+            .<span class="ident">expect_get_current_beacon</span>()
+            .<span class="ident">return_once</span>(<span class="op">|</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">fake_data::beacon</span>())));
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_multi_signer</span> <span class="op">=</span> <span class="ident">MockMultiSigner::new</span>();
         <span class="ident">mock_multi_signer</span>
             .<span class="ident">expect_get_multi_signature</span>()
             .<span class="ident">return_once</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>));
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">dependency_manager</span> <span class="op">=</span> <span class="ident">setup_dependency_manager</span>();
-        <span class="ident">dependency_manager</span>.<span class="ident">with_multi_signer</span>(<span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">mock_multi_signer</span>)));
+        <span class="ident">dependency_manager</span>
+            .<span class="ident">with_multi_signer</span>(<span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">mock_multi_signer</span>)))
+            .<span class="ident">with_beacon_store</span>(<span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">beacon_store</span>)));
 
         <span class="kw">let</span> <span class="ident">method</span> <span class="op">=</span> <span class="ident">Method::GET</span>.<span class="ident">as_str</span>();
         <span class="kw">let</span> <span class="ident">path</span> <span class="op">=</span> <span class="string">&quot;/certificate/{certificate_hash}&quot;</span>;
@@ -1116,12 +1310,18 @@
 
     <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_certificate_certificate_hash_get_ko</span>() {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">beacon_store</span> <span class="op">=</span> <span class="ident">MockBeaconStore::new</span>();
+        <span class="ident">beacon_store</span>
+            .<span class="ident">expect_get_current_beacon</span>()
+            .<span class="ident">return_once</span>(<span class="op">|</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>));
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_multi_signer</span> <span class="op">=</span> <span class="ident">MockMultiSigner::new</span>();
         <span class="ident">mock_multi_signer</span>
             .<span class="ident">expect_get_multi_signature</span>()
             .<span class="ident">return_once</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Err</span>(<span class="string">&quot;an error occurred&quot;</span>.<span class="ident">to_string</span>()));
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">dependency_manager</span> <span class="op">=</span> <span class="ident">setup_dependency_manager</span>();
-        <span class="ident">dependency_manager</span>.<span class="ident">with_multi_signer</span>(<span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">mock_multi_signer</span>)));
+        <span class="ident">dependency_manager</span>
+            .<span class="ident">with_multi_signer</span>(<span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">mock_multi_signer</span>)))
+            .<span class="ident">with_beacon_store</span>(<span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">beacon_store</span>)));
 
         <span class="kw">let</span> <span class="ident">method</span> <span class="op">=</span> <span class="ident">Method::GET</span>.<span class="ident">as_str</span>();
         <span class="kw">let</span> <span class="ident">path</span> <span class="op">=</span> <span class="string">&quot;/certificate/{certificate_hash}&quot;</span>;
@@ -1311,10 +1511,6 @@
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_register_signatures_post_ok</span>() {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_multi_signer</span> <span class="op">=</span> <span class="ident">MockMultiSigner::new</span>();
         <span class="ident">mock_multi_signer</span>
-            .<span class="ident">expect_update_current_message</span>()
-            .<span class="ident">return_const</span>(<span class="prelude-val">Ok</span>(()))
-            .<span class="ident">once</span>();
-        <span class="ident">mock_multi_signer</span>
             .<span class="ident">expect_register_single_signature</span>()
             .<span class="ident">return_const</span>(<span class="prelude-val">Ok</span>(()))
             .<span class="ident">once</span>();
@@ -1345,10 +1541,6 @@
     <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_register_signatures_post_ko</span>() {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_multi_signer</span> <span class="op">=</span> <span class="ident">MockMultiSigner::new</span>();
-        <span class="ident">mock_multi_signer</span>
-            .<span class="ident">expect_update_current_message</span>()
-            .<span class="ident">return_const</span>(<span class="prelude-val">Ok</span>(()))
-            .<span class="ident">once</span>();
         <span class="ident">mock_multi_signer</span>
             .<span class="ident">expect_register_single_signature</span>()
             .<span class="ident">return_const</span>(<span class="prelude-val">Err</span>(<span class="string">&quot;an error occurred&quot;</span>.<span class="ident">to_string</span>()))

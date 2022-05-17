@@ -189,8 +189,6 @@
 <span id="184">184</span>
 <span id="185">185</span>
 <span id="186">186</span>
-<span id="187">187</span>
-<span id="188">188</span>
 </pre><pre class="rust"><code><span class="attribute">#![<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span>
 
 <span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
@@ -206,16 +204,15 @@
         .<span class="ident">unwrap</span>()
         .<span class="ident">as_secs</span>();
     <span class="kw">let</span> <span class="ident">epoch</span> <span class="op">=</span> <span class="ident">seconds_since_unix_epoch</span> <span class="op">/</span> <span class="number">86400_u64</span>; <span class="comment">// 1 epoch every day</span>
-    <span class="kw">let</span> <span class="ident">block</span> <span class="op">=</span> <span class="number">100</span> <span class="op">*</span> (<span class="ident">seconds_since_unix_epoch</span> <span class="op">/</span> (<span class="number">5</span> <span class="op">*</span> <span class="number">100</span>)) <span class="kw">as</span> <span class="ident">u64</span>; <span class="comment">// 1 block every 5s and 1 snapshot every 100 blocks</span>
-    <span class="ident">entities::Beacon::new</span>(<span class="ident">network</span>, <span class="ident">epoch</span>, <span class="ident">block</span>)
+    <span class="kw">let</span> <span class="ident">immutable_file_number</span> <span class="op">=</span> (<span class="ident">seconds_since_unix_epoch</span> <span class="op">/</span> (<span class="number">5</span> <span class="op">*</span> <span class="number">100</span>)) <span class="kw">as</span> <span class="ident">u64</span>; <span class="comment">// 1 immutable_file_number every 500s</span>
+    <span class="ident">entities::Beacon::new</span>(<span class="ident">network</span>, <span class="ident">epoch</span>, <span class="ident">immutable_file_number</span>)
 }
 
 <span class="doccomment">/// Fake Digest</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">digest</span>() -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="ident">beacon</span> <span class="op">=</span> <span class="ident">beacon</span>();
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">digest</span>(<span class="ident">beacon</span>: <span class="kw-2">&amp;</span><span class="ident">entities::Beacon</span>) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span> {
     <span class="macro">format!</span>(
         <span class="string">&quot;digest-{}-{}-{}&quot;</span>,
-        <span class="ident">beacon</span>.<span class="ident">network</span>, <span class="ident">beacon</span>.<span class="ident">epoch</span>, <span class="ident">beacon</span>.<span class="ident">block</span>
+        <span class="ident">beacon</span>.<span class="ident">network</span>, <span class="ident">beacon</span>.<span class="ident">epoch</span>, <span class="ident">beacon</span>.<span class="ident">immutable_file_number</span>
     )
     .<span class="ident">as_bytes</span>()
     .<span class="ident">to_vec</span>()
@@ -260,15 +257,14 @@
 
     <span class="comment">// Certificate</span>
     <span class="kw">let</span> <span class="ident">previous_hash</span> <span class="op">=</span> <span class="macro">format!</span>(<span class="string">&quot;{}0&quot;</span>, <span class="ident">certificate_hash</span>);
-    <span class="kw">let</span> <span class="ident">block</span> <span class="op">=</span> <span class="ident">beacon</span>.<span class="ident">block</span>;
-    <span class="kw">let</span> <span class="ident">digest</span> <span class="op">=</span> <span class="macro">format!</span>(<span class="string">&quot;1{}&quot;</span>, <span class="ident">block</span>).<span class="ident">repeat</span>(<span class="number">20</span>);
+    <span class="kw">let</span> <span class="ident">digest</span> <span class="op">=</span> <span class="macro">format!</span>(<span class="string">&quot;1{}&quot;</span>, <span class="ident">beacon</span>.<span class="ident">immutable_file_number</span>).<span class="ident">repeat</span>(<span class="number">20</span>);
     <span class="kw">let</span> <span class="ident">started_at</span> <span class="op">=</span> <span class="string">&quot;2006-01-02T15:04:05Z&quot;</span>.<span class="ident">to_string</span>();
     <span class="kw">let</span> <span class="ident">completed_at</span> <span class="op">=</span> <span class="string">&quot;2006-01-02T15:04:05Z&quot;</span>.<span class="ident">to_string</span>();
-    <span class="kw">let</span> <span class="ident">multisignature</span> <span class="op">=</span> <span class="macro">format!</span>(<span class="string">&quot;ABC{}&quot;</span>, <span class="ident">block</span>).<span class="ident">repeat</span>(<span class="number">200</span>);
+    <span class="kw">let</span> <span class="ident">multisignature</span> <span class="op">=</span> <span class="macro">format!</span>(<span class="string">&quot;ABC{}&quot;</span>, <span class="ident">beacon</span>.<span class="ident">immutable_file_number</span>).<span class="ident">repeat</span>(<span class="number">200</span>);
     <span class="ident">entities::Certificate::new</span>(
         <span class="ident">certificate_hash</span>,
         <span class="ident">previous_hash</span>,
-        <span class="ident">block</span>,
+        <span class="ident">beacon</span>,
         <span class="ident">protocol_parameters</span>,
         <span class="ident">digest</span>,
         <span class="ident">started_at</span>,
