@@ -231,6 +231,15 @@
 <span id="226">226</span>
 <span id="227">227</span>
 <span id="228">228</span>
+<span id="229">229</span>
+<span id="230">230</span>
+<span id="231">231</span>
+<span id="232">232</span>
+<span id="233">233</span>
+<span id="234">234</span>
+<span id="235">235</span>
+<span id="236">236</span>
+<span id="237">237</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">http::response::Response</span>;
 <span class="kw">use</span> <span class="ident">jsonschema::JSONSchema</span>;
 <span class="kw">use</span> <span class="ident">serde::Serialize</span>;
@@ -242,6 +251,7 @@
     <span class="ident">openapi</span>: <span class="ident">Value</span>,
     <span class="ident">path</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">str</span><span class="op">&gt;</span>,
     <span class="ident">method</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">str</span><span class="op">&gt;</span>,
+    <span class="ident">content_type</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">str</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">APISpec</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
@@ -253,6 +263,7 @@
             <span class="ident">openapi</span>,
             <span class="ident">path</span>: <span class="prelude-val">None</span>,
             <span class="ident">method</span>: <span class="prelude-val">None</span>,
+            <span class="ident">content_type</span>: <span class="prelude-val">Some</span>(<span class="string">&quot;application/json&quot;</span>),
         }
     }
 
@@ -268,6 +279,12 @@
         <span class="self">self</span>
     }
 
+    <span class="doccomment">/// Sets the content type to specify/check, note that it defaults to &quot;application/json&quot;.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">content_type</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">content_type</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">str</span>) -&gt; <span class="kw-2">&amp;mut</span> <span class="ident">APISpec</span> {
+        <span class="self">self</span>.<span class="ident">content_type</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">content_type</span>);
+        <span class="self">self</span>
+    }
+
     <span class="doccomment">/// Validates if a request is valid</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">validate_request</span>(
         <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="self">self</span>,
@@ -275,9 +292,10 @@
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw-2">&amp;mut</span> <span class="ident">APISpec</span>, <span class="ident">String</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">path</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">path</span>.<span class="ident">unwrap</span>();
         <span class="kw">let</span> <span class="ident">method</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">method</span>.<span class="ident">unwrap</span>().<span class="ident">to_lowercase</span>();
+        <span class="kw">let</span> <span class="ident">content_type</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">content_type</span>.<span class="ident">unwrap</span>();
 
         <span class="kw">let</span> <span class="ident">request_schema</span> <span class="op">=</span> <span class="kw-2">&amp;mut</span> <span class="self">self</span>.<span class="ident">openapi</span>.<span class="ident">clone</span>()[<span class="string">&quot;paths&quot;</span>][<span class="ident">path</span>][<span class="ident">method</span>][<span class="string">&quot;requestBody&quot;</span>]
-            [<span class="string">&quot;content&quot;</span>][<span class="string">&quot;application/json&quot;</span>][<span class="string">&quot;schema&quot;</span>];
+            [<span class="string">&quot;content&quot;</span>][<span class="ident">content_type</span>][<span class="string">&quot;schema&quot;</span>];
         <span class="kw">let</span> <span class="ident">value</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="macro">json!</span>(<span class="kw-2">&amp;</span><span class="ident">request_body</span>);
         <span class="self">self</span>.<span class="ident">validate_conformity</span>(<span class="ident">value</span>, <span class="ident">request_schema</span>)
     }
@@ -292,6 +310,7 @@
 
         <span class="kw">let</span> <span class="ident">path</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">path</span>.<span class="ident">unwrap</span>();
         <span class="kw">let</span> <span class="ident">method</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">method</span>.<span class="ident">unwrap</span>().<span class="ident">to_lowercase</span>();
+        <span class="kw">let</span> <span class="ident">content_type</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">content_type</span>.<span class="ident">unwrap</span>();
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">openapi</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">openapi</span>.<span class="ident">clone</span>();
 
         <span class="kw">let</span> <span class="ident">response_spec</span> <span class="op">=</span> {
@@ -310,8 +329,7 @@
 
         <span class="kw">match</span> <span class="ident">response_spec</span> {
             <span class="prelude-val">Some</span>(<span class="ident">response_spec</span>) =&gt; {
-                <span class="kw">let</span> <span class="ident">response_schema</span> <span class="op">=</span>
-                    <span class="kw-2">&amp;mut</span> <span class="ident">response_spec</span>.<span class="ident">clone</span>()[<span class="string">&quot;content&quot;</span>][<span class="string">&quot;application/json&quot;</span>][<span class="string">&quot;schema&quot;</span>];
+                <span class="kw">let</span> <span class="ident">response_schema</span> <span class="op">=</span> <span class="kw-2">&amp;mut</span> <span class="ident">response_spec</span>.<span class="ident">clone</span>()[<span class="string">&quot;content&quot;</span>][<span class="ident">content_type</span>][<span class="string">&quot;schema&quot;</span>];
                 <span class="kw">if</span> <span class="ident">body</span>.<span class="ident">is_empty</span>() {
                     <span class="kw">match</span> <span class="ident">response_spec</span>.<span class="ident">as_object</span>() {
                         <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; <span class="kw">match</span> <span class="ident">response_schema</span>.<span class="ident">as_object</span>() {

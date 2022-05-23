@@ -284,7 +284,7 @@
 <span class="doccomment">/// ImmutableDigester</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ImmutableDigester</span> {
     <span class="doccomment">/// A cardano node DB directory</span>
-    <span class="ident">db_directory</span>: <span class="ident">String</span>,
+    <span class="ident">db_directory</span>: <span class="ident">PathBuf</span>,
 
     <span class="doccomment">/// The logger where the logs should be written</span>
     <span class="ident">logger</span>: <span class="ident">Logger</span>,
@@ -313,7 +313,7 @@
 
 <span class="kw">impl</span> <span class="ident">ImmutableDigester</span> {
     <span class="doccomment">/// ImmutableDigester factory</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">db_directory</span>: <span class="ident">String</span>, <span class="ident">logger</span>: <span class="ident">Logger</span>) -&gt; <span class="self">Self</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">db_directory</span>: <span class="ident">PathBuf</span>, <span class="ident">logger</span>: <span class="ident">Logger</span>) -&gt; <span class="self">Self</span> {
         <span class="self">Self</span> {
             <span class="ident">db_directory</span>,
             <span class="ident">logger</span>,
@@ -419,7 +419,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// Important Note: It will skip the last chunk / primary / secondary trio since they&#39;re not yet</span>
     <span class="doccomment">/// complete.</span>
-    <span class="kw">fn</span> <span class="ident">list_in_dir</span>(<span class="ident">dir</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">ImmutableFile</span><span class="op">&gt;</span>, <span class="ident">String</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">list_in_dir</span>(<span class="ident">dir</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">ImmutableFile</span><span class="op">&gt;</span>, <span class="ident">String</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">files</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">ImmutableFile</span><span class="op">&gt;</span> <span class="op">=</span> <span class="macro">vec!</span>[];
 
         <span class="kw">for</span> <span class="ident">path</span> <span class="kw">in</span> <span class="ident">WalkDir::new</span>(<span class="ident">dir</span>)
@@ -510,7 +510,7 @@
             <span class="string">&quot;21.secondary&quot;</span>,
         ];
         <span class="ident">create_fake_files</span>(<span class="kw-2">&amp;</span><span class="ident">target_dir</span>, <span class="kw-2">&amp;</span><span class="ident">entries</span>);
-        <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">ImmutableFile::list_in_dir</span>(<span class="ident">target_dir</span>.<span class="ident">parent</span>().<span class="ident">unwrap</span>().<span class="ident">to_str</span>().<span class="ident">unwrap</span>())
+        <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">ImmutableFile::list_in_dir</span>(<span class="ident">target_dir</span>.<span class="ident">parent</span>().<span class="ident">unwrap</span>())
             .<span class="ident">expect</span>(<span class="string">&quot;ImmutableFile::list_in_dir Failed&quot;</span>);
 
         <span class="macro">assert_eq!</span>(<span class="ident">result</span>.<span class="ident">last</span>().<span class="ident">unwrap</span>().<span class="ident">number</span>, <span class="number">423</span>);
@@ -529,7 +529,7 @@
             <span class="ident">get_test_dir</span>(<span class="string">&quot;list_immutable_file_should_works_even_in_a_empty_folder/immutable&quot;</span>);
         <span class="kw">let</span> <span class="ident">entries</span> <span class="op">=</span> <span class="macro">vec!</span>[];
         <span class="ident">create_fake_files</span>(<span class="kw-2">&amp;</span><span class="ident">target_dir</span>, <span class="kw-2">&amp;</span><span class="ident">entries</span>);
-        <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">ImmutableFile::list_in_dir</span>(<span class="ident">target_dir</span>.<span class="ident">parent</span>().<span class="ident">unwrap</span>().<span class="ident">to_str</span>().<span class="ident">unwrap</span>())
+        <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">ImmutableFile::list_in_dir</span>(<span class="ident">target_dir</span>.<span class="ident">parent</span>().<span class="ident">unwrap</span>())
             .<span class="ident">expect</span>(<span class="string">&quot;ImmutableFile::list_in_dir Failed&quot;</span>);
 
         <span class="macro">assert!</span>(<span class="ident">result</span>.<span class="ident">is_empty</span>());
