@@ -1,3 +1,0 @@
-(function() {var implementors = {};
-implementors["mithril_client"] = [{"text":"impl FromArgMatches for <a class=\"struct\" href=\"mithril_client/struct.Args.html\" title=\"struct mithril_client::Args\">Args</a>","synthetic":false,"types":["mithril_client::Args"]},{"text":"impl FromArgMatches for <a class=\"enum\" href=\"mithril_client/enum.Commands.html\" title=\"enum mithril_client::Commands\">Commands</a>","synthetic":false,"types":["mithril_client::Commands"]}];
-if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

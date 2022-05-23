@@ -1,3 +1,0 @@
-(function() {var implementors = {};
-implementors["mithril_client"] = [{"text":"impl Subcommand for <a class=\"enum\" href=\"mithril_client/enum.Commands.html\" title=\"enum mithril_client::Commands\">Commands</a>","synthetic":false,"types":["mithril_client::Commands"]}];
-if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
