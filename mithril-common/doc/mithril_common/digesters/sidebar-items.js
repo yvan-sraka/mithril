@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["DigesterError",""]],"struct":[["DigesterResult",""],["ImmutableDigester","A digester working directly on a Cardano DB immutables files"]],"trait":[["Digester","A digester than can compute the digest used for mithril signatures"]]});
