@@ -237,12 +237,25 @@
 <span id="232">232</span>
 <span id="233">233</span>
 <span id="234">234</span>
+<span id="235">235</span>
+<span id="236">236</span>
+<span id="237">237</span>
+<span id="238">238</span>
+<span id="239">239</span>
+<span id="240">240</span>
+<span id="241">241</span>
+<span id="242">242</span>
+<span id="243">243</span>
+<span id="244">244</span>
+<span id="245">245</span>
+<span id="246">246</span>
+<span id="247">247</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">super</span>::dependency</span>::{<span class="ident">BeaconStoreWrapper</span>, <span class="ident">MultiSignerWrapper</span>, <span class="ident">SnapshotStoreWrapper</span>};
 <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">BeaconStoreError</span>, <span class="ident">ProtocolError</span>, <span class="ident">SnapshotError</span>, <span class="ident">Snapshotter</span>};
 
 <span class="kw">use</span> <span class="ident">mithril_common::crypto_helper::Bytes</span>;
 <span class="kw">use</span> <span class="ident">mithril_common::digesters</span>::{<span class="ident">Digester</span>, <span class="ident">DigesterError</span>, <span class="ident">ImmutableDigester</span>};
-<span class="kw">use</span> <span class="ident">mithril_common::entities::Beacon</span>;
+<span class="kw">use</span> <span class="ident">mithril_common::entities</span>::{<span class="ident">Beacon</span>, <span class="ident">Certificate</span>};
 <span class="kw">use</span> <span class="ident">mithril_common::fake_data</span>;
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::dependency</span>::{<span class="ident">CertificatePendingStoreWrapper</span>, <span class="ident">CertificateStoreWrapper</span>};
@@ -275,6 +288,9 @@
 
     <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;snapshot store error&quot;</span>)]</span>
     <span class="ident">SnapshotStore</span>(<span class="attribute">#[<span class="ident">from</span>]</span> <span class="ident">SnapshotStoreError</span>),
+
+    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;certificate store error&quot;</span>)]</span>
+    <span class="ident">CertificateStore</span>(<span class="ident">String</span>),
 
     <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;snapshot uploader error: {0}&quot;</span>)]</span>
     <span class="ident">SnapshotUploader</span>(<span class="ident">String</span>),
@@ -375,7 +391,7 @@
                 <span class="kw">let</span> <span class="ident">message</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">digest_result</span>.<span class="ident">digest</span>.<span class="ident">clone</span>().<span class="ident">into_bytes</span>();
 
                 <span class="kw">match</span> <span class="self">self</span>.<span class="ident">manage_trigger_snapshot</span>(<span class="ident">message</span>, <span class="kw-2">&amp;</span><span class="ident">beacon</span>).<span class="kw">await</span> {
-                    <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>) =&gt; {
+                    <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">certificate</span>)) =&gt; {
                         <span class="kw">let</span> <span class="ident">snapshot_name</span> <span class="op">=</span>
                             <span class="macro">format!</span>(<span class="string">&quot;{}.{}.tar.gz&quot;</span>, <span class="self">self</span>.<span class="ident">network</span>, <span class="kw-2">&amp;</span><span class="ident">digest_result</span>.<span class="ident">digest</span>);
                         <span class="kw">let</span> <span class="ident">snapshot_path</span> <span class="op">=</span> <span class="ident">snapshotter</span>.<span class="ident">snapshot</span>(<span class="kw-2">&amp;</span><span class="ident">snapshot_name</span>)<span class="question-mark">?</span>;
@@ -387,6 +403,7 @@
                             .<span class="ident">map_err</span>(<span class="ident">RuntimeError::SnapshotUploader</span>)<span class="question-mark">?</span>;
                         <span class="kw">let</span> <span class="ident">new_snapshot</span> <span class="op">=</span> <span class="ident">build_new_snapshot</span>(
                             <span class="ident">digest_result</span>.<span class="ident">digest</span>,
+                            <span class="ident">certificate</span>.<span class="ident">hash</span>.<span class="ident">to_owned</span>(),
                             <span class="kw-2">&amp;</span><span class="ident">snapshot_path</span>,
                             <span class="ident">uploaded_snapshot_location</span>,
                         )<span class="question-mark">?</span>;
@@ -395,9 +412,15 @@
                         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">snapshot_store</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">snapshot_store</span>.<span class="ident">write</span>().<span class="kw">await</span>;
                         <span class="ident">snapshot_store</span>.<span class="ident">add_snapshot</span>(<span class="ident">new_snapshot</span>).<span class="kw">await</span><span class="question-mark">?</span>;
 
+                        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">certificate_store</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">certificate_store</span>.<span class="ident">write</span>().<span class="kw">await</span>;
+                        <span class="ident">certificate_store</span>
+                            .<span class="ident">save</span>(<span class="ident">certificate</span>)
+                            .<span class="kw">await</span>
+                            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">RuntimeError::CertificateStore</span>(<span class="ident">e</span>.<span class="ident">to_string</span>()))<span class="question-mark">?</span>;
+
                         <span class="prelude-val">Ok</span>(())
                     }
-                    <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>) =&gt; <span class="prelude-val">Ok</span>(()),
+                    <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; <span class="prelude-val">Ok</span>(()),
                     <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">err</span>),
                 }
             }
@@ -413,7 +436,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">message</span>: <span class="kw-2">&amp;</span><span class="ident">Bytes</span>,
         <span class="ident">beacon</span>: <span class="kw-2">&amp;</span><span class="ident">Beacon</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident">RuntimeError</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Certificate</span><span class="op">&gt;</span>, <span class="ident">RuntimeError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">multi_signer</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">multi_signer</span>.<span class="ident">write</span>().<span class="kw">await</span>;
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">beacon_store</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">beacon_store</span>.<span class="ident">write</span>().<span class="kw">await</span>;
         <span class="kw">match</span> <span class="ident">multi_signer</span>.<span class="ident">get_multi_signature</span>() {
@@ -429,20 +452,22 @@
                                 .<span class="ident">unwrap</span>()
                                 .<span class="ident">encode_hex</span>::<span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>()
                         );
-                        <span class="comment">//TODO: save signature here</span>
+                        <span class="kw">let</span> <span class="ident">previous_hash</span> <span class="op">=</span> <span class="string">&quot;&quot;</span>.<span class="ident">to_string</span>();
+                        <span class="prelude-val">Ok</span>(<span class="ident">multi_signer</span>.<span class="ident">create_certificate</span>(<span class="ident">beacon</span>.<span class="ident">clone</span>(), <span class="ident">previous_hash</span>)<span class="question-mark">?</span>)
                     }
                     <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; {
                         <span class="macro">warn!</span>(<span class="string">&quot;Not ready to create a multi signature: quorum is not reached yet&quot;</span>);
+                        <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
                     }
                     <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; {
                         <span class="macro">warn!</span>(<span class="string">&quot;Error while creating a multi signature: {}&quot;</span>, <span class="ident">e</span>);
+                        <span class="prelude-val">Err</span>(<span class="ident">RuntimeError::MultiSigner</span>(<span class="ident">e</span>))
                     }
                 }
-                <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
             }
             <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; {
                 <span class="ident">beacon_store</span>.<span class="ident">reset_current_beacon</span>().<span class="kw">await</span><span class="question-mark">?</span>;
-                <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>)
+                <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
             }
             <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; {
                 <span class="ident">beacon_store</span>.<span class="ident">reset_current_beacon</span>().<span class="kw">await</span><span class="question-mark">?</span>;
@@ -454,6 +479,7 @@
 
 <span class="kw">fn</span> <span class="ident">build_new_snapshot</span>(
     <span class="ident">digest</span>: <span class="ident">String</span>,
+    <span class="ident">certificate_hash</span>: <span class="ident">String</span>,
     <span class="ident">snapshot_filepath</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>,
     <span class="ident">uploaded_snapshot_location</span>: <span class="ident">SnapshotLocation</span>,
 ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Snapshot</span>, <span class="ident">RuntimeError</span><span class="op">&gt;</span> {
@@ -464,8 +490,8 @@
     <span class="kw">let</span> <span class="ident">size</span>: <span class="ident">u64</span> <span class="op">=</span> <span class="ident">tar_gz</span>.<span class="ident">seek</span>(<span class="ident">SeekFrom::End</span>(<span class="number">0</span>))<span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>(<span class="ident">Snapshot::new</span>(
-        <span class="ident">digest</span>.<span class="ident">clone</span>(),
         <span class="ident">digest</span>,
+        <span class="ident">certificate_hash</span>,
         <span class="ident">size</span>,
         <span class="ident">created_at</span>,
         <span class="macro">vec!</span>[<span class="ident">uploaded_snapshot_location</span>],

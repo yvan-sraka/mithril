@@ -1296,16 +1296,6 @@
 <span id="1291">1291</span>
 <span id="1292">1292</span>
 <span id="1293">1293</span>
-<span id="1294">1294</span>
-<span id="1295">1295</span>
-<span id="1296">1296</span>
-<span id="1297">1297</span>
-<span id="1298">1298</span>
-<span id="1299">1299</span>
-<span id="1300">1300</span>
-<span id="1301">1301</span>
-<span id="1302">1302</span>
-<span id="1303">1303</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">mithril_common::crypto_helper</span>::{<span class="ident">key_decode_hex</span>, <span class="ident">ProtocolLotteryIndex</span>, <span class="ident">ProtocolPartyId</span>};
 <span class="kw">use</span> <span class="ident">mithril_common::entities</span>;
 <span class="kw">use</span> <span class="ident">mithril_common::fake_data</span>;
@@ -1318,7 +1308,8 @@
 <span class="kw">use</span> <span class="ident">warp</span>::{<span class="ident">http::Method</span>, <span class="ident">http::StatusCode</span>, <span class="ident">Filter</span>};
 
 <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::dependency</span>::{
-    <span class="ident">BeaconStoreWrapper</span>, <span class="ident">DependencyManager</span>, <span class="ident">MultiSignerWrapper</span>, <span class="ident">SnapshotStoreWrapper</span>,
+    <span class="ident">BeaconStoreWrapper</span>, <span class="ident">CertificateStoreWrapper</span>, <span class="ident">DependencyManager</span>, <span class="ident">MultiSignerWrapper</span>,
+    <span class="ident">SnapshotStoreWrapper</span>,
 };
 <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::multi_signer</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::Config</span>;
@@ -1394,8 +1385,7 @@
     ) -&gt; <span class="kw">impl</span> <span class="ident">Filter</span><span class="op">&lt;</span><span class="ident">Extract</span> <span class="op">=</span> <span class="kw">impl</span> <span class="ident">warp::Reply</span>, <span class="ident">Error</span> <span class="op">=</span> <span class="ident">warp::Rejection</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Clone</span> {
         <span class="macro">warp::path!</span>(<span class="string">&quot;certificate&quot;</span> <span class="op">/</span> <span class="ident">String</span>)
             .<span class="ident">and</span>(<span class="ident">warp::get</span>())
-            .<span class="ident">and</span>(<span class="ident">with_beacon_store</span>(<span class="ident">dependency_manager</span>.<span class="ident">clone</span>()))
-            .<span class="ident">and</span>(<span class="ident">with_multi_signer</span>(<span class="ident">dependency_manager</span>))
+            .<span class="ident">and</span>(<span class="ident">with_certificate_store</span>(<span class="ident">dependency_manager</span>))
             .<span class="ident">and_then</span>(<span class="ident">handlers::certificate_certificate_hash</span>)
     }
 
@@ -1463,6 +1453,13 @@
             .<span class="ident">and_then</span>(<span class="ident">handlers::register_signatures</span>)
     }
 
+    <span class="doccomment">/// With beacon store middleware</span>
+    <span class="kw">fn</span> <span class="ident">with_beacon_store</span>(
+        <span class="ident">dependency_manager</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">DependencyManager</span><span class="op">&gt;</span>,
+    ) -&gt; <span class="kw">impl</span> <span class="ident">Filter</span><span class="op">&lt;</span><span class="ident">Extract</span> <span class="op">=</span> (<span class="ident">BeaconStoreWrapper</span>,), <span class="ident">Error</span> <span class="op">=</span> <span class="ident">Infallible</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Clone</span> {
+        <span class="ident">warp::any</span>().<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span><span class="op">|</span> <span class="ident">dependency_manager</span>.<span class="ident">beacon_store</span>.<span class="ident">as_ref</span>().<span class="ident">unwrap</span>().<span class="ident">clone</span>())
+    }
+
     <span class="doccomment">/// With snapshot store middleware</span>
     <span class="kw">fn</span> <span class="ident">with_snapshot_store</span>(
         <span class="ident">dependency_manager</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">DependencyManager</span><span class="op">&gt;</span>,
@@ -1470,18 +1467,24 @@
         <span class="ident">warp::any</span>().<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span><span class="op">|</span> <span class="ident">dependency_manager</span>.<span class="ident">snapshot_store</span>.<span class="ident">as_ref</span>().<span class="ident">unwrap</span>().<span class="ident">clone</span>())
     }
 
+    <span class="doccomment">/// With certificate store middleware</span>
+    <span class="kw">fn</span> <span class="ident">with_certificate_store</span>(
+        <span class="ident">dependency_manager</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">DependencyManager</span><span class="op">&gt;</span>,
+    ) -&gt; <span class="kw">impl</span> <span class="ident">Filter</span><span class="op">&lt;</span><span class="ident">Extract</span> <span class="op">=</span> (<span class="ident">CertificateStoreWrapper</span>,), <span class="ident">Error</span> <span class="op">=</span> <span class="ident">Infallible</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Clone</span> {
+        <span class="ident">warp::any</span>().<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
+            <span class="ident">dependency_manager</span>
+                .<span class="ident">certificate_store</span>
+                .<span class="ident">as_ref</span>()
+                .<span class="ident">unwrap</span>()
+                .<span class="ident">clone</span>()
+        })
+    }
+
     <span class="doccomment">/// With multi signer middleware</span>
     <span class="kw">fn</span> <span class="ident">with_multi_signer</span>(
         <span class="ident">dependency_manager</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">DependencyManager</span><span class="op">&gt;</span>,
     ) -&gt; <span class="kw">impl</span> <span class="ident">Filter</span><span class="op">&lt;</span><span class="ident">Extract</span> <span class="op">=</span> (<span class="ident">MultiSignerWrapper</span>,), <span class="ident">Error</span> <span class="op">=</span> <span class="ident">Infallible</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Clone</span> {
         <span class="ident">warp::any</span>().<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span><span class="op">|</span> <span class="ident">dependency_manager</span>.<span class="ident">multi_signer</span>.<span class="ident">as_ref</span>().<span class="ident">unwrap</span>().<span class="ident">clone</span>())
-    }
-
-    <span class="doccomment">/// With beacon store middleware</span>
-    <span class="kw">fn</span> <span class="ident">with_beacon_store</span>(
-        <span class="ident">dependency_manager</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">DependencyManager</span><span class="op">&gt;</span>,
-    ) -&gt; <span class="kw">impl</span> <span class="ident">Filter</span><span class="op">&lt;</span><span class="ident">Extract</span> <span class="op">=</span> (<span class="ident">BeaconStoreWrapper</span>,), <span class="ident">Error</span> <span class="op">=</span> <span class="ident">Infallible</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Clone</span> {
-        <span class="ident">warp::any</span>().<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span><span class="op">|</span> <span class="ident">dependency_manager</span>.<span class="ident">beacon_store</span>.<span class="ident">as_ref</span>().<span class="ident">unwrap</span>().<span class="ident">clone</span>())
     }
 
     <span class="doccomment">/// With config middleware</span>
@@ -1581,38 +1584,26 @@
     <span class="doccomment">/// Certificate by certificate hash</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">certificate_certificate_hash</span>(
         <span class="ident">certificate_hash</span>: <span class="ident">String</span>,
-        <span class="ident">beacon_store</span>: <span class="ident">BeaconStoreWrapper</span>,
-        <span class="ident">multi_signer</span>: <span class="ident">MultiSignerWrapper</span>,
+        <span class="ident">certificate_store</span>: <span class="ident">CertificateStoreWrapper</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw">impl</span> <span class="ident">warp::Reply</span>, <span class="ident">Infallible</span><span class="op">&gt;</span> {
         <span class="macro">debug!</span>(<span class="string">&quot;certificate_certificate_hash/{}&quot;</span>, <span class="ident">certificate_hash</span>);
 
-        <span class="comment">// TODO: This is temporary implementation that will be linked to certificate store</span>
-        <span class="kw">let</span> <span class="ident">multi_signer</span> <span class="op">=</span> <span class="ident">multi_signer</span>.<span class="ident">read</span>().<span class="kw">await</span>;
-        <span class="kw">let</span> <span class="ident">beacon_store</span> <span class="op">=</span> <span class="ident">beacon_store</span>.<span class="ident">read</span>().<span class="kw">await</span>;
-        <span class="kw">match</span> <span class="ident">beacon_store</span>.<span class="ident">get_current_beacon</span>().<span class="kw">await</span> {
-            <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">beacon</span>)) =&gt; {
-                <span class="kw">let</span> <span class="ident">previous_hash</span> <span class="op">=</span> <span class="string">&quot;&quot;</span>.<span class="ident">to_string</span>();
-                <span class="kw">match</span> <span class="ident">multi_signer</span>.<span class="ident">create_certificate</span>(<span class="ident">beacon</span>, <span class="ident">previous_hash</span>) {
-                    <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">certificate</span>)) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">warp::reply::with_status</span>(
-                        <span class="ident">warp::reply::json</span>(<span class="kw-2">&amp;</span><span class="ident">certificate</span>),
-                        <span class="ident">StatusCode::OK</span>,
-                    )),
-                    <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">warp::reply::with_status</span>(
-                        <span class="ident">warp::reply::json</span>(<span class="kw-2">&amp;</span><span class="ident">Null</span>),
-                        <span class="ident">StatusCode::NOT_FOUND</span>,
-                    )),
-                    <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">warp::reply::with_status</span>(
-                        <span class="ident">warp::reply::json</span>(<span class="kw-2">&amp;</span><span class="ident">entities::Error::new</span>(
-                            <span class="string">&quot;MITHRIL-E0005&quot;</span>.<span class="ident">to_string</span>(),
-                            <span class="ident">err</span>.<span class="ident">to_string</span>(),
-                        )),
-                        <span class="ident">StatusCode::INTERNAL_SERVER_ERROR</span>,
-                    )),
-                }
-            }
-            <span class="kw">_</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">warp::reply::with_status</span>(
+        <span class="kw">let</span> <span class="ident">certificate_store</span> <span class="op">=</span> <span class="ident">certificate_store</span>.<span class="ident">read</span>().<span class="kw">await</span>;
+        <span class="kw">match</span> <span class="ident">certificate_store</span>.<span class="ident">get_from_hash</span>(<span class="kw-2">&amp;</span><span class="ident">certificate_hash</span>).<span class="kw">await</span> {
+            <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">certificate</span>)) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">warp::reply::with_status</span>(
+                <span class="ident">warp::reply::json</span>(<span class="kw-2">&amp;</span><span class="ident">certificate</span>),
+                <span class="ident">StatusCode::OK</span>,
+            )),
+            <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">warp::reply::with_status</span>(
                 <span class="ident">warp::reply::json</span>(<span class="kw-2">&amp;</span><span class="ident">Null</span>),
                 <span class="ident">StatusCode::NOT_FOUND</span>,
+            )),
+            <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">warp::reply::with_status</span>(
+                <span class="ident">warp::reply::json</span>(<span class="kw-2">&amp;</span><span class="ident">entities::Error::new</span>(
+                    <span class="string">&quot;MITHRIL-E0005&quot;</span>.<span class="ident">to_string</span>(),
+                    <span class="ident">err</span>.<span class="ident">to_string</span>(),
+                )),
+                <span class="ident">StatusCode::INTERNAL_SERVER_ERROR</span>,
             )),
         }
     }
@@ -1828,6 +1819,9 @@
     <span class="kw">use</span> <span class="ident">warp::test::request</span>;
 
     <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::beacon_store</span>::{<span class="ident">BeaconStoreError</span>, <span class="ident">MockBeaconStore</span>};
+    <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::certificate_store::dumb_adapter::DumbStoreAdapter</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::certificate_store::fail_adapter::FailStoreAdapter</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::certificate_store::CertificateStore</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::entities</span>::<span class="kw-2">*</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::multi_signer::MockMultiSigner</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::multi_signer::ProtocolError</span>;
@@ -2036,18 +2030,16 @@
 
     <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_certificate_certificate_hash_get_ok</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">beacon_store</span> <span class="op">=</span> <span class="ident">MockBeaconStore::new</span>();
-        <span class="ident">beacon_store</span>
-            .<span class="ident">expect_get_current_beacon</span>()
-            .<span class="ident">return_once</span>(<span class="op">|</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">fake_data::beacon</span>())));
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_multi_signer</span> <span class="op">=</span> <span class="ident">MockMultiSigner::new</span>();
-        <span class="ident">mock_multi_signer</span>
-            .<span class="ident">expect_create_certificate</span>()
-            .<span class="ident">return_once</span>(<span class="kw">move</span> <span class="op">|</span><span class="kw">_</span>, <span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">fake_data::certificate</span>(<span class="string">&quot;cert-hash-123&quot;</span>.<span class="ident">to_string</span>()))));
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">certificate_store</span> <span class="op">=</span> <span class="ident">CertificateStore::new</span>(<span class="ident">Box::new</span>(<span class="ident">DumbStoreAdapter</span>::<span class="op">&lt;</span>
+            <span class="ident">String</span>,
+            <span class="ident">entities::Certificate</span>,
+        <span class="op">&gt;</span><span class="ident">::new</span>()));
+        <span class="ident">certificate_store</span>
+            .<span class="ident">save</span>(<span class="ident">fake_data::certificate</span>(<span class="string">&quot;cert-hash-123&quot;</span>.<span class="ident">to_string</span>()))
+            .<span class="kw">await</span>
+            .<span class="ident">expect</span>(<span class="string">&quot;certificate store save should have succeeded&quot;</span>);
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">dependency_manager</span> <span class="op">=</span> <span class="ident">setup_dependency_manager</span>();
-        <span class="ident">dependency_manager</span>
-            .<span class="ident">with_multi_signer</span>(<span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">mock_multi_signer</span>)))
-            .<span class="ident">with_beacon_store</span>(<span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">beacon_store</span>)));
+        <span class="ident">dependency_manager</span>.<span class="ident">with_certificate_store</span>(<span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">certificate_store</span>)));
 
         <span class="kw">let</span> <span class="ident">method</span> <span class="op">=</span> <span class="ident">Method::GET</span>.<span class="ident">as_str</span>();
         <span class="kw">let</span> <span class="ident">path</span> <span class="op">=</span> <span class="string">&quot;/certificate/{certificate_hash}&quot;</span>;
@@ -2069,18 +2061,12 @@
 
     <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_certificate_certificate_hash_get_ok_404</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">beacon_store</span> <span class="op">=</span> <span class="ident">MockBeaconStore::new</span>();
-        <span class="ident">beacon_store</span>
-            .<span class="ident">expect_get_current_beacon</span>()
-            .<span class="ident">return_once</span>(<span class="op">|</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">fake_data::beacon</span>())));
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_multi_signer</span> <span class="op">=</span> <span class="ident">MockMultiSigner::new</span>();
-        <span class="ident">mock_multi_signer</span>
-            .<span class="ident">expect_create_certificate</span>()
-            .<span class="ident">return_once</span>(<span class="kw">move</span> <span class="op">|</span><span class="kw">_</span>, <span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>));
+        <span class="kw">let</span> <span class="ident">certificate_store</span> <span class="op">=</span> <span class="ident">CertificateStore::new</span>(<span class="ident">Box::new</span>(<span class="ident">DumbStoreAdapter</span>::<span class="op">&lt;</span>
+            <span class="ident">String</span>,
+            <span class="ident">entities::Certificate</span>,
+        <span class="op">&gt;</span><span class="ident">::new</span>()));
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">dependency_manager</span> <span class="op">=</span> <span class="ident">setup_dependency_manager</span>();
-        <span class="ident">dependency_manager</span>
-            .<span class="ident">with_multi_signer</span>(<span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">mock_multi_signer</span>)))
-            .<span class="ident">with_beacon_store</span>(<span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">beacon_store</span>)));
+        <span class="ident">dependency_manager</span>.<span class="ident">with_certificate_store</span>(<span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">certificate_store</span>)));
 
         <span class="kw">let</span> <span class="ident">method</span> <span class="op">=</span> <span class="ident">Method::GET</span>.<span class="ident">as_str</span>();
         <span class="kw">let</span> <span class="ident">path</span> <span class="op">=</span> <span class="string">&quot;/certificate/{certificate_hash}&quot;</span>;
@@ -2102,18 +2088,12 @@
 
     <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_certificate_certificate_hash_get_ko</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">beacon_store</span> <span class="op">=</span> <span class="ident">MockBeaconStore::new</span>();
-        <span class="ident">beacon_store</span>
-            .<span class="ident">expect_get_current_beacon</span>()
-            .<span class="ident">return_once</span>(<span class="op">|</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">fake_data::beacon</span>())));
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_multi_signer</span> <span class="op">=</span> <span class="ident">MockMultiSigner::new</span>();
-        <span class="ident">mock_multi_signer</span>
-            .<span class="ident">expect_create_certificate</span>()
-            .<span class="ident">return_once</span>(<span class="kw">move</span> <span class="op">|</span><span class="kw">_</span>, <span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Err</span>(<span class="ident">ProtocolError::Codec</span>(<span class="string">&quot;an error occurred&quot;</span>.<span class="ident">to_string</span>())));
+        <span class="kw">let</span> <span class="ident">certificate_store</span> <span class="op">=</span> <span class="ident">CertificateStore::new</span>(<span class="ident">Box::new</span>(<span class="ident">FailStoreAdapter</span>::<span class="op">&lt;</span>
+            <span class="ident">String</span>,
+            <span class="ident">entities::Certificate</span>,
+        <span class="op">&gt;</span><span class="ident">::new</span>()));
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">dependency_manager</span> <span class="op">=</span> <span class="ident">setup_dependency_manager</span>();
-        <span class="ident">dependency_manager</span>
-            .<span class="ident">with_multi_signer</span>(<span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">mock_multi_signer</span>)))
-            .<span class="ident">with_beacon_store</span>(<span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">beacon_store</span>)));
+        <span class="ident">dependency_manager</span>.<span class="ident">with_certificate_store</span>(<span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">certificate_store</span>)));
 
         <span class="kw">let</span> <span class="ident">method</span> <span class="op">=</span> <span class="ident">Method::GET</span>.<span class="ident">as_str</span>();
         <span class="kw">let</span> <span class="ident">path</span> <span class="op">=</span> <span class="string">&quot;/certificate/{certificate_hash}&quot;</span>;
