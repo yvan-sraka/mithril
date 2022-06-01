@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["AdapterError",""],["CertificateStoreError",""]],"mod":[["adapter",""]],"struct":[["CertificatePendingStore",""],["CertificateStore",""],["JsonFileStoreAdapter",""],["MemoryAdapter",""]],"trait":[["StoreAdapter",""]]});
