@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["mithril_common"] = [{"text":"impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.61.0/core/cmp/trait.Ord.html\" title=\"trait core::cmp::Ord\">Ord</a> for <a class=\"struct\" href=\"mithril_common/digesters/struct.ImmutableFile.html\" title=\"struct mithril_common::digesters::ImmutableFile\">ImmutableFile</a>","synthetic":false,"types":["mithril_common::digesters::immutable_file::ImmutableFile"]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
