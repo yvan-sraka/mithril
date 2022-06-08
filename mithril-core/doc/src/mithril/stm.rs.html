@@ -1304,6 +1304,29 @@
 <span id="1299">1299</span>
 <span id="1300">1300</span>
 <span id="1301">1301</span>
+<span id="1302">1302</span>
+<span id="1303">1303</span>
+<span id="1304">1304</span>
+<span id="1305">1305</span>
+<span id="1306">1306</span>
+<span id="1307">1307</span>
+<span id="1308">1308</span>
+<span id="1309">1309</span>
+<span id="1310">1310</span>
+<span id="1311">1311</span>
+<span id="1312">1312</span>
+<span id="1313">1313</span>
+<span id="1314">1314</span>
+<span id="1315">1315</span>
+<span id="1316">1316</span>
+<span id="1317">1317</span>
+<span id="1318">1318</span>
+<span id="1319">1319</span>
+<span id="1320">1320</span>
+<span id="1321">1321</span>
+<span id="1322">1322</span>
+<span id="1323">1323</span>
+<span id="1324">1324</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Top-level API for Mithril Stake-based Threshold Multisignature scheme.</span>
 <span class="doccomment">//! See figure 6 of [the paper](https://eprint.iacr.org/2021/916) for most of the</span>
 <span class="doccomment">//! protocol.</span>
@@ -1434,7 +1457,10 @@
 };
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::key_reg::ClosedKeyReg</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::merkle_tree</span>::{<span class="ident">MTLeaf</span>, <span class="ident">MerkleTreeCommitment</span>, <span class="ident">Path</span>};
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;zcash&quot;</span>))]</span>
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::multi_sig</span>::{<span class="ident">Signature</span>, <span class="ident">SigningKey</span>, <span class="ident">VerificationKey</span>, <span class="ident">VerificationKeyPoP</span>};
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;zcash&quot;</span>)]</span>
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::multi_sig_zcash</span>::{<span class="ident">Signature</span>, <span class="ident">SigningKey</span>, <span class="ident">VerificationKey</span>, <span class="ident">VerificationKeyPoP</span>};
 <span class="kw">use</span> <span class="ident">digest</span>::{<span class="ident">Digest</span>, <span class="ident">FixedOutput</span>};
 <span class="kw">use</span> <span class="ident">rand_core</span>::{<span class="ident">CryptoRng</span>, <span class="ident">RngCore</span>};
 <span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
@@ -1778,9 +1804,11 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_bytes</span>(<span class="ident">bytes</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">StmAggrSig</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>, <span class="ident">MultiSignatureError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">u64_bytes</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">8</span>];
         <span class="ident">u64_bytes</span>.<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[..<span class="number">8</span>]);
-        <span class="kw">let</span> <span class="ident">size</span> <span class="op">=</span> <span class="ident">usize::try_from</span>(<span class="ident">u64::from_be_bytes</span>(<span class="ident">u64_bytes</span>)).<span class="ident">unwrap</span>();
+        <span class="kw">let</span> <span class="ident">size</span> <span class="op">=</span> <span class="ident">usize::try_from</span>(<span class="ident">u64::from_be_bytes</span>(<span class="ident">u64_bytes</span>))
+            .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">MultiSignatureError::SerializationError</span>)<span class="question-mark">?</span>;
         <span class="ident">u64_bytes</span>.<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[<span class="number">8</span>..<span class="number">16</span>]);
-        <span class="kw">let</span> <span class="ident">sig_size</span> <span class="op">=</span> <span class="ident">usize::try_from</span>(<span class="ident">u64::from_be_bytes</span>(<span class="ident">u64_bytes</span>)).<span class="ident">unwrap</span>();
+        <span class="kw">let</span> <span class="ident">sig_size</span> <span class="op">=</span> <span class="ident">usize::try_from</span>(<span class="ident">u64::from_be_bytes</span>(<span class="ident">u64_bytes</span>))
+            .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">MultiSignatureError::SerializationError</span>)<span class="question-mark">?</span>;
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">signatures</span> <span class="op">=</span> <span class="ident">Vec::with_capacity</span>(<span class="ident">size</span>);
         <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">size</span> {
             <span class="ident">signatures</span>.<span class="ident">push</span>(<span class="ident">StmSig::from_bytes</span>(
@@ -1923,7 +1951,7 @@
         <span class="kw">let</span> <span class="ident">party_id</span> <span class="op">=</span> <span class="ident">u64::from_be_bytes</span>(<span class="ident">u64_bytes</span>);
         <span class="ident">u64_bytes</span>.<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[<span class="number">8</span>..<span class="number">16</span>]);
         <span class="kw">let</span> <span class="ident">stake</span> <span class="op">=</span> <span class="ident">u64::from_be_bytes</span>(<span class="ident">u64_bytes</span>);
-        <span class="kw">let</span> <span class="ident">params</span> <span class="op">=</span> <span class="ident">StmParameters::from_bytes</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[<span class="number">16</span>..])<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">params</span> <span class="op">=</span> <span class="ident">StmParameters::from_bytes</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[<span class="number">16</span>..<span class="number">40</span>])<span class="question-mark">?</span>;
         <span class="kw">let</span> <span class="ident">sk</span> <span class="op">=</span> <span class="ident">SigningKey::from_bytes</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[<span class="number">40</span>..])<span class="question-mark">?</span>;
         <span class="kw">let</span> <span class="ident">pk</span> <span class="op">=</span> <span class="ident">StmVerificationKeyPoP::from_bytes</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[<span class="number">72</span>..])<span class="question-mark">?</span>;
 
@@ -1960,7 +1988,7 @@
             <span class="kw">let</span> <span class="ident">path</span> <span class="op">=</span> <span class="self">self</span>
                 .<span class="ident">closed_reg</span>
                 .<span class="ident">merkle_tree</span>
-                .<span class="ident">get_path</span>(<span class="self">self</span>.<span class="ident">mt_index</span>.<span class="ident">try_into</span>().<span class="ident">unwrap</span>());
+                .<span class="ident">get_path</span>(<span class="self">self</span>.<span class="ident">mt_index</span>.<span class="ident">try_into</span>().<span class="ident">ok</span>()<span class="question-mark">?</span>);
             <span class="prelude-val">Some</span>(<span class="ident">StmSig</span> {
                 <span class="ident">sigma</span>,
                 <span class="ident">pk</span>: <span class="self">self</span>.<span class="ident">vk</span>,
@@ -2142,7 +2170,12 @@
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">StmAggrSig</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>, <span class="ident">AggregationFailure</span><span class="op">&gt;</span> {
         <span class="comment">// todo: how come the dedup does not take the concatenated message</span>
         <span class="comment">// let msgp = concat_avk_with_msg(&amp;self.avk.to_commitment(), msg);</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">unique_sigs</span> <span class="op">=</span> <span class="ident">Vec::with_capacity</span>(<span class="self">self</span>.<span class="ident">params</span>.<span class="ident">k</span>.<span class="ident">try_into</span>().<span class="ident">unwrap</span>());
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">unique_sigs</span> <span class="op">=</span> <span class="ident">Vec::with_capacity</span>(
+            <span class="self">self</span>.<span class="ident">params</span>
+                .<span class="ident">k</span>
+                .<span class="ident">try_into</span>()
+                .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">AggregationFailure::InvalidUsizeConversion</span>)<span class="question-mark">?</span>,
+        );
         <span class="kw">for</span> (<span class="kw">_</span>, <span class="ident">sigs</span>) <span class="kw">in</span> <span class="self">self</span>.<span class="ident">dedup_sigs_for_indices</span>(<span class="ident">msg</span>, <span class="ident">sigs</span>)<span class="question-mark">?</span> {
             <span class="ident">unique_sigs</span>.<span class="ident">push</span>(<span class="ident">sigs</span>.<span class="ident">clone</span>())
         }
@@ -2399,12 +2432,22 @@
                 }
                 <span class="prelude-val">Err</span>(<span class="ident">AggregationFailure::NotEnoughSignatures</span>(<span class="ident">n</span>, <span class="ident">k</span>)) =&gt;
                     <span class="macro">assert!</span>(<span class="ident">n</span> <span class="op">&lt;</span> <span class="ident">params</span>.<span class="ident">k</span> <span class="op">|</span><span class="op">|</span> <span class="ident">k</span> <span class="op">==</span> <span class="ident">params</span>.<span class="ident">k</span>),
+                <span class="prelude-val">Err</span>(<span class="ident">AggregationFailure::InvalidUsizeConversion</span>) =&gt;
+                    <span class="macro">unreachable!</span>()
             }
         }
     }
 
     <span class="macro">proptest!</span> {
         <span class="attribute">#![<span class="ident">proptest_config</span>(<span class="ident">ProptestConfig::with_cases</span>(<span class="number">10</span>))]</span>
+        <span class="attribute">#[<span class="ident">test</span>]</span>
+        <span class="kw">fn</span> <span class="ident">test_parameters_serialize_deserialize</span>(<span class="ident">m</span> <span class="kw">in</span> <span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>(), <span class="ident">k</span> <span class="kw">in</span> <span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>(), <span class="ident">phi_f</span> <span class="kw">in</span> <span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>()) {
+            <span class="kw">let</span> <span class="ident">params</span> <span class="op">=</span> <span class="ident">StmParameters</span> { <span class="ident">m</span>, <span class="ident">k</span>, <span class="ident">phi_f</span> };
+
+            <span class="kw">let</span> <span class="ident">bytes</span> <span class="op">=</span> <span class="ident">params</span>.<span class="ident">to_bytes</span>();
+            <span class="kw">let</span> <span class="ident">deserialised</span> <span class="op">=</span> <span class="ident">StmParameters::from_bytes</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>);
+            <span class="macro">assert!</span>(<span class="ident">deserialised</span>.<span class="ident">is_ok</span>())
+        }
 
         <span class="attribute">#[<span class="ident">test</span>]</span>
         <span class="kw">fn</span> <span class="ident">test_initializer_serialize_deserialize</span>(<span class="ident">seed</span> <span class="kw">in</span> <span class="ident">any</span>::<span class="op">&lt;</span>[<span class="ident">u8</span>;<span class="number">32</span>]<span class="op">&gt;</span>()) {
@@ -2413,6 +2456,9 @@
             <span class="kw">let</span> <span class="ident">pid</span> <span class="op">=</span> <span class="ident">rng</span>.<span class="ident">next_u64</span>();
             <span class="kw">let</span> <span class="ident">stake</span> <span class="op">=</span> <span class="ident">rng</span>.<span class="ident">next_u64</span>();
             <span class="kw">let</span> <span class="ident">initializer</span> <span class="op">=</span> <span class="ident">StmInitializer::setup</span>(<span class="ident">params</span>, <span class="ident">pid</span>, <span class="ident">stake</span>, <span class="kw-2">&amp;mut</span> <span class="ident">rng</span>);
+
+            <span class="kw">let</span> <span class="ident">bytes</span> <span class="op">=</span> <span class="ident">initializer</span>.<span class="ident">to_bytes</span>();
+            <span class="macro">assert!</span>(<span class="ident">StmInitializer::from_bytes</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>).<span class="ident">is_ok</span>());
 
             <span class="kw">let</span> <span class="ident">bytes</span> <span class="op">=</span> <span class="ident">bincode::serialize</span>(<span class="kw-2">&amp;</span><span class="ident">initializer</span>).<span class="ident">unwrap</span>();
             <span class="macro">assert!</span>(<span class="ident">bincode::deserialize</span>::<span class="op">&lt;</span><span class="ident">StmInitializer</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>).<span class="ident">is_ok</span>())

@@ -222,6 +222,16 @@
 <span id="217">217</span>
 <span id="218">218</span>
 <span id="219">219</span>
+<span id="220">220</span>
+<span id="221">221</span>
+<span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
+<span id="226">226</span>
+<span id="227">227</span>
+<span id="228">228</span>
+<span id="229">229</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Key registration functionality.</span>
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::error::RegisterError</span>;
@@ -229,11 +239,13 @@
 <span class="kw">use</span> <span class="ident">std::collections</span>::{<span class="ident">HashMap</span>, <span class="ident">HashSet</span>};
 <span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
 
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::multi_sig::VerificationKeyPoP</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::stm</span>::{<span class="ident">PartyId</span>, <span class="ident">Stake</span>};
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;zcash&quot;</span>))]</span>
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::multi_sig</span>::{<span class="ident">VerificationKey</span>, <span class="ident">VerificationKeyPoP</span>};
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;zcash&quot;</span>)]</span>
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::multi_sig_zcash</span>::{<span class="ident">VerificationKey</span>, <span class="ident">VerificationKeyPoP</span>};
 
+<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::stm</span>::{<span class="ident">PartyId</span>, <span class="ident">Stake</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::merkle_tree</span>::{<span class="ident">MTLeaf</span>, <span class="ident">MerkleTree</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::multi_sig::VerificationKey</span>;
 
 <span class="doccomment">/// Struct that collects public keys and stakes of parties. Each participant (both the</span>
 <span class="doccomment">/// signers and the clerks) need to run their own instance of the key registration.</span>
@@ -297,7 +309,7 @@
         <span class="ident">pk</span>: <span class="ident">VerificationKeyPoP</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">RegisterError</span><span class="op">&gt;</span> {
         <span class="kw">if</span> <span class="self">self</span>.<span class="ident">keys</span>.<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="ident">pk</span>.<span class="ident">vk</span>) {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">RegisterError::KeyRegistered</span>(<span class="ident">pk</span>.<span class="ident">vk</span>));
+            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">RegisterError::KeyRegistered</span>(<span class="ident">Box::new</span>(<span class="ident">pk</span>.<span class="ident">vk</span>)));
         }
 
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="kw-2">mut</span> <span class="ident">party</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">parties</span>.<span class="ident">get_mut</span>(<span class="kw-2">&amp;</span><span class="ident">party_id</span>) {
@@ -319,13 +331,17 @@
     <span class="kw">where</span>
         <span class="ident">D</span>: <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span>,
     {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">total_stake</span> <span class="op">=</span> <span class="number">0</span>;
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">total_stake</span>: <span class="ident">Stake</span> <span class="op">=</span> <span class="number">0</span>;
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">reg_parties</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">parties</span>
             .<span class="ident">iter</span>()
             .<span class="ident">filter_map</span>(<span class="op">|</span>(<span class="kw">_</span>, <span class="ident">party</span>)<span class="op">|</span> {
                 <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">vk</span>) <span class="op">=</span> <span class="ident">party</span>.<span class="ident">vk</span> {
-                    <span class="ident">total_stake</span> <span class="op">+</span><span class="op">=</span> <span class="ident">party</span>.<span class="ident">stake</span>;
+                    <span class="kw">let</span> (<span class="ident">res</span>, <span class="ident">overflow</span>) <span class="op">=</span> <span class="ident">total_stake</span>.<span class="ident">overflowing_add</span>(<span class="ident">party</span>.<span class="ident">stake</span>);
+                    <span class="kw">if</span> <span class="ident">overflow</span> {
+                        <span class="macro">panic!</span>(<span class="string">&quot;Total stake overflow&quot;</span>);
+                    }
+                    <span class="ident">total_stake</span> <span class="op">=</span> <span class="ident">res</span>;
                     <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="ident">MTLeaf</span>(<span class="ident">vk</span>, <span class="ident">party</span>.<span class="ident">stake</span>));
                 }
                 <span class="prelude-val">None</span>
@@ -350,7 +366,10 @@
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="kw">mod</span> <span class="ident">tests</span> {
     <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;zcash&quot;</span>))]</span>
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::multi_sig::SigningKey</span>;
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;zcash&quot;</span>)]</span>
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::multi_sig_zcash::SigningKey</span>;
     <span class="kw">use</span> <span class="ident">blake2::Blake2b</span>;
     <span class="kw">use</span> <span class="ident">proptest::collection::vec</span>;
     <span class="kw">use</span> <span class="ident">proptest::prelude</span>::<span class="kw-2">*</span>;
@@ -358,7 +377,8 @@
     <span class="kw">use</span> <span class="ident">rand_core::SeedableRng</span>;
 
     <span class="kw">fn</span> <span class="ident">arb_participants</span>(<span class="ident">min</span>: <span class="ident">usize</span>, <span class="ident">max</span>: <span class="ident">usize</span>) -&gt; <span class="kw">impl</span> <span class="ident">Strategy</span><span class="op">&lt;</span><span class="ident">Value</span> <span class="op">=</span> <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">PartyId</span>, <span class="ident">Stake</span>)<span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="ident">vec</span>(<span class="ident">any</span>::<span class="op">&lt;</span><span class="ident">Stake</span><span class="op">&gt;</span>(), <span class="ident">min</span>..<span class="op">=</span><span class="ident">max</span>).<span class="ident">prop_map</span>(<span class="op">|</span><span class="ident">v</span><span class="op">|</span> {
+        <span class="ident">vec</span>(<span class="number">1</span>..<span class="number">1u64</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">60</span>, <span class="ident">min</span>..<span class="op">=</span><span class="ident">max</span>).<span class="ident">prop_map</span>(<span class="op">|</span><span class="ident">v</span><span class="op">|</span> {
+            <span class="comment">// 1&lt;&lt;60 to avoid overflows</span>
             <span class="ident">v</span>.<span class="ident">into_iter</span>()
                 .<span class="ident">enumerate</span>()
                 .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">index</span>, <span class="ident">value</span>)<span class="op">|</span> (<span class="ident">index</span> <span class="kw">as</span> <span class="ident">u64</span>, <span class="ident">value</span>))
@@ -408,7 +428,7 @@
                         <span class="macro">assert!</span>(<span class="ident">parties</span>.<span class="ident">insert</span>(<span class="ident">p</span>.<span class="number">0</span>));
                     },
                     <span class="prelude-val">Err</span>(<span class="ident">RegisterError::KeyRegistered</span>(<span class="ident">pk1</span>)) =&gt; {
-                        <span class="macro">assert!</span>(<span class="ident">pk1</span> <span class="op">==</span> <span class="ident">pk</span>.<span class="ident">vk</span>);
+                        <span class="macro">assert!</span>(<span class="ident">pk1</span>.<span class="ident">as_ref</span>() <span class="op">==</span> <span class="kw-2">&amp;</span><span class="ident">pk</span>.<span class="ident">vk</span>);
                         <span class="macro">assert!</span>(<span class="ident">keys</span>.<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="ident">pk</span>.<span class="ident">vk</span>));
                     }
                     <span class="prelude-val">Err</span>(<span class="ident">RegisterError::PartyRegistered</span>(<span class="ident">party</span>)) =&gt; {
