@@ -128,6 +128,26 @@
 <span id="123">123</span>
 <span id="124">124</span>
 <span id="125">125</span>
+<span id="126">126</span>
+<span id="127">127</span>
+<span id="128">128</span>
+<span id="129">129</span>
+<span id="130">130</span>
+<span id="131">131</span>
+<span id="132">132</span>
+<span id="133">133</span>
+<span id="134">134</span>
+<span id="135">135</span>
+<span id="136">136</span>
+<span id="137">137</span>
+<span id="138">138</span>
+<span id="139">139</span>
+<span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
 </pre><pre class="rust"><code><span class="attribute">#![<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span>
 <span class="doccomment">/// ↑ only until we plug this into main code</span>
 <span class="kw">use</span> <span class="ident">mithril_common::entities</span>::{<span class="ident">Beacon</span>, <span class="ident">CertificatePending</span>};
@@ -164,6 +184,16 @@
         <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">vars</span>.<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="op">|</span>(<span class="kw">_</span>, <span class="ident">y</span>)<span class="op">|</span> <span class="ident">y</span>).<span class="ident">collect</span>();
 
         <span class="prelude-val">Ok</span>(<span class="ident">result</span>)
+    }
+
+    <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">remove</span>(
+        <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
+        <span class="ident">beacon</span>: <span class="kw-2">&amp;</span><span class="ident">Beacon</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">CertificatePending</span><span class="op">&gt;</span>, <span class="ident">StoreError</span><span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="ident">adapter</span>
+            .<span class="ident">remove</span>(<span class="ident">beacon</span>)
+            .<span class="kw">await</span>
+            .<span class="ident">map_err</span>(<span class="ident">StoreError::AdapterError</span>)
     }
 }
 
@@ -251,6 +281,16 @@
         <span class="kw">let</span> <span class="ident">certificate_pending</span> <span class="op">=</span> <span class="ident">store</span>.<span class="ident">get_from_beacon</span>(<span class="kw-2">&amp;</span><span class="ident">beacon</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>().<span class="ident">unwrap</span>();
 
         <span class="macro">assert_eq!</span>(<span class="string">&quot;one&quot;</span>.<span class="ident">to_string</span>(), <span class="ident">certificate_pending</span>.<span class="ident">previous_hash</span>);
+    }
+
+    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">remove_certificate_pending</span>() {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">store</span> <span class="op">=</span> <span class="ident">get_certificate_pending_store</span>(<span class="number">1</span>).<span class="kw">await</span>;
+        <span class="kw">let</span> <span class="ident">beacon</span> <span class="op">=</span> <span class="ident">Beacon::new</span>(<span class="string">&quot;testnet&quot;</span>.<span class="ident">to_string</span>(), <span class="number">0</span>, <span class="number">0</span>);
+        <span class="kw">let</span> <span class="ident">certificate_pending</span> <span class="op">=</span> <span class="ident">store</span>.<span class="ident">remove</span>(<span class="kw-2">&amp;</span><span class="ident">beacon</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>().<span class="ident">unwrap</span>();
+
+        <span class="macro">assert_eq!</span>(<span class="ident">beacon</span>, <span class="ident">certificate_pending</span>.<span class="ident">beacon</span>);
+        <span class="macro">assert!</span>(<span class="ident">store</span>.<span class="ident">get_from_beacon</span>(<span class="kw-2">&amp;</span><span class="ident">beacon</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>().<span class="ident">is_none</span>());
     }
 }
 </code></pre></div>

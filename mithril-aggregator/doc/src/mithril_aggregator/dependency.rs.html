@@ -100,8 +100,19 @@
 <span id="95">95</span>
 <span id="96">96</span>
 <span id="97">97</span>
+<span id="98">98</span>
+<span id="99">99</span>
+<span id="100">100</span>
+<span id="101">101</span>
+<span id="102">102</span>
+<span id="103">103</span>
+<span id="104">104</span>
+<span id="105">105</span>
+<span id="106">106</span>
+<span id="107">107</span>
+<span id="108">108</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::beacon_store::BeaconStore</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">CertificatePendingStore</span>, <span class="ident">CertificateStore</span>, <span class="ident">VerificationKeyStore</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">CertificatePendingStore</span>, <span class="ident">CertificateStore</span>, <span class="ident">StakeStore</span>, <span class="ident">VerificationKeyStore</span>};
 <span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
 <span class="kw">use</span> <span class="ident">tokio::sync::RwLock</span>;
 
@@ -127,6 +138,9 @@
 <span class="doccomment">///  VerificationKeyStoreWrapper wraps a VerificationKeyStore</span>
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">VerificationKeyStoreWrapper</span> <span class="op">=</span> <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">RwLock</span><span class="op">&lt;</span><span class="ident">VerificationKeyStore</span><span class="op">&gt;</span><span class="op">&gt;</span>;
 
+<span class="doccomment">///  StakeStoreWrapper wraps a StakeStore</span>
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">StakeStoreWrapper</span> <span class="op">=</span> <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">RwLock</span><span class="op">&lt;</span><span class="ident">StakeStore</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+
 <span class="doccomment">/// DependencyManager handles the dependencies</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">DependencyManager</span> {
     <span class="kw">pub</span> <span class="ident">config</span>: <span class="ident">Config</span>,
@@ -136,6 +150,7 @@
     <span class="kw">pub</span> <span class="ident">certificate_pending_store</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">CertificatePendingStoreWrapper</span><span class="op">&gt;</span>,
     <span class="kw">pub</span> <span class="ident">certificate_store</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">CertificateStoreWrapper</span><span class="op">&gt;</span>,
     <span class="kw">pub</span> <span class="ident">verification_key_store</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">VerificationKeyStoreWrapper</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">stake_store</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">StakeStoreWrapper</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">DependencyManager</span> {
@@ -149,6 +164,7 @@
             <span class="ident">certificate_pending_store</span>: <span class="prelude-val">None</span>,
             <span class="ident">certificate_store</span>: <span class="prelude-val">None</span>,
             <span class="ident">verification_key_store</span>: <span class="prelude-val">None</span>,
+            <span class="ident">stake_store</span>: <span class="prelude-val">None</span>,
         }
     }
 
@@ -194,6 +210,12 @@
         <span class="ident">verification_key_store</span>: <span class="ident">VerificationKeyStoreWrapper</span>,
     ) -&gt; <span class="kw-2">&amp;mut</span> <span class="self">Self</span> {
         <span class="self">self</span>.<span class="ident">verification_key_store</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">verification_key_store</span>);
+        <span class="self">self</span>
+    }
+
+    <span class="doccomment">/// With StakeStore middleware</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">with_stake_store</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">stake_store</span>: <span class="ident">StakeStoreWrapper</span>) -&gt; <span class="kw-2">&amp;mut</span> <span class="self">Self</span> {
+        <span class="self">self</span>.<span class="ident">stake_store</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">stake_store</span>);
         <span class="self">self</span>
     }
 }
