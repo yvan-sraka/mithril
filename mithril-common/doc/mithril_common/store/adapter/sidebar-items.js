@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["AdapterError",""]],"struct":[["DumbStoreAdapter",""],["FailStoreAdapter",""],["JsonFileStoreAdapter",""],["MemoryAdapter",""]],"trait":[["StoreAdapter",""]]});
