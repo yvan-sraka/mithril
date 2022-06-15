@@ -506,6 +506,14 @@
 <span id="501">501</span>
 <span id="502">502</span>
 <span id="503">503</span>
+<span id="504">504</span>
+<span id="505">505</span>
+<span id="506">506</span>
+<span id="507">507</span>
+<span id="508">508</span>
+<span id="509">509</span>
+<span id="510">510</span>
+<span id="511">511</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
 <span class="kw">use</span> <span class="ident">flate2::read::GzDecoder</span>;
 <span class="kw">use</span> <span class="ident">futures::StreamExt</span>;
@@ -515,6 +523,7 @@
 <span class="kw">use</span> <span class="ident">std::fs</span>;
 <span class="kw">use</span> <span class="ident">std::io</span>::{<span class="self">self</span>, <span class="ident">Write</span>};
 <span class="kw">use</span> <span class="ident">std::path</span>;
+<span class="kw">use</span> <span class="ident">std::path::PathBuf</span>;
 <span class="kw">use</span> <span class="ident">tar::Archive</span>;
 <span class="kw">use</span> <span class="ident">thiserror::Error</span>;
 
@@ -533,8 +542,10 @@
     <span class="ident">RemoteServerUnreachable</span>(<span class="ident">String</span>),
     <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;json parsing failed: &#39;{0}&#39;&quot;</span>)]</span>
     <span class="ident">JsonParseFailed</span>(<span class="ident">String</span>),
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;io error:&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;io error: {0}&quot;</span>)]</span>
     <span class="ident">IOError</span>(<span class="attribute">#[<span class="ident">from</span>]</span> <span class="ident">io::Error</span>),
+    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;archive not found, did you download it beforehand ? Expected path: &#39;{0}&#39;&quot;</span>)]</span>
+    <span class="ident">ArchiveNotFound</span>(<span class="ident">PathBuf</span>),
 }
 
 <span class="doccomment">/// AggregatorHandler represents a read interactor with an aggregator</span>
@@ -683,6 +694,11 @@
         <span class="macro">debug!</span>(<span class="string">&quot;Unpack snapshot {}&quot;</span>, <span class="ident">digest</span>);
         <span class="macro">println!</span>(<span class="string">&quot;Unpacking snapshot...&quot;</span>);
         <span class="kw">let</span> <span class="ident">local_path</span> <span class="op">=</span> <span class="ident">archive_file_path</span>(<span class="ident">digest</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">network</span>)<span class="question-mark">?</span>;
+        <span class="ident">local_path</span>
+            .<span class="ident">exists</span>()
+            .<span class="ident">then</span>(<span class="op">|</span><span class="op">|</span> ())
+            .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">AggregatorHandlerError::ArchiveNotFound</span>(<span class="ident">local_path</span>.<span class="ident">clone</span>()))<span class="question-mark">?</span>;
+
         <span class="kw">let</span> <span class="ident">snapshot_file_tar_gz</span> <span class="op">=</span> <span class="ident">fs::File::open</span>(<span class="ident">local_path</span>.<span class="ident">clone</span>())<span class="question-mark">?</span>;
         <span class="kw">let</span> <span class="ident">snapshot_file_tar</span> <span class="op">=</span> <span class="ident">GzDecoder::new</span>(<span class="ident">snapshot_file_tar_gz</span>);
         <span class="kw">let</span> <span class="ident">unpack_dir_path</span> <span class="op">=</span> <span class="ident">local_path</span>.<span class="ident">parent</span>().<span class="ident">unwrap</span>().<span class="ident">join</span>(<span class="ident">path::Path::new</span>(<span class="string">&quot;db&quot;</span>));
