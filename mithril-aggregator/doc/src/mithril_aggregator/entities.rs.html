@@ -85,10 +85,8 @@
 <span id="80">80</span>
 <span id="81">81</span>
 <span id="82">82</span>
-<span id="83">83</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::dependency::SnapshotStoreWrapper</span>;
+</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::dependency</span>::{<span class="ident">SnapshotStoreWrapper</span>, <span class="ident">SnapshotUploaderWrapper</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::snapshot_stores::LocalSnapshotStore</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::snapshot_uploaders::SnapshotUploader</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::tools::GcpFileUploader</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">LocalSnapshotUploader</span>, <span class="ident">RemoteSnapshotStore</span>, <span class="ident">RemoteSnapshotUploader</span>};
 <span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
@@ -158,14 +156,14 @@
         }
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">build_snapshot_uploader</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">SnapshotUploader</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">build_snapshot_uploader</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">SnapshotUploaderWrapper</span> {
         <span class="kw">match</span> <span class="self">self</span>.<span class="ident">snapshot_uploader_type</span> {
-            <span class="ident">SnapshotUploaderType::Gcp</span> =&gt; <span class="ident">Box::new</span>(<span class="ident">RemoteSnapshotUploader::new</span>(<span class="ident">Box::new</span>(
-                <span class="ident">GcpFileUploader::default</span>(),
+            <span class="ident">SnapshotUploaderType::Gcp</span> =&gt; <span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">RemoteSnapshotUploader::new</span>(
+                <span class="ident">Box::new</span>(<span class="ident">GcpFileUploader::default</span>()),
             ))),
-            <span class="ident">SnapshotUploaderType::Local</span> =&gt; {
-                <span class="ident">Box::new</span>(<span class="ident">LocalSnapshotUploader::new</span>(<span class="self">self</span>.<span class="ident">server_url</span>.<span class="ident">clone</span>()))
-            }
+            <span class="ident">SnapshotUploaderType::Local</span> =&gt; <span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">LocalSnapshotUploader::new</span>(
+                <span class="self">self</span>.<span class="ident">server_url</span>.<span class="ident">clone</span>(),
+            ))),
         }
     }
 }
