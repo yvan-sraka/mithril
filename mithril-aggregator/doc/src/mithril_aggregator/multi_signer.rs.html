@@ -804,7 +804,6 @@
 <span id="799">799</span>
 <span id="800">800</span>
 <span id="801">801</span>
-<span id="802">802</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
 <span class="kw">use</span> <span class="ident">chrono::prelude</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident">hex::ToHex</span>;
@@ -813,7 +812,7 @@
 <span class="kw">use</span> <span class="ident">thiserror::Error</span>;
 
 <span class="kw">use</span> <span class="ident">mithril_common::crypto_helper</span>::{
-    <span class="ident">key_decode_hex</span>, <span class="ident">key_encode_hex</span>, <span class="ident">Bytes</span>, <span class="ident">ProtocolAggregateVerificationKey</span>, <span class="ident">ProtocolClerk</span>,
+    <span class="ident">key_decode_hex</span>, <span class="ident">key_encode_hex</span>, <span class="ident">ProtocolAggregateVerificationKey</span>, <span class="ident">ProtocolClerk</span>,
     <span class="ident">ProtocolKeyRegistration</span>, <span class="ident">ProtocolLotteryIndex</span>, <span class="ident">ProtocolMultiSignature</span>, <span class="ident">ProtocolParameters</span>,
     <span class="ident">ProtocolPartyId</span>, <span class="ident">ProtocolSignerVerificationKey</span>, <span class="ident">ProtocolSingleSignature</span>, <span class="ident">ProtocolStake</span>,
     <span class="ident">ProtocolStakeDistribution</span>,
@@ -869,10 +868,10 @@
 <span class="attribute">#[<span class="ident">async_trait</span>]</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">MultiSigner</span>: <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span> {
     <span class="doccomment">/// Get current message</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_current_message</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Bytes</span><span class="op">&gt;</span>;
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_current_message</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>;
 
     <span class="doccomment">/// Update current message</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">update_current_message</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">message</span>: <span class="ident">Bytes</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">ProtocolError</span><span class="op">&gt;</span>;
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">update_current_message</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">message</span>: <span class="ident">String</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">ProtocolError</span><span class="op">&gt;</span>;
 
     <span class="doccomment">/// Get protocol parameters</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_protocol_parameters</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ProtocolParameters</span><span class="op">&gt;</span>;
@@ -946,7 +945,7 @@
 <span class="doccomment">/// MultiSignerImpl is an implementation of the MultiSigner</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MultiSignerImpl</span> {
     <span class="doccomment">/// Message that is currently signed</span>
-    <span class="ident">current_message</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Bytes</span><span class="op">&gt;</span>,
+    <span class="ident">current_message</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
 
     <span class="doccomment">/// Protocol parameters used for signing</span>
     <span class="ident">protocol_parameters</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ProtocolParameters</span><span class="op">&gt;</span>,
@@ -1024,12 +1023,12 @@
 <span class="attribute">#[<span class="ident">async_trait</span>]</span>
 <span class="kw">impl</span> <span class="ident">MultiSigner</span> <span class="kw">for</span> <span class="ident">MultiSignerImpl</span> {
     <span class="doccomment">/// Get current message</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_current_message</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Bytes</span><span class="op">&gt;</span> {
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_current_message</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">current_message</span>.<span class="ident">clone</span>()
     }
 
     <span class="doccomment">/// Update current message</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">update_current_message</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">message</span>: <span class="ident">Bytes</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">ProtocolError</span><span class="op">&gt;</span> {
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">update_current_message</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">message</span>: <span class="ident">String</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">ProtocolError</span><span class="op">&gt;</span> {
         <span class="kw">if</span> <span class="self">self</span>.<span class="ident">current_message</span>.<span class="ident">clone</span>() <span class="op">!</span><span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">message</span>.<span class="ident">clone</span>()) {
             <span class="self">self</span>.<span class="ident">multi_signature</span> <span class="op">=</span> <span class="prelude-val">None</span>;
             <span class="self">self</span>.<span class="ident">single_signatures</span>.<span class="ident">drain</span>();
@@ -1239,7 +1238,7 @@
                 .<span class="ident">as_ref</span>()
                 .<span class="ident">ok_or_else</span>(<span class="ident">ProtocolError::UnavailableClerk</span>)<span class="question-mark">?</span>
                 .<span class="ident">compute_avk</span>(),
-            <span class="ident">message</span>,
+            <span class="ident">message</span>.<span class="ident">as_bytes</span>(),
         ) {
             <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; {
                 <span class="comment">// Register single signature</span>
@@ -1300,7 +1299,7 @@
             .<span class="ident">create_clerk</span>()
             .<span class="kw">await</span><span class="question-mark">?</span>
             .<span class="ident">ok_or_else</span>(<span class="ident">ProtocolError::UnavailableClerk</span>)<span class="question-mark">?</span>;
-        <span class="kw">match</span> <span class="ident">clerk</span>.<span class="ident">aggregate</span>(<span class="kw-2">&amp;</span><span class="ident">signatures</span>, <span class="ident">message</span>) {
+        <span class="kw">match</span> <span class="ident">clerk</span>.<span class="ident">aggregate</span>(<span class="kw-2">&amp;</span><span class="ident">signatures</span>, <span class="ident">message</span>.<span class="ident">as_bytes</span>()) {
             <span class="prelude-val">Ok</span>(<span class="ident">multi_signature</span>) =&gt; {
                 <span class="self">self</span>.<span class="ident">avk</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">clerk</span>.<span class="ident">compute_avk</span>());
                 <span class="self">self</span>.<span class="ident">multi_signature</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">multi_signature</span>.<span class="ident">clone</span>());
@@ -1330,8 +1329,7 @@
                 <span class="kw">let</span> <span class="ident">digest</span> <span class="op">=</span> <span class="self">self</span>
                     .<span class="ident">get_current_message</span>()
                     .<span class="kw">await</span>
-                    .<span class="ident">ok_or_else</span>(<span class="ident">ProtocolError::UnavailableMessage</span>)<span class="question-mark">?</span>
-                    .<span class="ident">encode_hex</span>::<span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>();
+                    .<span class="ident">ok_or_else</span>(<span class="ident">ProtocolError::UnavailableMessage</span>)<span class="question-mark">?</span>;
                 <span class="kw">let</span> <span class="ident">previous_hash</span> <span class="op">=</span> <span class="ident">previous_hash</span>;
                 <span class="kw">let</span> <span class="ident">started_at</span> <span class="op">=</span> <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, <span class="ident">Utc::now</span>());
                 <span class="kw">let</span> <span class="ident">completed_at</span> <span class="op">=</span> <span class="ident">started_at</span>.<span class="ident">clone</span>();
@@ -1543,7 +1541,7 @@
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">signatures</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
         <span class="kw">for</span> (<span class="ident">party_id</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="ident">protocol_signer</span>, <span class="kw">_</span>) <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="ident">signers</span> {
             <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">1</span>..<span class="op">=</span><span class="ident">protocol_parameters</span>.<span class="ident">m</span> {
-                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">signature</span>) <span class="op">=</span> <span class="ident">protocol_signer</span>.<span class="ident">sign</span>(<span class="kw-2">&amp;</span><span class="ident">message</span>, <span class="ident">i</span>) {
+                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">signature</span>) <span class="op">=</span> <span class="ident">protocol_signer</span>.<span class="ident">sign</span>(<span class="kw-2">&amp;</span><span class="ident">message</span>.<span class="ident">as_bytes</span>(), <span class="ident">i</span>) {
                     <span class="ident">signatures</span>.<span class="ident">push</span>((<span class="kw-2">*</span><span class="ident">party_id</span>, <span class="ident">signature</span>, <span class="ident">i</span> <span class="kw">as</span> <span class="ident">ProtocolLotteryIndex</span>));
                 }
             }
