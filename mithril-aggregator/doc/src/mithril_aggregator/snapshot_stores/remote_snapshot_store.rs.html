@@ -209,6 +209,12 @@
 <span id="204">204</span>
 <span id="205">205</span>
 <span id="206">206</span>
+<span id="207">207</span>
+<span id="208">208</span>
+<span id="209">209</span>
+<span id="210">210</span>
+<span id="211">211</span>
+<span id="212">212</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::snapshot_stores::SnapshotStoreError</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::SnapshotStore</span>;
 
@@ -242,7 +248,7 @@
 <span class="attribute">#[<span class="ident">async_trait</span>]</span>
 <span class="kw">impl</span> <span class="ident">SnapshotStore</span> <span class="kw">for</span> <span class="ident">RemoteSnapshotStore</span> {
     <span class="doccomment">/// List snapshots</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">list_snapshots</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Snapshot</span><span class="op">&gt;</span>, <span class="ident">String</span><span class="op">&gt;</span> {
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">list_snapshots</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Snapshot</span><span class="op">&gt;</span>, <span class="ident">SnapshotStoreError</span><span class="op">&gt;</span> {
         <span class="macro">debug!</span>(<span class="string">&quot;List snapshots from {}&quot;</span>, <span class="self">self</span>.<span class="ident">url_manifest</span>);
 
         <span class="kw">let</span> <span class="ident">response</span> <span class="op">=</span> <span class="ident">reqwest::get</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">url_manifest</span>).<span class="kw">await</span>;
@@ -250,16 +256,22 @@
             <span class="prelude-val">Ok</span>(<span class="ident">response</span>) =&gt; <span class="kw">match</span> <span class="ident">response</span>.<span class="ident">status</span>() {
                 <span class="ident">StatusCode::OK</span> =&gt; <span class="kw">match</span> <span class="ident">response</span>.<span class="ident">json</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Snapshot</span><span class="op">&gt;</span><span class="op">&gt;</span>().<span class="kw">await</span> {
                     <span class="prelude-val">Ok</span>(<span class="ident">snapshots</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">snapshots</span>),
-                    <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">err</span>.<span class="ident">to_string</span>()),
+                    <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">SnapshotStoreError::Manifest</span>(<span class="ident">err</span>.<span class="ident">to_string</span>())),
                 },
-                <span class="ident">status_error</span> =&gt; <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">&quot;error {} received&quot;</span>, <span class="ident">status_error</span>)),
+                <span class="ident">status_error</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">SnapshotStoreError::Manifest</span>(<span class="macro">format!</span>(
+                    <span class="string">&quot;error {} received&quot;</span>,
+                    <span class="ident">status_error</span>
+                ))),
             },
-            <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">err</span>.<span class="ident">to_string</span>()),
+            <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">SnapshotStoreError::Manifest</span>(<span class="ident">err</span>.<span class="ident">to_string</span>())),
         }
     }
 
     <span class="doccomment">/// Get snapshot details</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_snapshot_details</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">digest</span>: <span class="ident">String</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Snapshot</span><span class="op">&gt;</span>, <span class="ident">String</span><span class="op">&gt;</span> {
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_snapshot_details</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">digest</span>: <span class="ident">String</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Snapshot</span><span class="op">&gt;</span>, <span class="ident">SnapshotStoreError</span><span class="op">&gt;</span> {
         <span class="kw">for</span> <span class="ident">snapshot</span> <span class="kw">in</span> <span class="self">self</span>.<span class="ident">list_snapshots</span>().<span class="kw">await</span><span class="question-mark">?</span> {
             <span class="kw">if</span> <span class="ident">digest</span>.<span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="ident">snapshot</span>.<span class="ident">digest</span>) {
                 <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">snapshot</span>));
@@ -281,7 +293,7 @@
         <span class="self">self</span>.<span class="ident">file_uploader</span>
             .<span class="ident">upload_file</span>(<span class="ident">manifest_to_upload_path</span>)
             .<span class="kw">await</span>
-            .<span class="ident">map_err</span>(<span class="ident">SnapshotStoreError::GcpError</span>)<span class="question-mark">?</span>;
+            .<span class="ident">map_err</span>(<span class="ident">SnapshotStoreError::Gcp</span>)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(())
     }
@@ -410,7 +422,7 @@
 
         <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">snapshot_store</span>.<span class="ident">add_snapshot</span>(<span class="ident">snapshot</span>).<span class="kw">await</span>;
         <span class="macro">assert_eq!</span>(
-            <span class="ident">SnapshotStoreError::GcpError</span>(<span class="string">&quot;unexpected error&quot;</span>.<span class="ident">to_string</span>()).<span class="ident">to_string</span>(),
+            <span class="ident">SnapshotStoreError::Gcp</span>(<span class="string">&quot;unexpected error&quot;</span>.<span class="ident">to_string</span>()).<span class="ident">to_string</span>(),
             <span class="ident">result</span>.<span class="ident">unwrap_err</span>().<span class="ident">to_string</span>()
         );
     }
