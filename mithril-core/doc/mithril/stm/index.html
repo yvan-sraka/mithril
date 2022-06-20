@@ -4,7 +4,7 @@
     </nav>
     <nav class="sidebar"><a class="sidebar-logo" href="../../mithril/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
         </a><h2 class="location"><a href="#">Module stm</a></h2><div class="sidebar-elems"><section><div class="block"><ul><li><a href="#structs">Structs</a></li><li><a href="#types">Type Definitions</a></li></ul></div></section><div id="sidebar-vars" data-name="stm" data-ty="mod" data-relpath="./"></div><script defer src="./sidebar-items.js"></script></div></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../mithril/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="main-heading">
-    <h1 class="fqn"><span class="in-band">Module <a href="../index.html">mithril</a>::<wbr><a class="mod" href="#">stm</a><button id="copy-path" onclick="copy_path(this)" title="Copy item path to clipboard"><img src="../../clipboard.svg" width="19" height="18" alt="Copy item path"></button></span></h1><span class="out-of-band"><a class="srclink" href="../../src/mithril/stm.rs.html#1-1324">source</a> · <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span></div><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Top-level API for Mithril Stake-based Threshold Multisignature scheme.
+    <h1 class="fqn"><span class="in-band">Module <a href="../index.html">mithril</a>::<wbr><a class="mod" href="#">stm</a><button id="copy-path" onclick="copy_path(this)" title="Copy item path to clipboard"><img src="../../clipboard.svg" width="19" height="18" alt="Copy item path"></button></span></h1><span class="out-of-band"><a class="srclink" href="../../src/mithril/stm.rs.html#1-1297">source</a> · <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span></div><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Top-level API for Mithril Stake-based Threshold Multisignature scheme.
 See figure 6 of <a href="https://eprint.iacr.org/2021/916">the paper</a> for most of the
 protocol.</p>
 <p>What follows is a simple example showing the usage of STM.</p>
@@ -42,23 +42,23 @@ protocol.</p>
 <span class="comment">// Generate some arbitrary stake for each party</span>
 <span class="comment">// Stake is an integer.</span>
 <span class="comment">// Total stake of all parties is total stake in the system.</span>
-<span class="kw">let</span> <span class="ident">parties</span> <span class="op">=</span> (<span class="number">0</span>..<span class="ident">nparties</span>)
+<span class="kw">let</span> <span class="ident">stakes</span> <span class="op">=</span> (<span class="number">0</span>..<span class="ident">nparties</span>)
     .<span class="ident">into_iter</span>()
-    .<span class="ident">map</span>(<span class="op">|</span><span class="ident">pid</span><span class="op">|</span> (<span class="ident">pid</span> <span class="kw">as</span> <span class="ident">u64</span>, <span class="number">1</span> <span class="op">+</span> (<span class="ident">rng</span>.<span class="ident">next_u64</span>() <span class="op">%</span> <span class="number">9999</span>)))
+    .<span class="ident">map</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="number">1</span> <span class="op">+</span> (<span class="ident">rng</span>.<span class="ident">next_u64</span>() <span class="op">%</span> <span class="number">9999</span>))
     .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
 
 <span class="comment">// Create a new key registry from the parties and their stake</span>
-<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">key_reg</span> <span class="op">=</span> <span class="ident">KeyReg::init</span>(<span class="kw-2">&amp;</span><span class="ident">parties</span>);
+<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">key_reg</span> <span class="op">=</span> <span class="ident">KeyReg::init</span>();
 
 <span class="comment">// For each party, crate a StmInitializer.</span>
 <span class="comment">// This struct can create keys for the party.</span>
 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ps</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">StmInitializer</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Vec::with_capacity</span>(<span class="ident">nparties</span>);
-<span class="kw">for</span> (<span class="ident">pid</span>, <span class="ident">stake</span>) <span class="kw">in</span> <span class="ident">parties</span> {
+<span class="kw">for</span> <span class="ident">stake</span> <span class="kw">in</span> <span class="ident">stakes</span> {
     <span class="comment">// Create keys for this party</span>
-    <span class="kw">let</span> <span class="ident">p</span> <span class="op">=</span> <span class="ident">StmInitializer::setup</span>(<span class="ident">params</span>, <span class="ident">pid</span>, <span class="ident">stake</span>, <span class="kw-2">&amp;mut</span> <span class="ident">rng</span>);
+    <span class="kw">let</span> <span class="ident">p</span> <span class="op">=</span> <span class="ident">StmInitializer::setup</span>(<span class="ident">params</span>, <span class="ident">stake</span>, <span class="kw-2">&amp;mut</span> <span class="ident">rng</span>);
     <span class="comment">// Register keys with the KeyReg service</span>
     <span class="ident">key_reg</span>
-        .<span class="ident">register</span>(<span class="ident">p</span>.<span class="ident">party_id</span>(), <span class="ident">p</span>.<span class="ident">verification_key</span>())
+        .<span class="ident">register</span>(<span class="ident">p</span>.<span class="ident">stake</span>(), <span class="ident">p</span>.<span class="ident">verification_key</span>())
         .<span class="ident">unwrap</span>();
     <span class="ident">ps</span>.<span class="ident">push</span>(<span class="ident">p</span>);
 }
@@ -137,7 +137,6 @@ computed before all participants have registered.</p>
 </div></div></div><h2 id="types" class="small-section-header"><a href="#types">Type Definitions</a></h2>
 <div class="item-table"><div class="item-row"><div class="item-left module-item"><a class="type" href="type.Index.html" title="mithril::stm::Index type">Index</a></div><div class="item-right docblock-short"><p>Quorum index for signatures.
 An aggregate signature (<code>StmMultiSig</code>) must have at least <code>k</code> unique indices.</p>
-</div></div><div class="item-row"><div class="item-left module-item"><a class="type" href="type.PartyId.html" title="mithril::stm::PartyId type">PartyId</a></div><div class="item-right docblock-short"><p>Party identifier, unique for each participant in the protocol.</p>
 </div></div><div class="item-row"><div class="item-left module-item"><a class="type" href="type.Stake.html" title="mithril::stm::Stake type">Stake</a></div><div class="item-right docblock-short"><p>The quantity of stake held by a party, represented as a <code>u64</code>.</p>
 </div></div><div class="item-row"><div class="item-left module-item"><a class="type" href="type.StmVerificationKey.html" title="mithril::stm::StmVerificationKey type">StmVerificationKey</a></div><div class="item-right docblock-short"><p>Wrapper of the MultiSignature Verification key</p>
 </div></div><div class="item-row"><div class="item-left module-item"><a class="type" href="type.StmVerificationKeyPoP.html" title="mithril::stm::StmVerificationKeyPoP type">StmVerificationKeyPoP</a></div><div class="item-right docblock-short"><p>Wrapper of the MultiSignature Verification key with proof of possession</p>

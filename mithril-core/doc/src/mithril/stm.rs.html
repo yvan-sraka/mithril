@@ -1300,33 +1300,6 @@
 <span id="1295">1295</span>
 <span id="1296">1296</span>
 <span id="1297">1297</span>
-<span id="1298">1298</span>
-<span id="1299">1299</span>
-<span id="1300">1300</span>
-<span id="1301">1301</span>
-<span id="1302">1302</span>
-<span id="1303">1303</span>
-<span id="1304">1304</span>
-<span id="1305">1305</span>
-<span id="1306">1306</span>
-<span id="1307">1307</span>
-<span id="1308">1308</span>
-<span id="1309">1309</span>
-<span id="1310">1310</span>
-<span id="1311">1311</span>
-<span id="1312">1312</span>
-<span id="1313">1313</span>
-<span id="1314">1314</span>
-<span id="1315">1315</span>
-<span id="1316">1316</span>
-<span id="1317">1317</span>
-<span id="1318">1318</span>
-<span id="1319">1319</span>
-<span id="1320">1320</span>
-<span id="1321">1321</span>
-<span id="1322">1322</span>
-<span id="1323">1323</span>
-<span id="1324">1324</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Top-level API for Mithril Stake-based Threshold Multisignature scheme.</span>
 <span class="doccomment">//! See figure 6 of [the paper](https://eprint.iacr.org/2021/916) for most of the</span>
 <span class="doccomment">//! protocol.</span>
@@ -1368,23 +1341,23 @@
 <span class="doccomment">//! // Generate some arbitrary stake for each party</span>
 <span class="doccomment">//! // Stake is an integer.</span>
 <span class="doccomment">//! // Total stake of all parties is total stake in the system.</span>
-<span class="doccomment">//! let parties = (0..nparties)</span>
+<span class="doccomment">//! let stakes = (0..nparties)</span>
 <span class="doccomment">//!     .into_iter()</span>
-<span class="doccomment">//!     .map(|pid| (pid as u64, 1 + (rng.next_u64() % 9999)))</span>
+<span class="doccomment">//!     .map(|_| 1 + (rng.next_u64() % 9999))</span>
 <span class="doccomment">//!     .collect::&lt;Vec&lt;_&gt;&gt;();</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! // Create a new key registry from the parties and their stake</span>
-<span class="doccomment">//! let mut key_reg = KeyReg::init(&amp;parties);</span>
+<span class="doccomment">//! let mut key_reg = KeyReg::init();</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! // For each party, crate a StmInitializer.</span>
 <span class="doccomment">//! // This struct can create keys for the party.</span>
 <span class="doccomment">//! let mut ps: Vec&lt;StmInitializer&gt; = Vec::with_capacity(nparties);</span>
-<span class="doccomment">//! for (pid, stake) in parties {</span>
+<span class="doccomment">//! for stake in stakes {</span>
 <span class="doccomment">//!     // Create keys for this party</span>
-<span class="doccomment">//!     let p = StmInitializer::setup(params, pid, stake, &amp;mut rng);</span>
+<span class="doccomment">//!     let p = StmInitializer::setup(params, stake, &amp;mut rng);</span>
 <span class="doccomment">//!     // Register keys with the KeyReg service</span>
 <span class="doccomment">//!     key_reg</span>
-<span class="doccomment">//!         .register(p.party_id(), p.verification_key())</span>
+<span class="doccomment">//!         .register(p.stake(), p.verification_key())</span>
 <span class="doccomment">//!         .unwrap();</span>
 <span class="doccomment">//!     ps.push(p);</span>
 <span class="doccomment">//! }</span>
@@ -1469,8 +1442,6 @@
 
 <span class="doccomment">/// The quantity of stake held by a party, represented as a `u64`.</span>
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">Stake</span> <span class="op">=</span> <span class="ident">u64</span>;
-<span class="doccomment">/// Party identifier, unique for each participant in the protocol.</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">PartyId</span> <span class="op">=</span> <span class="ident">u64</span>;
 <span class="doccomment">/// Quorum index for signatures.</span>
 <span class="doccomment">/// An aggregate signature (`StmMultiSig`) must have at least `k` unique indices.</span>
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">Index</span> <span class="op">=</span> <span class="ident">u64</span>;
@@ -1537,8 +1508,6 @@
 <span class="doccomment">/// procedure. Once the latter is finished, this instance is consumed into an `StmSigner`.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">StmInitializer</span> {
-    <span class="doccomment">/// This participant&#39;s Id</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">party_id</span>: <span class="ident">PartyId</span>,
     <span class="doccomment">/// This participant&#39;s stake</span>
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">stake</span>: <span class="ident">Stake</span>,
     <span class="doccomment">/// Current protocol instantiation parameters</span>
@@ -1557,7 +1526,6 @@
 <span class="kw">where</span>
     <span class="ident">D</span>: <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span>,
 {
-    <span class="ident">party_id</span>: <span class="ident">PartyId</span>,
     <span class="ident">mt_index</span>: <span class="ident">u64</span>,
     <span class="ident">stake</span>: <span class="ident">Stake</span>,
     <span class="ident">params</span>: <span class="ident">StmParameters</span>,
@@ -1823,14 +1791,13 @@
 <span class="kw">impl</span> <span class="ident">StmInitializer</span> {
     <span class="doccomment">/// Builds an `StmInitializer` that is ready to register with the key registration service</span>
     <span class="comment">// todo: definitely don&#39;t like how the id is handled. To initialise one needs to be aware of the id?</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">setup</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>(<span class="ident">params</span>: <span class="ident">StmParameters</span>, <span class="ident">party_id</span>: <span class="ident">PartyId</span>, <span class="ident">stake</span>: <span class="ident">Stake</span>, <span class="ident">rng</span>: <span class="kw-2">&amp;mut</span> <span class="ident">R</span>) -&gt; <span class="self">Self</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">setup</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>(<span class="ident">params</span>: <span class="ident">StmParameters</span>, <span class="ident">stake</span>: <span class="ident">Stake</span>, <span class="ident">rng</span>: <span class="kw-2">&amp;mut</span> <span class="ident">R</span>) -&gt; <span class="self">Self</span>
     <span class="kw">where</span>
         <span class="ident">R</span>: <span class="ident">RngCore</span> <span class="op">+</span> <span class="ident">CryptoRng</span>,
     {
         <span class="kw">let</span> <span class="ident">sk</span> <span class="op">=</span> <span class="ident">SigningKey::gen</span>(<span class="ident">rng</span>);
         <span class="kw">let</span> <span class="ident">pk</span> <span class="op">=</span> <span class="ident">StmVerificationKeyPoP::from</span>(<span class="kw-2">&amp;</span><span class="ident">sk</span>);
         <span class="self">Self</span> {
-            <span class="ident">party_id</span>,
             <span class="ident">stake</span>,
             <span class="ident">params</span>,
             <span class="ident">sk</span>,
@@ -1872,11 +1839,6 @@
         <span class="self">self</span>.<span class="ident">stake</span>
     }
 
-    <span class="doccomment">/// Get the party ID.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">party_id</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">PartyId</span> {
-        <span class="self">self</span>.<span class="ident">party_id</span>
-    }
-
     <span class="doccomment">/// Set the StmParameters.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_params</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">params</span>: <span class="ident">StmParameters</span>) {
         <span class="self">self</span>.<span class="ident">params</span> <span class="op">=</span> <span class="ident">params</span>;
@@ -1911,12 +1873,8 @@
             }
         }
         <span class="ident">StmSigner</span> {
-            <span class="ident">party_id</span>: <span class="self">self</span>.<span class="ident">party_id</span>,
             <span class="ident">mt_index</span>: <span class="ident">my_index</span>.<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="op">|</span> {
-                <span class="macro">panic!</span>(
-                    <span class="string">&quot;Initializer not registered: {}. Cannot participate as a signer.&quot;</span>,
-                    <span class="self">self</span>.<span class="ident">party_id</span>
-                )
+                <span class="macro">panic!</span>(<span class="string">&quot;Initializer not registered. Cannot participate as a signer.&quot;</span>,)
             }),
             <span class="ident">stake</span>: <span class="self">self</span>.<span class="ident">stake</span>,
             <span class="ident">params</span>: <span class="self">self</span>.<span class="ident">params</span>,
@@ -1929,18 +1887,16 @@
     <span class="doccomment">/// Convert to bytes</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// # Layout</span>
-    <span class="doccomment">/// * Party identifier (u64)</span>
     <span class="doccomment">/// * Stake (u64)</span>
     <span class="doccomment">/// * Params</span>
     <span class="doccomment">/// * Secret Key</span>
     <span class="doccomment">/// * Public key (including PoP)</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_bytes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; [<span class="ident">u8</span>; <span class="number">264</span>] {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">out</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">264</span>];
-        <span class="ident">out</span>[..<span class="number">8</span>].<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">party_id</span>.<span class="ident">to_be_bytes</span>());
-        <span class="ident">out</span>[<span class="number">8</span>..<span class="number">16</span>].<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">stake</span>.<span class="ident">to_be_bytes</span>());
-        <span class="ident">out</span>[<span class="number">16</span>..<span class="number">40</span>].<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">params</span>.<span class="ident">to_bytes</span>());
-        <span class="ident">out</span>[<span class="number">40</span>..<span class="number">72</span>].<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">sk</span>.<span class="ident">to_bytes</span>());
-        <span class="ident">out</span>[<span class="number">72</span>..].<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">pk</span>.<span class="ident">to_bytes</span>());
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_bytes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; [<span class="ident">u8</span>; <span class="number">256</span>] {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">out</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">256</span>];
+        <span class="ident">out</span>[..<span class="number">8</span>].<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">stake</span>.<span class="ident">to_be_bytes</span>());
+        <span class="ident">out</span>[<span class="number">8</span>..<span class="number">32</span>].<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">params</span>.<span class="ident">to_bytes</span>());
+        <span class="ident">out</span>[<span class="number">32</span>..<span class="number">64</span>].<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">sk</span>.<span class="ident">to_bytes</span>());
+        <span class="ident">out</span>[<span class="number">64</span>..].<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">pk</span>.<span class="ident">to_bytes</span>());
         <span class="ident">out</span>
     }
 
@@ -1948,15 +1904,12 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_bytes</span>(<span class="ident">bytes</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">StmInitializer</span>, <span class="ident">RegisterError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">u64_bytes</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">8</span>];
         <span class="ident">u64_bytes</span>.<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[..<span class="number">8</span>]);
-        <span class="kw">let</span> <span class="ident">party_id</span> <span class="op">=</span> <span class="ident">u64::from_be_bytes</span>(<span class="ident">u64_bytes</span>);
-        <span class="ident">u64_bytes</span>.<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[<span class="number">8</span>..<span class="number">16</span>]);
         <span class="kw">let</span> <span class="ident">stake</span> <span class="op">=</span> <span class="ident">u64::from_be_bytes</span>(<span class="ident">u64_bytes</span>);
-        <span class="kw">let</span> <span class="ident">params</span> <span class="op">=</span> <span class="ident">StmParameters::from_bytes</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[<span class="number">16</span>..<span class="number">40</span>])<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">sk</span> <span class="op">=</span> <span class="ident">SigningKey::from_bytes</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[<span class="number">40</span>..])<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">pk</span> <span class="op">=</span> <span class="ident">StmVerificationKeyPoP::from_bytes</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[<span class="number">72</span>..])<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">params</span> <span class="op">=</span> <span class="ident">StmParameters::from_bytes</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[<span class="number">8</span>..<span class="number">32</span>])<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">sk</span> <span class="op">=</span> <span class="ident">SigningKey::from_bytes</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[<span class="number">32</span>..])<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">pk</span> <span class="op">=</span> <span class="ident">StmVerificationKeyPoP::from_bytes</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[<span class="number">64</span>..])<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(<span class="self">Self</span> {
-            <span class="ident">party_id</span>,
             <span class="ident">stake</span>,
             <span class="ident">params</span>,
             <span class="ident">sk</span>,
@@ -2036,18 +1989,18 @@
     <span class="doccomment">///</span>
     <span class="doccomment">///     // We initialise the stake at epoch 1</span>
     <span class="doccomment">///     let mut total_stake_e1: Stake = 0;</span>
-    <span class="doccomment">///     let parties_e1 = (0..nparties_e1)</span>
+    <span class="doccomment">///     let stakes_e1 = (0..nparties_e1)</span>
     <span class="doccomment">///         .into_iter()</span>
-    <span class="doccomment">///         .map(|pid| {</span>
+    <span class="doccomment">///         .map(|_| {</span>
     <span class="doccomment">///             let stake = rng.next_u64() % 999;</span>
     <span class="doccomment">///             total_stake_e1 += stake;</span>
-    <span class="doccomment">///             (pid, 1 + stake)</span>
+    <span class="doccomment">///             1 + stake</span>
     <span class="doccomment">///         })</span>
     <span class="doccomment">///         .collect::&lt;Vec&lt;_&gt;&gt;();</span>
     <span class="doccomment">///</span>
     <span class="doccomment">///     // Each party generates their Stm keys</span>
-    <span class="doccomment">///     let party_0_init_e1 = StmInitializer::setup(params, parties_e1[0].0, parties_e1[0].1, &amp;mut rng);</span>
-    <span class="doccomment">///     let party_1_init_e1 = StmInitializer::setup(params, parties_e1[1].0, parties_e1[1].1, &amp;mut rng);</span>
+    <span class="doccomment">///     let party_0_init_e1 = StmInitializer::setup(params, stakes_e1[0], &amp;mut rng);</span>
+    <span class="doccomment">///     let party_1_init_e1 = StmInitializer::setup(params, stakes_e1[1], &amp;mut rng);</span>
     <span class="doccomment">///</span>
     <span class="doccomment">///     // The public keys are broadcast. All participants will have the same keys. We expect</span>
     <span class="doccomment">///     // the keys to be persistent.</span>
@@ -2058,8 +2011,8 @@
     <span class="doccomment">///</span>
     <span class="doccomment">///     // Now, each party registers all other participating parties. Once all parties are registered, the key registration</span>
     <span class="doccomment">///     // is closed.</span>
-    <span class="doccomment">///     let party_0_key_reg_e1 = local_reg(&amp;parties_e1, &amp;parties_pks);</span>
-    <span class="doccomment">///     let party_1_key_reg_e1 = local_reg(&amp;parties_e1, &amp;parties_pks);</span>
+    <span class="doccomment">///     let party_0_key_reg_e1 = local_reg(&amp;stakes_e1, &amp;parties_pks);</span>
+    <span class="doccomment">///     let party_1_key_reg_e1 = local_reg(&amp;stakes_e1, &amp;parties_pks);</span>
     <span class="doccomment">///</span>
     <span class="doccomment">///     // Now, with information of all participating parties, the</span>
     <span class="doccomment">///     // signers can be initialised (we can create the Merkle Tree).</span>
@@ -2078,30 +2031,30 @@
     <span class="doccomment">///</span>
     <span class="doccomment">///     // We initialise the stake at epoch 2</span>
     <span class="doccomment">///     let mut total_stake_e2: Stake = 0;</span>
-    <span class="doccomment">///     let parties_e2 = (0..nparties_e2)</span>
+    <span class="doccomment">///     let stakes_e2 = (0..nparties_e2)</span>
     <span class="doccomment">///         .into_iter()</span>
-    <span class="doccomment">///         .map(|pid| {</span>
+    <span class="doccomment">///         .map(|_| {</span>
     <span class="doccomment">///             let stake = rng.next_u64() % 999;</span>
     <span class="doccomment">///             total_stake_e2 += stake;</span>
-    <span class="doccomment">///             (pid, 1 + stake)</span>
+    <span class="doccomment">///             1 + stake</span>
     <span class="doccomment">///         })</span>
     <span class="doccomment">///         .collect::&lt;Vec&lt;_&gt;&gt;();</span>
     <span class="doccomment">///</span>
     <span class="doccomment">///     // Now the `StmSigner`s are outdated with respect to the new stake, and participants.</span>
     <span class="doccomment">///     // We allow a transition from `StmSigner` back to `StmInitializer`:</span>
-    <span class="doccomment">///     let party_0_init_e2 = party_0.new_epoch(Some(parties_e2[0].1));</span>
-    <span class="doccomment">///     let party_1_init_e2 = party_1.new_epoch(Some(parties_e2[1].1));</span>
+    <span class="doccomment">///     let party_0_init_e2 = party_0.new_epoch(Some(stakes_e2[0]));</span>
+    <span class="doccomment">///     let party_1_init_e2 = party_1.new_epoch(Some(stakes_e2[1]));</span>
     <span class="doccomment">///</span>
     <span class="doccomment">///     // The third party needs to generate from scratch and broadcast the key (which we represent</span>
     <span class="doccomment">///     // by appending to the `pks` vector.</span>
-    <span class="doccomment">///     let party_2_init_e2 = StmInitializer::setup(params, parties_e2[2].0, parties_e2[2].1, &amp;mut rng);</span>
+    <span class="doccomment">///     let party_2_init_e2 = StmInitializer::setup(params, stakes_e2[2], &amp;mut rng);</span>
     <span class="doccomment">///     parties_pks.push(party_2_init_e2.verification_key());</span>
     <span class="doccomment">///</span>
     <span class="doccomment">///     // The key reg of epoch 1 was consumed, so it cannot be used to generate a signer.</span>
     <span class="doccomment">///     // This forces us to re-run the key registration (which is good).</span>
-    <span class="doccomment">///     let key_reg_e2_0 = local_reg(&amp;parties_e2, &amp;parties_pks);</span>
-    <span class="doccomment">///     let key_reg_e2_1 = local_reg(&amp;parties_e2, &amp;parties_pks);</span>
-    <span class="doccomment">///     let key_reg_e2_2 = local_reg(&amp;parties_e2, &amp;parties_pks);</span>
+    <span class="doccomment">///     let key_reg_e2_0 = local_reg(&amp;stakes_e2, &amp;parties_pks);</span>
+    <span class="doccomment">///     let key_reg_e2_1 = local_reg(&amp;stakes_e2, &amp;parties_pks);</span>
+    <span class="doccomment">///     let key_reg_e2_2 = local_reg(&amp;stakes_e2, &amp;parties_pks);</span>
     <span class="doccomment">///</span>
     <span class="doccomment">///     // And finally, new signers can be created to signe messages in epoch 2. Again, signers</span>
     <span class="doccomment">///     // of epoch 1 are consumed, so they cannot be used to sign messages of this epoch (again,</span>
@@ -2111,10 +2064,10 @@
     <span class="doccomment">///     let _party_2_e2 = party_2_init_e2.new_signer(key_reg_e2_2);</span>
     <span class="doccomment">/// # }</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// # fn local_reg(ids: &amp;[(u64, u64)], pks: &amp;[StmVerificationKeyPoP]) -&gt; ClosedKeyReg&lt;Blake2b&gt; {</span>
-    <span class="doccomment">/// # let mut local_keyreg = KeyReg::init(ids);</span>
-    <span class="doccomment">/// #    for (&amp;pk, id) in pks.iter().zip(ids.iter()) {</span>
-    <span class="doccomment">/// #        local_keyreg.register(id.0, pk).unwrap();</span>
+    <span class="doccomment">/// # fn local_reg(stakes: &amp;[u64], pks: &amp;[StmVerificationKeyPoP]) -&gt; ClosedKeyReg&lt;Blake2b&gt; {</span>
+    <span class="doccomment">/// # let mut local_keyreg = KeyReg::init();</span>
+    <span class="doccomment">/// #    for (&amp;pk, stake) in pks.iter().zip(stakes.iter()) {</span>
+    <span class="doccomment">/// #        local_keyreg.register(*stake, pk).unwrap();</span>
     <span class="doccomment">/// #    }</span>
     <span class="doccomment">/// #    local_keyreg.close()</span>
     <span class="doccomment">/// # }</span>
@@ -2126,7 +2079,6 @@
         };
 
         <span class="ident">StmInitializer</span> {
-            <span class="ident">party_id</span>: <span class="self">self</span>.<span class="ident">party_id</span>,
             <span class="ident">stake</span>,
             <span class="ident">params</span>: <span class="self">self</span>.<span class="ident">params</span>,
             <span class="ident">pk</span>: <span class="ident">StmVerificationKeyPoP::from</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">sk</span>),
@@ -2250,21 +2202,16 @@
     }
 
     <span class="kw">fn</span> <span class="ident">setup_parties</span>(<span class="ident">params</span>: <span class="ident">StmParameters</span>, <span class="ident">stake</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Stake</span><span class="op">&gt;</span>) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">StmSigner</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">parties</span> <span class="op">=</span> <span class="ident">stake</span>
-            .<span class="ident">into_iter</span>()
-            .<span class="ident">enumerate</span>()
-            .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">index</span>, <span class="ident">stake</span>)<span class="op">|</span> (<span class="ident">index</span> <span class="kw">as</span> <span class="ident">u64</span>, <span class="ident">stake</span>))
-            .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">kr</span> <span class="op">=</span> <span class="ident">KeyReg::init</span>(<span class="kw-2">&amp;</span><span class="ident">parties</span>);
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">kr</span> <span class="op">=</span> <span class="ident">KeyReg::init</span>();
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">trng</span> <span class="op">=</span> <span class="ident">TestRng::deterministic_rng</span>(<span class="ident">ChaCha</span>);
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">rng</span> <span class="op">=</span> <span class="ident">ChaCha20Rng::from_seed</span>(<span class="ident">trng</span>.<span class="ident">gen</span>());
         <span class="comment">// The needless_collect lint is not correct here</span>
         <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::needless_collect</span>)]</span>
-        <span class="kw">let</span> <span class="ident">ps</span> <span class="op">=</span> <span class="ident">parties</span>
+        <span class="kw">let</span> <span class="ident">ps</span> <span class="op">=</span> <span class="ident">stake</span>
             .<span class="ident">into_iter</span>()
-            .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">pid</span>, <span class="ident">stake</span>)<span class="op">|</span> {
-                <span class="kw">let</span> <span class="ident">p</span> <span class="op">=</span> <span class="ident">StmInitializer::setup</span>(<span class="ident">params</span>, <span class="ident">pid</span>, <span class="ident">stake</span>, <span class="kw-2">&amp;mut</span> <span class="ident">rng</span>);
-                <span class="ident">kr</span>.<span class="ident">register</span>(<span class="ident">p</span>.<span class="ident">party_id</span>(), <span class="ident">p</span>.<span class="ident">verification_key</span>()).<span class="ident">unwrap</span>();
+            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">stake</span><span class="op">|</span> {
+                <span class="kw">let</span> <span class="ident">p</span> <span class="op">=</span> <span class="ident">StmInitializer::setup</span>(<span class="ident">params</span>, <span class="ident">stake</span>, <span class="kw-2">&amp;mut</span> <span class="ident">rng</span>);
+                <span class="ident">kr</span>.<span class="ident">register</span>(<span class="ident">stake</span>, <span class="ident">p</span>.<span class="ident">verification_key</span>()).<span class="ident">unwrap</span>();
                 <span class="ident">p</span>
             })
             .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
@@ -2453,9 +2400,8 @@
         <span class="kw">fn</span> <span class="ident">test_initializer_serialize_deserialize</span>(<span class="ident">seed</span> <span class="kw">in</span> <span class="ident">any</span>::<span class="op">&lt;</span>[<span class="ident">u8</span>;<span class="number">32</span>]<span class="op">&gt;</span>()) {
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">rng</span> <span class="op">=</span> <span class="ident">ChaCha20Rng::from_seed</span>(<span class="ident">seed</span>);
             <span class="kw">let</span> <span class="ident">params</span> <span class="op">=</span> <span class="ident">StmParameters</span> { <span class="ident">m</span>: <span class="number">1</span>, <span class="ident">k</span>: <span class="number">1</span>, <span class="ident">phi_f</span>: <span class="number">1.0</span> };
-            <span class="kw">let</span> <span class="ident">pid</span> <span class="op">=</span> <span class="ident">rng</span>.<span class="ident">next_u64</span>();
             <span class="kw">let</span> <span class="ident">stake</span> <span class="op">=</span> <span class="ident">rng</span>.<span class="ident">next_u64</span>();
-            <span class="kw">let</span> <span class="ident">initializer</span> <span class="op">=</span> <span class="ident">StmInitializer::setup</span>(<span class="ident">params</span>, <span class="ident">pid</span>, <span class="ident">stake</span>, <span class="kw-2">&amp;mut</span> <span class="ident">rng</span>);
+            <span class="kw">let</span> <span class="ident">initializer</span> <span class="op">=</span> <span class="ident">StmInitializer::setup</span>(<span class="ident">params</span>, <span class="ident">stake</span>, <span class="kw-2">&amp;mut</span> <span class="ident">rng</span>);
 
             <span class="kw">let</span> <span class="ident">bytes</span> <span class="op">=</span> <span class="ident">initializer</span>.<span class="ident">to_bytes</span>();
             <span class="macro">assert!</span>(<span class="ident">StmInitializer::from_bytes</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>).<span class="ident">is_ok</span>());
