@@ -424,44 +424,6 @@
 <span id="419">419</span>
 <span id="420">420</span>
 <span id="421">421</span>
-<span id="422">422</span>
-<span id="423">423</span>
-<span id="424">424</span>
-<span id="425">425</span>
-<span id="426">426</span>
-<span id="427">427</span>
-<span id="428">428</span>
-<span id="429">429</span>
-<span id="430">430</span>
-<span id="431">431</span>
-<span id="432">432</span>
-<span id="433">433</span>
-<span id="434">434</span>
-<span id="435">435</span>
-<span id="436">436</span>
-<span id="437">437</span>
-<span id="438">438</span>
-<span id="439">439</span>
-<span id="440">440</span>
-<span id="441">441</span>
-<span id="442">442</span>
-<span id="443">443</span>
-<span id="444">444</span>
-<span id="445">445</span>
-<span id="446">446</span>
-<span id="447">447</span>
-<span id="448">448</span>
-<span id="449">449</span>
-<span id="450">450</span>
-<span id="451">451</span>
-<span id="452">452</span>
-<span id="453">453</span>
-<span id="454">454</span>
-<span id="455">455</span>
-<span id="456">456</span>
-<span id="457">457</span>
-<span id="458">458</span>
-<span id="459">459</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::http_server::routes::middlewares</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::DependencyManager</span>;
 <span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
@@ -520,10 +482,9 @@
 
 <span class="kw">mod</span> <span class="ident">handlers</span> {
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::dependency::SnapshotStoreWrapper</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::http_server::routes::reply</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::http_server::SERVER_BASE_PATH</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::Config</span>;
-    <span class="kw">use</span> <span class="ident">mithril_common::entities</span>;
-    <span class="kw">use</span> <span class="ident">serde_json::Value::Null</span>;
     <span class="kw">use</span> <span class="ident">slog_scope::debug</span>;
     <span class="kw">use</span> <span class="ident">std::convert::Infallible</span>;
     <span class="kw">use</span> <span class="ident">std::str::FromStr</span>;
@@ -538,17 +499,8 @@
         <span class="comment">// Snapshots</span>
         <span class="kw">let</span> <span class="ident">snapshot_store</span> <span class="op">=</span> <span class="ident">snapshot_store</span>.<span class="ident">read</span>().<span class="kw">await</span>;
         <span class="kw">match</span> <span class="ident">snapshot_store</span>.<span class="ident">list_snapshots</span>().<span class="kw">await</span> {
-            <span class="prelude-val">Ok</span>(<span class="ident">snapshots</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">warp::reply::with_status</span>(
-                <span class="ident">warp::reply::json</span>(<span class="kw-2">&amp;</span><span class="ident">snapshots</span>),
-                <span class="ident">StatusCode::OK</span>,
-            )),
-            <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">warp::reply::with_status</span>(
-                <span class="ident">warp::reply::json</span>(<span class="kw-2">&amp;</span><span class="ident">entities::Error::new</span>(
-                    <span class="string">&quot;MITHRIL-E0001&quot;</span>.<span class="ident">to_string</span>(),
-                    <span class="ident">err</span>.<span class="ident">to_string</span>(),
-                )),
-                <span class="ident">StatusCode::INTERNAL_SERVER_ERROR</span>,
-            )),
+            <span class="prelude-val">Ok</span>(<span class="ident">snapshots</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">reply::json</span>(<span class="kw-2">&amp;</span><span class="ident">snapshots</span>, <span class="ident">StatusCode::OK</span>)),
+            <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">reply::internal_server_error</span>(<span class="ident">err</span>.<span class="ident">to_string</span>())),
         }
     }
 
@@ -575,16 +527,10 @@
                             <span class="ident">filepath</span>.<span class="ident">file_name</span>().<span class="ident">unwrap</span>().<span class="ident">to_str</span>().<span class="ident">unwrap</span>()
                         ),
                     )) <span class="kw">as</span> <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">warp::Reply</span><span class="op">&gt;</span>),
-                    <span class="kw">_</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">Box::new</span>(<span class="ident">warp::reply::with_status</span>(
-                        <span class="ident">warp::reply::reply</span>(),
-                        <span class="ident">StatusCode::NOT_FOUND</span>,
-                    ))),
+                    <span class="kw">_</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">reply::empty</span>(<span class="ident">StatusCode::NOT_FOUND</span>)),
                 }
             }
-            <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">Box::new</span>(<span class="ident">warp::reply::with_status</span>(
-                <span class="ident">warp::reply::reply</span>(),
-                <span class="ident">StatusCode::NOT_FOUND</span>,
-            ))),
+            <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">reply::empty</span>(<span class="ident">StatusCode::NOT_FOUND</span>)),
         }
     }
 
@@ -609,17 +555,8 @@
 
                 <span class="prelude-val">Ok</span>(<span class="ident">Box::new</span>(<span class="ident">warp::redirect::found</span>(<span class="ident">snapshot_uri</span>)) <span class="kw">as</span> <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">warp::Reply</span><span class="op">&gt;</span>)
             }
-            <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">Box::new</span>(<span class="ident">warp::reply::with_status</span>(
-                <span class="ident">warp::reply::reply</span>(),
-                <span class="ident">StatusCode::NOT_FOUND</span>,
-            ))),
-            <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">Box::new</span>(<span class="ident">warp::reply::with_status</span>(
-                <span class="ident">warp::reply::json</span>(<span class="kw-2">&amp;</span><span class="ident">entities::Error::new</span>(
-                    <span class="string">&quot;MITHRIL-E0002&quot;</span>.<span class="ident">to_string</span>(),
-                    <span class="ident">err</span>.<span class="ident">to_string</span>(),
-                )),
-                <span class="ident">StatusCode::INTERNAL_SERVER_ERROR</span>,
-            ))),
+            <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">reply::empty</span>(<span class="ident">StatusCode::NOT_FOUND</span>)),
+            <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">reply::internal_server_error</span>(<span class="ident">err</span>.<span class="ident">to_string</span>())),
         }
     }
 
@@ -632,25 +569,12 @@
 
         <span class="comment">// Snapshot</span>
         <span class="kw">let</span> <span class="ident">snapshot_store</span> <span class="op">=</span> <span class="ident">snapshot_store</span>.<span class="ident">read</span>().<span class="kw">await</span>;
-        <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="prelude-val">Ok</span>(<span class="ident">warp::reply::with_status</span>(
-            <span class="ident">warp::reply::json</span>(<span class="kw-2">&amp;</span><span class="ident">Null</span>),
-            <span class="ident">StatusCode::NOT_FOUND</span>,
-        ));
         <span class="kw">match</span> <span class="ident">snapshot_store</span>.<span class="ident">get_snapshot_details</span>(<span class="ident">digest</span>).<span class="kw">await</span> {
             <span class="prelude-val">Ok</span>(<span class="ident">snapshot</span>) =&gt; <span class="kw">match</span> <span class="ident">snapshot</span> {
-                <span class="prelude-val">Some</span>(<span class="ident">snapshot</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">warp::reply::with_status</span>(
-                    <span class="ident">warp::reply::json</span>(<span class="kw-2">&amp;</span><span class="ident">snapshot</span>),
-                    <span class="ident">StatusCode::OK</span>,
-                )),
-                <span class="prelude-val">None</span> =&gt; <span class="ident">result</span>,
+                <span class="prelude-val">Some</span>(<span class="ident">snapshot</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">reply::json</span>(<span class="kw-2">&amp;</span><span class="ident">snapshot</span>, <span class="ident">StatusCode::OK</span>)),
+                <span class="prelude-val">None</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">reply::empty</span>(<span class="ident">StatusCode::NOT_FOUND</span>)),
             },
-            <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">warp::reply::with_status</span>(
-                <span class="ident">warp::reply::json</span>(<span class="kw-2">&amp;</span><span class="ident">entities::Error::new</span>(
-                    <span class="string">&quot;MITHRIL-E0002&quot;</span>.<span class="ident">to_string</span>(),
-                    <span class="ident">err</span>.<span class="ident">to_string</span>(),
-                )),
-                <span class="ident">StatusCode::INTERNAL_SERVER_ERROR</span>,
-            )),
+            <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">reply::internal_server_error</span>(<span class="ident">err</span>.<span class="ident">to_string</span>())),
         }
     }
 }

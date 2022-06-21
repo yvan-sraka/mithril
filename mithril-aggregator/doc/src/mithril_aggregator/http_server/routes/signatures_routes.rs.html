@@ -234,21 +234,6 @@
 <span id="229">229</span>
 <span id="230">230</span>
 <span id="231">231</span>
-<span id="232">232</span>
-<span id="233">233</span>
-<span id="234">234</span>
-<span id="235">235</span>
-<span id="236">236</span>
-<span id="237">237</span>
-<span id="238">238</span>
-<span id="239">239</span>
-<span id="240">240</span>
-<span id="241">241</span>
-<span id="242">242</span>
-<span id="243">243</span>
-<span id="244">244</span>
-<span id="245">245</span>
-<span id="246">246</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::http_server::routes::middlewares</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::DependencyManager</span>;
 <span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
@@ -273,10 +258,10 @@
 
 <span class="kw">mod</span> <span class="ident">handlers</span> {
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::dependency::MultiSignerWrapper</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::http_server::routes::reply</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ProtocolError</span>;
     <span class="kw">use</span> <span class="ident">mithril_common::crypto_helper</span>::{<span class="ident">key_decode_hex</span>, <span class="ident">ProtocolLotteryIndex</span>, <span class="ident">ProtocolPartyId</span>};
     <span class="kw">use</span> <span class="ident">mithril_common::entities</span>;
-    <span class="kw">use</span> <span class="ident">serde_json::Value::Null</span>;
     <span class="kw">use</span> <span class="ident">slog_scope::debug</span>;
     <span class="kw">use</span> <span class="ident">std::convert::Infallible</span>;
     <span class="kw">use</span> <span class="ident">warp::http::StatusCode</span>;
@@ -301,35 +286,20 @@
                         .<span class="kw">await</span>
                     {
                         <span class="prelude-val">Err</span>(<span class="ident">ProtocolError::ExistingSingleSignature</span>(<span class="kw">_</span>)) =&gt; {
-                            <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">warp::reply::with_status</span>(
-                                <span class="ident">warp::reply::json</span>(<span class="kw-2">&amp;</span><span class="ident">Null</span>),
-                                <span class="ident">StatusCode::CONFLICT</span>,
-                            ));
+                            <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">reply::empty</span>(<span class="ident">StatusCode::CONFLICT</span>));
                         }
                         <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; {
-                            <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">warp::reply::with_status</span>(
-                                <span class="ident">warp::reply::json</span>(<span class="kw-2">&amp;</span><span class="ident">entities::Error::new</span>(
-                                    <span class="string">&quot;MITHRIL-E0003&quot;</span>.<span class="ident">to_string</span>(),
-                                    <span class="ident">err</span>.<span class="ident">to_string</span>(),
-                                )),
-                                <span class="ident">StatusCode::INTERNAL_SERVER_ERROR</span>,
-                            ));
+                            <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">reply::internal_server_error</span>(<span class="ident">err</span>.<span class="ident">to_string</span>()));
                         }
                         <span class="kw">_</span> =&gt; {}
                     }
                 }
                 <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; {
-                    <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">warp::reply::with_status</span>(
-                        <span class="ident">warp::reply::json</span>(<span class="kw-2">&amp;</span><span class="ident">Null</span>),
-                        <span class="ident">StatusCode::BAD_REQUEST</span>,
-                    ));
+                    <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">reply::empty</span>(<span class="ident">StatusCode::BAD_REQUEST</span>));
                 }
             }
         }
-        <span class="prelude-val">Ok</span>(<span class="ident">warp::reply::with_status</span>(
-            <span class="ident">warp::reply::json</span>(<span class="kw-2">&amp;</span><span class="ident">Null</span>),
-            <span class="ident">StatusCode::CREATED</span>,
-        ))
+        <span class="prelude-val">Ok</span>(<span class="ident">reply::empty</span>(<span class="ident">StatusCode::CREATED</span>))
     }
 }
 
