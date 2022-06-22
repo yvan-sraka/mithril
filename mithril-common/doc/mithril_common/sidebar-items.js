@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["apispec",""],["crypto_helper",""],["digesters",""],["entities",""],["fake_data",""],["store",""]]});
+initSidebarItems({"mod":[["apispec",""],["chain_observer",""],["crypto_helper",""],["digesters",""],["entities",""],["fake_data",""],["store",""]]});

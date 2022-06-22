@@ -150,9 +150,22 @@
 <span id="145">145</span>
 <span id="146">146</span>
 <span id="147">147</span>
+<span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
+<span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
+<span id="157">157</span>
+<span id="158">158</span>
+<span id="159">159</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
 <span class="kw">use</span> <span class="ident">tokio::sync::RwLock</span>;
 
+<span class="kw">use</span> <span class="ident">mithril_common::chain_observer::ChainObserver</span>;
 <span class="kw">use</span> <span class="ident">mithril_common::store::stake_store::StakeStore</span>;
 
 <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::entities</span>::<span class="kw-2">*</span>;
@@ -167,6 +180,9 @@
 
 <span class="doccomment">///  SnapshotStoreWrapper wraps a SnapshotStore</span>
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">SnapshotStoreWrapper</span> <span class="op">=</span> <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">RwLock</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">SnapshotStore</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+
+<span class="doccomment">///  SnapshotUploaderWrapper wraps a SnapshotUploader</span>
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">SnapshotUploaderWrapper</span> <span class="op">=</span> <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">RwLock</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">SnapshotUploader</span><span class="op">&gt;</span><span class="op">&gt;</span>;
 
 <span class="doccomment">/// MultiSignerWrapper wraps a MultiSigner</span>
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">MultiSignerWrapper</span> <span class="op">=</span> <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">RwLock</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">MultiSigner</span><span class="op">&gt;</span><span class="op">&gt;</span>;
@@ -183,8 +199,8 @@
 <span class="doccomment">///  StakeStoreWrapper wraps a StakeStore</span>
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">StakeStoreWrapper</span> <span class="op">=</span> <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">RwLock</span><span class="op">&lt;</span><span class="ident">StakeStore</span><span class="op">&gt;</span><span class="op">&gt;</span>;
 
-<span class="doccomment">///  StakeStoreWrapper wraps a StakeStore</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">SnapshotUploaderWrapper</span> <span class="op">=</span> <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">RwLock</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">SnapshotUploader</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+<span class="doccomment">///  ChainObserverWrapper wraps a ChainObserver</span>
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ChainObserverWrapper</span> <span class="op">=</span> <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">RwLock</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">ChainObserver</span><span class="op">&gt;</span><span class="op">&gt;</span>;
 
 <span class="doccomment">/// DependencyManager handles the dependencies</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">DependencyManager</span> {
@@ -197,6 +213,7 @@
     <span class="kw">pub</span> <span class="ident">certificate_store</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">CertificateStoreWrapper</span><span class="op">&gt;</span>,
     <span class="kw">pub</span> <span class="ident">verification_key_store</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">VerificationKeyStoreWrapper</span><span class="op">&gt;</span>,
     <span class="kw">pub</span> <span class="ident">stake_store</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">StakeStoreWrapper</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">chain_observer</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ChainObserverWrapper</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">DependencyManager</span> {
@@ -212,6 +229,7 @@
             <span class="ident">certificate_store</span>: <span class="prelude-val">None</span>,
             <span class="ident">verification_key_store</span>: <span class="prelude-val">None</span>,
             <span class="ident">stake_store</span>: <span class="prelude-val">None</span>,
+            <span class="ident">chain_observer</span>: <span class="prelude-val">None</span>,
         }
     }
 
@@ -272,6 +290,12 @@
     <span class="doccomment">/// With StakeStore middleware</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">with_stake_store</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">stake_store</span>: <span class="ident">StakeStoreWrapper</span>) -&gt; <span class="kw-2">&amp;mut</span> <span class="self">Self</span> {
         <span class="self">self</span>.<span class="ident">stake_store</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">stake_store</span>);
+        <span class="self">self</span>
+    }
+
+    <span class="doccomment">/// With ChainObserver middleware</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">with_chain_observer</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">chain_observer</span>: <span class="ident">ChainObserverWrapper</span>) -&gt; <span class="kw-2">&amp;mut</span> <span class="self">Self</span> {
+        <span class="self">self</span>.<span class="ident">chain_observer</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">chain_observer</span>);
         <span class="self">self</span>
     }
 

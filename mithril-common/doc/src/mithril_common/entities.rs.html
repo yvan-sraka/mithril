@@ -695,11 +695,29 @@
 <span id="690">690</span>
 <span id="691">691</span>
 <span id="692">692</span>
+<span id="693">693</span>
+<span id="694">694</span>
+<span id="695">695</span>
+<span id="696">696</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">fixed::types::U8F24</span>;
 <span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
 <span class="kw">use</span> <span class="ident">sha2</span>::{<span class="ident">Digest</span>, <span class="ident">Sha256</span>};
+<span class="kw">use</span> <span class="ident">std::collections::HashMap</span>;
 
+<span class="doccomment">/// Epoch represents a Cardano epoch</span>
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">Epoch</span> <span class="op">=</span> <span class="ident">u64</span>;
+
+<span class="doccomment">/// ImmutableFileNumber represents the id of immutable files in the Cardano node database</span>
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ImmutableFileNumber</span> <span class="op">=</span> <span class="ident">u64</span>;
+
+<span class="doccomment">/// PartyId represents a signing party in Mithril protocol</span>
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">PartyId</span> <span class="op">=</span> <span class="ident">u64</span>;
+
+<span class="doccomment">/// Stake represents the stakes of a participant in the Cardano chain</span>
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">Stake</span> <span class="op">=</span> <span class="ident">u64</span>;
+
+<span class="doccomment">/// StakeDistribution represents the stakes of multiple participants in the Cardano chain</span>
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">StakeDistribution</span> <span class="op">=</span> <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">PartyId</span>, <span class="ident">Stake</span><span class="op">&gt;</span>;
 
 <span class="doccomment">/// Beacon represents a point in the Cardano chain at which a Mithril certificate should be produced</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Default</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>, <span class="ident">Hash</span>, <span class="ident">PartialOrd</span>)]</span>
@@ -710,7 +728,7 @@
 
     <span class="doccomment">/// Cardano chain epoch number</span>
     <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename</span> <span class="op">=</span> <span class="string">&quot;epoch&quot;</span>)]</span>
-    <span class="kw">pub</span> <span class="ident">epoch</span>: <span class="ident">u64</span>,
+    <span class="kw">pub</span> <span class="ident">epoch</span>: <span class="ident">Epoch</span>,
 
     <span class="doccomment">/// Number of the last included immutable files for the digest computation</span>
     <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename</span> <span class="op">=</span> <span class="string">&quot;immutable_file_number&quot;</span>)]</span>
@@ -719,7 +737,11 @@
 
 <span class="kw">impl</span> <span class="ident">Beacon</span> {
     <span class="doccomment">/// Beacon factory</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">network</span>: <span class="ident">String</span>, <span class="ident">epoch</span>: <span class="ident">u64</span>, <span class="ident">immutable_file_number</span>: <span class="ident">u64</span>) -&gt; <span class="ident">Beacon</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(
+        <span class="ident">network</span>: <span class="ident">String</span>,
+        <span class="ident">epoch</span>: <span class="ident">Epoch</span>,
+        <span class="ident">immutable_file_number</span>: <span class="ident">ImmutableFileNumber</span>,
+    ) -&gt; <span class="ident">Beacon</span> {
         <span class="ident">Beacon</span> {
             <span class="ident">network</span>,
             <span class="ident">epoch</span>,
@@ -930,7 +952,7 @@
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Signer</span> {
     <span class="doccomment">/// The unique identifier of the signer</span>
     <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename</span> <span class="op">=</span> <span class="string">&quot;party_id&quot;</span>)]</span>
-    <span class="kw">pub</span> <span class="ident">party_id</span>: <span class="ident">u64</span>,
+    <span class="kw">pub</span> <span class="ident">party_id</span>: <span class="ident">PartyId</span>,
 
     <span class="doccomment">/// The public key used to authenticate signer signature</span>
     <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename</span> <span class="op">=</span> <span class="string">&quot;verification_key&quot;</span>)]</span>
@@ -939,7 +961,7 @@
 
 <span class="kw">impl</span> <span class="ident">Signer</span> {
     <span class="doccomment">/// Signer factory</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">party_id</span>: <span class="ident">u64</span>, <span class="ident">verification_key</span>: <span class="ident">String</span>) -&gt; <span class="ident">Signer</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">party_id</span>: <span class="ident">PartyId</span>, <span class="ident">verification_key</span>: <span class="ident">String</span>) -&gt; <span class="ident">Signer</span> {
         <span class="ident">Signer</span> {
             <span class="ident">party_id</span>,
             <span class="ident">verification_key</span>,
@@ -960,19 +982,19 @@
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">SignerWithStake</span> {
     <span class="doccomment">/// The unique identifier of the signer</span>
     <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename</span> <span class="op">=</span> <span class="string">&quot;party_id&quot;</span>)]</span>
-    <span class="kw">pub</span> <span class="ident">party_id</span>: <span class="ident">u64</span>,
+    <span class="kw">pub</span> <span class="ident">party_id</span>: <span class="ident">PartyId</span>,
 
     <span class="doccomment">/// The public key used to authenticate signer signature</span>
     <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename</span> <span class="op">=</span> <span class="string">&quot;verification_key&quot;</span>)]</span>
     <span class="kw">pub</span> <span class="ident">verification_key</span>: <span class="ident">String</span>,
 
     <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename</span> <span class="op">=</span> <span class="string">&quot;stake&quot;</span>)]</span>
-    <span class="kw">pub</span> <span class="ident">stake</span>: <span class="ident">u64</span>,
+    <span class="kw">pub</span> <span class="ident">stake</span>: <span class="ident">Stake</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">SignerWithStake</span> {
     <span class="doccomment">/// SignerWithStake factory</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">party_id</span>: <span class="ident">u64</span>, <span class="ident">verification_key</span>: <span class="ident">String</span>, <span class="ident">stake</span>: <span class="ident">u64</span>) -&gt; <span class="ident">SignerWithStake</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">party_id</span>: <span class="ident">PartyId</span>, <span class="ident">verification_key</span>: <span class="ident">String</span>, <span class="ident">stake</span>: <span class="ident">Stake</span>) -&gt; <span class="ident">SignerWithStake</span> {
         <span class="ident">SignerWithStake</span> {
             <span class="ident">party_id</span>,
             <span class="ident">verification_key</span>,
@@ -995,7 +1017,7 @@
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">SingleSignature</span> {
     <span class="doccomment">/// The unique identifier of the signer</span>
     <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename</span> <span class="op">=</span> <span class="string">&quot;party_id&quot;</span>)]</span>
-    <span class="kw">pub</span> <span class="ident">party_id</span>: <span class="ident">u64</span>,
+    <span class="kw">pub</span> <span class="ident">party_id</span>: <span class="ident">PartyId</span>,
 
     <span class="doccomment">/// The index of the lottery won that lead to the single signature</span>
     <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename</span> <span class="op">=</span> <span class="string">&quot;index&quot;</span>)]</span>
@@ -1008,7 +1030,7 @@
 
 <span class="kw">impl</span> <span class="ident">SingleSignature</span> {
     <span class="doccomment">/// SingleSignature factory</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">party_id</span>: <span class="ident">u64</span>, <span class="ident">index</span>: <span class="ident">u64</span>, <span class="ident">signature</span>: <span class="ident">String</span>) -&gt; <span class="ident">SingleSignature</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">party_id</span>: <span class="ident">PartyId</span>, <span class="ident">index</span>: <span class="ident">u64</span>, <span class="ident">signature</span>: <span class="ident">String</span>) -&gt; <span class="ident">SingleSignature</span> {
         <span class="ident">SingleSignature</span> {
             <span class="ident">party_id</span>,
             <span class="ident">index</span>,
@@ -1057,20 +1079,6 @@
             <span class="ident">created_at</span>,
             <span class="ident">locations</span>,
         }
-    }
-}
-
-<span class="doccomment">/// Stake represents the stakes of a participant in the Cardano chain</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Default</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Stake</span> {
-    <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename</span> <span class="op">=</span> <span class="string">&quot;stake&quot;</span>)]</span>
-    <span class="kw">pub</span> <span class="ident">stake</span>: <span class="ident">u64</span>,
-}
-
-<span class="kw">impl</span> <span class="ident">Stake</span> {
-    <span class="doccomment">/// Stake factory</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">stake</span>: <span class="ident">u64</span>) -&gt; <span class="ident">Stake</span> {
-        <span class="ident">Stake</span> { <span class="ident">stake</span> }
     }
 }
 
