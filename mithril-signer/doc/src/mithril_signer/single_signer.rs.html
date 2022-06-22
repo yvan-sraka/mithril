@@ -286,7 +286,7 @@
     <span class="ident">key_decode_hex</span>, <span class="ident">key_encode_hex</span>, <span class="ident">Bytes</span>, <span class="ident">ProtocolInitializer</span>, <span class="ident">ProtocolKeyRegistration</span>,
     <span class="ident">ProtocolPartyId</span>, <span class="ident">ProtocolSigner</span>,
 };
-<span class="kw">use</span> <span class="ident">mithril_common::entities</span>::{<span class="self">self</span>, <span class="ident">SignerWithStake</span>, <span class="ident">SingleSignature</span>};
+<span class="kw">use</span> <span class="ident">mithril_common::entities</span>::{<span class="self">self</span>, <span class="ident">PartyId</span>, <span class="ident">SignerWithStake</span>, <span class="ident">SingleSignature</span>};
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="kw">use</span> <span class="ident">mockall::automock</span>;
@@ -334,12 +334,12 @@
 }
 
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MithrilSingleSigner</span> {
-    <span class="ident">party_id</span>: <span class="ident">u64</span>,
+    <span class="ident">party_id</span>: <span class="ident">PartyId</span>,
     <span class="ident">protocol_initializer</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ProtocolInitializer</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">MithrilSingleSigner</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">party_id</span>: <span class="ident">u64</span>, <span class="ident">protocol_initializer_encoded</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="self">Self</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">party_id</span>: <span class="ident">PartyId</span>, <span class="ident">protocol_initializer_encoded</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="self">Self</span> {
         <span class="kw">let</span> <span class="ident">protocol_initializer</span> <span class="op">=</span> <span class="ident">key_decode_hex</span>(<span class="ident">protocol_initializer_encoded</span>).<span class="ident">ok</span>();
         <span class="self">Self</span> {
             <span class="ident">party_id</span>,
@@ -383,7 +383,7 @@
 
 <span class="kw">impl</span> <span class="ident">SingleSigner</span> <span class="kw">for</span> <span class="ident">MithrilSingleSigner</span> {
     <span class="kw">fn</span> <span class="ident">get_party_id</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">ProtocolPartyId</span> {
-        <span class="self">self</span>.<span class="ident">party_id</span>
+        <span class="self">self</span>.<span class="ident">party_id</span>.<span class="ident">to_owned</span>()
     }
 
     <span class="kw">fn</span> <span class="ident">get_protocol_initializer</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ProtocolInitializer</span><span class="op">&gt;</span> {
@@ -455,7 +455,7 @@
                 }
 
                 <span class="ident">signatures</span>.<span class="ident">push</span>(<span class="ident">SingleSignature::new</span>(
-                    <span class="self">self</span>.<span class="ident">party_id</span>,
+                    <span class="self">self</span>.<span class="ident">party_id</span>.<span class="ident">to_owned</span>(),
                     <span class="ident">i</span>,
                     <span class="ident">encoded_signature</span>.<span class="ident">unwrap</span>(),
                 ));
@@ -482,17 +482,17 @@
             .<span class="ident">iter</span>()
             .<span class="ident">map</span>(
                 <span class="op">|</span>(<span class="ident">party_id</span>, <span class="ident">stake</span>, <span class="ident">verification_key</span>, <span class="ident">_protocol_signer</span>, <span class="ident">_protocol_initializer</span>)<span class="op">|</span> {
-                    <span class="kw">let</span> <span class="ident">verification_key</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">party_id</span> {
-                        <span class="number">0</span> =&gt; <span class="ident">key_encode_hex</span>(<span class="ident">signer_unregistered</span>.<span class="number">2</span>).<span class="ident">unwrap</span>(),
+                    <span class="kw">let</span> <span class="ident">verification_key</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">party_id</span>.<span class="ident">as_str</span>() {
+                        <span class="string">&quot;0&quot;</span> =&gt; <span class="ident">key_encode_hex</span>(<span class="ident">signer_unregistered</span>.<span class="number">2</span>).<span class="ident">unwrap</span>(),
                         <span class="kw">_</span> =&gt; <span class="ident">key_encode_hex</span>(<span class="ident">verification_key</span>).<span class="ident">unwrap</span>(),
                     };
-                    <span class="ident">SignerWithStake::new</span>(<span class="kw-2">*</span><span class="ident">party_id</span>, <span class="ident">verification_key</span>, <span class="kw-2">*</span><span class="ident">stake</span>)
+                    <span class="ident">SignerWithStake::new</span>(<span class="ident">party_id</span>.<span class="ident">to_owned</span>(), <span class="ident">verification_key</span>, <span class="kw-2">*</span><span class="ident">stake</span>)
                 },
             )
             .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">SignerWithStake</span><span class="op">&gt;</span><span class="op">&gt;</span>();
         <span class="kw">let</span> <span class="ident">current_signer</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">signers</span>[<span class="number">0</span>];
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">single_signer</span> <span class="op">=</span> <span class="ident">MithrilSingleSigner::new</span>(
-            <span class="ident">current_signer</span>.<span class="number">0</span>,
+            <span class="ident">current_signer</span>.<span class="number">0</span>.<span class="ident">to_owned</span>(),
             <span class="kw-2">&amp;</span><span class="ident">key_encode_hex</span>(<span class="kw-2">&amp;</span><span class="ident">current_signer</span>.<span class="number">4</span>).<span class="ident">unwrap</span>(),
         );
 
@@ -519,7 +519,7 @@
             .<span class="ident">map</span>(
                 <span class="op">|</span>(<span class="ident">party_id</span>, <span class="ident">stake</span>, <span class="ident">verification_key</span>, <span class="ident">_protocol_signer</span>, <span class="ident">_protocol_initializer</span>)<span class="op">|</span> {
                     <span class="ident">SignerWithStake::new</span>(
-                        <span class="kw-2">*</span><span class="ident">party_id</span>,
+                        <span class="ident">party_id</span>.<span class="ident">to_owned</span>(),
                         <span class="ident">key_encode_hex</span>(<span class="ident">verification_key</span>).<span class="ident">unwrap</span>(),
                         <span class="kw-2">*</span><span class="ident">stake</span>,
                     )
@@ -528,7 +528,7 @@
             .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">SignerWithStake</span><span class="op">&gt;</span><span class="op">&gt;</span>();
         <span class="kw">let</span> <span class="ident">current_signer</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">signers</span>[<span class="number">0</span>];
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">single_signer</span> <span class="op">=</span> <span class="ident">MithrilSingleSigner::new</span>(
-            <span class="ident">current_signer</span>.<span class="number">0</span>,
+            <span class="ident">current_signer</span>.<span class="number">0</span>.<span class="ident">to_owned</span>(),
             <span class="kw-2">&amp;</span><span class="ident">key_encode_hex</span>(<span class="kw-2">&amp;</span><span class="ident">current_signer</span>.<span class="number">4</span>).<span class="ident">unwrap</span>(),
         );
         <span class="kw">let</span> <span class="ident">protocol_signer</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">current_signer</span>.<span class="number">3</span>;
