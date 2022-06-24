@@ -163,6 +163,24 @@
 <span id="158">158</span>
 <span id="159">159</span>
 <span id="160">160</span>
+<span id="161">161</span>
+<span id="162">162</span>
+<span id="163">163</span>
+<span id="164">164</span>
+<span id="165">165</span>
+<span id="166">166</span>
+<span id="167">167</span>
+<span id="168">168</span>
+<span id="169">169</span>
+<span id="170">170</span>
+<span id="171">171</span>
+<span id="172">172</span>
+<span id="173">173</span>
+<span id="174">174</span>
+<span id="175">175</span>
+<span id="176">176</span>
+<span id="177">177</span>
+<span id="178">178</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
 <span class="kw">use</span> <span class="ident">tokio::sync::RwLock</span>;
 
@@ -174,7 +192,9 @@
 <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::snapshot_stores::SnapshotStore</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::beacon_store::BeaconStore</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::snapshot_uploaders::SnapshotUploader</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">CertificatePendingStore</span>, <span class="ident">CertificateStore</span>, <span class="ident">VerificationKeyStore</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::{
+    <span class="ident">CertificatePendingStore</span>, <span class="ident">CertificateStore</span>, <span class="ident">SingleSignatureStore</span>, <span class="ident">VerificationKeyStore</span>,
+};
 
 <span class="doccomment">/// BeaconStoreWrapper wraps a BeaconStore</span>
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">BeaconStoreWrapper</span> <span class="op">=</span> <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">RwLock</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">BeaconStore</span><span class="op">&gt;</span><span class="op">&gt;</span>;
@@ -200,6 +220,9 @@
 <span class="doccomment">///  StakeStoreWrapper wraps a StakeStore</span>
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">StakeStoreWrapper</span> <span class="op">=</span> <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">RwLock</span><span class="op">&lt;</span><span class="ident">StakeStore</span><span class="op">&gt;</span><span class="op">&gt;</span>;
 
+<span class="doccomment">///  SingleSignatureStoreWrapper wraps a SingleSignatureStore</span>
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">SingleSignatureStoreWrapper</span> <span class="op">=</span> <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">RwLock</span><span class="op">&lt;</span><span class="ident">SingleSignatureStore</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+
 <span class="doccomment">///  ChainObserverWrapper wraps a ChainObserver</span>
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ChainObserverWrapper</span> <span class="op">=</span> <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">RwLock</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">ChainObserver</span><span class="op">&gt;</span><span class="op">&gt;</span>;
 
@@ -214,6 +237,7 @@
     <span class="kw">pub</span> <span class="ident">certificate_store</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">CertificateStoreWrapper</span><span class="op">&gt;</span>,
     <span class="kw">pub</span> <span class="ident">verification_key_store</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">VerificationKeyStoreWrapper</span><span class="op">&gt;</span>,
     <span class="kw">pub</span> <span class="ident">stake_store</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">StakeStoreWrapper</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">single_signature_store</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">SingleSignatureStoreWrapper</span><span class="op">&gt;</span>,
     <span class="kw">pub</span> <span class="ident">chain_observer</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ChainObserverWrapper</span><span class="op">&gt;</span>,
 }
 
@@ -230,6 +254,7 @@
             <span class="ident">certificate_store</span>: <span class="prelude-val">None</span>,
             <span class="ident">verification_key_store</span>: <span class="prelude-val">None</span>,
             <span class="ident">stake_store</span>: <span class="prelude-val">None</span>,
+            <span class="ident">single_signature_store</span>: <span class="prelude-val">None</span>,
             <span class="ident">chain_observer</span>: <span class="prelude-val">None</span>,
         }
     }
@@ -294,6 +319,15 @@
         <span class="self">self</span>
     }
 
+    <span class="doccomment">/// With SingleSignatureStore middleware</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">with_single_signature_store</span>(
+        <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
+        <span class="ident">single_signature_store</span>: <span class="ident">SingleSignatureStoreWrapper</span>,
+    ) -&gt; <span class="kw-2">&amp;mut</span> <span class="self">Self</span> {
+        <span class="self">self</span>.<span class="ident">single_signature_store</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">single_signature_store</span>);
+        <span class="self">self</span>
+    }
+
     <span class="doccomment">/// With ChainObserver middleware</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">with_chain_observer</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">chain_observer</span>: <span class="ident">ChainObserverWrapper</span>) -&gt; <span class="kw-2">&amp;mut</span> <span class="self">Self</span> {
         <span class="self">self</span>.<span class="ident">chain_observer</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">chain_observer</span>);
@@ -319,6 +353,8 @@
             <span class="ident">verification_key_store_directory</span>: <span class="ident">std::env::temp_dir</span>()
                 .<span class="ident">join</span>(<span class="string">&quot;mithril_test_verification_key_db&quot;</span>),
             <span class="ident">stake_store_directory</span>: <span class="ident">std::env::temp_dir</span>().<span class="ident">join</span>(<span class="string">&quot;mithril_test_stake_db&quot;</span>),
+            <span class="ident">single_signature_store_directory</span>: <span class="ident">std::env::temp_dir</span>()
+                .<span class="ident">join</span>(<span class="string">&quot;mithril_test_single_signature_db&quot;</span>),
         };
         <span class="ident">DependencyManager::new</span>(<span class="ident">config</span>)
     }

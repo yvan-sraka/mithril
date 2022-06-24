@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["StoreError",""],["VerificationKeyStoreError",""]],"struct":[["CertificatePendingStore",""],["CertificateStore",""],["VerificationKeyStore",""]],"trait":[["VerificationKeyStorer",""]]});
+initSidebarItems({"enum":[["SingleSignatureStoreError",""],["StoreError",""],["VerificationKeyStoreError",""]],"struct":[["CertificatePendingStore",""],["CertificateStore",""],["SingleSignatureStore",""],["VerificationKeyStore",""]],"trait":[["SingleSignatureStorer",""],["VerificationKeyStorer",""]]});
