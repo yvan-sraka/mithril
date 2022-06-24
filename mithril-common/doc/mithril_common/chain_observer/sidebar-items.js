@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["ChainObserverError",""]],"struct":[["FakeObserver",""]],"trait":[["ChainObserver",""]]});
+initSidebarItems({"enum":[["ChainObserverError",""]],"struct":[["CardanoCliChainObserver",""],["CardanoCliRunner",""],["FakeObserver",""]],"trait":[["ChainObserver",""]]});

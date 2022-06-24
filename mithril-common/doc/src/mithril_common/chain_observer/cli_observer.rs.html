@@ -231,42 +231,6 @@
 <span id="226">226</span>
 <span id="227">227</span>
 <span id="228">228</span>
-<span id="229">229</span>
-<span id="230">230</span>
-<span id="231">231</span>
-<span id="232">232</span>
-<span id="233">233</span>
-<span id="234">234</span>
-<span id="235">235</span>
-<span id="236">236</span>
-<span id="237">237</span>
-<span id="238">238</span>
-<span id="239">239</span>
-<span id="240">240</span>
-<span id="241">241</span>
-<span id="242">242</span>
-<span id="243">243</span>
-<span id="244">244</span>
-<span id="245">245</span>
-<span id="246">246</span>
-<span id="247">247</span>
-<span id="248">248</span>
-<span id="249">249</span>
-<span id="250">250</span>
-<span id="251">251</span>
-<span id="252">252</span>
-<span id="253">253</span>
-<span id="254">254</span>
-<span id="255">255</span>
-<span id="256">256</span>
-<span id="257">257</span>
-<span id="258">258</span>
-<span id="259">259</span>
-<span id="260">260</span>
-<span id="261">261</span>
-<span id="262">262</span>
-<span id="263">263</span>
-<span id="264">264</span>
 </pre><pre class="rust"><code><span class="attribute">#![<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span>
 <span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
 <span class="kw">use</span> <span class="ident">nom::IResult</span>;
@@ -276,7 +240,8 @@
 <span class="kw">use</span> <span class="ident">tokio::process::Command</span>;
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain_observer::interface</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::entities</span>::{<span class="ident">Epoch</span>, <span class="ident">StakeDistribution</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::entities</span>::{<span class="ident">Epoch</span>, <span class="ident">PartyId</span>, <span class="ident">Stake</span>, <span class="ident">StakeDistribution</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::fake_data</span>;
 
 <span class="attribute">#[<span class="ident">async_trait</span>]</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">CliRunner</span> {
@@ -286,13 +251,13 @@
 
 <span class="doccomment">/// Cardano Network identifier</span>
 <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::enum_variant_names</span>)]</span>
-<span class="kw">enum</span> <span class="ident">CardanoCliNetwork</span> {
+<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">CardanoCliNetwork</span> {
     <span class="ident">MainNet</span>,
     <span class="ident">DevNet</span>(<span class="ident">u64</span>),
     <span class="ident">TestNet</span>(<span class="ident">u64</span>),
 }
 
-<span class="kw">struct</span> <span class="ident">CardanoCliRunner</span> {
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">CardanoCliRunner</span> {
     <span class="ident">cli_path</span>: <span class="ident">PathBuf</span>,
     <span class="ident">socket_path</span>: <span class="ident">PathBuf</span>,
     <span class="ident">network</span>: <span class="ident">CardanoCliNetwork</span>,
@@ -349,13 +314,13 @@
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">launch_stake_distribution</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Error</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">output</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">command_for_stake_distribution</span>().<span class="ident">output</span>().<span class="kw">await</span><span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(<span class="ident">std::str::from_utf8</span>(<span class="kw-2">&amp;</span><span class="ident">output</span>.<span class="ident">stdout</span>)<span class="question-mark">?</span>.<span class="ident">to_string</span>())
+        <span class="prelude-val">Ok</span>(<span class="ident">std::str::from_utf8</span>(<span class="kw-2">&amp;</span><span class="ident">output</span>.<span class="ident">stdout</span>)<span class="question-mark">?</span>.<span class="ident">trim</span>().<span class="ident">to_string</span>())
     }
 
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">launch_epoch</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Error</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">output</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">command_for_epoch</span>().<span class="ident">output</span>().<span class="kw">await</span><span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(<span class="ident">std::str::from_utf8</span>(<span class="kw-2">&amp;</span><span class="ident">output</span>.<span class="ident">stdout</span>)<span class="question-mark">?</span>.<span class="ident">to_string</span>())
+        <span class="prelude-val">Ok</span>(<span class="ident">std::str::from_utf8</span>(<span class="kw-2">&amp;</span><span class="ident">output</span>.<span class="ident">stdout</span>)<span class="question-mark">?</span>.<span class="ident">trim</span>().<span class="ident">to_string</span>())
     }
 }
 
@@ -383,8 +348,8 @@
             .<span class="ident">launch_epoch</span>()
             .<span class="kw">await</span>
             .<span class="ident">map_err</span>(<span class="ident">ChainObserverError::General</span>)<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">v</span>: <span class="ident">Value</span> <span class="op">=</span>
-            <span class="ident">serde_json::from_str</span>(<span class="kw-2">&amp;</span><span class="ident">output</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">ChainObserverError::General</span>(<span class="ident">e</span>.<span class="ident">into</span>()))<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">v</span>: <span class="ident">Value</span> <span class="op">=</span> <span class="ident">serde_json::from_str</span>(<span class="kw-2">&amp;</span><span class="ident">output</span>)
+            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">ChainObserverError::InvalidContent</span>(<span class="ident">e</span>.<span class="ident">into</span>()))<span class="question-mark">?</span>;
 
         <span class="kw">if</span> <span class="kw">let</span> <span class="ident">Value::Number</span>(<span class="ident">epoch</span>) <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">v</span>[<span class="string">&quot;epoch&quot;</span>] {
             <span class="prelude-val">Ok</span>(<span class="ident">epoch</span>.<span class="ident">as_u64</span>())
@@ -392,36 +357,13 @@
             <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
         }
     }
-
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_current_stake_distribution</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">StakeDistribution</span><span class="op">&gt;</span>, <span class="ident">ChainObserverError</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">output</span> <span class="op">=</span> <span class="self">self</span>
-            .<span class="ident">cli_runner</span>
-            .<span class="ident">launch_stake_distribution</span>()
-            .<span class="kw">await</span>
-            .<span class="ident">map_err</span>(<span class="ident">ChainObserverError::General</span>)<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">stake_distribution</span> <span class="op">=</span> <span class="ident">StakeDistribution::new</span>();
-
-        <span class="kw">for</span> (<span class="ident">num</span>, <span class="ident">line</span>) <span class="kw">in</span> <span class="ident">output</span>.<span class="ident">lines</span>().<span class="ident">enumerate</span>() {
-            <span class="kw">let</span> <span class="ident">words</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">line</span>.<span class="ident">split_ascii_whitespace</span>().<span class="ident">collect</span>();
-
-            <span class="kw">if</span> <span class="ident">num</span> <span class="op">&lt;</span> <span class="number">3</span> <span class="op">|</span><span class="op">|</span> <span class="ident">words</span>.<span class="ident">len</span>() <span class="op">!</span><span class="op">=</span> <span class="number">2</span> {
-                <span class="kw">continue</span>;
-            }
-
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>((<span class="kw">_</span>, <span class="ident">f</span>)) <span class="op">=</span> <span class="self">self</span>.<span class="ident">parse_string</span>(<span class="ident">words</span>[<span class="number">1</span>]) {
-                <span class="kw">let</span> <span class="ident">stake</span>: <span class="ident">u64</span> <span class="op">=</span> (<span class="ident">f</span> <span class="op">*</span> <span class="number">1_000_000_000.0</span>).<span class="ident">round</span>() <span class="kw">as</span> <span class="ident">u64</span>;
-                <span class="comment">// TODO: the stake distribution shall not be indexed by position</span>
-                <span class="comment">// use the real poolId instead, for now this must be a u32.</span>
-                <span class="comment">//</span>
-                <span class="comment">// The position is num - 2 since we ignore the first two lines</span>
-                <span class="comment">// of the CLI output.</span>
-                <span class="kw">if</span> <span class="ident">stake</span> <span class="op">&gt;</span> <span class="number">0</span> {
-                    <span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="ident">stake_distribution</span>.<span class="ident">insert</span>(<span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, <span class="ident">num</span> <span class="kw">as</span> <span class="ident">u64</span> <span class="op">-</span> <span class="number">2</span>), <span class="ident">stake</span>);
-                }
-            }
-        }
+        <span class="kw">let</span> <span class="ident">stake_distribution</span>: <span class="ident">StakeDistribution</span> <span class="op">=</span> <span class="ident">fake_data::signers_with_stakes</span>(<span class="number">5</span>)
+            .<span class="ident">iter</span>()
+            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">signer</span><span class="op">|</span> (<span class="ident">signer</span>.<span class="ident">party_id</span>.<span class="ident">clone</span>() <span class="kw">as</span> <span class="ident">PartyId</span>, <span class="ident">signer</span>.<span class="ident">stake</span> <span class="kw">as</span> <span class="ident">Stake</span>))
+            .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">StakeDistribution</span><span class="op">&gt;</span>();
 
         <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">stake_distribution</span>))
     }
@@ -447,7 +389,7 @@ pool1qpqvz90w7qsex2al2ejjej0rfgrwsguch307w8fraw7a7adf6g8   2.474e-11
 pool1qptl80vq84xm28pt3t2lhpfzqag28csjhktxz5k6a74n260clmt   5.600e-7
 pool1qpuckgzxwgdru9vvq3ydmuqa077ur783yn2uywz7zq2c29p506e   5.161e-5
 pool1qz2vzszautc2c8mljnqre2857dpmheq7kgt6vav0s38tvvhxm6w   1.051e-6
-            &quot;#</span>;
+&quot;#</span>;
 
             <span class="prelude-val">Ok</span>(<span class="ident">output</span>.<span class="ident">to_string</span>())
         }
@@ -465,20 +407,6 @@ pool1qz2vzszautc2c8mljnqre2857dpmheq7kgt6vav0s38tvvhxm6w   1.051e-6
 
             <span class="prelude-val">Ok</span>(<span class="ident">output</span>.<span class="ident">to_string</span>())
         }
-    }
-    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_get_current_stake_distribution</span>() {
-        <span class="kw">let</span> <span class="ident">observer</span> <span class="op">=</span> <span class="ident">CardanoCliChainObserver::new</span>(<span class="ident">Box::new</span>(<span class="ident">TestCliRunner</span> {}));
-        <span class="kw">let</span> <span class="ident">results</span> <span class="op">=</span> <span class="ident">observer</span>
-            .<span class="ident">get_current_stake_distribution</span>()
-            .<span class="kw">await</span>
-            .<span class="ident">unwrap</span>()
-            .<span class="ident">unwrap</span>();
-
-        <span class="macro">assert_eq!</span>(<span class="number">7</span>, <span class="ident">results</span>.<span class="ident">len</span>());
-        <span class="macro">assert_eq!</span>(<span class="number">2_493_000</span>, <span class="kw-2">*</span><span class="ident">results</span>.<span class="ident">get</span>(<span class="string">&quot;1&quot;</span>).<span class="ident">unwrap</span>());
-        <span class="macro">assert_eq!</span>(<span class="number">1_051</span>, <span class="kw-2">*</span><span class="ident">results</span>.<span class="ident">get</span>(<span class="string">&quot;8&quot;</span>).<span class="ident">unwrap</span>());
-        <span class="macro">assert!</span>(<span class="ident">results</span>.<span class="ident">get</span>(<span class="string">&quot;5&quot;</span>).<span class="ident">is_none</span>());
     }
 
     <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
