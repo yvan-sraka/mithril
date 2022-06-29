@@ -223,14 +223,6 @@
 <span id="218">218</span>
 <span id="219">219</span>
 <span id="220">220</span>
-<span id="221">221</span>
-<span id="222">222</span>
-<span id="223">223</span>
-<span id="224">224</span>
-<span id="225">225</span>
-<span id="226">226</span>
-<span id="227">227</span>
-<span id="228">228</span>
 </pre><pre class="rust"><code><span class="attribute">#![<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span>
 <span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
 <span class="kw">use</span> <span class="ident">nom::IResult</span>;
@@ -241,7 +233,7 @@
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain_observer::interface</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::entities</span>::{<span class="ident">Epoch</span>, <span class="ident">PartyId</span>, <span class="ident">Stake</span>, <span class="ident">StakeDistribution</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::fake_data</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">fake_data</span>, <span class="ident">CardanoNetwork</span>};
 
 <span class="attribute">#[<span class="ident">async_trait</span>]</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">CliRunner</span> {
@@ -249,22 +241,14 @@
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">launch_epoch</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Error</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span>;
 }
 
-<span class="doccomment">/// Cardano Network identifier</span>
-<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::enum_variant_names</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">CardanoCliNetwork</span> {
-    <span class="ident">MainNet</span>,
-    <span class="ident">DevNet</span>(<span class="ident">u64</span>),
-    <span class="ident">TestNet</span>(<span class="ident">u64</span>),
-}
-
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">CardanoCliRunner</span> {
     <span class="ident">cli_path</span>: <span class="ident">PathBuf</span>,
     <span class="ident">socket_path</span>: <span class="ident">PathBuf</span>,
-    <span class="ident">network</span>: <span class="ident">CardanoCliNetwork</span>,
+    <span class="ident">network</span>: <span class="ident">CardanoNetwork</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">CardanoCliRunner</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">cli_path</span>: <span class="ident">PathBuf</span>, <span class="ident">socket_path</span>: <span class="ident">PathBuf</span>, <span class="ident">network</span>: <span class="ident">CardanoCliNetwork</span>) -&gt; <span class="self">Self</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">cli_path</span>: <span class="ident">PathBuf</span>, <span class="ident">socket_path</span>: <span class="ident">PathBuf</span>, <span class="ident">network</span>: <span class="ident">CardanoNetwork</span>) -&gt; <span class="self">Self</span> {
         <span class="self">Self</span> {
             <span class="ident">cli_path</span>,
             <span class="ident">socket_path</span>,
@@ -300,11 +284,11 @@
 
     <span class="kw">fn</span> <span class="ident">post_config_command</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>, <span class="ident">command</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">Command</span>) -&gt; <span class="kw-2">&amp;mut</span> <span class="ident">Command</span> {
         <span class="kw">match</span> <span class="self">self</span>.<span class="ident">network</span> {
-            <span class="ident">CardanoCliNetwork::MainNet</span> =&gt; <span class="ident">command</span>.<span class="ident">arg</span>(<span class="string">&quot;--mainnet&quot;</span>),
-            <span class="ident">CardanoCliNetwork::DevNet</span>(<span class="ident">magic</span>) =&gt; <span class="ident">command</span>
+            <span class="ident">CardanoNetwork::MainNet</span> =&gt; <span class="ident">command</span>.<span class="ident">arg</span>(<span class="string">&quot;--mainnet&quot;</span>),
+            <span class="ident">CardanoNetwork::DevNet</span>(<span class="ident">magic</span>) =&gt; <span class="ident">command</span>
                 .<span class="ident">arg</span>(<span class="macro">format!</span>(<span class="string">&quot;--testnet-magic {}&quot;</span>, <span class="ident">magic</span>))
                 .<span class="ident">arg</span>(<span class="string">&quot;--cardano-mode&quot;</span>),
-            <span class="ident">CardanoCliNetwork::TestNet</span>(<span class="ident">magic</span>) =&gt; <span class="ident">command</span>.<span class="ident">arg</span>(<span class="macro">format!</span>(<span class="string">&quot;--testnet-magic {}&quot;</span>, <span class="ident">magic</span>)),
+            <span class="ident">CardanoNetwork::TestNet</span>(<span class="ident">magic</span>) =&gt; <span class="ident">command</span>.<span class="ident">arg</span>(<span class="macro">format!</span>(<span class="string">&quot;--testnet-magic {}&quot;</span>, <span class="ident">magic</span>)),
         }
     }
 }
@@ -422,7 +406,7 @@ pool1qz2vzszautc2c8mljnqre2857dpmheq7kgt6vav0s38tvvhxm6w   1.051e-6
         <span class="kw">let</span> <span class="ident">runner</span> <span class="op">=</span> <span class="ident">CardanoCliRunner::new</span>(
             <span class="ident">PathBuf::new</span>().<span class="ident">join</span>(<span class="string">&quot;cardano-cli&quot;</span>),
             <span class="ident">PathBuf::new</span>().<span class="ident">join</span>(<span class="string">&quot;/tmp/whatever.sock&quot;</span>),
-            <span class="ident">CardanoCliNetwork::TestNet</span>(<span class="number">10</span>),
+            <span class="ident">CardanoNetwork::TestNet</span>(<span class="number">10</span>),
         );
 
         <span class="macro">assert_eq!</span>(<span class="string">&quot;Command { std: \&quot;cardano-cli\&quot; \&quot;query\&quot; \&quot;tip\&quot; \&quot;--testnet-magic 10\&quot;, kill_on_drop: false }&quot;</span>, <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, <span class="ident">runner</span>.<span class="ident">command_for_epoch</span>()));
@@ -434,7 +418,7 @@ pool1qz2vzszautc2c8mljnqre2857dpmheq7kgt6vav0s38tvvhxm6w   1.051e-6
         <span class="kw">let</span> <span class="ident">runner</span> <span class="op">=</span> <span class="ident">CardanoCliRunner::new</span>(
             <span class="ident">PathBuf::new</span>().<span class="ident">join</span>(<span class="string">&quot;cardano-cli&quot;</span>),
             <span class="ident">PathBuf::new</span>().<span class="ident">join</span>(<span class="string">&quot;/tmp/whatever.sock&quot;</span>),
-            <span class="ident">CardanoCliNetwork::DevNet</span>(<span class="number">25</span>),
+            <span class="ident">CardanoNetwork::DevNet</span>(<span class="number">25</span>),
         );
 
         <span class="macro">assert_eq!</span>(<span class="string">&quot;Command { std: \&quot;cardano-cli\&quot; \&quot;query\&quot; \&quot;tip\&quot; \&quot;--testnet-magic 25\&quot; \&quot;--cardano-mode\&quot;, kill_on_drop: false }&quot;</span>, <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, <span class="ident">runner</span>.<span class="ident">command_for_epoch</span>()));
@@ -446,7 +430,7 @@ pool1qz2vzszautc2c8mljnqre2857dpmheq7kgt6vav0s38tvvhxm6w   1.051e-6
         <span class="kw">let</span> <span class="ident">runner</span> <span class="op">=</span> <span class="ident">CardanoCliRunner::new</span>(
             <span class="ident">PathBuf::new</span>().<span class="ident">join</span>(<span class="string">&quot;cardano-cli&quot;</span>),
             <span class="ident">PathBuf::new</span>().<span class="ident">join</span>(<span class="string">&quot;/tmp/whatever.sock&quot;</span>),
-            <span class="ident">CardanoCliNetwork::MainNet</span>,
+            <span class="ident">CardanoNetwork::MainNet</span>,
         );
 
         <span class="macro">assert_eq!</span>(
