@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkmithril_doc=self.webpackChunkmithril_doc||[]).push([[4912],{6302:function(t){t.exports=JSON.parse('{"title":"Getting Sarted Topics","slug":"/category/getting-started","permalink":"/doc/category/getting-started","navigation":{"next":{"title":"Welcome","permalink":"/doc/manual/getting-started/welcome"}}}')}}]);
