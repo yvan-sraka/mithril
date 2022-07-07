@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["apispec",""],["chain_observer",""],["crypto_helper",""],["digesters",""],["entities",""],["fake_data",""],["store",""]]});
+initSidebarItems({"constant":[["SIGNER_EPOCH_RETRIEVAL_OFFSET","The epoch offset used for signers stake distribution and verification keys retrieval"]],"mod":[["apispec",""],["chain_observer",""],["crypto_helper",""],["digesters",""],["entities",""],["fake_data",""],["store",""]]});
