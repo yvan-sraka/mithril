@@ -1297,9 +1297,6 @@
 <span id="1292">1292</span>
 <span id="1293">1293</span>
 <span id="1294">1294</span>
-<span id="1295">1295</span>
-<span id="1296">1296</span>
-<span id="1297">1297</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Top-level API for Mithril Stake-based Threshold Multisignature scheme.</span>
 <span class="doccomment">//! See figure 6 of [the paper](https://eprint.iacr.org/2021/916) for most of the</span>
 <span class="doccomment">//! protocol.</span>
@@ -1729,22 +1726,19 @@
             }
         }
 
-        <span class="kw">let</span> <span class="ident">aggregate_signature</span>: <span class="ident">Signature</span> <span class="op">=</span> <span class="self">self</span>
+        <span class="kw">let</span> <span class="ident">msg</span> <span class="op">=</span> <span class="ident">avk</span>.<span class="ident">mt_commitment</span>.<span class="ident">concat_with_msg</span>(<span class="ident">msg</span>);
+        <span class="kw">let</span> <span class="ident">signatures</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">signatures</span>
             .<span class="ident">iter</span>()
             .<span class="ident">map</span>(<span class="op">|</span><span class="ident">sig</span><span class="op">|</span> <span class="ident">sig</span>.<span class="ident">sigma</span>)
-            .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Signature</span><span class="op">&gt;</span><span class="op">&gt;</span>()
-            .<span class="ident">iter</span>()
-            .<span class="ident">sum</span>();
-        <span class="kw">let</span> <span class="ident">aggregate_mpk</span>: <span class="ident">StmVerificationKey</span> <span class="op">=</span> <span class="self">self</span>
+            .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Signature</span><span class="op">&gt;</span><span class="op">&gt;</span>();
+        <span class="kw">let</span> <span class="ident">vks</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">signatures</span>
             .<span class="ident">iter</span>()
             .<span class="ident">map</span>(<span class="op">|</span><span class="ident">sig</span><span class="op">|</span> <span class="ident">sig</span>.<span class="ident">pk</span>)
-            .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">StmVerificationKey</span><span class="op">&gt;</span><span class="op">&gt;</span>()
-            .<span class="ident">iter</span>()
-            .<span class="ident">sum</span>();
+            .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">VerificationKey</span><span class="op">&gt;</span><span class="op">&gt;</span>();
 
-        <span class="ident">aggregate_signature</span>.<span class="ident">verify</span>(<span class="kw-2">&amp;</span><span class="ident">avk</span>.<span class="ident">mt_commitment</span>.<span class="ident">concat_with_msg</span>(<span class="ident">msg</span>), <span class="kw-2">&amp;</span><span class="ident">aggregate_mpk</span>)<span class="question-mark">?</span>;
+        <span class="ident">Signature::verify_aggregate</span>(<span class="ident">msg</span>.<span class="ident">as_slice</span>(), <span class="kw-2">&amp;</span><span class="ident">vks</span>, <span class="kw-2">&amp;</span><span class="ident">signatures</span>)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
 
