@@ -1,1 +1,1 @@
-window.ALL_CRATES = ["mithril_aggregator"];
+window.ALL_CRATES = ["mithril_aggregator","mithril_client"];
