@@ -295,13 +295,40 @@
 <span id="290">290</span>
 <span id="291">291</span>
 <span id="292">292</span>
+<span id="293">293</span>
+<span id="294">294</span>
+<span id="295">295</span>
+<span id="296">296</span>
+<span id="297">297</span>
+<span id="298">298</span>
+<span id="299">299</span>
+<span id="300">300</span>
+<span id="301">301</span>
+<span id="302">302</span>
+<span id="303">303</span>
+<span id="304">304</span>
+<span id="305">305</span>
+<span id="306">306</span>
+<span id="307">307</span>
+<span id="308">308</span>
+<span id="309">309</span>
+<span id="310">310</span>
+<span id="311">311</span>
+<span id="312">312</span>
+<span id="313">313</span>
+<span id="314">314</span>
+<span id="315">315</span>
+<span id="316">316</span>
+<span id="317">317</span>
+<span id="318">318</span>
+<span id="319">319</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">hex::ToHex</span>;
 <span class="kw">use</span> <span class="ident">slog_scope::trace</span>;
 <span class="kw">use</span> <span class="ident">thiserror::Error</span>;
 
 <span class="kw">use</span> <span class="ident">mithril_common::crypto_helper</span>::{
-    <span class="ident">key_decode_hex</span>, <span class="ident">key_encode_hex</span>, <span class="ident">Bytes</span>, <span class="ident">ProtocolInitializer</span>, <span class="ident">ProtocolKeyRegistration</span>,
-    <span class="ident">ProtocolPartyId</span>, <span class="ident">ProtocolSigner</span>,
+    <span class="ident">key_decode_hex</span>, <span class="ident">key_encode_hex</span>, <span class="ident">Bytes</span>, <span class="ident">ProtocolClerk</span>, <span class="ident">ProtocolInitializer</span>,
+    <span class="ident">ProtocolKeyRegistration</span>, <span class="ident">ProtocolPartyId</span>, <span class="ident">ProtocolSigner</span>,
 };
 <span class="kw">use</span> <span class="ident">mithril_common::entities</span>::{<span class="self">self</span>, <span class="ident">PartyId</span>, <span class="ident">SignerWithStake</span>, <span class="ident">SingleSignatures</span>};
 
@@ -330,6 +357,12 @@
         <span class="ident">stakes</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">SignerWithStake</span><span class="op">&gt;</span>,
         <span class="ident">protocol_parameters</span>: <span class="kw-2">&amp;</span><span class="ident">entities::ProtocolParameters</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">SingleSignatures</span><span class="op">&gt;</span>, <span class="ident">SingleSignerError</span><span class="op">&gt;</span>;
+
+    <span class="doccomment">/// Compute aggregate verification key from stake distribution</span>
+    <span class="kw">fn</span> <span class="ident">compute_aggregate_verification_key</span>(
+        <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
+        <span class="ident">stakes</span>: <span class="kw-2">&amp;</span>[<span class="ident">SignerWithStake</span>],
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>, <span class="ident">SingleSignerError</span><span class="op">&gt;</span>;
 }
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Error</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>)]</span>
@@ -498,6 +531,23 @@
             <span class="prelude-val">None</span> =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
         }
     }
+
+    <span class="doccomment">/// Compute aggregate verification key from stake distribution</span>
+    <span class="kw">fn</span> <span class="ident">compute_aggregate_verification_key</span>(
+        <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
+        <span class="ident">stakes</span>: <span class="kw-2">&amp;</span>[<span class="ident">SignerWithStake</span>],
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>, <span class="ident">SingleSignerError</span><span class="op">&gt;</span> {
+        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">create_protocol_signer</span>(<span class="ident">stakes</span>) {
+            <span class="prelude-val">Ok</span>(<span class="ident">protocol_signer</span>) =&gt; {
+                <span class="kw">let</span> <span class="ident">clerk</span> <span class="op">=</span> <span class="ident">ProtocolClerk::from_signer</span>(<span class="kw-2">&amp;</span><span class="ident">protocol_signer</span>);
+                <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(
+                    <span class="ident">key_encode_hex</span>(<span class="ident">clerk</span>.<span class="ident">compute_avk</span>()).<span class="ident">map_err</span>(<span class="ident">SingleSignerError::Codec</span>)<span class="question-mark">?</span>,
+                ))
+            }
+            <span class="prelude-val">Err</span>(<span class="ident">SingleSignerError::ProtocolSignerCreationFailure</span>(<span class="kw">_</span>)) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
+            <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">e</span>),
+        }
+    }
 }
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
@@ -532,7 +582,7 @@
         );
 
         <span class="kw">let</span> <span class="ident">sign_result</span> <span class="op">=</span> <span class="ident">single_signer</span>.<span class="ident">compute_single_signatures</span>(
-            <span class="ident">message</span>.<span class="ident">as_bytes</span>().<span class="ident">to_vec</span>(),
+            <span class="ident">message</span>.<span class="ident">compute_hash</span>().<span class="ident">as_bytes</span>().<span class="ident">to_vec</span>(),
             <span class="ident">stakes</span>,
             <span class="kw-2">&amp;</span><span class="ident">protocol_parameters</span>.<span class="ident">into</span>(),
         );
@@ -571,7 +621,7 @@
         <span class="kw">let</span> <span class="ident">avk</span> <span class="op">=</span> <span class="ident">clerk</span>.<span class="ident">compute_avk</span>();
 
         <span class="kw">let</span> <span class="ident">sign_result</span> <span class="op">=</span> <span class="ident">single_signer</span>.<span class="ident">compute_single_signatures</span>(
-            <span class="ident">message</span>.<span class="ident">as_bytes</span>().<span class="ident">to_vec</span>(),
+            <span class="ident">message</span>.<span class="ident">compute_hash</span>().<span class="ident">as_bytes</span>().<span class="ident">to_vec</span>(),
             <span class="ident">stakes</span>,
             <span class="kw-2">&amp;</span><span class="ident">protocol_parameters</span>.<span class="ident">into</span>(),
         );
@@ -581,7 +631,11 @@
         <span class="kw">let</span> <span class="ident">decoded_sig</span>: <span class="ident">ProtocolSingleSignature</span> <span class="op">=</span>
             <span class="ident">key_decode_hex</span>(<span class="kw-2">&amp;</span><span class="ident">sign_result</span>.<span class="ident">unwrap</span>().<span class="ident">unwrap</span>().<span class="ident">signature</span>).<span class="ident">unwrap</span>();
         <span class="macro">assert!</span>(<span class="ident">decoded_sig</span>
-            .<span class="ident">verify</span>(<span class="kw-2">&amp;</span><span class="ident">protocol_parameters</span>, <span class="kw-2">&amp;</span><span class="ident">avk</span>, <span class="kw-2">&amp;</span><span class="ident">message</span>.<span class="ident">as_bytes</span>())
+            .<span class="ident">verify</span>(
+                <span class="kw-2">&amp;</span><span class="ident">protocol_parameters</span>,
+                <span class="kw-2">&amp;</span><span class="ident">avk</span>,
+                <span class="kw-2">&amp;</span><span class="ident">message</span>.<span class="ident">compute_hash</span>().<span class="ident">as_bytes</span>()
+            )
             .<span class="ident">is_ok</span>());
         <span class="comment">//TODO: decoded_sig.pk should probably be a StmVerificationKeyPoP, uncomment once fixed</span>
         <span class="comment">//assert_eq!(current_signer.2, decoded_sig.pk);</span>

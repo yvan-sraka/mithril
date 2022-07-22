@@ -68,13 +68,33 @@
 <span id="63">63</span>
 <span id="64">64</span>
 <span id="65">65</span>
+<span id="66">66</span>
+<span id="67">67</span>
+<span id="68">68</span>
+<span id="69">69</span>
+<span id="70">70</span>
+<span id="71">71</span>
+<span id="72">72</span>
+<span id="73">73</span>
+<span id="74">74</span>
+<span id="75">75</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">super</span>::types</span>::<span class="kw-2">*</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::entities</span>::{<span class="ident">ProtocolMessage</span>, <span class="ident">ProtocolMessagePartKey</span>};
 
 <span class="kw">use</span> <span class="ident">rand_chacha::ChaCha20Rng</span>;
 <span class="kw">use</span> <span class="ident">rand_core</span>::{<span class="ident">RngCore</span>, <span class="ident">SeedableRng</span>};
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">setup_message</span>() -&gt; <span class="ident">String</span> {
-    <span class="string">&quot;message_to_sign_123&quot;</span>.<span class="ident">to_string</span>()
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">setup_message</span>() -&gt; <span class="ident">ProtocolMessage</span> {
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">protocol_message</span> <span class="op">=</span> <span class="ident">ProtocolMessage::new</span>();
+    <span class="ident">protocol_message</span>.<span class="ident">set_message_part</span>(
+        <span class="ident">ProtocolMessagePartKey::SnapshotDigest</span>,
+        <span class="string">&quot;message_to_sign_123&quot;</span>.<span class="ident">to_string</span>(),
+    );
+    <span class="ident">protocol_message</span>.<span class="ident">set_message_part</span>(
+        <span class="ident">ProtocolMessagePartKey::NextAggregateVerificationKey</span>,
+        <span class="string">&quot;next-avk-123&quot;</span>.<span class="ident">to_string</span>(),
+    );
+    <span class="ident">protocol_message</span>
 }
 
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">setup_protocol_parameters</span>() -&gt; <span class="ident">ProtocolParameters</span> {

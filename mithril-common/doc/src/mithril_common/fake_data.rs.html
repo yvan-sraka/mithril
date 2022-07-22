@@ -177,13 +177,31 @@
 <span id="172">172</span>
 <span id="173">173</span>
 <span id="174">174</span>
-</pre><pre class="rust"><code><span class="attribute">#![<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span>
-
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::digesters::DigesterResult</span>;
+<span id="175">175</span>
+<span id="176">176</span>
+<span id="177">177</span>
+<span id="178">178</span>
+<span id="179">179</span>
+<span id="180">180</span>
+<span id="181">181</span>
+<span id="182">182</span>
+<span id="183">183</span>
+<span id="184">184</span>
+<span id="185">185</span>
+<span id="186">186</span>
+<span id="187">187</span>
+<span id="188">188</span>
+<span id="189">189</span>
+<span id="190">190</span>
+<span id="191">191</span>
+<span id="192">192</span>
+</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::digesters::DigesterResult</span>;
 <span class="kw">use</span> <span class="ident">std::time</span>::{<span class="ident">SystemTime</span>, <span class="ident">UNIX_EPOCH</span>};
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::entities</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::entities</span>::{<span class="ident">LotteryIndex</span>, <span class="ident">SingleSignatures</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::entities</span>::{
+    <span class="ident">CertificateMetadata</span>, <span class="ident">LotteryIndex</span>, <span class="ident">ProtocolMessage</span>, <span class="ident">ProtocolMessagePartKey</span>, <span class="ident">SingleSignatures</span>,
+};
+<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">crypto_helper</span>, <span class="ident">entities</span>};
 
 <span class="doccomment">/// Fake Beacon</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">beacon</span>() -&gt; <span class="ident">entities::Beacon</span> {
@@ -250,23 +268,41 @@
     <span class="comment">// Signers with stakes</span>
     <span class="kw">let</span> <span class="ident">signers</span> <span class="op">=</span> <span class="ident">signers_with_stakes</span>(<span class="number">5</span>);
 
+    <span class="comment">// Certificate metadata</span>
+    <span class="kw">let</span> <span class="ident">protocol_version</span> <span class="op">=</span> <span class="ident">crypto_helper::PROTOCOL_VERSION</span>.<span class="ident">to_string</span>();
+    <span class="kw">let</span> <span class="ident">initiated_at</span> <span class="op">=</span> <span class="string">&quot;2006-01-02T15:04:05Z&quot;</span>.<span class="ident">to_string</span>();
+    <span class="kw">let</span> <span class="ident">sealed_at</span> <span class="op">=</span> <span class="string">&quot;2006-01-02T15:04:05Z&quot;</span>.<span class="ident">to_string</span>();
+    <span class="kw">let</span> <span class="ident">metadata</span> <span class="op">=</span> <span class="ident">CertificateMetadata::new</span>(
+        <span class="ident">protocol_version</span>,
+        <span class="ident">protocol_parameters</span>,
+        <span class="ident">initiated_at</span>,
+        <span class="ident">sealed_at</span>,
+        <span class="ident">signers</span>,
+    );
+
+    <span class="comment">// Protocol message</span>
+    <span class="kw">let</span> <span class="ident">next_aggregate_verification_key</span> <span class="op">=</span> <span class="string">&quot;next-avk-123&quot;</span>.<span class="ident">to_string</span>();
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">protocol_message</span> <span class="op">=</span> <span class="ident">ProtocolMessage::new</span>();
+    <span class="kw">let</span> <span class="ident">snapshot_digest</span> <span class="op">=</span> <span class="macro">format!</span>(<span class="string">&quot;1{}&quot;</span>, <span class="ident">beacon</span>.<span class="ident">immutable_file_number</span>).<span class="ident">repeat</span>(<span class="number">20</span>);
+    <span class="ident">protocol_message</span>.<span class="ident">set_message_part</span>(<span class="ident">ProtocolMessagePartKey::SnapshotDigest</span>, <span class="ident">snapshot_digest</span>);
+    <span class="ident">protocol_message</span>.<span class="ident">set_message_part</span>(
+        <span class="ident">ProtocolMessagePartKey::NextAggregateVerificationKey</span>,
+        <span class="ident">next_aggregate_verification_key</span>,
+    );
+
     <span class="comment">// Certificate</span>
     <span class="kw">let</span> <span class="ident">previous_hash</span> <span class="op">=</span> <span class="macro">format!</span>(<span class="string">&quot;{}0&quot;</span>, <span class="ident">certificate_hash</span>);
-    <span class="kw">let</span> <span class="ident">digest</span> <span class="op">=</span> <span class="macro">format!</span>(<span class="string">&quot;1{}&quot;</span>, <span class="ident">beacon</span>.<span class="ident">immutable_file_number</span>).<span class="ident">repeat</span>(<span class="number">20</span>);
-    <span class="kw">let</span> <span class="ident">started_at</span> <span class="op">=</span> <span class="string">&quot;2006-01-02T15:04:05Z&quot;</span>.<span class="ident">to_string</span>();
-    <span class="kw">let</span> <span class="ident">completed_at</span> <span class="op">=</span> <span class="string">&quot;2006-01-02T15:04:05Z&quot;</span>.<span class="ident">to_string</span>();
     <span class="kw">let</span> <span class="ident">aggregate_verification_key</span> <span class="op">=</span> <span class="macro">format!</span>(<span class="string">&quot;AVK{}&quot;</span>, <span class="ident">beacon</span>.<span class="ident">immutable_file_number</span>).<span class="ident">repeat</span>(<span class="number">5</span>);
-    <span class="kw">let</span> <span class="ident">multisignature</span> <span class="op">=</span> <span class="macro">format!</span>(<span class="string">&quot;MSIG{}&quot;</span>, <span class="ident">beacon</span>.<span class="ident">immutable_file_number</span>).<span class="ident">repeat</span>(<span class="number">200</span>);
+    <span class="kw">let</span> <span class="ident">multi_signature</span> <span class="op">=</span> <span class="macro">format!</span>(<span class="string">&quot;MSIG{}&quot;</span>, <span class="ident">beacon</span>.<span class="ident">immutable_file_number</span>).<span class="ident">repeat</span>(<span class="number">200</span>);
+    <span class="kw">let</span> <span class="ident">genesis_signature</span> <span class="op">=</span> <span class="string">&quot;&quot;</span>.<span class="ident">to_string</span>();
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">certificate</span> <span class="op">=</span> <span class="ident">entities::Certificate::new</span>(
         <span class="ident">previous_hash</span>,
         <span class="ident">beacon</span>,
-        <span class="ident">protocol_parameters</span>,
-        <span class="ident">digest</span>,
-        <span class="ident">started_at</span>,
-        <span class="ident">completed_at</span>,
-        <span class="ident">signers</span>,
+        <span class="ident">metadata</span>,
+        <span class="ident">protocol_message</span>,
         <span class="ident">aggregate_verification_key</span>,
-        <span class="ident">multisignature</span>,
+        <span class="ident">multi_signature</span>,
+        <span class="ident">genesis_signature</span>,
     );
     <span class="ident">certificate</span>.<span class="ident">hash</span> <span class="op">=</span> <span class="ident">certificate_hash</span>;
     <span class="ident">certificate</span>

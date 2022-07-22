@@ -470,17 +470,56 @@
 <span id="465">465</span>
 <span id="466">466</span>
 <span id="467">467</span>
+<span id="468">468</span>
+<span id="469">469</span>
+<span id="470">470</span>
+<span id="471">471</span>
+<span id="472">472</span>
+<span id="473">473</span>
+<span id="474">474</span>
+<span id="475">475</span>
+<span id="476">476</span>
+<span id="477">477</span>
+<span id="478">478</span>
+<span id="479">479</span>
+<span id="480">480</span>
+<span id="481">481</span>
+<span id="482">482</span>
+<span id="483">483</span>
+<span id="484">484</span>
+<span id="485">485</span>
+<span id="486">486</span>
+<span id="487">487</span>
+<span id="488">488</span>
+<span id="489">489</span>
+<span id="490">490</span>
+<span id="491">491</span>
+<span id="492">492</span>
+<span id="493">493</span>
+<span id="494">494</span>
+<span id="495">495</span>
+<span id="496">496</span>
+<span id="497">497</span>
+<span id="498">498</span>
+<span id="499">499</span>
+<span id="500">500</span>
+<span id="501">501</span>
+<span id="502">502</span>
+<span id="503">503</span>
+<span id="504">504</span>
+<span id="505">505</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std::path::PathBuf</span>;
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::snapshot_uploaders::SnapshotLocation</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">DependencyManager</span>, <span class="ident">SnapshotError</span>, <span class="ident">Snapshotter</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">DependencyManager</span>, <span class="ident">ProtocolError</span>, <span class="ident">SnapshotError</span>, <span class="ident">Snapshotter</span>};
 <span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
 <span class="kw">use</span> <span class="ident">chrono::Utc</span>;
+<span class="kw">use</span> <span class="ident">mithril_common::crypto_helper::ProtocolStakeDistribution</span>;
 <span class="kw">use</span> <span class="ident">mithril_common::digesters::DigesterResult</span>;
 <span class="kw">use</span> <span class="ident">mithril_common::entities</span>::{
-    <span class="ident">Beacon</span>, <span class="ident">Certificate</span>, <span class="ident">CertificatePending</span>, <span class="ident">SignerWithStake</span>, <span class="ident">Snapshot</span>,
+    <span class="ident">Beacon</span>, <span class="ident">Certificate</span>, <span class="ident">CertificatePending</span>, <span class="ident">ProtocolMessage</span>, <span class="ident">ProtocolMessagePartKey</span>, <span class="ident">Snapshot</span>,
 };
-<span class="kw">use</span> <span class="ident">mithril_common</span>::{<span class="ident">store::stake_store::StakeStorer</span>, <span class="ident">CardanoNetwork</span>};
+<span class="kw">use</span> <span class="ident">mithril_common::CardanoNetwork</span>;
 
 <span class="kw">use</span> <span class="ident">slog_scope</span>::{<span class="ident">debug</span>, <span class="ident">error</span>, <span class="ident">info</span>, <span class="ident">trace</span>};
 <span class="kw">use</span> <span class="ident">std::path::Path</span>;
@@ -705,24 +744,20 @@
             .<span class="ident">get_current_stake_distribution</span>()
             .<span class="kw">await</span><span class="question-mark">?</span>
             .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">RuntimeError::General</span>(<span class="string">&quot;no epoch was returned&quot;</span>.<span class="ident">to_string</span>().<span class="ident">into</span>()))<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">stake_store</span> <span class="op">=</span> <span class="self">self</span>
+        <span class="kw">let</span> <span class="ident">stake_distribution</span> <span class="op">=</span> <span class="ident">stake_distribution</span>
+            .<span class="ident">iter</span>()
+            .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">party_id</span>, <span class="ident">stake</span>)<span class="op">|</span> (<span class="ident">party_id</span>.<span class="ident">to_owned</span>(), <span class="kw-2">*</span><span class="ident">stake</span>))
+            .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">ProtocolStakeDistribution</span><span class="op">&gt;</span>();
+        <span class="prelude-val">Ok</span>(<span class="self">self</span>
             .<span class="ident">config</span>
             .<span class="ident">dependencies</span>
-            .<span class="ident">stake_store</span>
+            .<span class="ident">multi_signer</span>
             .<span class="ident">as_ref</span>()
-            .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">RuntimeError::General</span>(<span class="string">&quot;no stake store registered&quot;</span>.<span class="ident">to_string</span>().<span class="ident">into</span>()))<span class="question-mark">?</span>
+            .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">RuntimeError::General</span>(<span class="string">&quot;no multisigner registered&quot;</span>.<span class="ident">to_string</span>().<span class="ident">into</span>()))<span class="question-mark">?</span>
             .<span class="ident">write</span>()
-            .<span class="kw">await</span>;
-
-        <span class="kw">for</span> (<span class="ident">party_id</span>, <span class="ident">stake</span>) <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="ident">stake_distribution</span> {
-            <span class="ident">stake_store</span>
-                .<span class="ident">save_stake</span>(
-                    <span class="ident">new_beacon</span>.<span class="ident">epoch</span>,
-                    <span class="ident">SignerWithStake::new</span>(<span class="ident">party_id</span>.<span class="ident">to_owned</span>(), <span class="string">&quot;&quot;</span>.<span class="ident">to_string</span>(), <span class="kw-2">*</span><span class="ident">stake</span>),
-                )
-                .<span class="kw">await</span><span class="question-mark">?</span>;
-        }
-        <span class="prelude-val">Ok</span>(())
+            .<span class="kw">await</span>
+            .<span class="ident">update_stake_distribution</span>(<span class="kw-2">&amp;</span><span class="ident">stake_distribution</span>)
+            .<span class="kw">await</span><span class="question-mark">?</span>)
     }
 
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">create_new_pending_certificate_from_multisigner</span>(
@@ -740,6 +775,11 @@
             .<span class="kw">await</span>;
 
         <span class="macro">debug!</span>(<span class="string">&quot;creating certificate pending using multisigner&quot;</span>);
+        <span class="kw">let</span> <span class="ident">signers</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">multi_signer</span>.<span class="ident">get_signers</span>().<span class="kw">await</span> {
+            <span class="prelude-val">Ok</span>(<span class="ident">signers</span>) =&gt; <span class="ident">signers</span>,
+            <span class="prelude-val">Err</span>(<span class="ident">ProtocolError::Beacon</span>(<span class="kw">_</span>)) =&gt; <span class="macro">vec!</span>[],
+            <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>.<span class="ident">into</span>()),
+        };
         <span class="kw">let</span> <span class="ident">pending_certificate</span> <span class="op">=</span> <span class="ident">CertificatePending::new</span>(
             <span class="ident">beacon</span>,
             <span class="ident">multi_signer</span>
@@ -747,7 +787,7 @@
                 .<span class="kw">await</span>
                 .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">RuntimeError::General</span>(<span class="string">&quot;no protocol parameters&quot;</span>.<span class="ident">to_string</span>().<span class="ident">into</span>()))<span class="question-mark">?</span>
                 .<span class="ident">into</span>(),
-            <span class="ident">multi_signer</span>.<span class="ident">get_signers</span>().<span class="kw">await</span><span class="question-mark">?</span>,
+            <span class="ident">signers</span>,
         );
 
         <span class="prelude-val">Ok</span>(<span class="ident">pending_certificate</span>)
@@ -778,15 +818,27 @@
         <span class="ident">digest_result</span>: <span class="ident">DigesterResult</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">RuntimeError</span><span class="op">&gt;</span> {
         <span class="macro">info!</span>(<span class="string">&quot;update message in multisigner&quot;</span>);
-
-        <span class="self">self</span>.<span class="ident">config</span>
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">multi_signer</span> <span class="op">=</span> <span class="self">self</span>
+            .<span class="ident">config</span>
             .<span class="ident">dependencies</span>
             .<span class="ident">multi_signer</span>
             .<span class="ident">as_ref</span>()
             .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">RuntimeError::General</span>(<span class="string">&quot;no multisigner registered&quot;</span>.<span class="ident">to_string</span>().<span class="ident">into</span>()))<span class="question-mark">?</span>
             .<span class="ident">write</span>()
-            .<span class="kw">await</span>
-            .<span class="ident">update_current_message</span>(<span class="ident">digest_result</span>.<span class="ident">digest</span>)
+            .<span class="kw">await</span>;
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">protocol_message</span> <span class="op">=</span> <span class="ident">ProtocolMessage::new</span>();
+        <span class="ident">protocol_message</span>
+            .<span class="ident">set_message_part</span>(<span class="ident">ProtocolMessagePartKey::SnapshotDigest</span>, <span class="ident">digest_result</span>.<span class="ident">digest</span>);
+        <span class="ident">protocol_message</span>.<span class="ident">set_message_part</span>(
+            <span class="ident">ProtocolMessagePartKey::NextAggregateVerificationKey</span>,
+            <span class="ident">multi_signer</span>
+                .<span class="ident">compute_next_stake_distribution_aggregate_verification_key</span>()
+                .<span class="kw">await</span>
+                .<span class="ident">map_err</span>(<span class="ident">RuntimeError::MultiSigner</span>)<span class="question-mark">?</span>
+                .<span class="ident">unwrap_or_default</span>(),
+        );
+        <span class="ident">multi_signer</span>
+            .<span class="ident">update_current_message</span>(<span class="ident">protocol_message</span>)
             .<span class="kw">await</span>
             .<span class="ident">map_err</span>(<span class="ident">RuntimeError::MultiSigner</span>)
     }
@@ -824,7 +876,7 @@
             <span class="self">self</span>.<span class="ident">config</span>.<span class="ident">db_directory</span>.<span class="ident">clone</span>(),
             <span class="self">self</span>.<span class="ident">config</span>.<span class="ident">snapshot_directory</span>.<span class="ident">clone</span>(),
         );
-        <span class="kw">let</span> <span class="ident">message</span> <span class="op">=</span> <span class="self">self</span>
+        <span class="kw">let</span> <span class="ident">protocol_message</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">config</span>
             .<span class="ident">dependencies</span>
             .<span class="ident">multi_signer</span>
@@ -835,7 +887,12 @@
             .<span class="ident">get_current_message</span>()
             .<span class="kw">await</span>
             .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">RuntimeError::General</span>(<span class="string">&quot;no message found&quot;</span>.<span class="ident">to_string</span>().<span class="ident">into</span>()))<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">snapshot_name</span> <span class="op">=</span> <span class="macro">format!</span>(<span class="string">&quot;{}.{}.tar.gz&quot;</span>, <span class="self">self</span>.<span class="ident">config</span>.<span class="ident">network</span>, <span class="kw-2">&amp;</span><span class="ident">message</span>);
+        <span class="kw">let</span> <span class="ident">snapshot_digest</span> <span class="op">=</span> <span class="ident">protocol_message</span>
+            .<span class="ident">get_message_part</span>(<span class="kw-2">&amp;</span><span class="ident">ProtocolMessagePartKey::SnapshotDigest</span>)
+            .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> {
+                <span class="ident">RuntimeError::General</span>(<span class="string">&quot;no snapshot digest message part found&quot;</span>.<span class="ident">to_string</span>().<span class="ident">into</span>())
+            })<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">snapshot_name</span> <span class="op">=</span> <span class="macro">format!</span>(<span class="string">&quot;{}.{}.tar.gz&quot;</span>, <span class="self">self</span>.<span class="ident">config</span>.<span class="ident">network</span>, <span class="ident">snapshot_digest</span>);
         <span class="comment">// spawn a separate thread to prevent blocking</span>
         <span class="kw">let</span> <span class="ident">snapshot_path</span> <span class="op">=</span>
             <span class="ident">tokio::task::spawn_blocking</span>(<span class="kw">move</span> <span class="op">|</span><span class="op">|</span> -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">PathBuf</span>, <span class="ident">SnapshotError</span><span class="op">&gt;</span> {
@@ -854,6 +911,31 @@
         <span class="ident">beacon</span>: <span class="kw-2">&amp;</span><span class="ident">Beacon</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Certificate</span>, <span class="ident">RuntimeError</span><span class="op">&gt;</span> {
         <span class="macro">info!</span>(<span class="string">&quot;create and save certificate&quot;</span>);
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">certificate_store</span> <span class="op">=</span> <span class="self">self</span>
+            .<span class="ident">config</span>
+            .<span class="ident">dependencies</span>
+            .<span class="ident">certificate_store</span>
+            .<span class="ident">as_ref</span>()
+            .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> {
+                <span class="ident">RuntimeError::General</span>(<span class="string">&quot;no certificate store registered&quot;</span>.<span class="ident">to_string</span>().<span class="ident">into</span>())
+            })<span class="question-mark">?</span>
+            .<span class="ident">write</span>()
+            .<span class="kw">await</span>;
+        <span class="kw">let</span> <span class="ident">latest_certificates</span> <span class="op">=</span> <span class="ident">certificate_store</span>.<span class="ident">get_list</span>(<span class="number">2</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">last_certificate</span> <span class="op">=</span> <span class="ident">latest_certificates</span>.<span class="ident">get</span>(<span class="number">0</span>);
+        <span class="kw">let</span> <span class="ident">penultimate_certificate</span> <span class="op">=</span> <span class="ident">latest_certificates</span>.<span class="ident">get</span>(<span class="number">1</span>);
+        <span class="kw">let</span> <span class="ident">previous_hash</span> <span class="op">=</span> <span class="kw">match</span> (<span class="ident">penultimate_certificate</span>, <span class="ident">last_certificate</span>) {
+            (<span class="prelude-val">Some</span>(<span class="ident">penultimate_certificate</span>), <span class="prelude-val">Some</span>(<span class="ident">last_certificate</span>)) =&gt; {
+                <span class="comment">// Check if last certificate is first certificate of its epoch</span>
+                <span class="kw">if</span> <span class="ident">penultimate_certificate</span>.<span class="ident">beacon</span>.<span class="ident">epoch</span> <span class="op">!</span><span class="op">=</span> <span class="ident">last_certificate</span>.<span class="ident">beacon</span>.<span class="ident">epoch</span> {
+                    <span class="kw-2">&amp;</span><span class="ident">last_certificate</span>.<span class="ident">hash</span>
+                } <span class="kw">else</span> {
+                    <span class="kw-2">&amp;</span><span class="ident">last_certificate</span>.<span class="ident">previous_hash</span>
+                }
+            }
+            (<span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(<span class="ident">last_certificate</span>)) =&gt; <span class="kw-2">&amp;</span><span class="ident">last_certificate</span>.<span class="ident">hash</span>,
+            <span class="kw">_</span> =&gt; <span class="string">&quot;&quot;</span>,
+        };
         <span class="kw">let</span> <span class="ident">multisigner</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">config</span>
             .<span class="ident">dependencies</span>
@@ -863,21 +945,10 @@
             .<span class="ident">read</span>()
             .<span class="kw">await</span>;
         <span class="kw">let</span> <span class="ident">certificate</span> <span class="op">=</span> <span class="ident">multisigner</span>
-            .<span class="ident">create_certificate</span>(<span class="ident">beacon</span>.<span class="ident">clone</span>(), <span class="string">&quot;&quot;</span>.<span class="ident">to_string</span>()) <span class="comment">// TODO: The certificate will be created slightly differently in order to implement fully the certificate chain. In the mean time, just removed the unused reference to &#39;previous_hash&#39; in pending certificate</span>
+            .<span class="ident">create_certificate</span>(<span class="ident">beacon</span>.<span class="ident">clone</span>(), <span class="ident">previous_hash</span>.<span class="ident">to_owned</span>())
             .<span class="kw">await</span><span class="question-mark">?</span>
             .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">RuntimeError::General</span>(<span class="string">&quot;no certificate generated&quot;</span>.<span class="ident">to_string</span>().<span class="ident">into</span>()))<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="self">self</span>
-            .<span class="ident">config</span>
-            .<span class="ident">dependencies</span>
-            .<span class="ident">certificate_store</span>
-            .<span class="ident">as_ref</span>()
-            .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> {
-                <span class="ident">RuntimeError::General</span>(<span class="string">&quot;no certificate store registered&quot;</span>.<span class="ident">to_string</span>().<span class="ident">into</span>())
-            })<span class="question-mark">?</span>
-            .<span class="ident">write</span>()
-            .<span class="kw">await</span>
-            .<span class="ident">save</span>(<span class="ident">certificate</span>.<span class="ident">clone</span>())
-            .<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="ident">certificate_store</span>.<span class="ident">save</span>(<span class="ident">certificate</span>.<span class="ident">clone</span>()).<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(<span class="ident">certificate</span>)
     }
@@ -910,8 +981,13 @@
         <span class="ident">file_path</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>,
         <span class="ident">remote_locations</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Snapshot</span>, <span class="ident">RuntimeError</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">snapshot_digest</span> <span class="op">=</span> <span class="ident">certificate</span>
+            .<span class="ident">protocol_message</span>
+            .<span class="ident">get_message_part</span>(<span class="kw-2">&amp;</span><span class="ident">ProtocolMessagePartKey::SnapshotDigest</span>)
+            .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">RuntimeError::General</span>(<span class="string">&quot;message part not found&quot;</span>.<span class="ident">to_string</span>().<span class="ident">into</span>()))<span class="question-mark">?</span>
+            .<span class="ident">to_owned</span>();
         <span class="kw">let</span> <span class="ident">snapshot</span> <span class="op">=</span> <span class="ident">Snapshot::new</span>(
-            <span class="ident">certificate</span>.<span class="ident">digest</span>,
+            <span class="ident">snapshot_digest</span>,
             <span class="ident">certificate</span>.<span class="ident">beacon</span>,
             <span class="ident">certificate</span>.<span class="ident">hash</span>,
             <span class="ident">std::fs::metadata</span>(<span class="ident">file_path</span>)
