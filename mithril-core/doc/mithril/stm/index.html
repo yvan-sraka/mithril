@@ -4,13 +4,13 @@
     </nav>
     <nav class="sidebar"><a class="sidebar-logo" href="../../mithril/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
         </a><h2 class="location"><a href="#">Module stm</a></h2><div class="sidebar-elems"><section><div class="block"><ul><li><a href="#structs">Structs</a></li><li><a href="#types">Type Definitions</a></li></ul></div></section><div id="sidebar-vars" data-name="stm" data-ty="mod" data-relpath="./"></div><script defer src="./sidebar-items.js"></script></div></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../mithril/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="main-heading">
-    <h1 class="fqn"><span class="in-band">Module <a href="../index.html">mithril</a>::<wbr><a class="mod" href="#">stm</a><button id="copy-path" onclick="copy_path(this)" title="Copy item path to clipboard"><img src="../../clipboard.svg" width="19" height="18" alt="Copy item path"></button></span></h1><span class="out-of-band"><a class="srclink" href="../../src/mithril/stm.rs.html#1-1294">source</a> · <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span></div><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Top-level API for Mithril Stake-based Threshold Multisignature scheme.
+    <h1 class="fqn"><span class="in-band">Module <a href="../index.html">mithril</a>::<wbr><a class="mod" href="#">stm</a><button id="copy-path" onclick="copy_path(this)" title="Copy item path to clipboard"><img src="../../clipboard.svg" width="19" height="18" alt="Copy item path"></button></span></h1><span class="out-of-band"><a class="srclink" href="../../src/mithril/stm.rs.html#1-1343">source</a> · <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span></div><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Top-level API for Mithril Stake-based Threshold Multisignature scheme.
 See figure 6 of <a href="https://eprint.iacr.org/2021/916">the paper</a> for most of the
 protocol.</p>
 <p>What follows is a simple example showing the usage of STM.</p>
 
 <div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use</span> <span class="ident">mithril::key_reg::KeyReg</span>; <span class="comment">// Import key registration functionality</span>
-<span class="kw">use</span> <span class="ident">mithril::stm</span>::{<span class="ident">StmClerk</span>, <span class="ident">StmInitializer</span>, <span class="ident">StmParameters</span>, <span class="ident">StmSigner</span>};
+<span class="kw">use</span> <span class="ident">mithril::stm</span>::{<span class="ident">StmClerk</span>, <span class="ident">StmInitializer</span>, <span class="ident">StmParameters</span>, <span class="ident">StmSig</span>, <span class="ident">StmSigner</span>};
 <span class="kw">use</span> <span class="ident">mithril::error::AggregationFailure</span>;
 <span class="kw">use</span> <span class="ident">rayon::prelude</span>::<span class="kw-2">*</span>; <span class="comment">// We use par_iter to speed things up</span>
 
@@ -79,34 +79,18 @@ protocol.</p>
 
 <span class="comment">// Next, each party tries to sign the message for each index available.</span>
 <span class="comment">// We collect the successful signatures into a vec.</span>
-<span class="kw">let</span> <span class="ident">p_results</span> <span class="op">=</span> <span class="ident">ps</span>
+<span class="kw">let</span> <span class="ident">sigs</span> <span class="op">=</span> <span class="ident">ps</span>
     .<span class="ident">par_iter</span>()
-    .<span class="ident">map</span>(<span class="op">|</span><span class="ident">p</span><span class="op">|</span> {
-        <span class="comment">// Now for party p we try to sign the msg with each index.</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">sigs</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ixs</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
-        <span class="kw">for</span> <span class="ident">ix</span> <span class="kw">in</span> <span class="number">1</span>..<span class="ident">params</span>.<span class="ident">m</span> {
-            <span class="comment">// If party p wins the lottery for index ix, then sign the message</span>
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">sig</span>) <span class="op">=</span> <span class="ident">p</span>.<span class="ident">sign</span>(<span class="kw-2">&amp;</span><span class="ident">msg</span>, <span class="ident">ix</span>) {
-                <span class="ident">sigs</span>.<span class="ident">push</span>(<span class="ident">sig</span>);
-                <span class="ident">ixs</span>.<span class="ident">push</span>(<span class="ident">ix</span>);
-            }
-        }
-        (<span class="ident">ixs</span>, <span class="ident">sigs</span>)
+    .<span class="ident">filter_map</span>(<span class="op">|</span><span class="ident">p</span><span class="op">|</span> {
+        <span class="kw">return</span> <span class="ident">p</span>.<span class="ident">sign</span>(<span class="kw-2">&amp;</span><span class="ident">msg</span>);
     })
-    .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
-<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">sigs</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
-<span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ixs</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
-<span class="kw">for</span> <span class="ident">res</span> <span class="kw">in</span> <span class="ident">p_results</span> {
-    <span class="ident">ixs</span>.<span class="ident">extend</span>(<span class="ident">res</span>.<span class="number">0</span>);
-    <span class="ident">sigs</span>.<span class="ident">extend</span>(<span class="ident">res</span>.<span class="number">1</span>);
-}
+    .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">StmSig</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>();
 
 <span class="comment">// StmClerk can aggregate and verify signatures.</span>
 <span class="kw">let</span> <span class="ident">clerk</span> <span class="op">=</span> <span class="ident">StmClerk::from_signer</span>(<span class="kw-2">&amp;</span><span class="ident">ps</span>[<span class="number">0</span>]);
 
 <span class="comment">// Aggregate and verify the signatures</span>
-<span class="kw">let</span> <span class="ident">msig</span> <span class="op">=</span> <span class="ident">clerk</span>.<span class="ident">aggregate</span>(<span class="kw-2">&amp;</span><span class="ident">sigs</span>,<span class="kw-2">&amp;</span><span class="ident">msg</span>);
+<span class="kw">let</span> <span class="ident">msig</span> <span class="op">=</span> <span class="ident">clerk</span>.<span class="ident">aggregate</span>(<span class="kw-2">&amp;</span><span class="ident">sigs</span>, <span class="kw-2">&amp;</span><span class="ident">msg</span>);
 <span class="kw">match</span> <span class="ident">msig</span> {
     <span class="prelude-val">Ok</span>(<span class="ident">aggr</span>) =&gt; {
         <span class="macro">println!</span>(<span class="string">&quot;Aggregate ok&quot;</span>);

@@ -315,13 +315,6 @@
 <span id="310">310</span>
 <span id="311">311</span>
 <span id="312">312</span>
-<span id="313">313</span>
-<span id="314">314</span>
-<span id="315">315</span>
-<span id="316">316</span>
-<span id="317">317</span>
-<span id="318">318</span>
-<span id="319">319</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">hex::ToHex</span>;
 <span class="kw">use</span> <span class="ident">slog_scope::trace</span>;
 <span class="kw">use</span> <span class="ident">thiserror::Error</span>;
@@ -504,30 +497,23 @@
             <span class="ident">message</span>.<span class="ident">encode_hex</span>::<span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>()
         );
 
-        <span class="comment">// todo: update this when mithril core SingleSignature store all the won indexes</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">first_won_signature</span> <span class="op">=</span> <span class="prelude-val">None</span>;
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">won_indexes</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
+        <span class="kw">match</span> <span class="ident">protocol_signer</span>.<span class="ident">sign</span>(<span class="kw-2">&amp;</span><span class="ident">message</span>) {
+            <span class="prelude-val">Some</span>(<span class="ident">signature</span>) =&gt; {
+                <span class="macro">trace!</span>(
+                    <span class="string">&quot;Party #{}: lottery #{:?} won&quot;</span>,
+                    <span class="self">self</span>.<span class="ident">party_id</span>,
+                    <span class="kw-2">&amp;</span><span class="ident">signature</span>.<span class="ident">indexes</span>
+                );
+                <span class="kw">let</span> <span class="ident">encoded_signature</span> <span class="op">=</span>
+                    <span class="ident">key_encode_hex</span>(<span class="kw-2">&amp;</span><span class="ident">signature</span>).<span class="ident">map_err</span>(<span class="ident">SingleSignerError::Codec</span>)<span class="question-mark">?</span>;
+                <span class="kw">let</span> <span class="ident">won_indexes</span> <span class="op">=</span> <span class="ident">signature</span>.<span class="ident">indexes</span>;
 
-        <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">1</span>..<span class="op">=</span><span class="ident">protocol_parameters</span>.<span class="ident">m</span> {
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">signature</span>) <span class="op">=</span> <span class="ident">protocol_signer</span>.<span class="ident">sign</span>(<span class="kw-2">&amp;</span><span class="ident">message</span>, <span class="ident">i</span>) {
-                <span class="macro">trace!</span>(<span class="string">&quot;Party #{}: lottery #{} won&quot;</span>, <span class="self">self</span>.<span class="ident">party_id</span>, <span class="ident">i</span>,);
-
-                <span class="kw">if</span> <span class="ident">first_won_signature</span>.<span class="ident">is_none</span>() {
-                    <span class="kw">let</span> <span class="ident">encoded_signature</span> <span class="op">=</span>
-                        <span class="ident">key_encode_hex</span>(<span class="kw-2">&amp;</span><span class="ident">signature</span>).<span class="ident">map_err</span>(<span class="ident">SingleSignerError::Codec</span>)<span class="question-mark">?</span>;
-                    <span class="ident">first_won_signature</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">encoded_signature</span>);
-                }
-
-                <span class="ident">won_indexes</span>.<span class="ident">push</span>(<span class="ident">i</span>);
+                <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">SingleSignatures::new</span>(
+                    <span class="self">self</span>.<span class="ident">party_id</span>.<span class="ident">clone</span>(),
+                    <span class="ident">encoded_signature</span>,
+                    <span class="ident">won_indexes</span>,
+                )))
             }
-        }
-
-        <span class="kw">match</span> <span class="ident">first_won_signature</span> {
-            <span class="prelude-val">Some</span>(<span class="ident">encoded_signature</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">SingleSignatures::new</span>(
-                <span class="self">self</span>.<span class="ident">party_id</span>.<span class="ident">clone</span>(),
-                <span class="ident">encoded_signature</span>,
-                <span class="ident">won_indexes</span>,
-            ))),
             <span class="prelude-val">None</span> =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
         }
     }
