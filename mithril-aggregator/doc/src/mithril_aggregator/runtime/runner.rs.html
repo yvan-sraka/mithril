@@ -725,9 +725,33 @@
 <span id="720">720</span>
 <span id="721">721</span>
 <span id="722">722</span>
+<span id="723">723</span>
+<span id="724">724</span>
+<span id="725">725</span>
+<span id="726">726</span>
+<span id="727">727</span>
+<span id="728">728</span>
+<span id="729">729</span>
+<span id="730">730</span>
+<span id="731">731</span>
+<span id="732">732</span>
+<span id="733">733</span>
+<span id="734">734</span>
+<span id="735">735</span>
+<span id="736">736</span>
+<span id="737">737</span>
+<span id="738">738</span>
+<span id="739">739</span>
+<span id="740">740</span>
+<span id="741">741</span>
+<span id="742">742</span>
+<span id="743">743</span>
+<span id="744">744</span>
+<span id="745">745</span>
+<span id="746">746</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
 <span class="kw">use</span> <span class="ident">chrono::Utc</span>;
-<span class="kw">use</span> <span class="ident">slog_scope</span>::{<span class="ident">debug</span>, <span class="ident">error</span>, <span class="ident">info</span>, <span class="ident">trace</span>};
+<span class="kw">use</span> <span class="ident">slog_scope</span>::{<span class="ident">debug</span>, <span class="ident">error</span>, <span class="ident">info</span>, <span class="ident">trace</span>, <span class="ident">warn</span>};
 <span class="kw">use</span> <span class="ident">std::path::Path</span>;
 <span class="kw">use</span> <span class="ident">std::path::PathBuf</span>;
 <span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
@@ -757,23 +781,14 @@
 
     <span class="doccomment">/// DB directory to snapshot</span>
     <span class="kw">pub</span> <span class="ident">db_directory</span>: <span class="ident">PathBuf</span>,
-
-    <span class="doccomment">/// Directory to store snapshot</span>
-    <span class="kw">pub</span> <span class="ident">snapshot_directory</span>: <span class="ident">PathBuf</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">AggregatorConfig</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(
-        <span class="ident">interval</span>: <span class="ident">u64</span>,
-        <span class="ident">network</span>: <span class="ident">CardanoNetwork</span>,
-        <span class="ident">db_directory</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>,
-        <span class="ident">snapshot_directory</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>,
-    ) -&gt; <span class="self">Self</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">interval</span>: <span class="ident">u64</span>, <span class="ident">network</span>: <span class="ident">CardanoNetwork</span>, <span class="ident">db_directory</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>) -&gt; <span class="self">Self</span> {
         <span class="self">Self</span> {
             <span class="ident">interval</span>,
             <span class="ident">network</span>,
             <span class="ident">db_directory</span>: <span class="ident">db_directory</span>.<span class="ident">to_path_buf</span>(),
-            <span class="ident">snapshot_directory</span>: <span class="ident">snapshot_directory</span>.<span class="ident">to_path_buf</span>(),
         }
     }
 }
@@ -808,8 +823,14 @@
 
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">is_multisig_created</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident">RuntimeError</span><span class="op">&gt;</span>;
 
+    <span class="doccomment">/// Create an archive of the cardano node db directory.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Returns the path of the created archive and the archive size as byte.</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">create_snapshot_archive</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">OngoingSnapshot</span>, <span class="ident">RuntimeError</span><span class="op">&gt;</span>;
 
+    <span class="doccomment">/// Upload the snapshot at the given location using the configured uploader(s).</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Important: the snapshot is removed after the upload succeeded.</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">upload_snapshot_archive</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">ongoing_snapshot</span>: <span class="kw-2">&amp;</span><span class="ident">OngoingSnapshot</span>,
@@ -1178,6 +1199,13 @@
             .<span class="kw">await</span>
             .<span class="ident">map_err</span>(<span class="ident">RuntimeError::SnapshotUploader</span>)<span class="question-mark">?</span>;
 
+        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">error</span>) <span class="op">=</span> <span class="ident">tokio::fs::remove_file</span>(<span class="ident">ongoing_snapshot</span>.<span class="ident">get_file_path</span>()).<span class="kw">await</span> {
+            <span class="macro">warn!</span>(
+                <span class="string">&quot;Post upload ongoing snapshot file removal failure: {}&quot;</span>,
+                <span class="ident">error</span>
+            );
+        }
+
         <span class="prelude-val">Ok</span>(<span class="macro">vec!</span>[<span class="ident">location</span>])
     }
 
@@ -1201,8 +1229,7 @@
             <span class="ident">remote_locations</span>,
         );
 
-        <span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="self">self</span>
-            .<span class="ident">dependencies</span>
+        <span class="self">self</span>.<span class="ident">dependencies</span>
             .<span class="ident">snapshot_store</span>
             .<span class="ident">as_ref</span>()
             .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> {
@@ -1219,12 +1246,14 @@
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">tests</span> {
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::snapshotter::OngoingSnapshot</span>;
     <span class="kw">use</span> <span class="kw">crate</span>::{
         <span class="ident">initialize_dependencies</span>,
         <span class="ident">runtime</span>::{<span class="ident">AggregatorRunner</span>, <span class="ident">AggregatorRunnerTrait</span>},
     };
     <span class="kw">use</span> <span class="ident">mithril_common</span>::{<span class="ident">digesters::DigesterResult</span>, <span class="ident">entities::Beacon</span>};
     <span class="kw">use</span> <span class="ident">mithril_common</span>::{<span class="ident">entities::ProtocolMessagePartKey</span>, <span class="ident">store::stake_store::StakeStorer</span>};
+    <span class="kw">use</span> <span class="ident">tempfile::NamedTempFile</span>;
 
     <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_is_new_beacon</span>() {
@@ -1275,16 +1304,17 @@
 
         <span class="macro">assert_eq!</span>(<span class="ident">beacon</span>, <span class="ident">stored_beacon</span>);
     }
+
     <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_update_stake_distribution</span>() {
         <span class="kw">let</span> (<span class="ident">deps</span>, <span class="ident">config</span>) <span class="op">=</span> <span class="ident">initialize_dependencies</span>().<span class="kw">await</span>;
         <span class="kw">let</span> <span class="ident">runner</span> <span class="op">=</span> <span class="ident">AggregatorRunner::new</span>(<span class="ident">config</span>, <span class="ident">deps</span>.<span class="ident">clone</span>());
         <span class="kw">let</span> <span class="ident">beacon</span> <span class="op">=</span> <span class="ident">runner</span>.<span class="ident">is_new_beacon</span>(<span class="prelude-val">None</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>().<span class="ident">unwrap</span>();
-        <span class="kw">let</span> <span class="ident">_res</span> <span class="op">=</span> <span class="ident">runner</span>
+        <span class="ident">runner</span>
             .<span class="ident">update_beacon</span>(<span class="kw-2">&amp;</span><span class="ident">beacon</span>)
             .<span class="kw">await</span>
             .<span class="ident">expect</span>(<span class="string">&quot;setting the beacon should not fail&quot;</span>);
-        <span class="kw">let</span> <span class="ident">_res</span> <span class="op">=</span> <span class="ident">runner</span>
+        <span class="ident">runner</span>
             .<span class="ident">update_stake_distribution</span>(<span class="kw-2">&amp;</span><span class="ident">beacon</span>)
             .<span class="kw">await</span>
             .<span class="ident">expect</span>(<span class="string">&quot;updating stake distribution should not return an error&quot;</span>);
@@ -1310,13 +1340,12 @@
             .<span class="ident">get_stakes</span>(<span class="ident">beacon</span>.<span class="ident">epoch</span> <span class="op">+</span> <span class="number">1</span>)
             .<span class="kw">await</span>
             .<span class="ident">unwrap</span>()
-            .<span class="ident">expect</span>(
-                <span class="macro">format!</span>(
+            .<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="op">|</span> {
+                <span class="macro">panic!</span>(
                     <span class="string">&quot;I should have a stake distribution for the epoch {:?}&quot;</span>,
                     <span class="ident">beacon</span>.<span class="ident">epoch</span>
                 )
-                .<span class="ident">as_str</span>(),
-            );
+            });
 
         <span class="macro">assert_eq!</span>(
             <span class="ident">current_stake_distribution</span>.<span class="ident">len</span>(),
@@ -1444,6 +1473,25 @@
         <span class="macro">assert_eq!</span>(
             <span class="string">&quot;general error: no certificate pending for the given beacon&quot;</span>.<span class="ident">to_string</span>(),
             <span class="ident">err</span>.<span class="ident">to_string</span>()
+        );
+    }
+
+    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_remove_snapshot_archive_after_upload</span>() {
+        <span class="kw">let</span> (<span class="ident">deps</span>, <span class="ident">config</span>) <span class="op">=</span> <span class="ident">initialize_dependencies</span>().<span class="kw">await</span>;
+        <span class="kw">let</span> <span class="ident">runner</span> <span class="op">=</span> <span class="ident">AggregatorRunner::new</span>(<span class="ident">config</span>, <span class="ident">deps</span>.<span class="ident">clone</span>());
+        <span class="kw">let</span> <span class="ident">file</span> <span class="op">=</span> <span class="ident">NamedTempFile::new</span>().<span class="ident">unwrap</span>();
+        <span class="kw">let</span> <span class="ident">file_path</span> <span class="op">=</span> <span class="ident">file</span>.<span class="ident">path</span>();
+        <span class="kw">let</span> <span class="ident">snapshot</span> <span class="op">=</span> <span class="ident">OngoingSnapshot::new</span>(<span class="ident">file_path</span>.<span class="ident">to_path_buf</span>(), <span class="number">7331</span>);
+
+        <span class="ident">runner</span>
+            .<span class="ident">upload_snapshot_archive</span>(<span class="kw-2">&amp;</span><span class="ident">snapshot</span>)
+            .<span class="kw">await</span>
+            .<span class="ident">expect</span>(<span class="string">&quot;Snapshot upload should not fail&quot;</span>);
+
+        <span class="macro">assert!</span>(
+            <span class="op">!</span><span class="ident">file_path</span>.<span class="ident">exists</span>(),
+            <span class="string">&quot;Ongoing snapshot file should have been removed after upload&quot;</span>
         );
     }
 }

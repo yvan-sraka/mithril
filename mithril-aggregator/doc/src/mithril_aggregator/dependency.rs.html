@@ -341,9 +341,6 @@
 <span id="336">336</span>
 <span id="337">337</span>
 <span id="338">338</span>
-<span id="339">339</span>
-<span id="340">340</span>
-<span id="341">341</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">mithril_common::digesters::Digester</span>;
 <span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
 <span class="kw">use</span> <span class="ident">tokio::sync::RwLock</span>;
@@ -583,8 +580,8 @@
 
     <span class="kw">use</span> <span class="kw">crate</span>::{
         <span class="ident">beacon_provider::DumbImmutableFileObserver</span>, <span class="ident">AggregatorConfig</span>, <span class="ident">BeaconProviderImpl</span>,
-        <span class="ident">CertificatePendingStore</span>, <span class="ident">CertificateStore</span>, <span class="ident">Config</span>, <span class="ident">DependencyManager</span>, <span class="ident">MemoryBeaconStore</span>,
-        <span class="ident">MultiSigner</span>, <span class="ident">MultiSignerImpl</span>, <span class="ident">SingleSignatureStore</span>, <span class="ident">SnapshotStoreType</span>,
+        <span class="ident">CertificatePendingStore</span>, <span class="ident">CertificateStore</span>, <span class="ident">Config</span>, <span class="ident">DependencyManager</span>, <span class="ident">DumbSnapshotUploader</span>,
+        <span class="ident">MemoryBeaconStore</span>, <span class="ident">MultiSigner</span>, <span class="ident">MultiSignerImpl</span>, <span class="ident">SingleSignatureStore</span>, <span class="ident">SnapshotStoreType</span>,
         <span class="ident">SnapshotUploaderType</span>, <span class="ident">VerificationKeyStore</span>,
     };
     <span class="kw">use</span> <span class="ident">mithril_common</span>::{
@@ -655,6 +652,7 @@
             <span class="ident">immutable_file_observer</span>.<span class="ident">clone</span>(),
             <span class="ident">mithril_common::CardanoNetwork::TestNet</span>(<span class="number">42</span>),
         )));
+        <span class="kw">let</span> <span class="ident">snapshot_uploader</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">DumbSnapshotUploader::new</span>()));
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">dependency_manager</span> <span class="op">=</span> <span class="ident">DependencyManager::new</span>(<span class="ident">config</span>.<span class="ident">clone</span>());
         <span class="ident">dependency_manager</span>
             <span class="comment">//.with_snapshot_store(snapshot_store.clone())</span>
@@ -668,18 +666,14 @@
             .<span class="ident">with_single_signature_store</span>(<span class="ident">single_signature_store</span>.<span class="ident">clone</span>())
             .<span class="ident">with_chain_observer</span>(<span class="ident">chain_observer</span>.<span class="ident">clone</span>())
             .<span class="ident">with_beacon_provider</span>(<span class="ident">beacon_provider</span>.<span class="ident">clone</span>())
-            .<span class="ident">with_immutable_file_observer</span>(<span class="ident">immutable_file_observer</span>);
+            .<span class="ident">with_immutable_file_observer</span>(<span class="ident">immutable_file_observer</span>)
+            .<span class="ident">with_snapshot_uploader</span>(<span class="ident">snapshot_uploader</span>);
 
         <span class="kw">let</span> <span class="ident">dependency_manager</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">dependency_manager</span>);
         <span class="kw">let</span> <span class="ident">config</span> <span class="op">=</span> <span class="ident">AggregatorConfig::new</span>(
             <span class="ident">dependency_manager</span>.<span class="ident">config</span>.<span class="ident">run_interval</span>,
             <span class="ident">CardanoNetwork::TestNet</span>(<span class="number">42</span>),
             <span class="ident">dependency_manager</span>.<span class="ident">config</span>.<span class="ident">db_directory</span>.<span class="ident">as_path</span>(),
-            <span class="ident">dependency_manager</span>
-                .<span class="ident">config</span>
-                .<span class="ident">snapshot_directory</span>
-                .<span class="ident">as_path</span>()
-                .<span class="ident">as_ref</span>(),
         );
 
         (<span class="ident">dependency_manager</span>, <span class="ident">config</span>)
