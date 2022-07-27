@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["BeaconProviderImpl",""],["DumbImmutableFileObserver",""],["ImmutableFileSystemObserver",""]],"trait":[["BeaconProvider",""],["ImmutableFileObserver",""]]});
