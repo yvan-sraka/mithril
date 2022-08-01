@@ -216,6 +216,27 @@
 <span id="211">211</span>
 <span id="212">212</span>
 <span id="213">213</span>
+<span id="214">214</span>
+<span id="215">215</span>
+<span id="216">216</span>
+<span id="217">217</span>
+<span id="218">218</span>
+<span id="219">219</span>
+<span id="220">220</span>
+<span id="221">221</span>
+<span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
+<span id="226">226</span>
+<span id="227">227</span>
+<span id="228">228</span>
+<span id="229">229</span>
+<span id="230">230</span>
+<span id="231">231</span>
+<span id="232">232</span>
+<span id="233">233</span>
+<span id="234">234</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::entities::ImmutableFileNumber</span>;
 <span class="kw">use</span> <span class="ident">std::cmp::Ordering</span>;
 
@@ -231,31 +252,52 @@
     <span class="ident">path</span>.<span class="ident">iter</span>().<span class="ident">any</span>(<span class="op">|</span><span class="ident">component</span><span class="op">|</span> <span class="ident">component</span> <span class="op">==</span> <span class="ident">immutable</span>)
 }
 
+<span class="doccomment">/// Represent an immutable file in a Cardano node database directory</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ImmutableFile</span> {
+    <span class="doccomment">/// The path to the immutable file</span>
     <span class="kw">pub</span> <span class="ident">path</span>: <span class="ident">PathBuf</span>,
+
+    <span class="doccomment">/// The immutable file number</span>
     <span class="kw">pub</span> <span class="ident">number</span>: <span class="ident">ImmutableFileNumber</span>,
 }
 
+<span class="doccomment">/// [ImmutableFile::new] related errors.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Error</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">ImmutableFileCreationError</span> {
+    <span class="doccomment">/// Raised when the immutable file stem extraction fails.</span>
     <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Couldn&#39;t extract the file stem for &#39;{path:?}&#39;&quot;</span>)]</span>
-    <span class="ident">FileStemExtraction</span> { <span class="ident">path</span>: <span class="ident">PathBuf</span> },
+    <span class="ident">FileStemExtraction</span> {
+        <span class="doccomment">/// Path for which file stem extraction failed.</span>
+        <span class="ident">path</span>: <span class="ident">PathBuf</span>,
+    },
+
+    <span class="doccomment">/// Raised when the immutable file filename extraction fails.</span>
     <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Couldn&#39;t extract the filename as string for &#39;{path:?}&#39;&quot;</span>)]</span>
-    <span class="ident">FileNameExtraction</span> { <span class="ident">path</span>: <span class="ident">PathBuf</span> },
+    <span class="ident">FileNameExtraction</span> {
+        <span class="doccomment">/// Path for which filename extraction failed.</span>
+        <span class="ident">path</span>: <span class="ident">PathBuf</span>,
+    },
+
+    <span class="doccomment">/// Raised when the immutable file number parsing, from the filename, fails.</span>
     <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Error while parsing immutable file number&quot;</span>)]</span>
     <span class="ident">FileNumberParsing</span>(<span class="attribute">#[<span class="ident">from</span>]</span> <span class="ident">ParseIntError</span>),
 }
 
+<span class="doccomment">/// [ImmutableFile::list_completed_in_dir] related errors.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Error</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">ImmutableFileListingError</span> {
+    <span class="doccomment">/// Raised when the metadata of a file could not be read.</span>
     <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;metadata parsing failed&quot;</span>)]</span>
     <span class="ident">MetadataParsing</span>(<span class="attribute">#[<span class="ident">from</span>]</span> <span class="ident">io::Error</span>),
+
+    <span class="doccomment">/// Raised when [ImmutableFile::new] fails.</span>
     <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;immutable file creation error&quot;</span>)]</span>
     <span class="ident">ImmutableFileCreation</span>(<span class="attribute">#[<span class="ident">from</span>]</span> <span class="ident">ImmutableFileCreationError</span>),
 }
 
 <span class="kw">impl</span> <span class="ident">ImmutableFile</span> {
+    <span class="doccomment">/// ImmutableFile factory</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">path</span>: <span class="ident">PathBuf</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">ImmutableFileCreationError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">filename</span> <span class="op">=</span> <span class="ident">path</span>
             .<span class="ident">file_stem</span>()

@@ -1,1 +1,0 @@
-initSidebarItems({"enum":[["StakeStoreError",""]],"struct":[["StakeStore",""]],"trait":[["StakeStorer",""]]});

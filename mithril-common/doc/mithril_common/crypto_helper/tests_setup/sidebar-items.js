@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["setup_message",""],["setup_protocol_parameters",""],["setup_signers",""]]});
+initSidebarItems({"fn":[["setup_message","Instantiate a [ProtocolMessage] using fake data, use this for tests only."],["setup_protocol_parameters","Instantiate a [ProtocolParameters] using fake data, use this for tests only."],["setup_signers","Instantiate a list of signers using fake data, use this for tests only."]]});
