@@ -98,7 +98,24 @@
 <span id="93">93</span>
 <span id="94">94</span>
 <span id="95">95</span>
+<span id="96">96</span>
+<span id="97">97</span>
+<span id="98">98</span>
+<span id="99">99</span>
+<span id="100">100</span>
+<span id="101">101</span>
+<span id="102">102</span>
+<span id="103">103</span>
+<span id="104">104</span>
+<span id="105">105</span>
+<span id="106">106</span>
+<span id="107">107</span>
+<span id="108">108</span>
+<span id="109">109</span>
+<span id="110">110</span>
+<span id="111">111</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
+<span class="kw">use</span> <span class="ident">tokio::sync::RwLock</span>;
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain_observer::interface</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">entities</span>::<span class="kw-2">*</span>, <span class="ident">fake_data</span>};
@@ -108,39 +125,46 @@
     <span class="doccomment">/// A list of [SignerWithStake], used for [get_current_stake_distribution].</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// [get_current_stake_distribution]: ChainObserver::get_current_stake_distribution</span>
-    <span class="kw">pub</span> <span class="ident">signers</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">SignerWithStake</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">signers</span>: <span class="ident">RwLock</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">SignerWithStake</span><span class="op">&gt;</span><span class="op">&gt;</span>,
 
     <span class="doccomment">/// A [Beacon], used by [get_current_epoch]</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// [get_current_epoch]: ChainObserver::get_current_epoch</span>
-    <span class="kw">pub</span> <span class="ident">current_beacon</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Beacon</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">current_beacon</span>: <span class="ident">RwLock</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Beacon</span><span class="op">&gt;</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">FakeObserver</span> {
     <span class="doccomment">/// FakeObserver factory</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="self">Self</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">current_beacon</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Beacon</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
         <span class="self">Self</span> {
-            <span class="ident">signers</span>: <span class="macro">vec!</span>[],
-            <span class="ident">current_beacon</span>: <span class="prelude-val">None</span>,
+            <span class="ident">signers</span>: <span class="ident">RwLock::new</span>(<span class="macro">vec!</span>[]),
+            <span class="ident">current_beacon</span>: <span class="ident">RwLock::new</span>(<span class="ident">current_beacon</span>),
         }
     }
 
-    <span class="doccomment">/// Increase by one the epoch of [`FakeObserver::current_beacon`].</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">next_epoch</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Epoch</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">current_beacon</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">current_beacon</span>.<span class="ident">as_ref</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">beacon</span><span class="op">|</span> <span class="ident">Beacon</span> {
+    <span class="doccomment">/// Increase by one the epoch of the [current_beacon][`FakeObserver::current_beacon`].</span>
+    <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">next_epoch</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Epoch</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">current_beacon</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">current_beacon</span>.<span class="ident">write</span>().<span class="kw">await</span>;
+        <span class="kw-2">*</span><span class="ident">current_beacon</span> <span class="op">=</span> <span class="ident">current_beacon</span>.<span class="ident">as_ref</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">beacon</span><span class="op">|</span> <span class="ident">Beacon</span> {
             <span class="ident">epoch</span>: <span class="ident">beacon</span>.<span class="ident">epoch</span> <span class="op">+</span> <span class="number">1</span>,
             ..<span class="ident">beacon</span>.<span class="ident">clone</span>()
         });
 
-        <span class="self">self</span>.<span class="ident">current_beacon</span>.<span class="ident">as_ref</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">beacon</span><span class="op">|</span> <span class="ident">beacon</span>.<span class="ident">epoch</span>)
+        <span class="ident">current_beacon</span>.<span class="ident">as_ref</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">b</span><span class="op">|</span> <span class="ident">b</span>.<span class="ident">epoch</span>)
+    }
+
+    <span class="doccomment">/// Set the signers that will used to compute the result of</span>
+    <span class="doccomment">/// [get_current_stake_distribution][ChainObserver::get_current_stake_distribution].</span>
+    <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">set_signers</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">new_signers</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">SignerWithStake</span><span class="op">&gt;</span>) {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">signers</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">signers</span>.<span class="ident">write</span>().<span class="kw">await</span>;
+        <span class="kw-2">*</span><span class="ident">signers</span> <span class="op">=</span> <span class="ident">new_signers</span>;
     }
 }
 
 <span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">FakeObserver</span> {
     <span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">observer</span> <span class="op">=</span> <span class="ident"><span class="self">Self</span>::new</span>();
-        <span class="ident">observer</span>.<span class="ident">current_beacon</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">fake_data::beacon</span>());
-        <span class="ident">observer</span>.<span class="ident">signers</span> <span class="op">=</span> <span class="ident">fake_data::signers_with_stakes</span>(<span class="number">2</span>);
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">observer</span> <span class="op">=</span> <span class="ident"><span class="self">Self</span>::new</span>(<span class="prelude-val">Some</span>(<span class="ident">fake_data::beacon</span>()));
+        <span class="ident">observer</span>.<span class="ident">signers</span> <span class="op">=</span> <span class="ident">RwLock::new</span>(<span class="ident">fake_data::signers_with_stakes</span>(<span class="number">2</span>));
 
         <span class="ident">observer</span>
     }
@@ -149,7 +173,12 @@
 <span class="attribute">#[<span class="ident">async_trait</span>]</span>
 <span class="kw">impl</span> <span class="ident">ChainObserver</span> <span class="kw">for</span> <span class="ident">FakeObserver</span> {
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_current_epoch</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Epoch</span><span class="op">&gt;</span>, <span class="ident">ChainObserverError</span><span class="op">&gt;</span> {
-        <span class="prelude-val">Ok</span>(<span class="self">self</span>.<span class="ident">current_beacon</span>.<span class="ident">as_ref</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">beacon</span><span class="op">|</span> <span class="ident">beacon</span>.<span class="ident">epoch</span>))
+        <span class="prelude-val">Ok</span>(<span class="self">self</span>
+            .<span class="ident">current_beacon</span>
+            .<span class="ident">read</span>()
+            .<span class="kw">await</span>
+            .<span class="ident">as_ref</span>()
+            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">beacon</span><span class="op">|</span> <span class="ident">beacon</span>.<span class="ident">epoch</span>))
     }
 
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_current_stake_distribution</span>(
@@ -157,6 +186,8 @@
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">StakeDistribution</span><span class="op">&gt;</span>, <span class="ident">ChainObserverError</span><span class="op">&gt;</span> {
         <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(
             <span class="self">self</span>.<span class="ident">signers</span>
+                .<span class="ident">read</span>()
+                .<span class="kw">await</span>
                 .<span class="ident">iter</span>()
                 .<span class="ident">map</span>(<span class="op">|</span><span class="ident">signer</span><span class="op">|</span> (<span class="ident">signer</span>.<span class="ident">party_id</span>.<span class="ident">clone</span>() <span class="kw">as</span> <span class="ident">PartyId</span>, <span class="ident">signer</span>.<span class="ident">stake</span> <span class="kw">as</span> <span class="ident">Stake</span>))
                 .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">StakeDistribution</span><span class="op">&gt;</span>(),
@@ -173,8 +204,7 @@
     <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_get_current_epoch</span>() {
         <span class="kw">let</span> <span class="ident">beacon</span> <span class="op">=</span> <span class="ident">fake_data::beacon</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">fake_observer</span> <span class="op">=</span> <span class="ident">FakeObserver::new</span>();
-        <span class="ident">fake_observer</span>.<span class="ident">current_beacon</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">beacon</span>.<span class="ident">clone</span>());
+        <span class="kw">let</span> <span class="ident">fake_observer</span> <span class="op">=</span> <span class="ident">FakeObserver::new</span>(<span class="prelude-val">Some</span>(<span class="ident">beacon</span>.<span class="ident">clone</span>()));
         <span class="kw">let</span> <span class="ident">current_epoch</span> <span class="op">=</span> <span class="ident">fake_observer</span>.<span class="ident">get_current_epoch</span>().<span class="kw">await</span>.<span class="ident">unwrap</span>();
 
         <span class="macro">assert_eq!</span>(<span class="prelude-val">Some</span>(<span class="ident">beacon</span>.<span class="ident">epoch</span>), <span class="ident">current_epoch</span>);
@@ -182,8 +212,10 @@
 
     <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_get_current_stake_distribution</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">fake_observer</span> <span class="op">=</span> <span class="ident">FakeObserver::new</span>();
-        <span class="ident">fake_observer</span>.<span class="ident">signers</span> <span class="op">=</span> <span class="ident">fake_data::signers_with_stakes</span>(<span class="number">2</span>);
+        <span class="kw">let</span> <span class="ident">fake_observer</span> <span class="op">=</span> <span class="ident">FakeObserver::new</span>(<span class="prelude-val">None</span>);
+        <span class="ident">fake_observer</span>
+            .<span class="ident">set_signers</span>(<span class="ident">fake_data::signers_with_stakes</span>(<span class="number">2</span>))
+            .<span class="kw">await</span>;
         <span class="kw">let</span> <span class="ident">stake_distribution</span> <span class="op">=</span> <span class="ident">fake_observer</span>.<span class="ident">get_current_stake_distribution</span>().<span class="kw">await</span>;
 
         <span class="macro">assert_eq!</span>(

@@ -205,10 +205,6 @@
 <span id="200">200</span>
 <span id="201">201</span>
 <span id="202">202</span>
-<span id="203">203</span>
-<span id="204">204</span>
-<span id="205">205</span>
-<span id="206">206</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::http_server::routes::middlewares</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::DependencyManager</span>;
 <span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
@@ -278,11 +274,7 @@
     <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::http_server::SERVER_BASE_PATH</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::multi_signer::MockMultiSigner</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ProtocolError</span>;
-
-    <span class="kw">fn</span> <span class="ident">setup_dependency_manager</span>() -&gt; <span class="ident">DependencyManager</span> {
-        <span class="ident">DependencyManager::fake</span>()
-    }
+    <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">initialize_dependencies</span>, <span class="ident">ProtocolError</span>};
 
     <span class="kw">fn</span> <span class="ident">setup_router</span>(
         <span class="ident">dependency_manager</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">DependencyManager</span><span class="op">&gt;</span>,
@@ -303,8 +295,8 @@
         <span class="ident">mock_multi_signer</span>
             .<span class="ident">expect_register_signer</span>()
             .<span class="ident">return_once</span>(<span class="op">|</span><span class="kw">_</span>, <span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(()));
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">dependency_manager</span> <span class="op">=</span> <span class="ident">setup_dependency_manager</span>();
-        <span class="ident">dependency_manager</span>.<span class="ident">with_multi_signer</span>(<span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">mock_multi_signer</span>)));
+        <span class="kw">let</span> (<span class="kw-2">mut</span> <span class="ident">dependency_manager</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="ident">initialize_dependencies</span>().<span class="kw">await</span>;
+        <span class="ident">dependency_manager</span>.<span class="ident">multi_signer</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">mock_multi_signer</span>));
 
         <span class="kw">let</span> <span class="ident">signer</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">fake_data::signers</span>(<span class="number">1</span>)[<span class="number">0</span>];
 
@@ -333,8 +325,8 @@
         <span class="ident">mock_multi_signer</span>
             .<span class="ident">expect_register_signer</span>()
             .<span class="ident">return_once</span>(<span class="op">|</span><span class="kw">_</span>, <span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Err</span>(<span class="ident">ProtocolError::ExistingSigner</span>()));
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">dependency_manager</span> <span class="op">=</span> <span class="ident">setup_dependency_manager</span>();
-        <span class="ident">dependency_manager</span>.<span class="ident">with_multi_signer</span>(<span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">mock_multi_signer</span>)));
+        <span class="kw">let</span> (<span class="kw-2">mut</span> <span class="ident">dependency_manager</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="ident">initialize_dependencies</span>().<span class="kw">await</span>;
+        <span class="ident">dependency_manager</span>.<span class="ident">multi_signer</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">mock_multi_signer</span>));
 
         <span class="kw">let</span> <span class="ident">signer</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">fake_data::signers</span>(<span class="number">1</span>)[<span class="number">0</span>];
 
@@ -360,8 +352,8 @@
     <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_register_signer_post_ko_400</span>() {
         <span class="kw">let</span> <span class="ident">mock_multi_signer</span> <span class="op">=</span> <span class="ident">MockMultiSigner::new</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">dependency_manager</span> <span class="op">=</span> <span class="ident">setup_dependency_manager</span>();
-        <span class="ident">dependency_manager</span>.<span class="ident">with_multi_signer</span>(<span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">mock_multi_signer</span>)));
+        <span class="kw">let</span> (<span class="kw-2">mut</span> <span class="ident">dependency_manager</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="ident">initialize_dependencies</span>().<span class="kw">await</span>;
+        <span class="ident">dependency_manager</span>.<span class="ident">multi_signer</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">mock_multi_signer</span>));
 
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">signer</span> <span class="op">=</span> <span class="ident">fake_data::signers</span>(<span class="number">1</span>)[<span class="number">0</span>].<span class="ident">clone</span>();
         <span class="ident">signer</span>.<span class="ident">verification_key</span> <span class="op">=</span> <span class="string">&quot;invalid-key&quot;</span>.<span class="ident">to_string</span>();
@@ -391,8 +383,8 @@
         <span class="ident">mock_multi_signer</span>
             .<span class="ident">expect_register_signer</span>()
             .<span class="ident">return_once</span>(<span class="op">|</span><span class="kw">_</span>, <span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Err</span>(<span class="ident">ProtocolError::Core</span>(<span class="string">&quot;an error occurred&quot;</span>.<span class="ident">to_string</span>())));
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">dependency_manager</span> <span class="op">=</span> <span class="ident">setup_dependency_manager</span>();
-        <span class="ident">dependency_manager</span>.<span class="ident">with_multi_signer</span>(<span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">mock_multi_signer</span>)));
+        <span class="kw">let</span> (<span class="kw-2">mut</span> <span class="ident">dependency_manager</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="ident">initialize_dependencies</span>().<span class="kw">await</span>;
+        <span class="ident">dependency_manager</span>.<span class="ident">multi_signer</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">mock_multi_signer</span>));
 
         <span class="kw">let</span> <span class="ident">signer</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">fake_data::signers</span>(<span class="number">1</span>)[<span class="number">0</span>];
 

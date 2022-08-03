@@ -254,15 +254,15 @@
 }
 
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">BeaconProviderImpl</span> {
-    <span class="ident">chain_observer</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">RwLock</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">ChainObserver</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">immutable_observer</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">RwLock</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">ImmutableFileObserver</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="ident">chain_observer</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">ChainObserver</span><span class="op">&gt;</span>,
+    <span class="ident">immutable_observer</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">ImmutableFileObserver</span><span class="op">&gt;</span>,
     <span class="ident">network</span>: <span class="ident">CardanoNetwork</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">BeaconProviderImpl</span> {
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(
-        <span class="ident">chain_observer</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">RwLock</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">ChainObserver</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-        <span class="ident">immutable_observer</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">RwLock</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">ImmutableFileObserver</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+        <span class="ident">chain_observer</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">ChainObserver</span><span class="op">&gt;</span>,
+        <span class="ident">immutable_observer</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">ImmutableFileObserver</span><span class="op">&gt;</span>,
         <span class="ident">network</span>: <span class="ident">CardanoNetwork</span>,
     ) -&gt; <span class="self">Self</span> {
         <span class="self">Self</span> {
@@ -278,17 +278,10 @@
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_current_beacon</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Beacon</span>, <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Error</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">epoch</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">chain_observer</span>
-            .<span class="ident">read</span>()
-            .<span class="kw">await</span>
             .<span class="ident">get_current_epoch</span>()
             .<span class="kw">await</span><span class="question-mark">?</span>
             .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">RuntimeError::General</span>(<span class="string">&quot;could not get Epoch&quot;</span>.<span class="ident">to_string</span>().<span class="ident">into</span>()))<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">immutable_file_number</span> <span class="op">=</span> <span class="self">self</span>
-            .<span class="ident">immutable_observer</span>
-            .<span class="ident">read</span>()
-            .<span class="kw">await</span>
-            .<span class="ident">get_last_immutable_number</span>()
-            .<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">immutable_file_number</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">immutable_observer</span>.<span class="ident">get_last_immutable_number</span>().<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="kw">let</span> <span class="ident">beacon</span> <span class="op">=</span> <span class="ident">Beacon</span> {
             <span class="ident">network</span>: <span class="self">self</span>.<span class="ident">network</span>.<span class="ident">to_string</span>(),
@@ -301,13 +294,13 @@
 }
 
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">DumbImmutableFileObserver</span> {
-    <span class="kw">pub</span> <span class="ident">shall_return</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">shall_return</span>: <span class="ident">RwLock</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">DumbImmutableFileObserver</span> {
     <span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">observer</span> <span class="op">=</span> <span class="ident"><span class="self">Self</span>::new</span>();
-        <span class="ident">observer</span>.<span class="ident">shall_return</span>(<span class="prelude-val">Some</span>(<span class="number">119827</span>));
+        <span class="ident">observer</span>.<span class="ident">shall_return</span> <span class="op">=</span> <span class="ident">RwLock::new</span>(<span class="prelude-val">Some</span>(<span class="number">119827</span>));
 
         <span class="ident">observer</span>
     }
@@ -315,20 +308,25 @@
 
 <span class="kw">impl</span> <span class="ident">DumbImmutableFileObserver</span> {
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> { <span class="ident">shall_return</span>: <span class="prelude-val">None</span> }
+        <span class="self">Self</span> {
+            <span class="ident">shall_return</span>: <span class="ident">RwLock::new</span>(<span class="prelude-val">None</span>),
+        }
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">shall_return</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">what</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>) -&gt; <span class="kw-2">&amp;mut</span> <span class="self">Self</span> {
-        <span class="self">self</span>.<span class="ident">shall_return</span> <span class="op">=</span> <span class="ident">what</span>;
+    <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">shall_return</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">what</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>) -&gt; <span class="kw-2">&amp;</span><span class="self">Self</span> {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">shall_return</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">shall_return</span>.<span class="ident">write</span>().<span class="kw">await</span>;
+        <span class="kw-2">*</span><span class="ident">shall_return</span> <span class="op">=</span> <span class="ident">what</span>;
         <span class="self">self</span>
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">increase</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">u64</span>, <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Error</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">increase</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">u64</span>, <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Error</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">new_number</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">shall_return</span>
+            .<span class="ident">read</span>()
+            .<span class="kw">await</span>
             .<span class="ident">unwrap</span>() <span class="comment">// I do not understand why ok_or_else does not work here, TODO: fix this</span>
             .<span class="ident">add</span>(<span class="number">1</span>);
-        <span class="self">self</span>.<span class="ident">shall_return</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">new_number</span>);
+        <span class="self">self</span>.<span class="ident">shall_return</span>(<span class="prelude-val">Some</span>(<span class="ident">new_number</span>)).<span class="kw">await</span>;
 
         <span class="prelude-val">Ok</span>(<span class="ident">new_number</span>)
     }
@@ -338,6 +336,8 @@
 <span class="kw">impl</span> <span class="ident">ImmutableFileObserver</span> <span class="kw">for</span> <span class="ident">DumbImmutableFileObserver</span> {
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_last_immutable_number</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">u64</span>, <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Error</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">shall_return</span>
+            .<span class="ident">read</span>()
+            .<span class="kw">await</span>
             .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="string">&quot;fake immutable error, immutable number undefined&quot;</span>.<span class="ident">into</span>())
     }
 }
@@ -371,8 +371,8 @@
     <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_beacon_ok</span>() {
         <span class="kw">let</span> <span class="ident">beacon_provider</span> <span class="op">=</span> <span class="ident">BeaconProviderImpl::new</span>(
-            <span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">DumbChainObserver</span> {})),
-            <span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">DumbImmutableFileObserver::default</span>())),
+            <span class="ident">Arc::new</span>(<span class="ident">DumbChainObserver</span> {}),
+            <span class="ident">Arc::new</span>(<span class="ident">DumbImmutableFileObserver::default</span>()),
             <span class="ident">CardanoNetwork::TestNet</span>(<span class="number">42</span>),
         );
         <span class="kw">let</span> <span class="ident">beacon</span> <span class="op">=</span> <span class="ident">beacon_provider</span>.<span class="ident">get_current_beacon</span>().<span class="kw">await</span>.<span class="ident">unwrap</span>();
@@ -383,11 +383,11 @@
 
     <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_beacon_error</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">immutable_observer</span> <span class="op">=</span> <span class="ident">DumbImmutableFileObserver::default</span>();
-        <span class="ident">immutable_observer</span>.<span class="ident">shall_return</span>(<span class="prelude-val">None</span>);
+        <span class="kw">let</span> <span class="ident">immutable_observer</span> <span class="op">=</span> <span class="ident">DumbImmutableFileObserver::default</span>();
+        <span class="ident">immutable_observer</span>.<span class="ident">shall_return</span>(<span class="prelude-val">None</span>).<span class="kw">await</span>;
         <span class="kw">let</span> <span class="ident">beacon_provider</span> <span class="op">=</span> <span class="ident">BeaconProviderImpl::new</span>(
-            <span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">DumbChainObserver</span> {})),
-            <span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">immutable_observer</span>)),
+            <span class="ident">Arc::new</span>(<span class="ident">DumbChainObserver</span> {}),
+            <span class="ident">Arc::new</span>(<span class="ident">immutable_observer</span>),
             <span class="ident">CardanoNetwork::TestNet</span>(<span class="number">42</span>),
         );
 
