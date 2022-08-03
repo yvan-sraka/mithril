@@ -1004,21 +1004,9 @@
 <span id="999">999</span>
 <span id="1000">1000</span>
 <span id="1001">1001</span>
-<span id="1002">1002</span>
-<span id="1003">1003</span>
-<span id="1004">1004</span>
-<span id="1005">1005</span>
-<span id="1006">1006</span>
-<span id="1007">1007</span>
-<span id="1008">1008</span>
-<span id="1009">1009</span>
-<span id="1010">1010</span>
-<span id="1011">1011</span>
-<span id="1012">1012</span>
-<span id="1013">1013</span>
-<span id="1014">1014</span>
-<span id="1015">1015</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
+</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std::collections::HashMap</span>;
+
+<span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
 <span class="kw">use</span> <span class="ident">chrono::prelude</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident">hex::ToHex</span>;
 <span class="kw">use</span> <span class="ident">slog_scope::debug</span>;
@@ -1027,8 +1015,8 @@
 <span class="kw">use</span> <span class="ident">mithril_common::crypto_helper</span>::{
     <span class="ident">key_decode_hex</span>, <span class="ident">key_encode_hex</span>, <span class="ident">ProtocolAggregateVerificationKey</span>, <span class="ident">ProtocolClerk</span>,
     <span class="ident">ProtocolKeyRegistration</span>, <span class="ident">ProtocolMultiSignature</span>, <span class="ident">ProtocolParameters</span>, <span class="ident">ProtocolPartyId</span>,
-    <span class="ident">ProtocolSignerVerificationKey</span>, <span class="ident">ProtocolSingleSignature</span>, <span class="ident">ProtocolStake</span>,
-    <span class="ident">ProtocolStakeDistribution</span>, <span class="ident">PROTOCOL_VERSION</span>,
+    <span class="ident">ProtocolSignerVerificationKey</span>, <span class="ident">ProtocolSingleSignature</span>, <span class="ident">ProtocolStakeDistribution</span>,
+    <span class="ident">PROTOCOL_VERSION</span>,
 };
 <span class="kw">use</span> <span class="ident">mithril_common::entities</span>;
 <span class="kw">use</span> <span class="ident">mithril_common::store</span>::{<span class="ident">StakeStoreError</span>, <span class="ident">StakeStorer</span>};
@@ -1303,22 +1291,14 @@
             .<span class="ident">compute_beacon_with_epoch_offset</span>(<span class="ident">epoch_offset</span>)<span class="question-mark">?</span>
             .<span class="ident">epoch</span>;
 
-        <span class="kw">let</span> <span class="ident">signers</span> <span class="op">=</span> <span class="self">self</span>
+        <span class="kw">let</span> <span class="ident">stakes</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">stake_store</span>
             .<span class="ident">read</span>()
             .<span class="kw">await</span>
             .<span class="ident">get_stakes</span>(<span class="ident">epoch</span>)
             .<span class="kw">await</span><span class="question-mark">?</span>
             .<span class="ident">unwrap_or_default</span>();
-        <span class="prelude-val">Ok</span>(<span class="ident">signers</span>
-            .<span class="ident">iter</span>()
-            .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">party_id</span>, <span class="ident">signer</span>)<span class="op">|</span> {
-                (
-                    <span class="ident">party_id</span>.<span class="ident">to_owned</span>() <span class="kw">as</span> <span class="ident">ProtocolPartyId</span>,
-                    <span class="ident">signer</span>.<span class="ident">stake</span> <span class="kw">as</span> <span class="ident">ProtocolStake</span>,
-                )
-            })
-            .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">ProtocolStakeDistribution</span><span class="op">&gt;</span>())
+        <span class="prelude-val">Ok</span>(<span class="ident">stakes</span>.<span class="ident">into_iter</span>().<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">ProtocolStakeDistribution</span><span class="op">&gt;</span>())
     }
 }
 
@@ -1393,14 +1373,8 @@
             .<span class="ident">compute_beacon_with_epoch_offset</span>(<span class="ident">SIGNER_EPOCH_RECORDING_OFFSET</span>)<span class="question-mark">?</span>
             .<span class="ident">epoch</span>;
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">stake_store</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">stake_store</span>.<span class="ident">write</span>().<span class="kw">await</span>;
-        <span class="kw">for</span> (<span class="ident">party_id</span>, <span class="ident">stake</span>) <span class="kw">in</span> <span class="ident">stakes</span> {
-            <span class="ident">stake_store</span>
-                .<span class="ident">save_stake</span>(
-                    <span class="ident">epoch</span>,
-                    <span class="ident">entities::SignerWithStake::new</span>(<span class="ident">party_id</span>.<span class="ident">to_owned</span>(), <span class="string">&quot;&quot;</span>.<span class="ident">to_string</span>(), <span class="kw-2">*</span><span class="ident">stake</span>),
-                )
-                .<span class="kw">await</span><span class="question-mark">?</span>;
-        }
+        <span class="kw">let</span> <span class="ident">stakes</span> <span class="op">=</span> <span class="ident">HashMap::from_iter</span>(<span class="ident">stakes</span>.<span class="ident">iter</span>().<span class="ident">cloned</span>());
+        <span class="ident">stake_store</span>.<span class="ident">save_stakes</span>(<span class="ident">epoch</span>, <span class="ident">stakes</span>).<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(())
     }
@@ -1696,14 +1670,12 @@
             )
             .<span class="ident">unwrap</span>(),
         ));
-        <span class="kw">let</span> <span class="ident">stake_store</span> <span class="op">=</span>
-            <span class="ident">StakeStore::new</span>(<span class="ident">Box::new</span>(
-                <span class="ident">MemoryAdapter</span>::<span class="op">&lt;</span>
-                    <span class="ident">entities::Epoch</span>,
-                    <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">entities::PartyId</span>, <span class="ident">entities::SignerWithStake</span><span class="op">&gt;</span>,
-                <span class="op">&gt;</span><span class="ident">::new</span>(<span class="prelude-val">None</span>)
-                .<span class="ident">unwrap</span>(),
-            ));
+        <span class="kw">let</span> <span class="ident">stake_store</span> <span class="op">=</span> <span class="ident">StakeStore::new</span>(<span class="ident">Box::new</span>(
+            <span class="ident">MemoryAdapter</span>::<span class="op">&lt;</span><span class="ident">entities::Epoch</span>, <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">entities::PartyId</span>, <span class="ident">entities::Stake</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="ident">::new</span>(
+                <span class="prelude-val">None</span>,
+            )
+            .<span class="ident">unwrap</span>(),
+        ));
         <span class="kw">let</span> <span class="ident">single_signature_store</span> <span class="op">=</span> <span class="ident">SingleSignatureStore::new</span>(<span class="ident">Box::new</span>(
             <span class="ident">MemoryAdapter</span>::<span class="op">&lt;</span>
                 <span class="ident">entities::ImmutableFileNumber</span>,
