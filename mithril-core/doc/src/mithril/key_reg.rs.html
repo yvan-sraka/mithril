@@ -162,22 +162,6 @@
 <span id="157">157</span>
 <span id="158">158</span>
 <span id="159">159</span>
-<span id="160">160</span>
-<span id="161">161</span>
-<span id="162">162</span>
-<span id="163">163</span>
-<span id="164">164</span>
-<span id="165">165</span>
-<span id="166">166</span>
-<span id="167">167</span>
-<span id="168">168</span>
-<span id="169">169</span>
-<span id="170">170</span>
-<span id="171">171</span>
-<span id="172">172</span>
-<span id="173">173</span>
-<span id="174">174</span>
-<span id="175">175</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Key registration functionality.</span>
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::error::RegisterError</span>;
@@ -196,7 +180,7 @@
 
 <span class="doccomment">/// Struct that collects public keys and stakes of parties. Each participant (both the</span>
 <span class="doccomment">/// signers and the clerks) need to run their own instance of the key registration.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Default</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">KeyReg</span> {
     <span class="ident">keys</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">VerificationKey</span>, <span class="ident">Stake</span><span class="op">&gt;</span>,
 }
@@ -216,29 +200,19 @@
     <span class="kw">pub</span> <span class="ident">merkle_tree</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">MerkleTree</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span><span class="op">&gt;</span>,
 }
 
-<span class="doccomment">/// Represents the status of a known participant in the protocol who is allowed</span>
-<span class="doccomment">/// to register their key. `RegParty` values will be produced from mappings</span>
-<span class="doccomment">/// (id |-&gt; Party { stake, Some(key) }) in key_reg.parties</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">struct</span> <span class="ident">Party</span> {
-    <span class="doccomment">/// The stake of of the party.</span>
-    <span class="ident">stake</span>: <span class="ident">Stake</span>,
-    <span class="doccomment">/// The public key of the party.</span>
-    <span class="ident">vk</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">VerificationKey</span><span class="op">&gt;</span>,
-}
-
 <span class="doccomment">/// A registered party, a stake associated with its public key</span>
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">RegParty</span> <span class="op">=</span> <span class="ident">MTLeaf</span>;
 
 <span class="kw">impl</span> <span class="ident">KeyReg</span> {
-    <span class="doccomment">/// Initialise a KeyReg.</span>
+    <span class="doccomment">/// Initialise an empty `KeyReg`.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">init</span>() -&gt; <span class="self">Self</span> {
         <span class="self">Self</span> {
             <span class="ident">keys</span>: <span class="ident">HashMap::new</span>(),
         }
     }
 
-    <span class="doccomment">/// Register the pubkey and stake for a particular party.</span>
+    <span class="doccomment">/// Register the pubkey and stake for a particular party. These are store in a</span>
+    <span class="doccomment">/// mapping `key |-&gt; stake`</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">register</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">stake</span>: <span class="ident">Stake</span>, <span class="ident">pk</span>: <span class="ident">VerificationKeyPoP</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">RegisterError</span><span class="op">&gt;</span> {
         <span class="kw">if</span> <span class="kw">let</span> <span class="ident">Entry::Vacant</span>(<span class="ident">e</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">keys</span>.<span class="ident">entry</span>(<span class="ident">pk</span>.<span class="ident">vk</span>) {
             <span class="kw">if</span> <span class="ident">pk</span>.<span class="ident">check</span>().<span class="ident">is_ok</span>() {
@@ -277,12 +251,6 @@
             <span class="ident">reg_parties</span>,
             <span class="ident">total_stake</span>,
         }
-    }
-}
-
-<span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">KeyReg</span> {
-    <span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> {
-        <span class="ident"><span class="self">Self</span>::init</span>()
     }
 }
 
