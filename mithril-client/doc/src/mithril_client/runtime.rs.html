@@ -935,16 +935,6 @@
 <span id="930">930</span>
 <span id="931">931</span>
 <span id="932">932</span>
-<span id="933">933</span>
-<span id="934">934</span>
-<span id="935">935</span>
-<span id="936">936</span>
-<span id="937">937</span>
-<span id="938">938</span>
-<span id="939">939</span>
-<span id="940">940</span>
-<span id="941">941</span>
-<span id="942">942</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">log::debug</span>;
 <span class="kw">use</span> <span class="ident">std::path::Path</span>;
 <span class="kw">use</span> <span class="ident">std::str</span>;
@@ -954,7 +944,9 @@
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::entities</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::verifier</span>::{<span class="ident">ProtocolError</span>, <span class="ident">Verifier</span>};
 
-<span class="kw">use</span> <span class="ident">mithril_common::digesters</span>::{<span class="ident">Digester</span>, <span class="ident">DigesterError</span>, <span class="ident">ImmutableDigester</span>};
+<span class="kw">use</span> <span class="ident">mithril_common::digesters</span>::{
+    <span class="ident">CardanoImmutableDigester</span>, <span class="ident">ImmutableDigester</span>, <span class="ident">ImmutableDigesterError</span>,
+};
 <span class="kw">use</span> <span class="ident">mithril_common::entities</span>::{<span class="ident">Certificate</span>, <span class="ident">ProtocolMessagePartKey</span>, <span class="ident">Snapshot</span>};
 
 <span class="doccomment">/// AggregatorHandlerWrapper wraps an AggregatorHandler</span>
@@ -964,7 +956,7 @@
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">VerifierWrapper</span> <span class="op">=</span> <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Verifier</span><span class="op">&gt;</span>;
 
 <span class="doccomment">/// DigesterWrapper wraps a Digester</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">DigesterWrapper</span> <span class="op">=</span> <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Digester</span><span class="op">&gt;</span>;
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">DigesterWrapper</span> <span class="op">=</span> <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">ImmutableDigester</span><span class="op">&gt;</span>;
 
 <span class="doccomment">/// [Runtime] related errors.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Error</span>, <span class="ident">Debug</span>)]</span>
@@ -988,7 +980,7 @@
 
     <span class="doccomment">/// Error raised when the digest computation fails.</span>
     <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;immutale digester error: &#39;{0}&#39;&quot;</span>)]</span>
-    <span class="ident">ImmutableDigester</span>(<span class="attribute">#[<span class="ident">from</span>]</span> <span class="ident">DigesterError</span>),
+    <span class="ident">ImmutableDigester</span>(<span class="attribute">#[<span class="ident">from</span>]</span> <span class="ident">ImmutableDigesterError</span>),
 
     <span class="doccomment">/// Error raised when the digest stored in the signed message doesn&#39;t match the</span>
     <span class="doccomment">/// [certificate](https://mithril.network/mithril-common/doc/mithril_common/entities/struct.Certificate.html)</span>
@@ -1164,17 +1156,16 @@
             .<span class="kw">await</span>
             .<span class="ident">map_err</span>(<span class="ident">RuntimeError::AggregatorHandler</span>)<span class="question-mark">?</span>;
         <span class="kw">if</span> <span class="self">self</span>.<span class="ident">get_digester</span>().<span class="ident">is_err</span>() {
-            <span class="self">self</span>.<span class="ident">with_digester</span>(<span class="ident">Box::new</span>(<span class="ident">ImmutableDigester::new</span>(
+            <span class="self">self</span>.<span class="ident">with_digester</span>(<span class="ident">Box::new</span>(<span class="ident">CardanoImmutableDigester::new</span>(
                 <span class="ident">Path::new</span>(<span class="ident">unpacked_path</span>).<span class="ident">into</span>(),
                 <span class="ident">slog_scope::logger</span>(),
             )));
         }
         <span class="kw">let</span> <span class="ident">unpacked_snapshot_digest</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">get_digester</span>()<span class="question-mark">?</span>
-            .<span class="ident">compute_digest</span>()
+            .<span class="ident">compute_digest</span>(<span class="ident">certificate</span>.<span class="ident">beacon</span>.<span class="ident">immutable_file_number</span>)
             .<span class="kw">await</span>
-            .<span class="ident">map_err</span>(<span class="ident">RuntimeError::ImmutableDigester</span>)<span class="question-mark">?</span>
-            .<span class="ident">digest</span>;
+            .<span class="ident">map_err</span>(<span class="ident">RuntimeError::ImmutableDigester</span>)<span class="question-mark">?</span>;
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">protocol_message</span> <span class="op">=</span> <span class="ident">certificate</span>.<span class="ident">protocol_message</span>.<span class="ident">clone</span>();
         <span class="ident">protocol_message</span>.<span class="ident">set_message_part</span>(
             <span class="ident">ProtocolMessagePartKey::SnapshotDigest</span>,
@@ -1321,16 +1312,20 @@
 
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::aggregator</span>::{<span class="ident">AggregatorHandlerError</span>, <span class="ident">MockAggregatorHandler</span>};
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::verifier</span>::{<span class="ident">MockVerifier</span>, <span class="ident">ProtocolError</span>};
-    <span class="kw">use</span> <span class="ident">mithril_common::digesters</span>::{<span class="ident">Digester</span>, <span class="ident">DigesterError</span>, <span class="ident">DigesterResult</span>};
+    <span class="kw">use</span> <span class="ident">mithril_common::digesters</span>::{<span class="ident">ImmutableDigester</span>, <span class="ident">ImmutableDigesterError</span>};
+    <span class="kw">use</span> <span class="ident">mithril_common::entities::ImmutableFileNumber</span>;
     <span class="kw">use</span> <span class="ident">mithril_common::fake_data</span>;
 
     <span class="macro">mock!</span> {
-       <span class="kw">pub</span> <span class="ident">DigesterImpl</span> { }
+        <span class="kw">pub</span> <span class="ident">DigesterImpl</span> { }
 
-       <span class="attribute">#[<span class="ident">async_trait</span>]</span>
-       <span class="kw">impl</span> <span class="ident">Digester</span> <span class="kw">for</span> <span class="ident">DigesterImpl</span> {
-           <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">compute_digest</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">DigesterResult</span>, <span class="ident">DigesterError</span><span class="op">&gt;</span>;
-       }
+        <span class="attribute">#[<span class="ident">async_trait</span>]</span>
+        <span class="kw">impl</span> <span class="ident">ImmutableDigester</span> <span class="kw">for</span> <span class="ident">DigesterImpl</span> {
+            <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">compute_digest</span>(
+                <span class="kw-2">&amp;</span><span class="self">self</span>,
+                <span class="ident">up_to_file_number</span>: <span class="ident">ImmutableFileNumber</span>,
+            ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">ImmutableDigesterError</span><span class="op">&gt;</span>;
+        }
     }
 
     <span class="kw">fn</span> <span class="ident">create_fake_certificate_chain</span>(<span class="ident">total_certificates</span>: <span class="ident">u64</span>) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Certificate</span><span class="op">&gt;</span> {
@@ -1494,12 +1489,9 @@
             .<span class="ident">expect_verify_multi_signature</span>()
             .<span class="ident">returning</span>(<span class="op">|</span><span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(()))
             .<span class="ident">times</span>(<span class="ident">mockall::TimesRange::from</span>(<span class="ident">total_certificates</span> <span class="kw">as</span> <span class="ident">usize</span>));
-        <span class="ident">mock_digester</span>.<span class="ident">expect_compute_digest</span>().<span class="ident">return_once</span>(<span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
-            <span class="prelude-val">Ok</span>(<span class="ident">DigesterResult</span> {
-                <span class="ident">digest</span>: <span class="ident">digest_compute</span>,
-                <span class="ident">last_immutable_file_number</span>: <span class="number">0</span>,
-            })
-        });
+        <span class="ident">mock_digester</span>
+            .<span class="ident">expect_compute_digest</span>()
+            .<span class="ident">return_once</span>(<span class="kw">move</span> <span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="ident">digest_compute</span>));
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">client</span> <span class="op">=</span> <span class="ident">Runtime::new</span>(<span class="string">&quot;testnet&quot;</span>.<span class="ident">to_string</span>());
         <span class="ident">client</span>
             .<span class="ident">with_aggregator_handler</span>(<span class="ident">Box::new</span>(<span class="ident">mock_aggregator_handler</span>))
@@ -1544,12 +1536,9 @@
             .<span class="ident">expect_verify_multi_signature</span>()
             .<span class="ident">returning</span>(<span class="op">|</span><span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(()))
             .<span class="ident">times</span>(<span class="number">1</span>);
-        <span class="ident">mock_digester</span>.<span class="ident">expect_compute_digest</span>().<span class="ident">return_once</span>(<span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
-            <span class="prelude-val">Ok</span>(<span class="ident">DigesterResult</span> {
-                <span class="ident">digest</span>: <span class="ident">digest_compute</span>,
-                <span class="ident">last_immutable_file_number</span>: <span class="number">0</span>,
-            })
-        });
+        <span class="ident">mock_digester</span>
+            .<span class="ident">expect_compute_digest</span>()
+            .<span class="ident">return_once</span>(<span class="kw">move</span> <span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="ident">digest_compute</span>));
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">client</span> <span class="op">=</span> <span class="ident">Runtime::new</span>(<span class="string">&quot;testnet&quot;</span>.<span class="ident">to_string</span>());
         <span class="ident">client</span>
             .<span class="ident">with_aggregator_handler</span>(<span class="ident">Box::new</span>(<span class="ident">mock_aggregator_handler</span>))
@@ -1603,12 +1592,9 @@
             .<span class="ident">expect_verify_multi_signature</span>()
             .<span class="ident">returning</span>(<span class="op">|</span><span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(()))
             .<span class="ident">times</span>(<span class="number">1</span>);
-        <span class="ident">mock_digester</span>.<span class="ident">expect_compute_digest</span>().<span class="ident">return_once</span>(<span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
-            <span class="prelude-val">Ok</span>(<span class="ident">DigesterResult</span> {
-                <span class="ident">digest</span>: <span class="ident">digest_compute</span>,
-                <span class="ident">last_immutable_file_number</span>: <span class="number">0</span>,
-            })
-        });
+        <span class="ident">mock_digester</span>
+            .<span class="ident">expect_compute_digest</span>()
+            .<span class="ident">return_once</span>(<span class="kw">move</span> <span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="ident">digest_compute</span>));
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">client</span> <span class="op">=</span> <span class="ident">Runtime::new</span>(<span class="string">&quot;testnet&quot;</span>.<span class="ident">to_string</span>());
         <span class="ident">client</span>
             .<span class="ident">with_aggregator_handler</span>(<span class="ident">Box::new</span>(<span class="ident">mock_aggregator_handler</span>))
@@ -1646,12 +1632,9 @@
         <span class="ident">mock_aggregator_handler</span>
             .<span class="ident">expect_unpack_snapshot</span>()
             .<span class="ident">return_once</span>(<span class="kw">move</span> <span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="string">&quot;./target-dir&quot;</span>.<span class="ident">to_string</span>()));
-        <span class="ident">mock_digester</span>.<span class="ident">expect_compute_digest</span>().<span class="ident">return_once</span>(<span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
-            <span class="prelude-val">Ok</span>(<span class="ident">DigesterResult</span> {
-                <span class="ident">digest</span>: <span class="ident">digest_compute</span>,
-                <span class="ident">last_immutable_file_number</span>: <span class="number">0</span>,
-            })
-        });
+        <span class="ident">mock_digester</span>
+            .<span class="ident">expect_compute_digest</span>()
+            .<span class="ident">return_once</span>(<span class="kw">move</span> <span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="ident">digest_compute</span>));
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">client</span> <span class="op">=</span> <span class="ident">Runtime::new</span>(<span class="string">&quot;testnet&quot;</span>.<span class="ident">to_string</span>());
         <span class="ident">client</span>
             .<span class="ident">with_aggregator_handler</span>(<span class="ident">Box::new</span>(<span class="ident">mock_aggregator_handler</span>))
@@ -1689,12 +1672,9 @@
         <span class="ident">mock_aggregator_handler</span>
             .<span class="ident">expect_unpack_snapshot</span>()
             .<span class="ident">return_once</span>(<span class="kw">move</span> <span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="string">&quot;./target-dir&quot;</span>.<span class="ident">to_string</span>()));
-        <span class="ident">mock_digester</span>.<span class="ident">expect_compute_digest</span>().<span class="ident">return_once</span>(<span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
-            <span class="prelude-val">Ok</span>(<span class="ident">DigesterResult</span> {
-                <span class="ident">digest</span>: <span class="ident">digest_compute</span>,
-                <span class="ident">last_immutable_file_number</span>: <span class="number">0</span>,
-            })
-        });
+        <span class="ident">mock_digester</span>
+            .<span class="ident">expect_compute_digest</span>()
+            .<span class="ident">return_once</span>(<span class="kw">move</span> <span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="ident">digest_compute</span>));
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">client</span> <span class="op">=</span> <span class="ident">Runtime::new</span>(<span class="string">&quot;testnet&quot;</span>.<span class="ident">to_string</span>());
         <span class="ident">client</span>
             .<span class="ident">with_aggregator_handler</span>(<span class="ident">Box::new</span>(<span class="ident">mock_aggregator_handler</span>))
@@ -1732,9 +1712,12 @@
         <span class="ident">mock_aggregator_handler</span>
             .<span class="ident">expect_unpack_snapshot</span>()
             .<span class="ident">return_once</span>(<span class="kw">move</span> <span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="string">&quot;./target-dir&quot;</span>.<span class="ident">to_string</span>()));
-        <span class="ident">mock_digester</span>
-            .<span class="ident">expect_compute_digest</span>()
-            .<span class="ident">return_once</span>(<span class="op">|</span><span class="op">|</span> <span class="prelude-val">Err</span>(<span class="ident">DigesterError::NotEnoughImmutable</span>()));
+        <span class="ident">mock_digester</span>.<span class="ident">expect_compute_digest</span>().<span class="ident">return_once</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> {
+            <span class="prelude-val">Err</span>(<span class="ident">ImmutableDigesterError::NotEnoughImmutable</span> {
+                <span class="ident">found_number</span>: <span class="prelude-val">None</span>,
+                <span class="ident">expected_number</span>: <span class="number">3</span>,
+            })
+        });
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">client</span> <span class="op">=</span> <span class="ident">Runtime::new</span>(<span class="string">&quot;testnet&quot;</span>.<span class="ident">to_string</span>());
         <span class="ident">client</span>
             .<span class="ident">with_aggregator_handler</span>(<span class="ident">Box::new</span>(<span class="ident">mock_aggregator_handler</span>))
@@ -1825,12 +1808,9 @@
         <span class="ident">mock_aggregator_handler</span>
             .<span class="ident">expect_unpack_snapshot</span>()
             .<span class="ident">return_once</span>(<span class="kw">move</span> <span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="string">&quot;./target-dir&quot;</span>.<span class="ident">to_string</span>()));
-        <span class="ident">mock_digester</span>.<span class="ident">expect_compute_digest</span>().<span class="ident">return_once</span>(<span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
-            <span class="prelude-val">Ok</span>(<span class="ident">DigesterResult</span> {
-                <span class="ident">digest</span>: <span class="ident">digest_compute</span>,
-                <span class="ident">last_immutable_file_number</span>: <span class="number">0</span>,
-            })
-        });
+        <span class="ident">mock_digester</span>
+            .<span class="ident">expect_compute_digest</span>()
+            .<span class="ident">return_once</span>(<span class="kw">move</span> <span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="ident">digest_compute</span>));
         <span class="ident">mock_verifier</span>
             .<span class="ident">expect_verify_multi_signature</span>()
             .<span class="ident">return_once</span>(<span class="kw">move</span> <span class="op">|</span><span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span><span class="op">|</span> {
