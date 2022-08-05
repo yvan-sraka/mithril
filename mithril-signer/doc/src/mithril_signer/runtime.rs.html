@@ -858,6 +858,59 @@
 <span id="853">853</span>
 <span id="854">854</span>
 <span id="855">855</span>
+<span id="856">856</span>
+<span id="857">857</span>
+<span id="858">858</span>
+<span id="859">859</span>
+<span id="860">860</span>
+<span id="861">861</span>
+<span id="862">862</span>
+<span id="863">863</span>
+<span id="864">864</span>
+<span id="865">865</span>
+<span id="866">866</span>
+<span id="867">867</span>
+<span id="868">868</span>
+<span id="869">869</span>
+<span id="870">870</span>
+<span id="871">871</span>
+<span id="872">872</span>
+<span id="873">873</span>
+<span id="874">874</span>
+<span id="875">875</span>
+<span id="876">876</span>
+<span id="877">877</span>
+<span id="878">878</span>
+<span id="879">879</span>
+<span id="880">880</span>
+<span id="881">881</span>
+<span id="882">882</span>
+<span id="883">883</span>
+<span id="884">884</span>
+<span id="885">885</span>
+<span id="886">886</span>
+<span id="887">887</span>
+<span id="888">888</span>
+<span id="889">889</span>
+<span id="890">890</span>
+<span id="891">891</span>
+<span id="892">892</span>
+<span id="893">893</span>
+<span id="894">894</span>
+<span id="895">895</span>
+<span id="896">896</span>
+<span id="897">897</span>
+<span id="898">898</span>
+<span id="899">899</span>
+<span id="900">900</span>
+<span id="901">901</span>
+<span id="902">902</span>
+<span id="903">903</span>
+<span id="904">904</span>
+<span id="905">905</span>
+<span id="906">906</span>
+<span id="907">907</span>
+<span id="908">908</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">slog_scope</span>::{<span class="ident">error</span>, <span class="ident">info</span>, <span class="ident">warn</span>};
 <span class="kw">use</span> <span class="ident">std::collections::HashMap</span>;
 <span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
@@ -879,9 +932,13 @@
 <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::single_signer::SingleSigner</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::certificate_handler::CertificateHandlerError</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::single_signer::SingleSignerError</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ProtocolInitializerStore</span>;
 
 <span class="doccomment">///  StakeStoreWrapper wraps a StakeStore</span>
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">StakeStoreWrapper</span> <span class="op">=</span> <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">RwLock</span><span class="op">&lt;</span><span class="ident">StakeStore</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+
+<span class="doccomment">///  ProtocolInitializerStoreWrapper wraps a ProtocolInitializerStore</span>
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ProtocolInitializerStoreWrapper</span> <span class="op">=</span> <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">RwLock</span><span class="op">&lt;</span><span class="ident">ProtocolInitializerStore</span><span class="op">&gt;</span><span class="op">&gt;</span>;
 
 <span class="doccomment">///  ChainObserverWrapper wraps a ChainObserver</span>
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ChainObserverWrapper</span> <span class="op">=</span> <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">RwLock</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">ChainObserver</span><span class="op">&gt;</span><span class="op">&gt;</span>;
@@ -904,6 +961,11 @@
 
     <span class="doccomment">/// Stake store stores the stake distribution</span>
     <span class="ident">stake_store</span>: <span class="ident">StakeStoreWrapper</span>,
+
+    <span class="doccomment">/// Protocol initializer store stores the protocol initializers</span>
+    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span>
+    <span class="comment">// TODO: to remove this annotation once the store is used</span>
+    <span class="ident">protocol_initializer_store</span>: <span class="ident">ProtocolInitializerStoreWrapper</span>,
 
     <span class="doccomment">/// Chain observer observes the Cardano chain and helps retrieving epoch and stake distribution</span>
     <span class="ident">chain_observer</span>: <span class="ident">ChainObserverWrapper</span>,
@@ -951,6 +1013,7 @@
         <span class="ident">single_signer</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">SingleSigner</span><span class="op">&gt;</span>,
         <span class="ident">digester</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">ImmutableDigester</span><span class="op">&gt;</span>,
         <span class="ident">stake_store</span>: <span class="ident">StakeStoreWrapper</span>,
+        <span class="ident">protocol_initializer_store</span>: <span class="ident">ProtocolInitializerStoreWrapper</span>,
         <span class="ident">chain_observer</span>: <span class="ident">ChainObserverWrapper</span>,
     ) -&gt; <span class="self">Self</span> {
         <span class="self">Self</span> {
@@ -960,6 +1023,7 @@
             <span class="ident">local_epoch</span>: <span class="prelude-val">None</span>,
             <span class="ident">current_beacon</span>: <span class="prelude-val">None</span>,
             <span class="ident">stake_store</span>,
+            <span class="ident">protocol_initializer_store</span>,
             <span class="ident">chain_observer</span>,
         }
     }
@@ -1163,9 +1227,10 @@
     <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::certificate_handler</span>::{<span class="ident">CertificateHandlerError</span>, <span class="ident">MockCertificateHandler</span>};
     <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::single_signer</span>::{<span class="ident">MockSingleSigner</span>, <span class="ident">SingleSignerError</span>};
     <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ProtocolInitializerStorer</span>;
 
-    <span class="kw">use</span> <span class="ident">mithril_common::crypto_helper::tests_setup</span>::<span class="kw-2">*</span>;
     <span class="kw">use</span> <span class="ident">mithril_common::crypto_helper::ProtocolStakeDistribution</span>;
+    <span class="kw">use</span> <span class="ident">mithril_common::crypto_helper</span>::{<span class="ident">tests_setup</span>::<span class="kw-2">*</span>, <span class="ident">ProtocolInitializer</span>};
     <span class="kw">use</span> <span class="ident">mithril_common::digesters</span>::{<span class="ident">ImmutableDigester</span>, <span class="ident">ImmutableDigesterError</span>};
     <span class="kw">use</span> <span class="ident">mithril_common::entities</span>::{<span class="ident">Epoch</span>, <span class="ident">ImmutableFileNumber</span>, <span class="ident">Stake</span>, <span class="ident">StakeDistribution</span>};
     <span class="kw">use</span> <span class="ident">mithril_common::fake_data</span>;
@@ -1173,6 +1238,8 @@
 
     <span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
     <span class="kw">use</span> <span class="ident">mockall::mock</span>;
+    <span class="kw">use</span> <span class="ident">rand_chacha::ChaCha20Rng</span>;
+    <span class="kw">use</span> <span class="ident">rand_core::SeedableRng</span>;
 
     <span class="macro">mock!</span> {
         <span class="kw">pub</span> <span class="ident">DigesterImpl</span> { }
@@ -1217,6 +1284,27 @@
         <span class="ident">stake_store</span>
     }
 
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">setup_protocol_initializer_store</span>() -&gt; <span class="ident">ProtocolInitializerStore</span> {
+        <span class="kw">let</span> <span class="ident">protocol_initializer_store</span> <span class="op">=</span> <span class="ident">ProtocolInitializerStore::new</span>(<span class="ident">Box::new</span>(
+            <span class="ident">MemoryAdapter</span>::<span class="op">&lt;</span><span class="ident">Epoch</span>, <span class="ident">ProtocolInitializer</span><span class="op">&gt;</span><span class="ident">::new</span>(<span class="prelude-val">None</span>).<span class="ident">unwrap</span>(),
+        ));
+        <span class="kw">let</span> <span class="ident">current_epoch</span> <span class="op">=</span> <span class="ident">fake_data::beacon</span>().<span class="ident">epoch</span>;
+        <span class="kw">for</span> <span class="ident">epoch</span> <span class="kw">in</span> <span class="ident">current_epoch</span> <span class="op">-</span> <span class="number">2</span>..<span class="ident">current_epoch</span> <span class="op">+</span> <span class="number">2</span> {
+            <span class="kw">let</span> <span class="ident">protocol_parameters</span> <span class="op">=</span> <span class="ident">fake_data::protocol_parameters</span>();
+            <span class="kw">let</span> <span class="ident">party_id</span> <span class="op">=</span> <span class="macro">format!</span>(<span class="string">&quot;{:&lt;032}&quot;</span>, <span class="number">1</span>);
+            <span class="kw">let</span> <span class="ident">stake</span> <span class="op">=</span> (<span class="ident">epoch</span> <span class="op">+</span> <span class="number">1</span>) <span class="op">*</span> <span class="number">100</span>;
+            <span class="kw">let</span> <span class="ident">seed</span>: [<span class="ident">u8</span>; <span class="number">32</span>] <span class="op">=</span> <span class="ident">party_id</span>.<span class="ident">as_bytes</span>()[..<span class="number">32</span>].<span class="ident">try_into</span>().<span class="ident">unwrap</span>();
+            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">rng</span> <span class="op">=</span> <span class="ident">ChaCha20Rng::from_seed</span>(<span class="ident">seed</span>);
+            <span class="kw">let</span> <span class="ident">protocol_initializer</span> <span class="op">=</span>
+                <span class="ident">ProtocolInitializer::setup</span>(<span class="ident">protocol_parameters</span>.<span class="ident">into</span>(), <span class="ident">stake</span>, <span class="kw-2">&amp;mut</span> <span class="ident">rng</span>);
+            <span class="ident">protocol_initializer_store</span>
+                .<span class="ident">save_protocol_initializer</span>(<span class="ident">epoch</span>, <span class="ident">protocol_initializer</span>)
+                .<span class="kw">await</span>
+                .<span class="ident">expect</span>(<span class="string">&quot;fake protocol initializer update failed&quot;</span>);
+        }
+        <span class="ident">protocol_initializer_store</span>
+    }
+
     <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">signer_updates_stake_distribution_when_it_should</span>() {
         <span class="kw">let</span> <span class="ident">total_signers</span> <span class="op">=</span> <span class="number">5</span>;
@@ -1232,6 +1320,7 @@
         <span class="kw">let</span> <span class="ident">protocol_initializer</span> <span class="op">=</span> <span class="ident">current_signer</span>.<span class="number">4</span>.<span class="ident">clone</span>();
         <span class="kw">let</span> <span class="ident">pending_certificate</span> <span class="op">=</span> <span class="ident">fake_data::certificate_pending</span>();
         <span class="kw">let</span> <span class="ident">stake_store</span> <span class="op">=</span> <span class="ident">setup_stake_store</span>(<span class="ident">total_signers</span>).<span class="kw">await</span>;
+        <span class="kw">let</span> <span class="ident">protocol_initializer_store</span> <span class="op">=</span> <span class="ident">setup_protocol_initializer_store</span>().<span class="kw">await</span>;
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_certificate_handler</span> <span class="op">=</span> <span class="ident">MockCertificateHandler::new</span>();
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_single_signer</span> <span class="op">=</span> <span class="ident">MockSingleSigner::new</span>();
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_digester</span> <span class="op">=</span> <span class="ident">MockDigesterImpl::new</span>();
@@ -1274,6 +1363,7 @@
             <span class="ident">Box::new</span>(<span class="ident">mock_single_signer</span>),
             <span class="ident">Box::new</span>(<span class="ident">mock_digester</span>),
             <span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">stake_store</span>)),
+            <span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">protocol_initializer_store</span>)),
             <span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">mock_chain_observer</span>)),
         );
         <span class="macro">assert!</span>(<span class="ident">signer</span>.<span class="ident">run</span>().<span class="kw">await</span>.<span class="ident">is_ok</span>());
@@ -1297,6 +1387,7 @@
         <span class="kw">let</span> <span class="ident">party_id</span> <span class="op">=</span> <span class="ident">current_signer</span>.<span class="ident">clone</span>().<span class="number">0</span>;
         <span class="kw">let</span> <span class="ident">protocol_initializer</span> <span class="op">=</span> <span class="ident">current_signer</span>.<span class="number">4</span>.<span class="ident">clone</span>();
         <span class="kw">let</span> <span class="ident">stake_store</span> <span class="op">=</span> <span class="ident">setup_stake_store</span>(<span class="number">5</span>).<span class="kw">await</span>;
+        <span class="kw">let</span> <span class="ident">protocol_initializer_store</span> <span class="op">=</span> <span class="ident">setup_protocol_initializer_store</span>().<span class="kw">await</span>;
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_certificate_handler</span> <span class="op">=</span> <span class="ident">MockCertificateHandler::new</span>();
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_single_signer</span> <span class="op">=</span> <span class="ident">MockSingleSigner::new</span>();
         <span class="kw">let</span> <span class="ident">mock_digester</span> <span class="op">=</span> <span class="ident">MockDigesterImpl::new</span>();
@@ -1328,6 +1419,7 @@
             <span class="ident">Box::new</span>(<span class="ident">mock_single_signer</span>),
             <span class="ident">Box::new</span>(<span class="ident">mock_digester</span>),
             <span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">stake_store</span>)),
+            <span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">protocol_initializer_store</span>)),
             <span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">mock_chain_observer</span>)),
         );
         <span class="macro">assert!</span>(<span class="ident">signer</span>.<span class="ident">run</span>().<span class="kw">await</span>.<span class="ident">is_ok</span>());
@@ -1336,6 +1428,7 @@
     <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">signer_fails_when_pending_certificate_fails</span>() {
         <span class="kw">let</span> <span class="ident">stake_store</span> <span class="op">=</span> <span class="ident">setup_stake_store</span>(<span class="number">5</span>).<span class="kw">await</span>;
+        <span class="kw">let</span> <span class="ident">protocol_initializer_store</span> <span class="op">=</span> <span class="ident">setup_protocol_initializer_store</span>().<span class="kw">await</span>;
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_certificate_handler</span> <span class="op">=</span> <span class="ident">MockCertificateHandler::new</span>();
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_single_signer</span> <span class="op">=</span> <span class="ident">MockSingleSigner::new</span>();
         <span class="kw">let</span> <span class="ident">mock_digester</span> <span class="op">=</span> <span class="ident">MockDigesterImpl::new</span>();
@@ -1362,6 +1455,7 @@
             <span class="ident">Box::new</span>(<span class="ident">mock_single_signer</span>),
             <span class="ident">Box::new</span>(<span class="ident">mock_digester</span>),
             <span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">stake_store</span>)),
+            <span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">protocol_initializer_store</span>)),
             <span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">mock_chain_observer</span>)),
         );
         <span class="macro">assert_eq!</span>(
@@ -1379,6 +1473,7 @@
         <span class="kw">let</span> <span class="ident">party_id</span> <span class="op">=</span> <span class="ident">current_signer</span>.<span class="ident">clone</span>().<span class="number">0</span>;
         <span class="kw">let</span> <span class="ident">protocol_initializer</span> <span class="op">=</span> <span class="ident">current_signer</span>.<span class="number">4</span>.<span class="ident">clone</span>();
         <span class="kw">let</span> <span class="ident">stake_store</span> <span class="op">=</span> <span class="ident">setup_stake_store</span>(<span class="number">5</span>).<span class="kw">await</span>;
+        <span class="kw">let</span> <span class="ident">protocol_initializer_store</span> <span class="op">=</span> <span class="ident">setup_protocol_initializer_store</span>().<span class="kw">await</span>;
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_certificate_handler</span> <span class="op">=</span> <span class="ident">MockCertificateHandler::new</span>();
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_single_signer</span> <span class="op">=</span> <span class="ident">MockSingleSigner::new</span>();
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_digester</span> <span class="op">=</span> <span class="ident">MockDigesterImpl::new</span>();
@@ -1434,6 +1529,7 @@
             <span class="ident">Box::new</span>(<span class="ident">mock_single_signer</span>),
             <span class="ident">Box::new</span>(<span class="ident">mock_digester</span>),
             <span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">stake_store</span>)),
+            <span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">protocol_initializer_store</span>)),
             <span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">mock_chain_observer</span>)),
         );
         <span class="macro">assert!</span>(<span class="ident">signer</span>.<span class="ident">run</span>().<span class="kw">await</span>.<span class="ident">is_ok</span>());
@@ -1446,6 +1542,7 @@
         <span class="kw">let</span> <span class="ident">party_id</span> <span class="op">=</span> <span class="ident">current_signer</span>.<span class="ident">clone</span>().<span class="number">0</span>;
         <span class="kw">let</span> <span class="ident">protocol_initializer</span> <span class="op">=</span> <span class="ident">current_signer</span>.<span class="number">4</span>.<span class="ident">clone</span>();
         <span class="kw">let</span> <span class="ident">stake_store</span> <span class="op">=</span> <span class="ident">setup_stake_store</span>(<span class="number">5</span>).<span class="kw">await</span>;
+        <span class="kw">let</span> <span class="ident">protocol_initializer_store</span> <span class="op">=</span> <span class="ident">setup_protocol_initializer_store</span>().<span class="kw">await</span>;
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_certificate_handler</span> <span class="op">=</span> <span class="ident">MockCertificateHandler::new</span>();
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_single_signer</span> <span class="op">=</span> <span class="ident">MockSingleSigner::new</span>();
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_digester</span> <span class="op">=</span> <span class="ident">MockDigesterImpl::new</span>();
@@ -1495,6 +1592,7 @@
             <span class="ident">Box::new</span>(<span class="ident">mock_single_signer</span>),
             <span class="ident">Box::new</span>(<span class="ident">mock_digester</span>),
             <span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">stake_store</span>)),
+            <span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">protocol_initializer_store</span>)),
             <span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">mock_chain_observer</span>)),
         );
         <span class="macro">assert!</span>(<span class="ident">signer</span>.<span class="ident">run</span>().<span class="kw">await</span>.<span class="ident">is_ok</span>());
@@ -1507,6 +1605,7 @@
         <span class="kw">let</span> <span class="ident">party_id</span> <span class="op">=</span> <span class="ident">current_signer</span>.<span class="ident">clone</span>().<span class="number">0</span>;
         <span class="kw">let</span> <span class="ident">protocol_initializer</span> <span class="op">=</span> <span class="ident">current_signer</span>.<span class="number">4</span>.<span class="ident">clone</span>();
         <span class="kw">let</span> <span class="ident">stake_store</span> <span class="op">=</span> <span class="ident">setup_stake_store</span>(<span class="number">5</span>).<span class="kw">await</span>;
+        <span class="kw">let</span> <span class="ident">protocol_initializer_store</span> <span class="op">=</span> <span class="ident">setup_protocol_initializer_store</span>().<span class="kw">await</span>;
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_certificate_handler</span> <span class="op">=</span> <span class="ident">MockCertificateHandler::new</span>();
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_single_signer</span> <span class="op">=</span> <span class="ident">MockSingleSigner::new</span>();
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_digester</span> <span class="op">=</span> <span class="ident">MockDigesterImpl::new</span>();
@@ -1549,6 +1648,7 @@
             <span class="ident">Box::new</span>(<span class="ident">mock_single_signer</span>),
             <span class="ident">Box::new</span>(<span class="ident">mock_digester</span>),
             <span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">stake_store</span>)),
+            <span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">protocol_initializer_store</span>)),
             <span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">mock_chain_observer</span>)),
         );
         <span class="macro">assert!</span>(<span class="ident">signer</span>.<span class="ident">run</span>().<span class="kw">await</span>.<span class="ident">is_ok</span>());
@@ -1558,6 +1658,7 @@
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">signer_fails_if_signature_computation_fails</span>() {
         <span class="kw">let</span> <span class="ident">epoch</span> <span class="op">=</span> <span class="ident">fake_data::beacon</span>().<span class="ident">epoch</span>;
         <span class="kw">let</span> <span class="ident">stake_store</span> <span class="op">=</span> <span class="ident">setup_stake_store</span>(<span class="number">5</span>).<span class="kw">await</span>;
+        <span class="kw">let</span> <span class="ident">protocol_initializer_store</span> <span class="op">=</span> <span class="ident">setup_protocol_initializer_store</span>().<span class="kw">await</span>;
         <span class="kw">let</span> <span class="ident">stake_distribution_expected</span>: <span class="ident">StakeDistribution</span> <span class="op">=</span> <span class="ident">stake_store</span>
             .<span class="ident">get_stakes</span>(<span class="ident">epoch</span>)
             .<span class="kw">await</span>
@@ -1599,6 +1700,7 @@
             <span class="ident">Box::new</span>(<span class="ident">mock_single_signer</span>),
             <span class="ident">Box::new</span>(<span class="ident">mock_digester</span>),
             <span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">stake_store</span>)),
+            <span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">protocol_initializer_store</span>)),
             <span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">mock_chain_observer</span>)),
         );
         <span class="macro">assert_eq!</span>(
@@ -1617,6 +1719,7 @@
         <span class="kw">let</span> <span class="ident">protocol_initializer</span> <span class="op">=</span> <span class="ident">current_signer</span>.<span class="number">4</span>.<span class="ident">clone</span>();
         <span class="kw">let</span> <span class="ident">pending_certificate</span> <span class="op">=</span> <span class="ident">fake_data::certificate_pending</span>();
         <span class="kw">let</span> <span class="ident">stake_store</span> <span class="op">=</span> <span class="ident">setup_stake_store</span>(<span class="number">5</span>).<span class="kw">await</span>;
+        <span class="kw">let</span> <span class="ident">protocol_initializer_store</span> <span class="op">=</span> <span class="ident">setup_protocol_initializer_store</span>().<span class="kw">await</span>;
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_certificate_handler</span> <span class="op">=</span> <span class="ident">MockCertificateHandler::new</span>();
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_single_signer</span> <span class="op">=</span> <span class="ident">MockSingleSigner::new</span>();
         <span class="kw">let</span> <span class="ident">mock_digester</span> <span class="op">=</span> <span class="ident">MockDigesterImpl::new</span>();
@@ -1653,6 +1756,7 @@
             <span class="ident">Box::new</span>(<span class="ident">mock_single_signer</span>),
             <span class="ident">Box::new</span>(<span class="ident">mock_digester</span>),
             <span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">stake_store</span>)),
+            <span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">protocol_initializer_store</span>)),
             <span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">mock_chain_observer</span>)),
         );
         <span class="macro">assert_eq!</span>(
@@ -1668,6 +1772,7 @@
     <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">signer_fails_if_digest_computation_fails</span>() {
         <span class="kw">let</span> <span class="ident">stake_store</span> <span class="op">=</span> <span class="ident">setup_stake_store</span>(<span class="number">5</span>).<span class="kw">await</span>;
+        <span class="kw">let</span> <span class="ident">protocol_initializer_store</span> <span class="op">=</span> <span class="ident">setup_protocol_initializer_store</span>().<span class="kw">await</span>;
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_certificate_handler</span> <span class="op">=</span> <span class="ident">MockCertificateHandler::new</span>();
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_single_signer</span> <span class="op">=</span> <span class="ident">MockSingleSigner::new</span>();
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_digester</span> <span class="op">=</span> <span class="ident">MockDigesterImpl::new</span>();
@@ -1701,6 +1806,7 @@
             <span class="ident">Box::new</span>(<span class="ident">mock_single_signer</span>),
             <span class="ident">Box::new</span>(<span class="ident">mock_digester</span>),
             <span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">stake_store</span>)),
+            <span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">protocol_initializer_store</span>)),
             <span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">mock_chain_observer</span>)),
         );
         <span class="macro">assert_eq!</span>(

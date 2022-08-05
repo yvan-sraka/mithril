@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["CertificateHandlerHTTPClient","CertificateHandlerHTTPClient is a http client for an aggregator"],["Config","Client configuration"],["MithrilSingleSigner",""],["Runtime",""]]});
+initSidebarItems({"struct":[["CertificateHandlerHTTPClient","CertificateHandlerHTTPClient is a http client for an aggregator"],["Config","Client configuration"],["MithrilSingleSigner",""],["ProtocolInitializerStore",""],["Runtime",""]],"trait":[["ProtocolInitializerStorer",""]]});
