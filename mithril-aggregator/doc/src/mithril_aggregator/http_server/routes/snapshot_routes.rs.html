@@ -412,6 +412,18 @@
 <span id="407">407</span>
 <span id="408">408</span>
 <span id="409">409</span>
+<span id="410">410</span>
+<span id="411">411</span>
+<span id="412">412</span>
+<span id="413">413</span>
+<span id="414">414</span>
+<span id="415">415</span>
+<span id="416">416</span>
+<span id="417">417</span>
+<span id="418">418</span>
+<span id="419">419</span>
+<span id="420">420</span>
+<span id="421">421</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::http_server::routes::middlewares</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::DependencyManager</span>;
 <span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
@@ -473,7 +485,7 @@
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::http_server::routes::reply</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::http_server::SERVER_BASE_PATH</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::Config</span>;
-    <span class="kw">use</span> <span class="ident">slog_scope::debug</span>;
+    <span class="kw">use</span> <span class="ident">slog_scope</span>::{<span class="ident">debug</span>, <span class="ident">warn</span>};
     <span class="kw">use</span> <span class="ident">std::convert::Infallible</span>;
     <span class="kw">use</span> <span class="ident">std::str::FromStr</span>;
     <span class="kw">use</span> <span class="ident">warp::http</span>::{<span class="ident">StatusCode</span>, <span class="ident">Uri</span>};
@@ -486,7 +498,10 @@
 
         <span class="kw">match</span> <span class="ident">snapshot_store</span>.<span class="ident">list_snapshots</span>().<span class="kw">await</span> {
             <span class="prelude-val">Ok</span>(<span class="ident">snapshots</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">reply::json</span>(<span class="kw-2">&amp;</span><span class="ident">snapshots</span>, <span class="ident">StatusCode::OK</span>)),
-            <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">reply::internal_server_error</span>(<span class="ident">err</span>.<span class="ident">to_string</span>())),
+            <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; {
+                <span class="macro">warn!</span>(<span class="string">&quot;snapshots::error&quot;</span>; <span class="string">&quot;error&quot;</span> =&gt; <span class="question-mark">?</span><span class="ident">err</span>);
+                <span class="prelude-val">Ok</span>(<span class="ident">reply::internal_server_error</span>(<span class="ident">err</span>.<span class="ident">to_string</span>()))
+            }
         }
     }
 
@@ -513,7 +528,10 @@
                 )) <span class="kw">as</span> <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">warp::Reply</span><span class="op">&gt;</span>),
                 <span class="kw">_</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">reply::empty</span>(<span class="ident">StatusCode::NOT_FOUND</span>)),
             },
-            <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">reply::empty</span>(<span class="ident">StatusCode::NOT_FOUND</span>)),
+            <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; {
+                <span class="macro">warn!</span>(<span class="string">&quot;ensure_downloaded_file_is_a_snapshot::error&quot;</span>; <span class="string">&quot;error&quot;</span> =&gt; <span class="question-mark">?</span><span class="ident">err</span>);
+                <span class="prelude-val">Ok</span>(<span class="ident">reply::empty</span>(<span class="ident">StatusCode::NOT_FOUND</span>))
+            }
         }
     }
 
@@ -536,8 +554,14 @@
 
                 <span class="prelude-val">Ok</span>(<span class="ident">Box::new</span>(<span class="ident">warp::redirect::found</span>(<span class="ident">snapshot_uri</span>)) <span class="kw">as</span> <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">warp::Reply</span><span class="op">&gt;</span>)
             }
-            <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">reply::empty</span>(<span class="ident">StatusCode::NOT_FOUND</span>)),
-            <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">reply::internal_server_error</span>(<span class="ident">err</span>.<span class="ident">to_string</span>())),
+            <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; {
+                <span class="macro">warn!</span>(<span class="string">&quot;snapshot_download::not_found&quot;</span>);
+                <span class="prelude-val">Ok</span>(<span class="ident">reply::empty</span>(<span class="ident">StatusCode::NOT_FOUND</span>))
+            }
+            <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; {
+                <span class="macro">warn!</span>(<span class="string">&quot;snapshot_download::error&quot;</span>; <span class="string">&quot;error&quot;</span> =&gt; <span class="question-mark">?</span><span class="ident">err</span>);
+                <span class="prelude-val">Ok</span>(<span class="ident">reply::internal_server_error</span>(<span class="ident">err</span>.<span class="ident">to_string</span>()))
+            }
         }
     }
 

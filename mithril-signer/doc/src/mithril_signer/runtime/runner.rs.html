@@ -657,6 +657,20 @@
 <span id="652">652</span>
 <span id="653">653</span>
 <span id="654">654</span>
+<span id="655">655</span>
+<span id="656">656</span>
+<span id="657">657</span>
+<span id="658">658</span>
+<span id="659">659</span>
+<span id="660">660</span>
+<span id="661">661</span>
+<span id="662">662</span>
+<span id="663">663</span>
+<span id="664">664</span>
+<span id="665">665</span>
+<span id="666">666</span>
+<span id="667">667</span>
+<span id="668">668</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="kw">use</span> <span class="ident">mockall::automock</span>;
@@ -665,7 +679,7 @@
 <span class="kw">use</span> <span class="ident">thiserror::Error</span>;
 
 <span class="kw">use</span> <span class="ident">mithril_common::crypto_helper</span>::{<span class="ident">key_decode_hex</span>, <span class="ident">ProtocolSignerVerificationKey</span>};
-<span class="kw">use</span> <span class="ident">mithril_common::entities::ProtocolParameters</span>;
+<span class="kw">use</span> <span class="ident">mithril_common::entities</span>::{<span class="ident">PartyId</span>, <span class="ident">ProtocolParameters</span>};
 <span class="kw">use</span> <span class="ident">mithril_common</span>::{
     <span class="ident">crypto_helper::key_encode_hex</span>,
     <span class="ident">entities</span>::{
@@ -730,12 +744,14 @@
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Error</span>)]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">RuntimeError</span> {
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;No value returned by the subsystem.&quot;</span>)]</span>
-    <span class="ident">NoValueError</span>,
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;No stake associated with this signer.&quot;</span>)]</span>
-    <span class="ident">NoStake</span>,
+    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;No value returned by the subsystem for `{0}`&quot;</span>)]</span>
+    <span class="ident">NoValueError</span>(<span class="ident">String</span>),
+    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;No stake associated with this signer&quot;</span>)]</span>
+    <span class="ident">NoStakeForSelf</span>(),
+    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;No stake associated with this signer, party_id: {0}&quot;</span>)]</span>
+    <span class="ident">NoStakeForSigner</span>(<span class="ident">PartyId</span>),
     <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Subsystem unavailable: {0}&quot;</span>)]</span>
-    <span class="ident">SusbsystemUnavailable</span>(<span class="ident">String</span>),
+    <span class="ident">SubsystemUnavailable</span>(<span class="ident">String</span>),
 }
 
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">SignerRunner</span> {
@@ -786,10 +802,10 @@
             .<span class="ident">chain_observer</span>
             .<span class="ident">get_current_stake_distribution</span>()
             .<span class="kw">await</span><span class="question-mark">?</span>
-            .<span class="ident">ok_or</span>(<span class="ident">RuntimeError::NoValueError</span>)<span class="question-mark">?</span>;
+            .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">RuntimeError::NoValueError</span>(<span class="string">&quot;current_stake_distribution&quot;</span>.<span class="ident">to_string</span>()))<span class="question-mark">?</span>;
         <span class="kw">let</span> <span class="ident">stake</span> <span class="op">=</span> <span class="ident">stake_distribution</span>
             .<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">config</span>.<span class="ident">party_id</span>)
-            .<span class="ident">ok_or</span>(<span class="ident">RuntimeError::NoStake</span>)<span class="question-mark">?</span>;
+            .<span class="ident">ok_or</span>(<span class="ident">RuntimeError::NoStakeForSelf</span>())<span class="question-mark">?</span>;
         <span class="kw">let</span> <span class="ident">protocol_initializer</span> <span class="op">=</span>
             <span class="ident">MithrilProtocolInitializerBuilder::new</span>(<span class="self">self</span>.<span class="ident">config</span>.<span class="ident">party_id</span>.<span class="ident">to_owned</span>())
                 .<span class="ident">build</span>(<span class="ident">stake</span>, <span class="ident">protocol_parameters</span>)<span class="question-mark">?</span>;
@@ -818,7 +834,7 @@
             .<span class="ident">chain_observer</span>
             .<span class="ident">get_current_stake_distribution</span>()
             .<span class="kw">await</span><span class="question-mark">?</span>
-            .<span class="ident">ok_or</span>(<span class="ident">RuntimeError::NoValueError</span>)<span class="question-mark">?</span>;
+            .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">RuntimeError::NoValueError</span>(<span class="string">&quot;current_stake_distribution&quot;</span>.<span class="ident">to_string</span>()))<span class="question-mark">?</span>;
         <span class="self">self</span>.<span class="ident">services</span>
             .<span class="ident">stake_store</span>
             .<span class="ident">save_stakes</span>(<span class="ident">epoch</span>.<span class="ident">offset_to_recording_epoch</span>()<span class="question-mark">?</span>, <span class="ident">stake_distribution</span>)
@@ -861,18 +877,18 @@
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">SignerWithStake</span><span class="op">&gt;</span>, <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">StdError</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="macro">debug!</span>(<span class="string">&quot;runner: associate_signers_with_stake&quot;</span>);
 
-        <span class="comment">// todo: dedicated error</span>
         <span class="kw">let</span> <span class="ident">stakes</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">services</span>
             .<span class="ident">stake_store</span>
             .<span class="ident">get_stakes</span>(<span class="ident">epoch</span>)
             .<span class="kw">await</span><span class="question-mark">?</span>
-            .<span class="ident">ok_or</span>(<span class="ident">RuntimeError::NoValueError</span>)<span class="question-mark">?</span>;
+            .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">RuntimeError::NoValueError</span>(<span class="macro">format!</span>(<span class="string">&quot;stakes at epoch {}&quot;</span>, <span class="ident">epoch</span>)))<span class="question-mark">?</span>;
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">signers_with_stake</span> <span class="op">=</span> <span class="macro">vec!</span>[];
 
         <span class="kw">for</span> <span class="ident">signer</span> <span class="kw">in</span> <span class="ident">signers</span> {
-            <span class="comment">// todo: dedicated error</span>
-            <span class="kw">let</span> <span class="ident">stake</span> <span class="op">=</span> <span class="ident">stakes</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">signer</span>.<span class="ident">party_id</span>).<span class="ident">ok_or</span>(<span class="ident">RuntimeError::NoStake</span>)<span class="question-mark">?</span>;
+            <span class="kw">let</span> <span class="ident">stake</span> <span class="op">=</span> <span class="ident">stakes</span>
+                .<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">signer</span>.<span class="ident">party_id</span>)
+                .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">RuntimeError::NoStakeForSigner</span>(<span class="ident">signer</span>.<span class="ident">party_id</span>.<span class="ident">to_string</span>()))<span class="question-mark">?</span>;
 
             <span class="ident">signers_with_stake</span>.<span class="ident">push</span>(<span class="ident">SignerWithStake::new</span>(
                 <span class="ident">signer</span>.<span class="ident">party_id</span>.<span class="ident">to_owned</span>(),
@@ -900,18 +916,24 @@
         <span class="ident">message</span>.<span class="ident">set_message_part</span>(<span class="ident">ProtocolMessagePartKey::SnapshotDigest</span>, <span class="ident">digest</span>);
 
         <span class="comment">// 2 set the next signers keys and stakes in the message</span>
+        <span class="kw">let</span> <span class="ident">signer_retrieval_epoch</span> <span class="op">=</span> <span class="ident">beacon</span>.<span class="ident">epoch</span>.<span class="ident">offset_to_signer_retrieval_epoch</span>()<span class="question-mark">?</span>;
         <span class="kw">let</span> <span class="ident">protocol_initializer</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">services</span>
             .<span class="ident">protocol_initializer_store</span>
-            .<span class="ident">get_protocol_initializer</span>(<span class="ident">beacon</span>.<span class="ident">epoch</span>.<span class="ident">offset_to_signer_retrieval_epoch</span>()<span class="question-mark">?</span>)
+            .<span class="ident">get_protocol_initializer</span>(<span class="ident">signer_retrieval_epoch</span>)
             .<span class="kw">await</span><span class="question-mark">?</span>
-            .<span class="ident">ok_or</span>(<span class="ident">RuntimeError::NoValueError</span>)<span class="question-mark">?</span>;
+            .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> {
+                <span class="ident">RuntimeError::NoValueError</span>(<span class="macro">format!</span>(
+                    <span class="string">&quot;protocol_initializer at epoch {}&quot;</span>,
+                    <span class="ident">signer_retrieval_epoch</span>
+                ))
+            })<span class="question-mark">?</span>;
 
         <span class="kw">let</span> <span class="ident">avk</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">services</span>
             .<span class="ident">single_signer</span>
             .<span class="ident">compute_aggregate_verification_key</span>(<span class="ident">next_signers</span>, <span class="kw-2">&amp;</span><span class="ident">protocol_initializer</span>)<span class="question-mark">?</span>
-            .<span class="ident">ok_or</span>(<span class="ident">RuntimeError::NoValueError</span>)<span class="question-mark">?</span>;
+            .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">RuntimeError::NoValueError</span>(<span class="string">&quot;next_signers avk&quot;</span>.<span class="ident">to_string</span>()))<span class="question-mark">?</span>;
         <span class="ident">message</span>.<span class="ident">set_message_part</span>(<span class="ident">ProtocolMessagePartKey::NextAggregateVerificationKey</span>, <span class="ident">avk</span>);
 
         <span class="prelude-val">Ok</span>(<span class="ident">message</span>)
@@ -925,12 +947,18 @@
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">SingleSignatures</span><span class="op">&gt;</span>, <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">StdError</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="macro">debug!</span>(<span class="string">&quot;runner: compute_single_signature&quot;</span>);
 
+        <span class="kw">let</span> <span class="ident">signer_retrieval_epoch</span> <span class="op">=</span> <span class="ident">epoch</span>.<span class="ident">offset_to_signer_retrieval_epoch</span>()<span class="question-mark">?</span>;
         <span class="kw">let</span> <span class="ident">protocol_initializer</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">services</span>
             .<span class="ident">protocol_initializer_store</span>
-            .<span class="ident">get_protocol_initializer</span>(<span class="ident">epoch</span>.<span class="ident">offset_to_signer_retrieval_epoch</span>()<span class="question-mark">?</span>)
+            .<span class="ident">get_protocol_initializer</span>(<span class="ident">signer_retrieval_epoch</span>)
             .<span class="kw">await</span><span class="question-mark">?</span>
-            .<span class="ident">ok_or</span>(<span class="ident">RuntimeError::NoValueError</span>)<span class="question-mark">?</span>;
+            .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> {
+                <span class="ident">RuntimeError::NoValueError</span>(<span class="macro">format!</span>(
+                    <span class="string">&quot;protocol_initializer at epoch {}&quot;</span>,
+                    <span class="ident">signer_retrieval_epoch</span>
+                ))
+            })<span class="question-mark">?</span>;
         <span class="kw">let</span> <span class="ident">signature</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">services</span>.<span class="ident">single_signer</span>.<span class="ident">compute_single_signatures</span>(
             <span class="ident">message</span>,
             <span class="ident">signers</span>,
