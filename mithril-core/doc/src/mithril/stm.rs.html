@@ -1283,26 +1283,6 @@
 <span id="1278">1278</span>
 <span id="1279">1279</span>
 <span id="1280">1280</span>
-<span id="1281">1281</span>
-<span id="1282">1282</span>
-<span id="1283">1283</span>
-<span id="1284">1284</span>
-<span id="1285">1285</span>
-<span id="1286">1286</span>
-<span id="1287">1287</span>
-<span id="1288">1288</span>
-<span id="1289">1289</span>
-<span id="1290">1290</span>
-<span id="1291">1291</span>
-<span id="1292">1292</span>
-<span id="1293">1293</span>
-<span id="1294">1294</span>
-<span id="1295">1295</span>
-<span id="1296">1296</span>
-<span id="1297">1297</span>
-<span id="1298">1298</span>
-<span id="1299">1299</span>
-<span id="1300">1300</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Top-level API for Mithril Stake-based Threshold Multisignature scheme.</span>
 <span class="doccomment">//! See figure 6 of [the paper](https://eprint.iacr.org/2021/916) for most of the</span>
 <span class="doccomment">//! protocol.</span>
@@ -1430,9 +1410,16 @@
 
 <span class="doccomment">/// The quantity of stake held by a party, represented as a `u64`.</span>
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">Stake</span> <span class="op">=</span> <span class="ident">u64</span>;
+
 <span class="doccomment">/// Quorum index for signatures.</span>
 <span class="doccomment">/// An aggregate signature (`StmMultiSig`) must have at least `k` unique indices.</span>
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">Index</span> <span class="op">=</span> <span class="ident">u64</span>;
+
+<span class="doccomment">/// Wrapper of the MultiSignature Verification key with proof of possession</span>
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">StmVerificationKeyPoP</span> <span class="op">=</span> <span class="ident">VerificationKeyPoP</span>;
+
+<span class="doccomment">/// Wrapper of the MultiSignature Verification key</span>
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">StmVerificationKey</span> <span class="op">=</span> <span class="ident">VerificationKey</span>;
 
 <span class="doccomment">/// Used to set protocol parameters.</span>
 <span class="comment">// todo: this is the criteria to consider parameters valid:</span>
@@ -1443,76 +1430,34 @@
 <span class="comment">// The latter turns to 1 - BinomialCDF(k-1,m,p)</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">StmParameters</span> {
-    <span class="doccomment">/// Security parameter, upper bound on indices</span>
+    <span class="doccomment">/// Security parameter, upper bound on indices.</span>
     <span class="kw">pub</span> <span class="ident">m</span>: <span class="ident">u64</span>,
-
-    <span class="doccomment">/// Quorum parameter</span>
+    <span class="doccomment">/// Quorum parameter.</span>
     <span class="kw">pub</span> <span class="ident">k</span>: <span class="ident">u64</span>,
-
-    <span class="doccomment">/// `f` in phi(w) = 1 - (1 - f)^w, where w is the stake of a participant.</span>
+    <span class="doccomment">/// `f` in phi(w) = 1 - (1 - f)^w, where w is the stake of a participant..</span>
     <span class="kw">pub</span> <span class="ident">phi_f</span>: <span class="ident">f64</span>,
 }
 
-<span class="kw">impl</span> <span class="ident">StmParameters</span> {
-    <span class="doccomment">/// Convert to bytes</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Layout</span>
-    <span class="doccomment">/// * Security parameter, m (as u64)</span>
-    <span class="doccomment">/// * Quorum parameter, k (as u64)</span>
-    <span class="doccomment">/// * Phi f, as (f64)</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_bytes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; [<span class="ident">u8</span>; <span class="number">24</span>] {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">out</span> <span class="op">=</span> [<span class="number">0</span>; <span class="number">24</span>];
-        <span class="ident">out</span>[..<span class="number">8</span>].<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">m</span>.<span class="ident">to_be_bytes</span>());
-        <span class="ident">out</span>[<span class="number">8</span>..<span class="number">16</span>].<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">k</span>.<span class="ident">to_be_bytes</span>());
-        <span class="ident">out</span>[<span class="number">16</span>..].<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">phi_f</span>.<span class="ident">to_be_bytes</span>());
-        <span class="ident">out</span>
-    }
-
-    <span class="doccomment">/// Convert `StmParameters` from a byte slice</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_bytes</span>(<span class="ident">bytes</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">RegisterError</span><span class="op">&gt;</span> {
-        <span class="kw">if</span> <span class="ident">bytes</span>.<span class="ident">len</span>() <span class="op">!</span><span class="op">=</span> <span class="number">24</span> {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">RegisterError::SerializationError</span>);
-        }
-
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">u64_bytes</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">8</span>];
-        <span class="ident">u64_bytes</span>.<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[..<span class="number">8</span>]);
-        <span class="kw">let</span> <span class="ident">m</span> <span class="op">=</span> <span class="ident">u64::from_be_bytes</span>(<span class="ident">u64_bytes</span>);
-        <span class="ident">u64_bytes</span>.<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[<span class="number">8</span>..<span class="number">16</span>]);
-        <span class="kw">let</span> <span class="ident">k</span> <span class="op">=</span> <span class="ident">u64::from_be_bytes</span>(<span class="ident">u64_bytes</span>);
-        <span class="ident">u64_bytes</span>.<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[<span class="number">16</span>..]);
-        <span class="kw">let</span> <span class="ident">phi_f</span> <span class="op">=</span> <span class="ident">f64::from_be_bytes</span>(<span class="ident">u64_bytes</span>);
-
-        <span class="prelude-val">Ok</span>(<span class="self">Self</span> { <span class="ident">m</span>, <span class="ident">k</span>, <span class="ident">phi_f</span> })
-    }
-}
-
-<span class="doccomment">/// Wrapper of the MultiSignature Verification key with proof of possession</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">StmVerificationKeyPoP</span> <span class="op">=</span> <span class="ident">VerificationKeyPoP</span>;
-<span class="doccomment">/// Wrapper of the MultiSignature Verification key</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">StmVerificationKey</span> <span class="op">=</span> <span class="ident">VerificationKey</span>;
-
-<span class="doccomment">/// Initializer for `StmSigner`. This is the data that is used during the key registration</span>
-<span class="doccomment">/// procedure. Once the latter is finished, this instance is consumed into an `StmSigner`.</span>
+<span class="doccomment">/// Initializer for `StmSigner`.</span>
+<span class="doccomment">/// This is the data that is used during the key registration procedure.</span>
+<span class="doccomment">/// Once the latter is finished, this instance is consumed into an `StmSigner`.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">StmInitializer</span> {
-    <span class="doccomment">/// This participant&#39;s stake</span>
+    <span class="doccomment">/// This participant&#39;s stake.</span>
     <span class="kw">pub</span> <span class="ident">stake</span>: <span class="ident">Stake</span>,
-    <span class="doccomment">/// Current protocol instantiation parameters</span>
+    <span class="doccomment">/// Current protocol instantiation parameters.</span>
     <span class="kw">pub</span> <span class="ident">params</span>: <span class="ident">StmParameters</span>,
-    <span class="doccomment">/// Secret key</span>
+    <span class="doccomment">/// Secret key.</span>
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">sk</span>: <span class="ident">SigningKey</span>,
-    <span class="doccomment">/// Verification (public) key + proof of possession</span>
+    <span class="doccomment">/// Verification (public) key + proof of possession.</span>
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">pk</span>: <span class="ident">StmVerificationKeyPoP</span>,
 }
 
-<span class="doccomment">/// Participant in the protocol can sign messages. This instance can only be generated out of</span>
-<span class="doccomment">/// an `StmInitializer` and a `ClosedKeyReg`. This ensures that a `MerkleTree` root is not</span>
-<span class="doccomment">/// computed before all participants have registered.</span>
+<span class="doccomment">/// Participant in the protocol can sign messages.</span>
+<span class="doccomment">/// This instance can only be generated out of an `StmInitializer` and a `ClosedKeyReg`.</span>
+<span class="doccomment">/// This ensures that a `MerkleTree` root is not computed before all participants have registered.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">StmSigner</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">D</span>: <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span>,
-{
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">StmSigner</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span><span class="op">&gt;</span> {
     <span class="ident">mt_index</span>: <span class="ident">u64</span>,
     <span class="ident">stake</span>: <span class="ident">Stake</span>,
     <span class="ident">params</span>: <span class="ident">StmParameters</span>,
@@ -1521,14 +1466,11 @@
     <span class="ident">closed_reg</span>: <span class="ident">ClosedKeyReg</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>,
 }
 
-<span class="doccomment">/// `StmClerk` can verify and aggregate `StmSig`s and verify `StmMultiSig`s. Clerks can only be</span>
-<span class="doccomment">/// generated with the registration closed. This avoids that a Merkle Tree is computed before</span>
-<span class="doccomment">/// all parties have registered.</span>
+<span class="doccomment">/// `StmClerk` can verify and aggregate `StmSig`s and verify `StmMultiSig`s.</span>
+<span class="doccomment">/// Clerks can only be generated with the registration closed.</span>
+<span class="doccomment">/// This avoids that a Merkle Tree is computed before all parties have registered.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">StmClerk</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">D</span>: <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span>,
-{
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">StmClerk</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span><span class="op">&gt;</span> {
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">closed_reg</span>: <span class="ident">ClosedKeyReg</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>,
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">params</span>: <span class="ident">StmParameters</span>,
 }
@@ -1552,263 +1494,66 @@
     <span class="kw">pub</span> <span class="ident">path</span>: <span class="ident">Path</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span><span class="op">&gt;</span> <span class="ident">Hash</span> <span class="kw">for</span> <span class="ident">StmSig</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">hash</span><span class="op">&lt;</span><span class="ident">H</span>: <span class="ident">Hasher</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">state</span>: <span class="kw-2">&amp;mut</span> <span class="ident">H</span>) {
-        <span class="ident">Hash::hash_slice</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">sigma</span>.<span class="ident">to_bytes</span>(), <span class="ident">state</span>)
-    }
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span><span class="op">&gt;</span> <span class="ident">PartialEq</span> <span class="kw">for</span> <span class="ident">StmSig</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="ident">bool</span> {
-        <span class="self">self</span>.<span class="ident">sigma</span> <span class="op">==</span> <span class="ident">other</span>.<span class="ident">sigma</span>
-    }
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span><span class="op">&gt;</span> <span class="ident">Eq</span> <span class="kw">for</span> <span class="ident">StmSig</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span><span class="op">&gt;</span> <span class="ident">StmSig</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// Verify an stm signature by checking that the lottery was won, the merkle path is correct,</span>
-    <span class="doccomment">/// the indexes are in the desired range and the underlying multi signature validates.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verify</span>(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">params</span>: <span class="kw-2">&amp;</span><span class="ident">StmParameters</span>,
-        <span class="ident">avk</span>: <span class="kw-2">&amp;</span><span class="ident">StmAggrVerificationKey</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>,
-        <span class="ident">msg</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">VerificationFailure</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">msgp</span> <span class="op">=</span> <span class="ident">avk</span>.<span class="ident">mt_commitment</span>.<span class="ident">concat_with_msg</span>(<span class="ident">msg</span>);
-
-        <span class="self">self</span>.<span class="ident">check_indices</span>(<span class="ident">params</span>, <span class="kw-2">&amp;</span><span class="ident">msgp</span>, <span class="ident">avk</span>)<span class="question-mark">?</span>;
-        <span class="ident">avk</span>.<span class="ident">mt_commitment</span>
-            .<span class="ident">check</span>(<span class="kw-2">&amp;</span><span class="ident">MTLeaf</span>(<span class="self">self</span>.<span class="ident">pk</span>, <span class="self">self</span>.<span class="ident">stake</span>), <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">path</span>)<span class="question-mark">?</span>;
-        <span class="self">self</span>.<span class="ident">sigma</span>.<span class="ident">verify</span>(<span class="kw-2">&amp;</span><span class="ident">msgp</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">pk</span>)<span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(())
-    }
-
-    <span class="doccomment">/// Verify that all indices of a signature are valid</span>
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">check_indices</span>(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">params</span>: <span class="kw-2">&amp;</span><span class="ident">StmParameters</span>,
-        <span class="ident">msgp</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
-        <span class="ident">avk</span>: <span class="kw-2">&amp;</span><span class="ident">StmAggrVerificationKey</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">VerificationFailure</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="ident">index</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">indexes</span> {
-            <span class="kw">if</span> <span class="ident">index</span> <span class="op">&gt;</span> <span class="ident">params</span>.<span class="ident">m</span> {
-                <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">VerificationFailure::IndexBoundFailed</span>(<span class="ident">index</span>, <span class="ident">params</span>.<span class="ident">m</span>));
-            }
-
-            <span class="kw">let</span> <span class="ident">ev</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">sigma</span>.<span class="ident">eval</span>(<span class="ident">msgp</span>, <span class="ident">index</span>);
-
-            <span class="kw">if</span> <span class="op">!</span><span class="ident">ev_lt_phi</span>(<span class="ident">params</span>.<span class="ident">phi_f</span>, <span class="ident">ev</span>, <span class="self">self</span>.<span class="ident">stake</span>, <span class="ident">avk</span>.<span class="ident">total_stake</span>) {
-                <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">VerificationFailure::LotteryLost</span>);
-            }
-        }
-
-        <span class="prelude-val">Ok</span>(())
-    }
-
-    <span class="doccomment">/// Convert an `StmSig` into bytes</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Layout</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// * Party id</span>
-    <span class="doccomment">/// * Stake</span>
-    <span class="doccomment">/// * Number of valid indexes (as u64)</span>
-    <span class="doccomment">/// * Indexes of the signature</span>
-    <span class="doccomment">/// * Public Key</span>
-    <span class="doccomment">/// * Signature</span>
-    <span class="doccomment">/// * Merkle Tree path</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_bytes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">output</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
-        <span class="ident">output</span>.<span class="ident">extend_from_slice</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">stake</span>.<span class="ident">to_be_bytes</span>());
-        <span class="ident">output</span>.<span class="ident">extend_from_slice</span>(<span class="kw-2">&amp;</span>(<span class="self">self</span>.<span class="ident">indexes</span>.<span class="ident">len</span>() <span class="kw">as</span> <span class="ident">u64</span>).<span class="ident">to_be_bytes</span>());
-        <span class="kw">for</span> <span class="ident">index</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">indexes</span> {
-            <span class="ident">output</span>.<span class="ident">extend_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">index</span>.<span class="ident">to_be_bytes</span>());
-        }
-        <span class="ident">output</span>.<span class="ident">extend_from_slice</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">pk</span>.<span class="ident">to_bytes</span>());
-        <span class="ident">output</span>.<span class="ident">extend_from_slice</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">sigma</span>.<span class="ident">to_bytes</span>());
-        <span class="ident">output</span>.<span class="ident">extend_from_slice</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">path</span>.<span class="ident">to_bytes</span>());
-        <span class="ident">output</span>
-    }
-
-    <span class="doccomment">/// Convert an `StmSig` from a byte slice</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_bytes</span>(<span class="ident">bytes</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">StmSig</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>, <span class="ident">MultiSignatureError</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">u64_bytes</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">8</span>];
-        <span class="ident">u64_bytes</span>.<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[..<span class="number">8</span>]);
-        <span class="kw">let</span> <span class="ident">stake</span> <span class="op">=</span> <span class="ident">u64::from_be_bytes</span>(<span class="ident">u64_bytes</span>);
-        <span class="ident">u64_bytes</span>.<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[<span class="number">8</span>..<span class="number">16</span>]);
-        <span class="kw">let</span> <span class="ident">nr_indexes</span> <span class="op">=</span> <span class="ident">u64::from_be_bytes</span>(<span class="ident">u64_bytes</span>) <span class="kw">as</span> <span class="ident">usize</span>;
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">index</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
-        <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">nr_indexes</span> {
-            <span class="ident">u64_bytes</span>.<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[<span class="number">16</span> <span class="op">+</span> <span class="ident">i</span> <span class="op">*</span> <span class="number">8</span>..<span class="number">24</span> <span class="op">+</span> <span class="ident">i</span> <span class="op">*</span> <span class="number">8</span>]);
-            <span class="ident">index</span>.<span class="ident">push</span>(<span class="ident">u64::from_be_bytes</span>(<span class="ident">u64_bytes</span>));
-        }
-        <span class="kw">let</span> <span class="ident">pk</span> <span class="op">=</span> <span class="ident">StmVerificationKey::from_bytes</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[<span class="number">16</span> <span class="op">+</span> <span class="ident">nr_indexes</span> <span class="op">*</span> <span class="number">8</span>..])<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">sigma</span> <span class="op">=</span> <span class="ident">Signature::from_bytes</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[<span class="number">112</span> <span class="op">+</span> <span class="ident">nr_indexes</span> <span class="op">*</span> <span class="number">8</span>..])<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">path</span> <span class="op">=</span> <span class="ident">Path::from_bytes</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[<span class="number">160</span> <span class="op">+</span> <span class="ident">nr_indexes</span> <span class="op">*</span> <span class="number">8</span>..])<span class="question-mark">?</span>;
-
-        <span class="prelude-val">Ok</span>(<span class="ident">StmSig</span> {
-            <span class="ident">sigma</span>,
-            <span class="ident">pk</span>,
-            <span class="ident">stake</span>,
-            <span class="ident">indexes</span>: <span class="ident">index</span>,
-            <span class="ident">path</span>,
-        })
-    }
-}
-
-<span class="doccomment">/// Stm aggregate key, which contains the merkle tree root, and the total stake of the system.</span>
+<span class="doccomment">/// Stm aggregate key, which contains the merkle tree root and the total stake of the system.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
 <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">bound</span>(
     <span class="ident">serialize</span> <span class="op">=</span> <span class="string">&quot;Path&lt;D&gt;: Serialize&quot;</span>,
     <span class="ident">deserialize</span> <span class="op">=</span> <span class="string">&quot;Path&lt;D&gt;: Deserialize&lt;&#39;de&gt;&quot;</span>
 ))]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">StmAggrVerificationKey</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">D</span>: <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span>,
-{
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">StmAggrVerificationKey</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span><span class="op">&gt;</span> {
     <span class="ident">mt_commitment</span>: <span class="ident">MerkleTreeCommitment</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>,
     <span class="ident">total_stake</span>: <span class="ident">Stake</span>,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">ClosedKeyReg</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">StmAggrVerificationKey</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">D</span>: <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span>,
-{
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">reg</span>: <span class="kw-2">&amp;</span><span class="ident">ClosedKeyReg</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> {
-            <span class="ident">mt_commitment</span>: <span class="ident">reg</span>.<span class="ident">merkle_tree</span>.<span class="ident">to_commitment</span>(),
-            <span class="ident">total_stake</span>: <span class="ident">reg</span>.<span class="ident">total_stake</span>,
-        }
-    }
-}
-
-<span class="doccomment">/// `StmMultiSig` uses the &quot;concatenation&quot; proving system (as described in Section 4.3 of the</span>
-<span class="doccomment">/// original paper. This means that the aggregated signature contains a vector with all individual</span>
-<span class="doccomment">/// signatures.</span>
+<span class="doccomment">/// `StmMultiSig` uses the &quot;concatenation&quot; proving system (as described in Section 4.3 of the original paper.)</span>
+<span class="doccomment">/// This means that the aggregated signature contains a vector with all individual signatures.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
 <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">bound</span>(
     <span class="ident">serialize</span> <span class="op">=</span> <span class="string">&quot;Path&lt;D&gt;: Serialize&quot;</span>,
     <span class="ident">deserialize</span> <span class="op">=</span> <span class="string">&quot;Path&lt;D&gt;: Deserialize&lt;&#39;de&gt;&quot;</span>
 ))]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">StmAggrSig</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">D</span>: <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span>,
-{
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">StmAggrSig</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span><span class="op">&gt;</span> {
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">signatures</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">StmSig</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span><span class="op">&gt;</span>,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span><span class="op">&gt;</span> <span class="ident">StmAggrSig</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// Verify aggregate signature, by checking that each signature contains only</span>
-    <span class="doccomment">/// valid indices, that the lottery is indeed won by each one of them, the merkle</span>
-    <span class="doccomment">/// tree path is valid, and the aggregate signature validates with respect to the</span>
-    <span class="doccomment">/// aggregate verification key (aggregation is computed using functions `MSP.BKey`</span>
-    <span class="doccomment">/// and `MSP.BSig` as described in Section 2.4 of the paper.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verify</span>(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">msg</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
-        <span class="ident">avk</span>: <span class="kw-2">&amp;</span><span class="ident">StmAggrVerificationKey</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>,
-        <span class="ident">parameters</span>: <span class="kw-2">&amp;</span><span class="ident">StmParameters</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MithrilWitnessError</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="comment">// Check that indices are all smaller than `m` and they are unique</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">nr_indices</span> <span class="op">=</span> <span class="number">0</span>;
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">unique_indices</span> <span class="op">=</span> <span class="ident">HashSet::new</span>();
-        <span class="kw">for</span> <span class="ident">sig</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">signatures</span> {
-            <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="ident">index</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="ident">sig</span>.<span class="ident">indexes</span> {
-                <span class="kw">if</span> <span class="ident">index</span> <span class="op">&gt;</span> <span class="ident">parameters</span>.<span class="ident">m</span> {
-                    <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">MithrilWitnessError::IndexBoundFailed</span>(<span class="ident">index</span>, <span class="ident">parameters</span>.<span class="ident">m</span>));
-                }
-                <span class="ident">unique_indices</span>.<span class="ident">insert</span>(<span class="ident">index</span>);
-                <span class="ident">nr_indices</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
-            }
-        }
-
-        <span class="kw">if</span> <span class="ident">nr_indices</span> <span class="op">!</span><span class="op">=</span> <span class="ident">unique_indices</span>.<span class="ident">len</span>() {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">MithrilWitnessError::IndexNotUnique</span>);
-        }
-
-        <span class="comment">// Check that there are sufficient signatures</span>
-        <span class="kw">if</span> (<span class="ident">nr_indices</span> <span class="kw">as</span> <span class="ident">u64</span>) <span class="op">&lt;</span> <span class="ident">parameters</span>.<span class="ident">k</span> {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">MithrilWitnessError::NoQuorum</span>);
-        }
-
-        <span class="comment">// Check that all signatures did win the lottery</span>
-        <span class="kw">for</span> <span class="ident">sig</span> <span class="kw">in</span> <span class="self">self</span>.<span class="ident">signatures</span>.<span class="ident">iter</span>() {
-            <span class="kw">let</span> <span class="ident">msgp</span> <span class="op">=</span> <span class="ident">avk</span>.<span class="ident">mt_commitment</span>.<span class="ident">concat_with_msg</span>(<span class="ident">msg</span>);
-            <span class="ident">sig</span>.<span class="ident">check_indices</span>(<span class="ident">parameters</span>, <span class="kw-2">&amp;</span><span class="ident">msgp</span>, <span class="ident">avk</span>)<span class="question-mark">?</span>;
-
-            <span class="comment">// Check that merkle paths are valid</span>
-            <span class="kw">if</span> <span class="ident">avk</span>
-                .<span class="ident">mt_commitment</span>
-                .<span class="ident">check</span>(<span class="kw-2">&amp;</span><span class="ident">MTLeaf</span>(<span class="ident">sig</span>.<span class="ident">pk</span>, <span class="ident">sig</span>.<span class="ident">stake</span>), <span class="kw-2">&amp;</span><span class="ident">sig</span>.<span class="ident">path</span>)
-                .<span class="ident">is_err</span>()
-            {
-                <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">MithrilWitnessError::PathInvalid</span>(<span class="ident">sig</span>.<span class="ident">path</span>.<span class="ident">clone</span>()));
-            }
-        }
-
-        <span class="kw">let</span> <span class="ident">msg</span> <span class="op">=</span> <span class="ident">avk</span>.<span class="ident">mt_commitment</span>.<span class="ident">concat_with_msg</span>(<span class="ident">msg</span>);
-        <span class="kw">let</span> <span class="ident">signatures</span> <span class="op">=</span> <span class="self">self</span>
-            .<span class="ident">signatures</span>
-            .<span class="ident">iter</span>()
-            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">sig</span><span class="op">|</span> <span class="ident">sig</span>.<span class="ident">sigma</span>)
-            .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Signature</span><span class="op">&gt;</span><span class="op">&gt;</span>();
-        <span class="kw">let</span> <span class="ident">vks</span> <span class="op">=</span> <span class="self">self</span>
-            .<span class="ident">signatures</span>
-            .<span class="ident">iter</span>()
-            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">sig</span><span class="op">|</span> <span class="ident">sig</span>.<span class="ident">pk</span>)
-            .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">VerificationKey</span><span class="op">&gt;</span><span class="op">&gt;</span>();
-
-        <span class="ident">Signature::verify_aggregate</span>(<span class="ident">msg</span>.<span class="ident">as_slice</span>(), <span class="kw-2">&amp;</span><span class="ident">vks</span>, <span class="kw-2">&amp;</span><span class="ident">signatures</span>)<span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(())
-    }
-
-    <span class="doccomment">/// Convert multi signature to bytes</span>
-    <span class="doccomment">///</span>
+<span class="kw">impl</span> <span class="ident">StmParameters</span> {
+    <span class="doccomment">/// Convert to bytes</span>
     <span class="doccomment">/// # Layout</span>
-    <span class="doccomment">/// * Number of signatures (as u64)</span>
-    <span class="doccomment">/// * Size of a signature</span>
-    <span class="doccomment">/// * Signatures</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_bytes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">out</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
-        <span class="ident">out</span>.<span class="ident">extend_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">u64::try_from</span>(<span class="self">self</span>.<span class="ident">signatures</span>.<span class="ident">len</span>()).<span class="ident">unwrap</span>().<span class="ident">to_be_bytes</span>());
-        <span class="ident">out</span>.<span class="ident">extend_from_slice</span>(
-            <span class="kw-2">&amp;</span><span class="ident">u64::try_from</span>(<span class="self">self</span>.<span class="ident">signatures</span>[<span class="number">0</span>].<span class="ident">to_bytes</span>().<span class="ident">len</span>())
-                .<span class="ident">unwrap</span>()
-                .<span class="ident">to_be_bytes</span>(),
-        );
-        <span class="kw">for</span> <span class="ident">sig</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">signatures</span> {
-            <span class="ident">out</span>.<span class="ident">extend_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">sig</span>.<span class="ident">to_bytes</span>())
-        }
+    <span class="doccomment">/// * Security parameter, `m` (as u64)</span>
+    <span class="doccomment">/// * Quorum parameter, `k` (as u64)</span>
+    <span class="doccomment">/// * Phi f, as (f64)</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_bytes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; [<span class="ident">u8</span>; <span class="number">24</span>] {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">out</span> <span class="op">=</span> [<span class="number">0</span>; <span class="number">24</span>];
+        <span class="ident">out</span>[..<span class="number">8</span>].<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">m</span>.<span class="ident">to_be_bytes</span>());
+        <span class="ident">out</span>[<span class="number">8</span>..<span class="number">16</span>].<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">k</span>.<span class="ident">to_be_bytes</span>());
+        <span class="ident">out</span>[<span class="number">16</span>..].<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">phi_f</span>.<span class="ident">to_be_bytes</span>());
         <span class="ident">out</span>
     }
 
-    <span class="doccomment">/// Convert a `StmMultiSig` from a byte slice</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_bytes</span>(<span class="ident">bytes</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">StmAggrSig</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>, <span class="ident">MultiSignatureError</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">u64_bytes</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">8</span>];
-        <span class="ident">u64_bytes</span>.<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[..<span class="number">8</span>]);
-        <span class="kw">let</span> <span class="ident">size</span> <span class="op">=</span> <span class="ident">usize::try_from</span>(<span class="ident">u64::from_be_bytes</span>(<span class="ident">u64_bytes</span>))
-            .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">MultiSignatureError::SerializationError</span>)<span class="question-mark">?</span>;
-        <span class="ident">u64_bytes</span>.<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[<span class="number">8</span>..<span class="number">16</span>]);
-        <span class="kw">let</span> <span class="ident">sig_size</span> <span class="op">=</span> <span class="ident">usize::try_from</span>(<span class="ident">u64::from_be_bytes</span>(<span class="ident">u64_bytes</span>))
-            .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">MultiSignatureError::SerializationError</span>)<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">signatures</span> <span class="op">=</span> <span class="ident">Vec::with_capacity</span>(<span class="ident">size</span>);
-        <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">size</span> {
-            <span class="ident">signatures</span>.<span class="ident">push</span>(<span class="ident">StmSig::from_bytes</span>(
-                <span class="kw-2">&amp;</span><span class="ident">bytes</span>[<span class="number">16</span> <span class="op">+</span> <span class="ident">i</span> <span class="op">*</span> <span class="ident">sig_size</span>..<span class="number">16</span> <span class="op">+</span> (<span class="ident">i</span> <span class="op">+</span> <span class="number">1</span>) <span class="op">*</span> <span class="ident">sig_size</span>],
-            )<span class="question-mark">?</span>);
+    <span class="doccomment">/// Extract the `StmParameters` from a byte slice.</span>
+    <span class="doccomment">/// # Error</span>
+    <span class="doccomment">/// The function fails if the given string of bytes is not of required size.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_bytes</span>(<span class="ident">bytes</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">RegisterError</span><span class="op">&gt;</span> {
+        <span class="kw">if</span> <span class="ident">bytes</span>.<span class="ident">len</span>() <span class="op">!</span><span class="op">=</span> <span class="number">24</span> {
+            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">RegisterError::SerializationError</span>);
         }
 
-        <span class="prelude-val">Ok</span>(<span class="ident">StmAggrSig</span> { <span class="ident">signatures</span> })
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">u64_bytes</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">8</span>];
+        <span class="ident">u64_bytes</span>.<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[..<span class="number">8</span>]);
+        <span class="kw">let</span> <span class="ident">m</span> <span class="op">=</span> <span class="ident">u64::from_be_bytes</span>(<span class="ident">u64_bytes</span>);
+        <span class="ident">u64_bytes</span>.<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[<span class="number">8</span>..<span class="number">16</span>]);
+        <span class="kw">let</span> <span class="ident">k</span> <span class="op">=</span> <span class="ident">u64::from_be_bytes</span>(<span class="ident">u64_bytes</span>);
+        <span class="ident">u64_bytes</span>.<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[<span class="number">16</span>..]);
+        <span class="kw">let</span> <span class="ident">phi_f</span> <span class="op">=</span> <span class="ident">f64::from_be_bytes</span>(<span class="ident">u64_bytes</span>);
+
+        <span class="prelude-val">Ok</span>(<span class="self">Self</span> { <span class="ident">m</span>, <span class="ident">k</span>, <span class="ident">phi_f</span> })
     }
 }
 
 <span class="kw">impl</span> <span class="ident">StmInitializer</span> {
-    <span class="doccomment">/// Builds an `StmInitializer` that is ready to register with the key registration service. This</span>
-    <span class="doccomment">/// function generates the signing and verification key with a PoP, and initialises the structure.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">setup</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>(<span class="ident">params</span>: <span class="ident">StmParameters</span>, <span class="ident">stake</span>: <span class="ident">Stake</span>, <span class="ident">rng</span>: <span class="kw-2">&amp;mut</span> <span class="ident">R</span>) -&gt; <span class="self">Self</span>
-    <span class="kw">where</span>
-        <span class="ident">R</span>: <span class="ident">RngCore</span> <span class="op">+</span> <span class="ident">CryptoRng</span>,
-    {
+    <span class="doccomment">/// Builds an `StmInitializer` that is ready to register with the key registration service.</span>
+    <span class="doccomment">/// This function generates the signing and verification key with a PoP, and initialises the structure.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">setup</span><span class="op">&lt;</span><span class="ident">R</span>: <span class="ident">RngCore</span> <span class="op">+</span> <span class="ident">CryptoRng</span><span class="op">&gt;</span>(<span class="ident">params</span>: <span class="ident">StmParameters</span>, <span class="ident">stake</span>: <span class="ident">Stake</span>, <span class="ident">rng</span>: <span class="kw-2">&amp;mut</span> <span class="ident">R</span>) -&gt; <span class="self">Self</span> {
         <span class="kw">let</span> <span class="ident">sk</span> <span class="op">=</span> <span class="ident">SigningKey::gen</span>(<span class="ident">rng</span>);
         <span class="kw">let</span> <span class="ident">pk</span> <span class="op">=</span> <span class="ident">StmVerificationKeyPoP::from</span>(<span class="kw-2">&amp;</span><span class="ident">sk</span>);
         <span class="self">Self</span> {
@@ -1824,20 +1569,22 @@
         <span class="self">self</span>.<span class="ident">pk</span>
     }
 
-    <span class="doccomment">/// Build the avk for the given list of parties.</span>
+    <span class="doccomment">/// Build the `avk` for the given list of parties.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Note that if this StmInitializer was modified *between* the last call to `register`,</span>
     <span class="doccomment">/// then the resulting `StmSigner` may not be able to produce valid signatures.</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// Returns an StmSigner specialized to</span>
-    <span class="doccomment">/// (1) this StmSigner&#39;s ID and current stake</span>
-    <span class="doccomment">/// (2) this StmSigner&#39;s parameter valuation</span>
-    <span class="doccomment">/// (3) the avk as built from the current registered parties (according to the registration service)</span>
-    <span class="doccomment">/// (4) the current total stake (according to the registration service)</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_signer</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">closed_reg</span>: <span class="ident">ClosedKeyReg</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>) -&gt; <span class="ident">StmSigner</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">D</span>: <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span> <span class="op">+</span> <span class="ident">Clone</span>,
-    {
+    <span class="doccomment">/// Returns an `StmSigner` specialized to</span>
+    <span class="doccomment">/// * this `StmSigner`&#39;s ID and current stake</span>
+    <span class="doccomment">/// * this `StmSigner`&#39;s parameter valuation</span>
+    <span class="doccomment">/// * the `avk` as built from the current registered parties (according to the registration service)</span>
+    <span class="doccomment">/// * the current total stake (according to the registration service)</span>
+    <span class="doccomment">/// # Panics</span>
+    <span class="doccomment">/// If the initializer is not registered.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_signer</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span> <span class="op">+</span> <span class="ident">Clone</span><span class="op">&gt;</span>(
+        <span class="self">self</span>,
+        <span class="ident">closed_reg</span>: <span class="ident">ClosedKeyReg</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>,
+    ) -&gt; <span class="ident">StmSigner</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">my_index</span> <span class="op">=</span> <span class="prelude-val">None</span>;
         <span class="kw">for</span> (<span class="ident">i</span>, <span class="ident">rp</span>) <span class="kw">in</span> <span class="ident">closed_reg</span>.<span class="ident">reg_parties</span>.<span class="ident">iter</span>().<span class="ident">enumerate</span>() {
             <span class="kw">if</span> <span class="ident">rp</span>.<span class="number">0</span> <span class="op">==</span> <span class="self">self</span>.<span class="ident">pk</span>.<span class="ident">vk</span> {
@@ -1858,7 +1605,6 @@
     }
 
     <span class="doccomment">/// Convert to bytes</span>
-    <span class="doccomment">///</span>
     <span class="doccomment">/// # Layout</span>
     <span class="doccomment">/// * Stake (u64)</span>
     <span class="doccomment">/// * Params</span>
@@ -1874,6 +1620,8 @@
     }
 
     <span class="doccomment">/// Convert a slice of bytes to an `StmInitializer`</span>
+    <span class="doccomment">/// # Error</span>
+    <span class="doccomment">/// The function fails if the given string of bytes is not of required size.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_bytes</span>(<span class="ident">bytes</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">StmInitializer</span>, <span class="ident">RegisterError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">u64_bytes</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">8</span>];
         <span class="ident">u64_bytes</span>.<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[..<span class="number">8</span>]);
@@ -1891,15 +1639,12 @@
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> <span class="ident">StmSigner</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">D</span>: <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span>,
-{
-    <span class="doccomment">/// This function produces a signature following the description of Section 2.4. Once the</span>
-    <span class="doccomment">/// signature is produced, this function checks whether any index in `[0,..,self.params.m]`</span>
-    <span class="doccomment">/// wins the lottery by evaluating the dense mapping. It records all the winning indexes</span>
-    <span class="doccomment">/// in `Self.indexes`. If it wins at least one lottery, it produces the merkle path for</span>
-    <span class="doccomment">/// its corresponding `(VerificationKey, Stake)`.</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span><span class="op">&gt;</span> <span class="ident">StmSigner</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
+    <span class="doccomment">/// This function produces a signature following the description of Section 2.4.</span>
+    <span class="doccomment">/// Once the signature is produced, this function checks whether any index in `[0,..,self.params.m]`</span>
+    <span class="doccomment">/// wins the lottery by evaluating the dense mapping.</span>
+    <span class="doccomment">/// It records all the winning indexes in `Self.indexes`.</span>
+    <span class="doccomment">/// If it wins at least one lottery, it produces the merkle path for its corresponding `(VerificationKey, Stake)`.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">sign</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">msg</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">StmSig</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">msgp</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">closed_reg</span>
@@ -2076,10 +1821,7 @@
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> <span class="ident">StmClerk</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">D</span>: <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span> <span class="op">+</span> <span class="ident">Clone</span>,
-{
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span> <span class="op">+</span> <span class="ident">Clone</span><span class="op">&gt;</span> <span class="ident">StmClerk</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
     <span class="doccomment">/// Create a new `Clerk` from a closed registration instance.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_registration</span>(<span class="ident">params</span>: <span class="kw-2">&amp;</span><span class="ident">StmParameters</span>, <span class="ident">closed_reg</span>: <span class="kw-2">&amp;</span><span class="ident">ClosedKeyReg</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
         <span class="self">Self</span> {
@@ -2088,7 +1830,7 @@
         }
     }
 
-    <span class="doccomment">/// Creates a Clerk from a Signer.</span>
+    <span class="doccomment">/// Create a Clerk from a signer.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_signer</span>(<span class="ident">signer</span>: <span class="kw-2">&amp;</span><span class="ident">StmSigner</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
         <span class="self">Self</span> {
             <span class="ident">params</span>: <span class="ident">signer</span>.<span class="ident">params</span>,
@@ -2112,13 +1854,14 @@
         })
     }
 
-    <span class="doccomment">/// Given a slice of `sigs`, this function returns a new list of signatures with only</span>
-    <span class="doccomment">/// valid indices.</span>
-    <span class="doccomment">/// In case of conflict (having several signatures for the same index) it selects the</span>
-    <span class="doccomment">/// smallest signature (i.e. takes the signature with the smallest scalar). The function</span>
-    <span class="doccomment">/// selects at least `self.k` indexes. If there is no sufficient, then returns an error.</span>
-    <span class="doccomment">/// todo: We need to agree on a criteria to dedup</span>
-    <span class="doccomment">/// todo: not good, because it only removes index if there is a conflict (see benches)</span>
+    <span class="doccomment">/// Given a slice of `sigs`, this function returns a new list of signatures with only  valid indices.</span>
+    <span class="doccomment">/// In case of conflict (having several signatures for the same index)</span>
+    <span class="doccomment">/// it selects the smallest signature (i.e. takes the signature with the smallest scalar).</span>
+    <span class="doccomment">/// The function selects at least `self.k` indexes.</span>
+    <span class="doccomment">///  # Error</span>
+    <span class="doccomment">/// If there is no sufficient signatures, then the function fails.s</span>
+    <span class="comment">// todo: We need to agree on a criteria to dedup</span>
+    <span class="comment">// todo: not good, because it only removes index if there is a conflict (see benches)</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">dedup_sigs_for_indices</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">msg</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
@@ -2195,9 +1938,226 @@
         ))
     }
 
-    <span class="doccomment">/// Compute the `StmAggrVerificationKey` related to the used registration</span>
+    <span class="doccomment">/// Compute the `StmAggrVerificationKey` related to the used registration.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">compute_avk</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">StmAggrVerificationKey</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
         <span class="ident">StmAggrVerificationKey::from</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">closed_reg</span>)
+    }
+}
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span><span class="op">&gt;</span> <span class="ident">StmSig</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
+    <span class="doccomment">/// Verify an stm signature by checking that the lottery was won, the merkle path is correct,</span>
+    <span class="doccomment">/// the indexes are in the desired range and the underlying multi signature validates.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verify</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">params</span>: <span class="kw-2">&amp;</span><span class="ident">StmParameters</span>,
+        <span class="ident">avk</span>: <span class="kw-2">&amp;</span><span class="ident">StmAggrVerificationKey</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>,
+        <span class="ident">msg</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">VerificationFailure</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">msgp</span> <span class="op">=</span> <span class="ident">avk</span>.<span class="ident">mt_commitment</span>.<span class="ident">concat_with_msg</span>(<span class="ident">msg</span>);
+
+        <span class="self">self</span>.<span class="ident">check_indices</span>(<span class="ident">params</span>, <span class="kw-2">&amp;</span><span class="ident">msgp</span>, <span class="ident">avk</span>)<span class="question-mark">?</span>;
+        <span class="ident">avk</span>.<span class="ident">mt_commitment</span>
+            .<span class="ident">check</span>(<span class="kw-2">&amp;</span><span class="ident">MTLeaf</span>(<span class="self">self</span>.<span class="ident">pk</span>, <span class="self">self</span>.<span class="ident">stake</span>), <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">path</span>)<span class="question-mark">?</span>;
+        <span class="self">self</span>.<span class="ident">sigma</span>.<span class="ident">verify</span>(<span class="kw-2">&amp;</span><span class="ident">msgp</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">pk</span>)<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(())
+    }
+
+    <span class="doccomment">/// Verify that all indices of a signature are valid.</span>
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">check_indices</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">params</span>: <span class="kw-2">&amp;</span><span class="ident">StmParameters</span>,
+        <span class="ident">msgp</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
+        <span class="ident">avk</span>: <span class="kw-2">&amp;</span><span class="ident">StmAggrVerificationKey</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">VerificationFailure</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+        <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="ident">index</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">indexes</span> {
+            <span class="kw">if</span> <span class="ident">index</span> <span class="op">&gt;</span> <span class="ident">params</span>.<span class="ident">m</span> {
+                <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">VerificationFailure::IndexBoundFailed</span>(<span class="ident">index</span>, <span class="ident">params</span>.<span class="ident">m</span>));
+            }
+
+            <span class="kw">let</span> <span class="ident">ev</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">sigma</span>.<span class="ident">eval</span>(<span class="ident">msgp</span>, <span class="ident">index</span>);
+
+            <span class="kw">if</span> <span class="op">!</span><span class="ident">ev_lt_phi</span>(<span class="ident">params</span>.<span class="ident">phi_f</span>, <span class="ident">ev</span>, <span class="self">self</span>.<span class="ident">stake</span>, <span class="ident">avk</span>.<span class="ident">total_stake</span>) {
+                <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">VerificationFailure::LotteryLost</span>);
+            }
+        }
+
+        <span class="prelude-val">Ok</span>(())
+    }
+
+    <span class="doccomment">/// Convert an `StmSig` into bytes</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Layout</span>
+    <span class="doccomment">/// * Party id</span>
+    <span class="doccomment">/// * Stake</span>
+    <span class="doccomment">/// * Number of valid indexes (as u64)</span>
+    <span class="doccomment">/// * Indexes of the signature</span>
+    <span class="doccomment">/// * Public Key</span>
+    <span class="doccomment">/// * Signature</span>
+    <span class="doccomment">/// * Merkle Tree path</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_bytes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">output</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
+        <span class="ident">output</span>.<span class="ident">extend_from_slice</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">stake</span>.<span class="ident">to_be_bytes</span>());
+        <span class="ident">output</span>.<span class="ident">extend_from_slice</span>(<span class="kw-2">&amp;</span>(<span class="self">self</span>.<span class="ident">indexes</span>.<span class="ident">len</span>() <span class="kw">as</span> <span class="ident">u64</span>).<span class="ident">to_be_bytes</span>());
+        <span class="kw">for</span> <span class="ident">index</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">indexes</span> {
+            <span class="ident">output</span>.<span class="ident">extend_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">index</span>.<span class="ident">to_be_bytes</span>());
+        }
+        <span class="ident">output</span>.<span class="ident">extend_from_slice</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">pk</span>.<span class="ident">to_bytes</span>());
+        <span class="ident">output</span>.<span class="ident">extend_from_slice</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">sigma</span>.<span class="ident">to_bytes</span>());
+        <span class="ident">output</span>.<span class="ident">extend_from_slice</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">path</span>.<span class="ident">to_bytes</span>());
+        <span class="ident">output</span>
+    }
+
+    <span class="doccomment">/// Extract an `StmSig` from a byte slice.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_bytes</span>(<span class="ident">bytes</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">StmSig</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>, <span class="ident">MultiSignatureError</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">u64_bytes</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">8</span>];
+        <span class="ident">u64_bytes</span>.<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[..<span class="number">8</span>]);
+        <span class="kw">let</span> <span class="ident">stake</span> <span class="op">=</span> <span class="ident">u64::from_be_bytes</span>(<span class="ident">u64_bytes</span>);
+        <span class="ident">u64_bytes</span>.<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[<span class="number">8</span>..<span class="number">16</span>]);
+        <span class="kw">let</span> <span class="ident">nr_indexes</span> <span class="op">=</span> <span class="ident">u64::from_be_bytes</span>(<span class="ident">u64_bytes</span>) <span class="kw">as</span> <span class="ident">usize</span>;
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">index</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
+        <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">nr_indexes</span> {
+            <span class="ident">u64_bytes</span>.<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[<span class="number">16</span> <span class="op">+</span> <span class="ident">i</span> <span class="op">*</span> <span class="number">8</span>..<span class="number">24</span> <span class="op">+</span> <span class="ident">i</span> <span class="op">*</span> <span class="number">8</span>]);
+            <span class="ident">index</span>.<span class="ident">push</span>(<span class="ident">u64::from_be_bytes</span>(<span class="ident">u64_bytes</span>));
+        }
+        <span class="kw">let</span> <span class="ident">pk</span> <span class="op">=</span> <span class="ident">StmVerificationKey::from_bytes</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[<span class="number">16</span> <span class="op">+</span> <span class="ident">nr_indexes</span> <span class="op">*</span> <span class="number">8</span>..])<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">sigma</span> <span class="op">=</span> <span class="ident">Signature::from_bytes</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[<span class="number">112</span> <span class="op">+</span> <span class="ident">nr_indexes</span> <span class="op">*</span> <span class="number">8</span>..])<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">path</span> <span class="op">=</span> <span class="ident">Path::from_bytes</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[<span class="number">160</span> <span class="op">+</span> <span class="ident">nr_indexes</span> <span class="op">*</span> <span class="number">8</span>..])<span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(<span class="ident">StmSig</span> {
+            <span class="ident">sigma</span>,
+            <span class="ident">pk</span>,
+            <span class="ident">stake</span>,
+            <span class="ident">indexes</span>: <span class="ident">index</span>,
+            <span class="ident">path</span>,
+        })
+    }
+}
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span><span class="op">&gt;</span> <span class="ident">Hash</span> <span class="kw">for</span> <span class="ident">StmSig</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">hash</span><span class="op">&lt;</span><span class="ident">H</span>: <span class="ident">Hasher</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">state</span>: <span class="kw-2">&amp;mut</span> <span class="ident">H</span>) {
+        <span class="ident">Hash::hash_slice</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">sigma</span>.<span class="ident">to_bytes</span>(), <span class="ident">state</span>)
+    }
+}
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span><span class="op">&gt;</span> <span class="ident">PartialEq</span> <span class="kw">for</span> <span class="ident">StmSig</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="ident">bool</span> {
+        <span class="self">self</span>.<span class="ident">sigma</span> <span class="op">==</span> <span class="ident">other</span>.<span class="ident">sigma</span>
+    }
+}
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span><span class="op">&gt;</span> <span class="ident">Eq</span> <span class="kw">for</span> <span class="ident">StmSig</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {}
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">ClosedKeyReg</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">StmAggrVerificationKey</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">reg</span>: <span class="kw-2">&amp;</span><span class="ident">ClosedKeyReg</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
+        <span class="self">Self</span> {
+            <span class="ident">mt_commitment</span>: <span class="ident">reg</span>.<span class="ident">merkle_tree</span>.<span class="ident">to_commitment</span>(),
+            <span class="ident">total_stake</span>: <span class="ident">reg</span>.<span class="ident">total_stake</span>,
+        }
+    }
+}
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span><span class="op">&gt;</span> <span class="ident">StmAggrSig</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
+    <span class="doccomment">/// Verify aggregate signature, by checking that</span>
+    <span class="doccomment">/// * each signature contains only valid indices,</span>
+    <span class="doccomment">/// * the lottery is indeed won by each one of them,</span>
+    <span class="doccomment">/// * the merkle tree path is valid,</span>
+    <span class="doccomment">/// * the aggregate signature validates with respect to the aggregate verification key</span>
+    <span class="doccomment">/// (aggregation is computed using functions `MSP.BKey` and `MSP.BSig` as described in Section 2.4 of the paper).</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verify</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">msg</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
+        <span class="ident">avk</span>: <span class="kw-2">&amp;</span><span class="ident">StmAggrVerificationKey</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>,
+        <span class="ident">parameters</span>: <span class="kw-2">&amp;</span><span class="ident">StmParameters</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MithrilWitnessError</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+        <span class="comment">// Check that indices are all smaller than `m` and they are unique</span>
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">nr_indices</span> <span class="op">=</span> <span class="number">0</span>;
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">unique_indices</span> <span class="op">=</span> <span class="ident">HashSet::new</span>();
+        <span class="kw">for</span> <span class="ident">sig</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">signatures</span> {
+            <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="ident">index</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="ident">sig</span>.<span class="ident">indexes</span> {
+                <span class="kw">if</span> <span class="ident">index</span> <span class="op">&gt;</span> <span class="ident">parameters</span>.<span class="ident">m</span> {
+                    <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">MithrilWitnessError::IndexBoundFailed</span>(<span class="ident">index</span>, <span class="ident">parameters</span>.<span class="ident">m</span>));
+                }
+                <span class="ident">unique_indices</span>.<span class="ident">insert</span>(<span class="ident">index</span>);
+                <span class="ident">nr_indices</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+            }
+        }
+
+        <span class="kw">if</span> <span class="ident">nr_indices</span> <span class="op">!</span><span class="op">=</span> <span class="ident">unique_indices</span>.<span class="ident">len</span>() {
+            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">MithrilWitnessError::IndexNotUnique</span>);
+        }
+
+        <span class="comment">// Check that there are sufficient signatures</span>
+        <span class="kw">if</span> (<span class="ident">nr_indices</span> <span class="kw">as</span> <span class="ident">u64</span>) <span class="op">&lt;</span> <span class="ident">parameters</span>.<span class="ident">k</span> {
+            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">MithrilWitnessError::NoQuorum</span>);
+        }
+
+        <span class="comment">// Check that all signatures did win the lottery</span>
+        <span class="kw">for</span> <span class="ident">sig</span> <span class="kw">in</span> <span class="self">self</span>.<span class="ident">signatures</span>.<span class="ident">iter</span>() {
+            <span class="kw">let</span> <span class="ident">msgp</span> <span class="op">=</span> <span class="ident">avk</span>.<span class="ident">mt_commitment</span>.<span class="ident">concat_with_msg</span>(<span class="ident">msg</span>);
+            <span class="ident">sig</span>.<span class="ident">check_indices</span>(<span class="ident">parameters</span>, <span class="kw-2">&amp;</span><span class="ident">msgp</span>, <span class="ident">avk</span>)<span class="question-mark">?</span>;
+
+            <span class="comment">// Check that merkle paths are valid</span>
+            <span class="kw">if</span> <span class="ident">avk</span>
+                .<span class="ident">mt_commitment</span>
+                .<span class="ident">check</span>(<span class="kw-2">&amp;</span><span class="ident">MTLeaf</span>(<span class="ident">sig</span>.<span class="ident">pk</span>, <span class="ident">sig</span>.<span class="ident">stake</span>), <span class="kw-2">&amp;</span><span class="ident">sig</span>.<span class="ident">path</span>)
+                .<span class="ident">is_err</span>()
+            {
+                <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">MithrilWitnessError::PathInvalid</span>(<span class="ident">sig</span>.<span class="ident">path</span>.<span class="ident">clone</span>()));
+            }
+        }
+
+        <span class="kw">let</span> <span class="ident">msg</span> <span class="op">=</span> <span class="ident">avk</span>.<span class="ident">mt_commitment</span>.<span class="ident">concat_with_msg</span>(<span class="ident">msg</span>);
+        <span class="kw">let</span> <span class="ident">signatures</span> <span class="op">=</span> <span class="self">self</span>
+            .<span class="ident">signatures</span>
+            .<span class="ident">iter</span>()
+            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">sig</span><span class="op">|</span> <span class="ident">sig</span>.<span class="ident">sigma</span>)
+            .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Signature</span><span class="op">&gt;</span><span class="op">&gt;</span>();
+        <span class="kw">let</span> <span class="ident">vks</span> <span class="op">=</span> <span class="self">self</span>
+            .<span class="ident">signatures</span>
+            .<span class="ident">iter</span>()
+            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">sig</span><span class="op">|</span> <span class="ident">sig</span>.<span class="ident">pk</span>)
+            .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">VerificationKey</span><span class="op">&gt;</span><span class="op">&gt;</span>();
+
+        <span class="ident">Signature::verify_aggregate</span>(<span class="ident">msg</span>.<span class="ident">as_slice</span>(), <span class="kw-2">&amp;</span><span class="ident">vks</span>, <span class="kw-2">&amp;</span><span class="ident">signatures</span>)<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(())
+    }
+
+    <span class="doccomment">/// Convert multi signature to bytes</span>
+    <span class="doccomment">/// # Layout</span>
+    <span class="doccomment">/// * Number of signatures (as u64)</span>
+    <span class="doccomment">/// * Size of a signature</span>
+    <span class="doccomment">/// * Signatures</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_bytes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">out</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
+        <span class="ident">out</span>.<span class="ident">extend_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">u64::try_from</span>(<span class="self">self</span>.<span class="ident">signatures</span>.<span class="ident">len</span>()).<span class="ident">unwrap</span>().<span class="ident">to_be_bytes</span>());
+        <span class="ident">out</span>.<span class="ident">extend_from_slice</span>(
+            <span class="kw-2">&amp;</span><span class="ident">u64::try_from</span>(<span class="self">self</span>.<span class="ident">signatures</span>[<span class="number">0</span>].<span class="ident">to_bytes</span>().<span class="ident">len</span>())
+                .<span class="ident">unwrap</span>()
+                .<span class="ident">to_be_bytes</span>(),
+        );
+        <span class="kw">for</span> <span class="ident">sig</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">signatures</span> {
+            <span class="ident">out</span>.<span class="ident">extend_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">sig</span>.<span class="ident">to_bytes</span>())
+        }
+        <span class="ident">out</span>
+    }
+
+    <span class="doccomment">/// Extract a `StmMultiSig` from a byte slice.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_bytes</span>(<span class="ident">bytes</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">StmAggrSig</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>, <span class="ident">MultiSignatureError</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">u64_bytes</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">8</span>];
+        <span class="ident">u64_bytes</span>.<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[..<span class="number">8</span>]);
+        <span class="kw">let</span> <span class="ident">size</span> <span class="op">=</span> <span class="ident">usize::try_from</span>(<span class="ident">u64::from_be_bytes</span>(<span class="ident">u64_bytes</span>))
+            .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">MultiSignatureError::SerializationError</span>)<span class="question-mark">?</span>;
+        <span class="ident">u64_bytes</span>.<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[<span class="number">8</span>..<span class="number">16</span>]);
+        <span class="kw">let</span> <span class="ident">sig_size</span> <span class="op">=</span> <span class="ident">usize::try_from</span>(<span class="ident">u64::from_be_bytes</span>(<span class="ident">u64_bytes</span>))
+            .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">MultiSignatureError::SerializationError</span>)<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">signatures</span> <span class="op">=</span> <span class="ident">Vec::with_capacity</span>(<span class="ident">size</span>);
+        <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">size</span> {
+            <span class="ident">signatures</span>.<span class="ident">push</span>(<span class="ident">StmSig::from_bytes</span>(
+                <span class="kw-2">&amp;</span><span class="ident">bytes</span>[<span class="number">16</span> <span class="op">+</span> <span class="ident">i</span> <span class="op">*</span> <span class="ident">sig_size</span>..<span class="number">16</span> <span class="op">+</span> (<span class="ident">i</span> <span class="op">+</span> <span class="number">1</span>) <span class="op">*</span> <span class="ident">sig_size</span>],
+            )<span class="question-mark">?</span>);
+        }
+
+        <span class="prelude-val">Ok</span>(<span class="ident">StmAggrSig</span> { <span class="ident">signatures</span> })
     }
 }
 

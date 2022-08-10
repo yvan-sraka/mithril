@@ -211,8 +211,8 @@
 
 <span class="comment">// todo: better organise these errors.</span>
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">thiserror::Error</span>, <span class="ident">Eq</span>, <span class="ident">PartialEq</span>)]</span>
 <span class="doccomment">/// Error types for multi signatures</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">thiserror::Error</span>, <span class="ident">Eq</span>, <span class="ident">PartialEq</span>)]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">MultiSignatureError</span> {
     <span class="doccomment">/// Invalid Multi signature</span>
     <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Invalid multi signature&quot;</span>)]</span>
@@ -258,24 +258,6 @@
     <span class="doccomment">/// A party submitted an invalid signature</span>
     <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;A provided signature is invalid&quot;</span>)]</span>
     <span class="ident">InvalidSignature</span>(<span class="ident">Signature</span>),
-}
-
-<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::from_over_into</span>)]</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span><span class="op">&gt;</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">i64</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">MithrilWitnessError</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">into</span>(<span class="self">self</span>) -&gt; <span class="ident">i64</span> {
-        <span class="comment">// -1 is reserved to the function failing.</span>
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">MithrilWitnessError::NoQuorum</span> =&gt; <span class="op">-</span><span class="number">2</span>,
-            <span class="ident">MithrilWitnessError::IvkInvalid</span>(<span class="kw">_</span>) =&gt; <span class="op">-</span><span class="number">3</span>,
-            <span class="ident">MithrilWitnessError::SumInvalid</span>(<span class="kw">_</span>) =&gt; <span class="op">-</span><span class="number">4</span>,
-            <span class="ident">MithrilWitnessError::IndexBoundFailed</span>(<span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="op">-</span><span class="number">5</span>,
-            <span class="ident">MithrilWitnessError::IndexNotUnique</span> =&gt; <span class="op">-</span><span class="number">6</span>,
-            <span class="ident">MithrilWitnessError::PathInvalid</span>(<span class="kw">_</span>) =&gt; <span class="op">-</span><span class="number">7</span>,
-            <span class="ident">MithrilWitnessError::EvalInvalid</span>(<span class="kw">_</span>) =&gt; <span class="op">-</span><span class="number">8</span>,
-            <span class="ident">MithrilWitnessError::StakeInvalid</span> =&gt; <span class="op">-</span><span class="number">9</span>,
-            <span class="ident">MithrilWitnessError::InvalidSignature</span>(<span class="kw">_</span>) =&gt; <span class="op">-</span><span class="number">10</span>,
-        }
-    }
 }
 
 <span class="doccomment">/// Error types for aggregation.</span>
@@ -331,16 +313,6 @@
     <span class="ident">SerializationError</span>,
 }
 
-<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">MultiSignatureError</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">RegisterError</span> {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">e</span>: <span class="ident">MultiSignatureError</span>) -&gt; <span class="self">Self</span> {
-        <span class="kw">match</span> <span class="ident">e</span> {
-            <span class="ident">MultiSignatureError::SerializationError</span> =&gt; <span class="ident"><span class="self">Self</span>::SerializationError</span>,
-            <span class="ident">MultiSignatureError::InvalidKey</span>(<span class="ident">k</span>) =&gt; <span class="ident"><span class="self">Self</span>::InvalidKey</span>(<span class="ident">k</span>),
-            <span class="kw">_</span> =&gt; <span class="macro">todo!</span>(),
-        }
-    }
-}
-
 <span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">RegisterError</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">MultiSignatureError</span> {
     <span class="kw">fn</span> <span class="ident">from</span>(<span class="kw">_</span>: <span class="ident">RegisterError</span>) -&gt; <span class="self">Self</span> {
         <span class="macro">todo!</span>()
@@ -350,6 +322,38 @@
 <span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">MerkleTreeError</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">MultiSignatureError</span> {
     <span class="kw">fn</span> <span class="ident">from</span>(<span class="kw">_</span>: <span class="ident">MerkleTreeError</span>) -&gt; <span class="self">Self</span> {
         <span class="macro">todo!</span>()
+    }
+}
+
+<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::from_over_into</span>)]</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span><span class="op">&gt;</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">i64</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">MithrilWitnessError</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">into</span>(<span class="self">self</span>) -&gt; <span class="ident">i64</span> {
+        <span class="comment">// -1 is reserved to the function failing.</span>
+        <span class="kw">match</span> <span class="self">self</span> {
+            <span class="ident">MithrilWitnessError::NoQuorum</span> =&gt; <span class="op">-</span><span class="number">2</span>,
+            <span class="ident">MithrilWitnessError::IvkInvalid</span>(<span class="kw">_</span>) =&gt; <span class="op">-</span><span class="number">3</span>,
+            <span class="ident">MithrilWitnessError::SumInvalid</span>(<span class="kw">_</span>) =&gt; <span class="op">-</span><span class="number">4</span>,
+            <span class="ident">MithrilWitnessError::IndexBoundFailed</span>(<span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="op">-</span><span class="number">5</span>,
+            <span class="ident">MithrilWitnessError::IndexNotUnique</span> =&gt; <span class="op">-</span><span class="number">6</span>,
+            <span class="ident">MithrilWitnessError::PathInvalid</span>(<span class="kw">_</span>) =&gt; <span class="op">-</span><span class="number">7</span>,
+            <span class="ident">MithrilWitnessError::EvalInvalid</span>(<span class="kw">_</span>) =&gt; <span class="op">-</span><span class="number">8</span>,
+            <span class="ident">MithrilWitnessError::StakeInvalid</span> =&gt; <span class="op">-</span><span class="number">9</span>,
+            <span class="ident">MithrilWitnessError::InvalidSignature</span>(<span class="kw">_</span>) =&gt; <span class="op">-</span><span class="number">10</span>,
+        }
+    }
+}
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">FixedOutput</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">MultiSignatureError</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">MithrilWitnessError</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">from</span>(<span class="kw">_</span>: <span class="ident">MultiSignatureError</span>) -&gt; <span class="self">Self</span> {
+        <span class="comment">// todo:</span>
+        <span class="ident"><span class="self">Self</span>::StakeInvalid</span>
+    }
+}
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">FixedOutput</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">VerificationFailure</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">MithrilWitnessError</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">from</span>(<span class="kw">_</span>: <span class="ident">VerificationFailure</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
+        <span class="comment">// todo:</span>
+        <span class="ident"><span class="self">Self</span>::StakeInvalid</span>
     }
 }
 
@@ -367,17 +371,13 @@
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">FixedOutput</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">MultiSignatureError</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">MithrilWitnessError</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="kw">_</span>: <span class="ident">MultiSignatureError</span>) -&gt; <span class="self">Self</span> {
-        <span class="comment">// todo:</span>
-        <span class="ident"><span class="self">Self</span>::StakeInvalid</span>
-    }
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">FixedOutput</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">VerificationFailure</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">MithrilWitnessError</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="kw">_</span>: <span class="ident">VerificationFailure</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
-        <span class="comment">// todo:</span>
-        <span class="ident"><span class="self">Self</span>::StakeInvalid</span>
+<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">MultiSignatureError</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">RegisterError</span> {
+    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">e</span>: <span class="ident">MultiSignatureError</span>) -&gt; <span class="self">Self</span> {
+        <span class="kw">match</span> <span class="ident">e</span> {
+            <span class="ident">MultiSignatureError::SerializationError</span> =&gt; <span class="ident"><span class="self">Self</span>::SerializationError</span>,
+            <span class="ident">MultiSignatureError::InvalidKey</span>(<span class="ident">k</span>) =&gt; <span class="ident"><span class="self">Self</span>::InvalidKey</span>(<span class="ident">k</span>),
+            <span class="kw">_</span> =&gt; <span class="macro">todo!</span>(),
+        }
     }
 }
 

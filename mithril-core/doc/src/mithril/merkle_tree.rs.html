@@ -416,12 +416,6 @@
 <span id="411">411</span>
 <span id="412">412</span>
 <span id="413">413</span>
-<span id="414">414</span>
-<span id="415">415</span>
-<span id="416">416</span>
-<span id="417">417</span>
-<span id="418">418</span>
-<span id="419">419</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Creation and verification of Merkle Trees</span>
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::error::MerkleTreeError</span>;
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;zcash&quot;</span>))]</span>
@@ -436,10 +430,47 @@
 <span class="kw">use</span> <span class="ident">std::fmt::Debug</span>;
 <span class="kw">use</span> <span class="ident">std::marker::PhantomData</span>;
 
-<span class="doccomment">/// The values that are committed in the Merkle Tree. Namely, a verified `VerificationKey`</span>
-<span class="doccomment">/// and its corresponding stake.</span>
+<span class="doccomment">/// The values that are committed in the Merkle Tree.</span>
+<span class="doccomment">/// Namely, a verified `VerificationKey` and its corresponding stake.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">Default</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MTLeaf</span>(<span class="kw">pub</span> <span class="ident">VerificationKey</span>, <span class="kw">pub</span> <span class="ident">Stake</span>);
+
+<span class="doccomment">/// Path of hashes from root to leaf in a Merkle Tree.</span>
+<span class="doccomment">/// Contains all hashes on the path, and the index of the leaf.</span>
+<span class="doccomment">/// Used to verify that signatures come from eligible signers.</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Path</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">values</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">index</span>: <span class="ident">usize</span>,
+    <span class="ident">hasher</span>: <span class="ident">PhantomData</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>,
+}
+
+<span class="doccomment">/// `MerkleTree` commitment.</span>
+<span class="doccomment">/// This structure differs from `MerkleTree` in that it does not contain all elements, which are not always necessary.</span>
+<span class="doccomment">/// Instead, it only contains the root of the tree.</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MerkleTreeCommitment</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span><span class="op">&gt;</span> {
+    <span class="doccomment">/// Root of the merkle commitment.</span>
+    <span class="kw">pub</span> <span class="ident">root</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>,
+    <span class="ident">hasher</span>: <span class="ident">PhantomData</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>,
+}
+
+<span class="doccomment">/// Tree of hashes, providing a commitment of data and its ordering.</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MerkleTree</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span><span class="op">&gt;</span> {
+    <span class="doccomment">/// The nodes are stored in an array heap:</span>
+    <span class="doccomment">/// * `nodes[0]` is the root,</span>
+    <span class="doccomment">/// * the parent of `nodes[i]` is `nodes[(i-1)/2]`</span>
+    <span class="doccomment">/// * the children of `nodes[i]` are `{nodes[2i + 1], nodes[2i + 2]}`</span>
+    <span class="doccomment">/// * All nodes have size `Output&lt;D&gt;::output_size()`, even leafs (which are hashed before committing them).</span>
+    <span class="ident">nodes</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// The leaves begin at `nodes[leaf_off]`.</span>
+    <span class="ident">leaf_off</span>: <span class="ident">usize</span>,
+    <span class="doccomment">/// Number of leaves cached in the merkle tree.</span>
+    <span class="ident">n</span>: <span class="ident">usize</span>,
+    <span class="doccomment">/// Phantom type to link the tree with its hasher</span>
+    <span class="ident">hasher</span>: <span class="ident">PhantomData</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>,
+}
 
 <span class="kw">impl</span> <span class="ident">MTLeaf</span> {
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">to_bytes</span>(<span class="self">self</span>) -&gt; [<span class="ident">u8</span>; <span class="number">104</span>] {
@@ -450,11 +481,13 @@
     }
 }
 
-<span class="doccomment">/// Ordering of MT Values. First we order by stake, then by key. By having this ordering,</span>
-<span class="doccomment">/// we have the players with higher stake close together, meaning that the probability of</span>
-<span class="doccomment">/// having several signatures in the same side of the tree, is higher. This allows us</span>
-<span class="doccomment">/// to produce a more efficient batch opening of the merkle tree.</span>
 <span class="kw">impl</span> <span class="ident">PartialOrd</span> <span class="kw">for</span> <span class="ident">MTLeaf</span> {
+    <span class="doccomment">/// Ordering of MT Values.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// First we order by stake, then by key. By having this ordering,</span>
+    <span class="doccomment">/// we have the players with higher stake close together,</span>
+    <span class="doccomment">/// meaning that the probability of having several signatures in the same side of the tree, is higher.</span>
+    <span class="doccomment">/// This allows us to produce a more efficient batch opening of the merkle tree.</span>
     <span class="kw">fn</span> <span class="ident">partial_cmp</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Ordering</span><span class="op">&gt;</span> {
         <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="number">1</span>.<span class="ident">cmp</span>(<span class="kw-2">&amp;</span><span class="ident">other</span>.<span class="number">1</span>).<span class="ident">then</span>(<span class="self">self</span>.<span class="number">0</span>.<span class="ident">cmp</span>(<span class="kw-2">&amp;</span><span class="ident">other</span>.<span class="number">0</span>)))
     }
@@ -466,33 +499,51 @@
     }
 }
 
-<span class="doccomment">/// Path of hashes from root to leaf in a Merkle Tree. Contains all hashes on the path, and the index</span>
-<span class="doccomment">/// of the leaf. Used to verify that signatures come from eligible signers.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Path</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span><span class="op">&gt;</span> {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">values</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">index</span>: <span class="ident">usize</span>,
-    <span class="ident">hasher</span>: <span class="ident">PhantomData</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>,
-}
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">FixedOutput</span><span class="op">&gt;</span> <span class="ident">Path</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
+    <span class="doccomment">/// Convert to bytes</span>
+    <span class="doccomment">/// # Layout</span>
+    <span class="doccomment">/// * Index representing the position in the Merkle Tree</span>
+    <span class="doccomment">/// * Size of the Path</span>
+    <span class="doccomment">/// * Path of hashes</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_bytes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">output</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
+        <span class="ident">output</span>.<span class="ident">extend_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">u64::try_from</span>(<span class="self">self</span>.<span class="ident">index</span>).<span class="ident">unwrap</span>().<span class="ident">to_be_bytes</span>());
+        <span class="ident">output</span>.<span class="ident">extend_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">u64::try_from</span>(<span class="self">self</span>.<span class="ident">values</span>.<span class="ident">len</span>()).<span class="ident">unwrap</span>().<span class="ident">to_be_bytes</span>());
+        <span class="kw">for</span> <span class="ident">value</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">values</span> {
+            <span class="ident">output</span>.<span class="ident">extend_from_slice</span>(<span class="ident">value</span>)
+        }
 
-<span class="doccomment">/// MerkleTree commitment. This structure differs from `MerkleTree` in that it does not contain</span>
-<span class="doccomment">/// all elements, which are not always necessary. Instead, it only contains the root of the tree.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MerkleTreeCommitment</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// Root of the merkle commitment</span>
-    <span class="kw">pub</span> <span class="ident">root</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>,
-    <span class="ident">hasher</span>: <span class="ident">PhantomData</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>,
-}
+        <span class="ident">output</span>
+    }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> <span class="ident">MerkleTreeCommitment</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">D</span>: <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span>,
-{
-    <span class="doccomment">/// Check an inclusion proof that `val` is part of the tree by traveling the whole path</span>
-    <span class="doccomment">/// until the root.</span>
-    <span class="doccomment">///</span>
+    <span class="doccomment">/// Extract a `Path` from a byte slice.</span>
     <span class="doccomment">/// # Error</span>
-    <span class="doccomment">/// Returns an error if the path is invalid.</span>
+    <span class="doccomment">/// This function fails if the bytes cannot retrieve path.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_bytes</span>(<span class="ident">bytes</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Path</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>, <span class="ident">MerkleTreeError</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">u64_bytes</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">8</span>];
+        <span class="ident">u64_bytes</span>.<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[..<span class="number">8</span>]);
+        <span class="kw">let</span> <span class="ident">index</span> <span class="op">=</span> <span class="ident">usize::try_from</span>(<span class="ident">u64::from_be_bytes</span>(<span class="ident">u64_bytes</span>))
+            .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">MerkleTreeError::SerializationError</span>)<span class="question-mark">?</span>;
+        <span class="ident">u64_bytes</span>.<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[<span class="number">8</span>..<span class="number">16</span>]);
+        <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="ident">usize::try_from</span>(<span class="ident">u64::from_be_bytes</span>(<span class="ident">u64_bytes</span>))
+            .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">MerkleTreeError::SerializationError</span>)<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">values</span> <span class="op">=</span> <span class="ident">Vec::with_capacity</span>(<span class="ident">len</span>);
+        <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">len</span> {
+            <span class="ident">values</span>.<span class="ident">push</span>(<span class="ident">bytes</span>[<span class="number">16</span> <span class="op">+</span> <span class="ident">i</span> <span class="op">*</span> <span class="ident">D::output_size</span>()..<span class="number">16</span> <span class="op">+</span> (<span class="ident">i</span> <span class="op">+</span> <span class="number">1</span>) <span class="op">*</span> <span class="ident">D::output_size</span>()].<span class="ident">to_vec</span>());
+        }
+
+        <span class="prelude-val">Ok</span>(<span class="ident">Path</span> {
+            <span class="ident">values</span>,
+            <span class="ident">index</span>,
+            <span class="ident">hasher</span>: <span class="ident">Default::default</span>(),
+        })
+    }
+}
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span><span class="op">&gt;</span> <span class="ident">MerkleTreeCommitment</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
+    <span class="doccomment">/// Check an inclusion proof that `val` is part of the tree by traveling the whole path until the root.</span>
+    <span class="doccomment">/// # Error</span>
+    <span class="doccomment">/// If the merkle tree path is invalid, then the function fails.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">check</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">val</span>: <span class="kw-2">&amp;</span><span class="ident">MTLeaf</span>, <span class="ident">proof</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MerkleTreeError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">idx</span> <span class="op">=</span> <span class="ident">proof</span>.<span class="ident">index</span>;
 
@@ -513,7 +564,7 @@
     }
 
     <span class="doccomment">/// Serializes the Merkle Tree commitment together with a message in a single vector of bytes.</span>
-    <span class="doccomment">/// Outputs msg || self as a vector of bytes.</span>
+    <span class="doccomment">/// Outputs `msg || self` as a vector of bytes.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">concat_with_msg</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">msg</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>
     <span class="kw">where</span>
         <span class="ident">D</span>: <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span>,
@@ -526,31 +577,7 @@
     }
 }
 
-<span class="doccomment">/// Tree of hashes, providing a commitment of data and its ordering.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MerkleTree</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">D</span>: <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span>,
-{
-    <span class="doccomment">/// The nodes are stored in an array heap:</span>
-    <span class="doccomment">/// `nodes[0]` is the root,</span>
-    <span class="doccomment">/// the parent of `nodes[i]` is `nodes[(i-1)/2]`</span>
-    <span class="doccomment">/// the children of `nodes[i]` are `{nodes[2i + 1], nodes[2i + 2]}`</span>
-    <span class="doccomment">/// All nodes have size `Output&lt;D&gt;::output_size()`, even leafs (which are</span>
-    <span class="doccomment">/// hashed before committing them).</span>
-    <span class="ident">nodes</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="doccomment">/// The leaves begin at `nodes[leaf_off]`</span>
-    <span class="ident">leaf_off</span>: <span class="ident">usize</span>,
-    <span class="doccomment">/// Number of leaves cached in the merkle tree</span>
-    <span class="ident">n</span>: <span class="ident">usize</span>,
-    <span class="doccomment">/// Phantom type to link the tree with its hasher</span>
-    <span class="ident">hasher</span>: <span class="ident">PhantomData</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>,
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> <span class="ident">MerkleTree</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">D</span>: <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span>,
-{
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span><span class="op">&gt;</span> <span class="ident">MerkleTree</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
     <span class="doccomment">/// Provided a non-empty list of leaves, `create` generates its corresponding `MerkleTree`.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">create</span>(<span class="ident">leaves</span>: <span class="kw-2">&amp;</span>[<span class="ident">MTLeaf</span>]) -&gt; <span class="ident">MerkleTree</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">n</span> <span class="op">=</span> <span class="ident">leaves</span>.<span class="ident">len</span>();
@@ -587,7 +614,7 @@
         }
     }
 
-    <span class="doccomment">/// Convert merkle tree to a commitment. This function simply returns the root</span>
+    <span class="doccomment">/// Convert merkle tree to a commitment. This function simply returns the root.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_commitment</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">MerkleTreeCommitment</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
         <span class="ident">MerkleTreeCommitment</span> {
             <span class="ident">root</span>: <span class="self">self</span>.<span class="ident">nodes</span>[<span class="number">0</span>].<span class="ident">clone</span>(),
@@ -595,7 +622,7 @@
         }
     }
 
-    <span class="doccomment">/// Get the root of the tree</span>
+    <span class="doccomment">/// Get the root of the tree.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">root</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span> {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">nodes</span>[<span class="number">0</span>]
     }
@@ -630,15 +657,14 @@
         }
     }
 
+    <span class="doccomment">/// Return the index of the leaf.</span>
     <span class="kw">fn</span> <span class="ident">idx_of_leaf</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">i</span>: <span class="ident">usize</span>) -&gt; <span class="ident">usize</span> {
         <span class="self">self</span>.<span class="ident">leaf_off</span> <span class="op">+</span> <span class="ident">i</span>
     }
 
     <span class="doccomment">/// Convert a `MerkleTree` into a byte string, containing $4 + n * S$ bytes where $n$ is the</span>
     <span class="doccomment">/// number of nodes and $S$ the output size of the hash function.</span>
-    <span class="doccomment">///</span>
     <span class="doccomment">/// # Layout</span>
-    <span class="doccomment">/// The layout of a `MerkleTree` is:</span>
     <span class="doccomment">/// * Number of leaves committed in the Merkle Tree (as u64)</span>
     <span class="doccomment">/// * All nodes of the merkle tree (starting with the root)</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_bytes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span> {
@@ -651,6 +677,8 @@
     }
 
     <span class="doccomment">/// Try to convert a byte string into a `MerkleTree`.</span>
+    <span class="doccomment">/// # Error</span>
+    <span class="doccomment">/// It returns error if conversion fails.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_bytes</span>(<span class="ident">bytes</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">MerkleTreeError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">u64_bytes</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">8</span>];
         <span class="ident">u64_bytes</span>.<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[..<span class="number">8</span>]);
@@ -666,46 +694,6 @@
             <span class="ident">leaf_off</span>: <span class="ident">num_nodes</span> <span class="op">-</span> <span class="ident">n</span>,
             <span class="ident">n</span>,
             <span class="ident">hasher</span>: <span class="ident">PhantomData::default</span>(),
-        })
-    }
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">FixedOutput</span><span class="op">&gt;</span> <span class="ident">Path</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// Convert to bytes</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Layout</span>
-    <span class="doccomment">/// * Index representing the position in the Merkle Tree</span>
-    <span class="doccomment">/// * Size of the Path</span>
-    <span class="doccomment">/// * Path of hashes</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_bytes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">output</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
-        <span class="ident">output</span>.<span class="ident">extend_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">u64::try_from</span>(<span class="self">self</span>.<span class="ident">index</span>).<span class="ident">unwrap</span>().<span class="ident">to_be_bytes</span>());
-        <span class="ident">output</span>.<span class="ident">extend_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">u64::try_from</span>(<span class="self">self</span>.<span class="ident">values</span>.<span class="ident">len</span>()).<span class="ident">unwrap</span>().<span class="ident">to_be_bytes</span>());
-        <span class="kw">for</span> <span class="ident">value</span> <span class="kw">in</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">values</span> {
-            <span class="ident">output</span>.<span class="ident">extend_from_slice</span>(<span class="ident">value</span>)
-        }
-
-        <span class="ident">output</span>
-    }
-
-    <span class="doccomment">/// Convert a byte slice into a Path</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_bytes</span>(<span class="ident">bytes</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Path</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>, <span class="ident">MerkleTreeError</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">u64_bytes</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">8</span>];
-        <span class="ident">u64_bytes</span>.<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[..<span class="number">8</span>]);
-        <span class="kw">let</span> <span class="ident">index</span> <span class="op">=</span> <span class="ident">usize::try_from</span>(<span class="ident">u64::from_be_bytes</span>(<span class="ident">u64_bytes</span>))
-            .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">MerkleTreeError::SerializationError</span>)<span class="question-mark">?</span>;
-        <span class="ident">u64_bytes</span>.<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[<span class="number">8</span>..<span class="number">16</span>]);
-        <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="ident">usize::try_from</span>(<span class="ident">u64::from_be_bytes</span>(<span class="ident">u64_bytes</span>))
-            .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">MerkleTreeError::SerializationError</span>)<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">values</span> <span class="op">=</span> <span class="ident">Vec::with_capacity</span>(<span class="ident">len</span>);
-        <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">len</span> {
-            <span class="ident">values</span>.<span class="ident">push</span>(<span class="ident">bytes</span>[<span class="number">16</span> <span class="op">+</span> <span class="ident">i</span> <span class="op">*</span> <span class="ident">D::output_size</span>()..<span class="number">16</span> <span class="op">+</span> (<span class="ident">i</span> <span class="op">+</span> <span class="number">1</span>) <span class="op">*</span> <span class="ident">D::output_size</span>()].<span class="ident">to_vec</span>());
-        }
-
-        <span class="prelude-val">Ok</span>(<span class="ident">Path</span> {
-            <span class="ident">values</span>,
-            <span class="ident">index</span>,
-            <span class="ident">hasher</span>: <span class="ident">Default::default</span>(),
         })
     }
 }
