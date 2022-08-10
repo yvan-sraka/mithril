@@ -266,123 +266,77 @@
 <span id="261">261</span>
 <span id="262">262</span>
 <span id="263">263</span>
-<span id="264">264</span>
-<span id="265">265</span>
-<span id="266">266</span>
-<span id="267">267</span>
-<span id="268">268</span>
-<span id="269">269</span>
-<span id="270">270</span>
-<span id="271">271</span>
-<span id="272">272</span>
-<span id="273">273</span>
-<span id="274">274</span>
-<span id="275">275</span>
-<span id="276">276</span>
-<span id="277">277</span>
-<span id="278">278</span>
-<span id="279">279</span>
-<span id="280">280</span>
-<span id="281">281</span>
-<span id="282">282</span>
-<span id="283">283</span>
-<span id="284">284</span>
-<span id="285">285</span>
-<span id="286">286</span>
-<span id="287">287</span>
-<span id="288">288</span>
-<span id="289">289</span>
-<span id="290">290</span>
-<span id="291">291</span>
-<span id="292">292</span>
-<span id="293">293</span>
-<span id="294">294</span>
-<span id="295">295</span>
-<span id="296">296</span>
-<span id="297">297</span>
-<span id="298">298</span>
-<span id="299">299</span>
-<span id="300">300</span>
-<span id="301">301</span>
-<span id="302">302</span>
-<span id="303">303</span>
-<span id="304">304</span>
-<span id="305">305</span>
-<span id="306">306</span>
-<span id="307">307</span>
-<span id="308">308</span>
-<span id="309">309</span>
-<span id="310">310</span>
-<span id="311">311</span>
-<span id="312">312</span>
-<span id="313">313</span>
-<span id="314">314</span>
-<span id="315">315</span>
-<span id="316">316</span>
-<span id="317">317</span>
-<span id="318">318</span>
-<span id="319">319</span>
-<span id="320">320</span>
-<span id="321">321</span>
-<span id="322">322</span>
-<span id="323">323</span>
-<span id="324">324</span>
-<span id="325">325</span>
-<span id="326">326</span>
-<span id="327">327</span>
-<span id="328">328</span>
-<span id="329">329</span>
-<span id="330">330</span>
-<span id="331">331</span>
-<span id="332">332</span>
-<span id="333">333</span>
-<span id="334">334</span>
-<span id="335">335</span>
-<span id="336">336</span>
-<span id="337">337</span>
-<span id="338">338</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">hex::ToHex</span>;
 <span class="kw">use</span> <span class="ident">slog_scope</span>::{<span class="ident">info</span>, <span class="ident">trace</span>};
 <span class="kw">use</span> <span class="ident">thiserror::Error</span>;
 
 <span class="kw">use</span> <span class="ident">mithril_common::crypto_helper</span>::{
     <span class="ident">key_decode_hex</span>, <span class="ident">key_encode_hex</span>, <span class="ident">ProtocolClerk</span>, <span class="ident">ProtocolInitializer</span>, <span class="ident">ProtocolKeyRegistration</span>,
-    <span class="ident">ProtocolPartyId</span>, <span class="ident">ProtocolSigner</span>,
+    <span class="ident">ProtocolSigner</span>,
 };
 <span class="kw">use</span> <span class="ident">mithril_common::entities</span>::{
-    <span class="self">self</span>, <span class="ident">PartyId</span>, <span class="ident">ProtocolMessage</span>, <span class="ident">ProtocolMessagePartKey</span>, <span class="ident">SignerWithStake</span>, <span class="ident">SingleSignatures</span>,
+    <span class="ident">PartyId</span>, <span class="ident">ProtocolMessage</span>, <span class="ident">ProtocolParameters</span>, <span class="ident">SignerWithStake</span>, <span class="ident">SingleSignatures</span>, <span class="ident">Stake</span>,
 };
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="kw">use</span> <span class="ident">mockall::automock</span>;
 
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::AsyncError</span>;
+
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MithrilProtocolInitializerBuilder</span> {
+    <span class="ident">party_id</span>: <span class="ident">PartyId</span>,
+}
+
+<span class="kw">impl</span> <span class="ident">MithrilProtocolInitializerBuilder</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">party_id</span>: <span class="ident">PartyId</span>) -&gt; <span class="self">Self</span> {
+        <span class="self">Self</span> { <span class="ident">party_id</span> }
+    }
+
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">build</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">stake</span>: <span class="kw-2">&amp;</span><span class="ident">Stake</span>,
+        <span class="ident">protocol_parameters</span>: <span class="kw-2">&amp;</span><span class="ident">ProtocolParameters</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ProtocolInitializer</span>, <span class="ident">AsyncError</span><span class="op">&gt;</span> {
+        <span class="comment">// TODO: Since the stake distribution is now updated, we can&#39;t cache only one protocol initializer</span>
+        <span class="comment">// When the protocol initalizer store is implemented, we should get the protocol initializer based on its associated epoch</span>
+        <span class="comment">// The use of this cache leads to &#39;The path of the Merkle Tree is invalid.&#39; error when the signer creates a single signature</span>
+        <span class="comment">// and is source of flakiness of the CI</span>
+
+        <span class="comment">// TODO: Uncomment next line and remove the 4 following lines with deterministic random generator when the protocol initializer store is created</span>
+        <span class="comment">//let mut rng = rand_core::OsRng;</span>
+        <span class="kw">use</span> <span class="ident">rand_chacha::ChaCha20Rng</span>;
+        <span class="kw">use</span> <span class="ident">rand_core::SeedableRng</span>;
+        <span class="comment">// 32 chars are appended after the party ID to ensure the length is at least 32 while still grants some uniqueness</span>
+        <span class="kw">let</span> <span class="ident">seed</span>: [<span class="ident">u8</span>; <span class="number">32</span>] <span class="op">=</span> <span class="macro">format!</span>(<span class="string">&quot;{}azerazerazerazerazerazerazerazer&quot;</span>, <span class="self">self</span>.<span class="ident">party_id</span>)
+            .<span class="ident">as_bytes</span>()[..<span class="number">32</span>]
+            .<span class="ident">try_into</span>()<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">rng</span> <span class="op">=</span> <span class="ident">ChaCha20Rng::from_seed</span>(<span class="ident">seed</span>);
+        <span class="comment">//</span>
+        <span class="kw">let</span> <span class="ident">protocol_initializer</span> <span class="op">=</span> <span class="ident">ProtocolInitializer::setup</span>(
+            <span class="ident">protocol_parameters</span>.<span class="ident">to_owned</span>().<span class="ident">into</span>(),
+            <span class="ident">stake</span>.<span class="ident">to_owned</span>(),
+            <span class="kw-2">&amp;mut</span> <span class="ident">rng</span>,
+        );
+
+        <span class="prelude-val">Ok</span>(<span class="ident">protocol_initializer</span>)
+    }
+}
+
 <span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">test</span>, <span class="ident">automock</span>)]</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">SingleSigner</span> {
-    <span class="doccomment">/// Get party id</span>
-    <span class="kw">fn</span> <span class="ident">get_party_id</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">ProtocolPartyId</span>;
-
-    <span class="doccomment">/// Get currently setup protocol initializer</span>
-    <span class="kw">fn</span> <span class="ident">get_protocol_initializer</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ProtocolInitializer</span><span class="op">&gt;</span>;
-
-    <span class="doccomment">/// Init the protocol initializer</span>
-    <span class="kw">fn</span> <span class="ident">init_protocol_initializer</span>(
-        <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-        <span class="ident">stakes</span>: <span class="kw-2">&amp;</span>[<span class="ident">SignerWithStake</span>],
-        <span class="ident">protocol_parameters</span>: <span class="kw-2">&amp;</span><span class="ident">entities::ProtocolParameters</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">SingleSignerError</span><span class="op">&gt;</span>;
-
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">SingleSigner</span>: <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span> {
     <span class="doccomment">/// Computes single signatures</span>
     <span class="kw">fn</span> <span class="ident">compute_single_signatures</span>(
-        <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-        <span class="ident">digest</span>: <span class="ident">String</span>,
-        <span class="ident">stakes</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">SignerWithStake</span><span class="op">&gt;</span>,
-        <span class="ident">protocol_parameters</span>: <span class="kw-2">&amp;</span><span class="ident">entities::ProtocolParameters</span>,
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">protocol_message</span>: <span class="kw-2">&amp;</span><span class="ident">ProtocolMessage</span>,
+        <span class="ident">signers_with_stake</span>: <span class="kw-2">&amp;</span>[<span class="ident">SignerWithStake</span>],
+        <span class="ident">protocol_initializer</span>: <span class="kw-2">&amp;</span><span class="ident">ProtocolInitializer</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">SingleSignatures</span><span class="op">&gt;</span>, <span class="ident">SingleSignerError</span><span class="op">&gt;</span>;
 
     <span class="doccomment">/// Compute aggregate verification key from stake distribution</span>
     <span class="kw">fn</span> <span class="ident">compute_aggregate_verification_key</span>(
-        <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-        <span class="ident">stakes</span>: <span class="kw-2">&amp;</span>[<span class="ident">SignerWithStake</span>],
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">signers_with_stake</span>: <span class="kw-2">&amp;</span>[<span class="ident">SignerWithStake</span>],
+        <span class="ident">protocol_initializer</span>: <span class="kw-2">&amp;</span><span class="ident">ProtocolInitializer</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>, <span class="ident">SingleSignerError</span><span class="op">&gt;</span>;
 }
 
@@ -406,135 +360,55 @@
 
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MithrilSingleSigner</span> {
     <span class="ident">party_id</span>: <span class="ident">PartyId</span>,
-    <span class="ident">protocol_initializer</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ProtocolInitializer</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">MithrilSingleSigner</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">party_id</span>: <span class="ident">PartyId</span>, <span class="ident">protocol_initializer_encoded</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="self">Self</span> {
-        <span class="kw">let</span> <span class="ident">protocol_initializer</span> <span class="op">=</span> <span class="ident">key_decode_hex</span>(<span class="ident">protocol_initializer_encoded</span>).<span class="ident">ok</span>();
-        <span class="self">Self</span> {
-            <span class="ident">party_id</span>,
-            <span class="ident">protocol_initializer</span>,
-        }
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">party_id</span>: <span class="ident">PartyId</span>) -&gt; <span class="self">Self</span> {
+        <span class="self">Self</span> { <span class="ident">party_id</span> }
     }
 
     <span class="kw">fn</span> <span class="ident">create_protocol_signer</span>(
-        <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-        <span class="ident">stakes</span>: <span class="kw-2">&amp;</span>[<span class="ident">SignerWithStake</span>], <span class="comment">// TODO : use a hmap to prevent party id duplication</span>
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">signers_with_stake</span>: <span class="kw-2">&amp;</span>[<span class="ident">SignerWithStake</span>],
+        <span class="ident">protocol_initializer</span>: <span class="kw-2">&amp;</span><span class="ident">ProtocolInitializer</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ProtocolSigner</span>, <span class="ident">SingleSignerError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">key_reg</span> <span class="op">=</span> <span class="ident">ProtocolKeyRegistration::init</span>();
-        <span class="kw">let</span> <span class="ident">signers</span> <span class="op">=</span> <span class="ident">stakes</span>
+        <span class="kw">let</span> <span class="ident">signers</span> <span class="op">=</span> <span class="ident">signers_with_stake</span>
             .<span class="ident">iter</span>()
             .<span class="ident">filter</span>(<span class="op">|</span><span class="ident">signer</span><span class="op">|</span> <span class="op">!</span><span class="ident">signer</span>.<span class="ident">verification_key</span>.<span class="ident">is_empty</span>())
             .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">SignerWithStake</span><span class="op">&gt;</span><span class="op">&gt;</span>();
 
-        <span class="kw">match</span> <span class="ident">signers</span>.<span class="ident">len</span>() {
-            <span class="number">0</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">SingleSignerError::ProtocolSignerCreationFailure</span>(
+        <span class="kw">if</span> <span class="ident">signers</span>.<span class="ident">is_empty</span>() {
+            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">SingleSignerError::ProtocolSignerCreationFailure</span>(
                 <span class="string">&quot;no signer&quot;</span>.<span class="ident">to_string</span>(),
-            )),
-            <span class="kw">_</span> =&gt; {
-                <span class="kw">for</span> <span class="ident">s</span> <span class="kw">in</span> <span class="ident">signers</span> {
-                    <span class="kw">let</span> <span class="ident">decoded_key</span> <span class="op">=</span>
-                        <span class="ident">key_decode_hex</span>(<span class="kw-2">&amp;</span><span class="ident">s</span>.<span class="ident">verification_key</span>).<span class="ident">map_err</span>(<span class="ident">SingleSignerError::Codec</span>)<span class="question-mark">?</span>;
-                    <span class="ident">key_reg</span>.<span class="ident">register</span>(<span class="ident">s</span>.<span class="ident">stake</span>, <span class="ident">decoded_key</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
-                        <span class="ident">SingleSignerError::ProtocolSignerCreationFailure</span>(<span class="ident">e</span>.<span class="ident">to_string</span>())
-                    })<span class="question-mark">?</span>;
-                }
-                <span class="kw">let</span> <span class="ident">closed_reg</span> <span class="op">=</span> <span class="ident">key_reg</span>.<span class="ident">close</span>();
-                <span class="prelude-val">Ok</span>(<span class="self">self</span>
-                    .<span class="ident">protocol_initializer</span>
-                    .<span class="ident">as_ref</span>()
-                    .<span class="ident">ok_or_else</span>(<span class="ident">SingleSignerError::ProtocolInitializerMissing</span>)<span class="question-mark">?</span>
-                    .<span class="ident">clone</span>()
-                    .<span class="ident">new_signer</span>(<span class="ident">closed_reg</span>))
-            }
+            ));
         }
+
+        <span class="kw">for</span> <span class="ident">s</span> <span class="kw">in</span> <span class="ident">signers</span> {
+            <span class="kw">let</span> <span class="ident">decoded_key</span> <span class="op">=</span>
+                <span class="ident">key_decode_hex</span>(<span class="kw-2">&amp;</span><span class="ident">s</span>.<span class="ident">verification_key</span>).<span class="ident">map_err</span>(<span class="ident">SingleSignerError::Codec</span>)<span class="question-mark">?</span>;
+            <span class="ident">key_reg</span>
+                .<span class="ident">register</span>(<span class="ident">s</span>.<span class="ident">stake</span>, <span class="ident">decoded_key</span>)
+                .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">SingleSignerError::ProtocolSignerCreationFailure</span>(<span class="ident">e</span>.<span class="ident">to_string</span>()))<span class="question-mark">?</span>;
+        }
+        <span class="kw">let</span> <span class="ident">closed_reg</span> <span class="op">=</span> <span class="ident">key_reg</span>.<span class="ident">close</span>();
+
+        <span class="prelude-val">Ok</span>(<span class="ident">protocol_initializer</span>.<span class="ident">to_owned</span>().<span class="ident">new_signer</span>(<span class="ident">closed_reg</span>))
     }
 }
 
 <span class="kw">impl</span> <span class="ident">SingleSigner</span> <span class="kw">for</span> <span class="ident">MithrilSingleSigner</span> {
-    <span class="kw">fn</span> <span class="ident">get_party_id</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">ProtocolPartyId</span> {
-        <span class="self">self</span>.<span class="ident">party_id</span>.<span class="ident">to_owned</span>()
-    }
-
-    <span class="kw">fn</span> <span class="ident">get_protocol_initializer</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ProtocolInitializer</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">protocol_initializer</span>.<span class="ident">clone</span>()
-    }
-
-    <span class="kw">fn</span> <span class="ident">init_protocol_initializer</span>(
-        <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-        <span class="ident">stakes</span>: <span class="kw-2">&amp;</span>[<span class="ident">SignerWithStake</span>],
-        <span class="ident">protocol_parameters</span>: <span class="kw-2">&amp;</span><span class="ident">entities::ProtocolParameters</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">SingleSignerError</span><span class="op">&gt;</span> {
-        <span class="comment">// TODO: Since the stake distribution is now updated, we can&#39;t cache only one protocol initializer</span>
-        <span class="comment">// When the protocol initalizer store is implemented, we should get the protocol initializer based on its associated epoch</span>
-        <span class="comment">// The use of this cache leads to &#39;The path of the Merkle Tree is invalid.&#39; error when the signer creates a single signature</span>
-        <span class="comment">// and is source of flakiness of the CI</span>
-        <span class="kw">let</span> <span class="ident">protocol_initializer</span> <span class="op">=</span> {
-            <span class="kw">let</span> <span class="ident">current_signer_with_stake</span> <span class="op">=</span> <span class="ident">stakes</span>
-                .<span class="ident">iter</span>()
-                .<span class="ident">find</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">party_id</span> <span class="op">==</span> <span class="self">self</span>.<span class="ident">party_id</span>)
-                .<span class="ident">ok_or</span>(<span class="ident">SingleSignerError::UnregisteredPartyId</span>())<span class="question-mark">?</span>;
-
-            <span class="comment">// TODO: Uncomment next line and remove the 4 following lines with deterministic random generator when the protocol initializer store is created</span>
-            <span class="comment">//let mut rng = rand_core::OsRng;</span>
-            <span class="kw">use</span> <span class="ident">rand_chacha::ChaCha20Rng</span>;
-            <span class="kw">use</span> <span class="ident">rand_core::SeedableRng</span>;
-            <span class="kw">let</span> <span class="ident">seed</span>: [<span class="ident">u8</span>; <span class="number">32</span>] <span class="op">=</span> <span class="self">self</span>.<span class="ident">party_id</span>.<span class="ident">as_bytes</span>()[..<span class="number">32</span>].<span class="ident">try_into</span>().<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> {
-                <span class="ident">SingleSignerError::ProtocolSignerCreationFailure</span>(
-                    <span class="string">&quot;impossible to generate a seed&quot;</span>.<span class="ident">to_string</span>(),
-                )
-            })<span class="question-mark">?</span>;
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">rng</span> <span class="op">=</span> <span class="ident">ChaCha20Rng::from_seed</span>(<span class="ident">seed</span>);
-            <span class="comment">//</span>
-            <span class="ident">ProtocolInitializer::setup</span>(
-                <span class="ident">protocol_parameters</span>.<span class="ident">to_owned</span>().<span class="ident">into</span>(),
-                <span class="ident">current_signer_with_stake</span>.<span class="ident">stake</span>,
-                <span class="kw-2">&amp;mut</span> <span class="ident">rng</span>,
-            )
-        };
-        <span class="self">self</span>.<span class="ident">protocol_initializer</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">protocol_initializer</span>);
-        <span class="prelude-val">Ok</span>(())
-    }
-
     <span class="kw">fn</span> <span class="ident">compute_single_signatures</span>(
-        <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-        <span class="ident">snapshot_digest</span>: <span class="ident">String</span>,
-        <span class="ident">stakes</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">SignerWithStake</span><span class="op">&gt;</span>, <span class="comment">// TODO : use a hmap to prevent party id duplication</span>
-        <span class="ident">protocol_parameters</span>: <span class="kw-2">&amp;</span><span class="ident">entities::ProtocolParameters</span>,
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">protocol_message</span>: <span class="kw-2">&amp;</span><span class="ident">ProtocolMessage</span>,
+        <span class="ident">signers_with_stake</span>: <span class="kw-2">&amp;</span>[<span class="ident">SignerWithStake</span>],
+        <span class="ident">protocol_initializer</span>: <span class="kw-2">&amp;</span><span class="ident">ProtocolInitializer</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">SingleSignatures</span><span class="op">&gt;</span>, <span class="ident">SingleSignerError</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">init_protocol_initializer</span>(<span class="kw-2">&amp;</span><span class="ident">stakes</span>, <span class="ident">protocol_parameters</span>)<span class="question-mark">?</span>;
-
-        <span class="kw">let</span> <span class="ident">current_signer_with_stake</span> <span class="op">=</span> <span class="ident">stakes</span>
-            .<span class="ident">iter</span>()
-            .<span class="ident">find</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">party_id</span> <span class="op">==</span> <span class="self">self</span>.<span class="ident">party_id</span>)
-            .<span class="ident">ok_or</span>(<span class="ident">SingleSignerError::UnregisteredPartyId</span>())<span class="question-mark">?</span>;
-
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">protocol_initializer</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">get_protocol_initializer</span>() {
-            <span class="kw">let</span> <span class="ident">verification_key</span> <span class="op">=</span> <span class="ident">key_encode_hex</span>(<span class="ident">protocol_initializer</span>.<span class="ident">verification_key</span>())
-                .<span class="ident">map_err</span>(<span class="ident">SingleSignerError::Codec</span>)<span class="question-mark">?</span>;
-            <span class="kw">if</span> <span class="ident">current_signer_with_stake</span>.<span class="ident">verification_key</span> <span class="op">!</span><span class="op">=</span> <span class="ident">verification_key</span> {
-                <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">SingleSignerError::UnregisteredVerificationKey</span>());
-            }
-        }
-
-        <span class="kw">let</span> <span class="ident">protocol_signer</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">create_protocol_signer</span>(<span class="kw-2">&amp;</span><span class="ident">stakes</span>)<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">protocol_message</span> <span class="op">=</span> <span class="ident">ProtocolMessage::new</span>();
-        <span class="ident">protocol_message</span>.<span class="ident">set_message_part</span>(<span class="ident">ProtocolMessagePartKey::SnapshotDigest</span>, <span class="ident">snapshot_digest</span>);
-        <span class="ident">protocol_message</span>.<span class="ident">set_message_part</span>(
-            <span class="ident">ProtocolMessagePartKey::NextAggregateVerificationKey</span>,
-            <span class="self">self</span>.<span class="ident">compute_aggregate_verification_key</span>(<span class="kw-2">&amp;</span><span class="ident">stakes</span>)<span class="question-mark">?</span>
-                .<span class="ident">unwrap_or_default</span>(),
-        );
+        <span class="kw">let</span> <span class="ident">protocol_signer</span> <span class="op">=</span>
+            <span class="self">self</span>.<span class="ident">create_protocol_signer</span>(<span class="ident">signers_with_stake</span>, <span class="ident">protocol_initializer</span>)<span class="question-mark">?</span>;
         <span class="kw">let</span> <span class="ident">message</span> <span class="op">=</span> <span class="ident">protocol_message</span>.<span class="ident">compute_hash</span>().<span class="ident">as_bytes</span>().<span class="ident">to_vec</span>();
 
-        <span class="macro">info!</span>(<span class="string">&quot;Signing protocol message&quot;</span>; <span class="string">&quot;protocol_message&quot;</span> =&gt;  #<span class="question-mark">?</span><span class="ident">protocol_message</span>, <span class="string">&quot;snapshot_digest&quot;</span> =&gt; <span class="ident">protocol_message</span>.<span class="ident">compute_hash</span>().<span class="ident">encode_hex</span>::<span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>());
-
-        <span class="macro">trace!</span>(
-            <span class="string">&quot;Party #{}: sign message {}&quot;</span>,
-            <span class="self">self</span>.<span class="ident">party_id</span>,
-            <span class="ident">message</span>.<span class="ident">encode_hex</span>::<span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>()
-        );
+        <span class="macro">info!</span>(<span class="string">&quot;Signing protocol message&quot;</span>; <span class="string">&quot;protocol_message&quot;</span> =&gt;  #<span class="question-mark">?</span><span class="ident">protocol_message</span>, <span class="string">&quot;signed message&quot;</span> =&gt; <span class="ident">protocol_message</span>.<span class="ident">compute_hash</span>().<span class="ident">encode_hex</span>::<span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>());
 
         <span class="kw">match</span> <span class="ident">protocol_signer</span>.<span class="ident">sign</span>(<span class="kw-2">&amp;</span><span class="ident">message</span>) {
             <span class="prelude-val">Some</span>(<span class="ident">signature</span>) =&gt; {
@@ -559,10 +433,11 @@
 
     <span class="doccomment">/// Compute aggregate verification key from stake distribution</span>
     <span class="kw">fn</span> <span class="ident">compute_aggregate_verification_key</span>(
-        <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-        <span class="ident">stakes</span>: <span class="kw-2">&amp;</span>[<span class="ident">SignerWithStake</span>],
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">signers_with_stake</span>: <span class="kw-2">&amp;</span>[<span class="ident">SignerWithStake</span>],
+        <span class="ident">protocol_initializer</span>: <span class="kw-2">&amp;</span><span class="ident">ProtocolInitializer</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>, <span class="ident">SingleSignerError</span><span class="op">&gt;</span> {
-        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">create_protocol_signer</span>(<span class="ident">stakes</span>) {
+        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">create_protocol_signer</span>(<span class="ident">signers_with_stake</span>, <span class="ident">protocol_initializer</span>) {
             <span class="prelude-val">Ok</span>(<span class="ident">protocol_signer</span>) =&gt; {
                 <span class="kw">let</span> <span class="ident">clerk</span> <span class="op">=</span> <span class="ident">ProtocolClerk::from_signer</span>(<span class="kw-2">&amp;</span><span class="ident">protocol_signer</span>);
                 <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(
@@ -581,54 +456,14 @@
 
     <span class="kw">use</span> <span class="ident">mithril_common::crypto_helper::tests_setup</span>::<span class="kw-2">*</span>;
     <span class="kw">use</span> <span class="ident">mithril_common::crypto_helper</span>::{<span class="ident">key_decode_hex</span>, <span class="ident">ProtocolClerk</span>, <span class="ident">ProtocolSingleSignature</span>};
+    <span class="kw">use</span> <span class="ident">mithril_common::entities::ProtocolMessagePartKey</span>;
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">cant_compute_if_signer_verification_key_is_not_registered</span>() {
+    <span class="kw">fn</span> <span class="ident">compute_single_signature_success</span>() {
         <span class="kw">let</span> <span class="ident">snapshot_digest</span> <span class="op">=</span> <span class="string">&quot;digest&quot;</span>.<span class="ident">to_string</span>();
         <span class="kw">let</span> <span class="ident">protocol_parameters</span> <span class="op">=</span> <span class="ident">setup_protocol_parameters</span>();
         <span class="kw">let</span> <span class="ident">signers</span> <span class="op">=</span> <span class="ident">setup_signers</span>(<span class="number">5</span>);
-        <span class="kw">let</span> <span class="ident">signer_unregistered</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">signers</span>[<span class="number">4</span>];
-        <span class="kw">let</span> <span class="ident">stakes</span> <span class="op">=</span> <span class="ident">signers</span>[..<span class="number">4</span>]
-            .<span class="ident">iter</span>()
-            .<span class="ident">enumerate</span>()
-            .<span class="ident">map</span>(
-                <span class="op">|</span>(
-                    <span class="ident">idx</span>,
-                    (<span class="ident">party_id</span>, <span class="ident">stake</span>, <span class="ident">verification_key</span>, <span class="ident">_protocol_signer</span>, <span class="ident">_protocol_initializer</span>),
-                )<span class="op">|</span> {
-                    <span class="kw">let</span> <span class="ident">verification_key</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">idx</span> {
-                        <span class="number">0</span> =&gt; <span class="ident">key_encode_hex</span>(<span class="ident">signer_unregistered</span>.<span class="number">2</span>).<span class="ident">unwrap</span>(),
-                        <span class="kw">_</span> =&gt; <span class="ident">key_encode_hex</span>(<span class="ident">verification_key</span>).<span class="ident">unwrap</span>(),
-                    };
-                    <span class="ident">SignerWithStake::new</span>(<span class="ident">party_id</span>.<span class="ident">to_owned</span>(), <span class="ident">verification_key</span>, <span class="kw-2">*</span><span class="ident">stake</span>)
-                },
-            )
-            .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">SignerWithStake</span><span class="op">&gt;</span><span class="op">&gt;</span>();
-        <span class="kw">let</span> <span class="ident">current_signer</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">signers</span>[<span class="number">0</span>];
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">single_signer</span> <span class="op">=</span> <span class="ident">MithrilSingleSigner::new</span>(
-            <span class="ident">current_signer</span>.<span class="number">0</span>.<span class="ident">to_owned</span>(),
-            <span class="kw-2">&amp;</span><span class="ident">key_encode_hex</span>(<span class="kw-2">&amp;</span><span class="ident">current_signer</span>.<span class="number">4</span>).<span class="ident">unwrap</span>(),
-        );
-
-        <span class="kw">let</span> <span class="ident">sign_result</span> <span class="op">=</span> <span class="ident">single_signer</span>.<span class="ident">compute_single_signatures</span>(
-            <span class="ident">snapshot_digest</span>,
-            <span class="ident">stakes</span>,
-            <span class="kw-2">&amp;</span><span class="ident">protocol_parameters</span>.<span class="ident">into</span>(),
-        );
-
-        <span class="macro">assert!</span>(<span class="kw-2">&amp;</span><span class="ident">single_signer</span>.<span class="ident">get_protocol_initializer</span>().<span class="ident">is_some</span>());
-        <span class="macro">assert_eq!</span>(
-            <span class="ident">SingleSignerError::UnregisteredVerificationKey</span>(),
-            <span class="ident">sign_result</span>.<span class="ident">unwrap_err</span>()
-        )
-    }
-
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">should_produce_a_single_signature</span>() {
-        <span class="kw">let</span> <span class="ident">snapshot_digest</span> <span class="op">=</span> <span class="string">&quot;digest&quot;</span>.<span class="ident">to_string</span>();
-        <span class="kw">let</span> <span class="ident">protocol_parameters</span> <span class="op">=</span> <span class="ident">setup_protocol_parameters</span>();
-        <span class="kw">let</span> <span class="ident">signers</span> <span class="op">=</span> <span class="ident">setup_signers</span>(<span class="number">5</span>);
-        <span class="kw">let</span> <span class="ident">stakes</span> <span class="op">=</span> <span class="ident">signers</span>
+        <span class="kw">let</span> <span class="ident">signers_with_stake</span> <span class="op">=</span> <span class="ident">signers</span>
             .<span class="ident">iter</span>()
             .<span class="ident">map</span>(
                 <span class="op">|</span>(<span class="ident">party_id</span>, <span class="ident">stake</span>, <span class="ident">verification_key</span>, <span class="ident">_protocol_signer</span>, <span class="ident">_protocol_initializer</span>)<span class="op">|</span> {
@@ -641,10 +476,7 @@
             )
             .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">SignerWithStake</span><span class="op">&gt;</span><span class="op">&gt;</span>();
         <span class="kw">let</span> <span class="ident">current_signer</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">signers</span>[<span class="number">0</span>];
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">single_signer</span> <span class="op">=</span> <span class="ident">MithrilSingleSigner::new</span>(
-            <span class="ident">current_signer</span>.<span class="number">0</span>.<span class="ident">to_owned</span>(),
-            <span class="kw-2">&amp;</span><span class="ident">key_encode_hex</span>(<span class="kw-2">&amp;</span><span class="ident">current_signer</span>.<span class="number">4</span>).<span class="ident">unwrap</span>(),
-        );
+        <span class="kw">let</span> <span class="ident">single_signer</span> <span class="op">=</span> <span class="ident">MithrilSingleSigner::new</span>(<span class="ident">current_signer</span>.<span class="number">0</span>.<span class="ident">to_owned</span>());
         <span class="kw">let</span> <span class="ident">protocol_signer</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">current_signer</span>.<span class="number">3</span>;
         <span class="kw">let</span> <span class="ident">clerk</span> <span class="op">=</span> <span class="ident">ProtocolClerk::from_signer</span>(<span class="ident">protocol_signer</span>);
         <span class="kw">let</span> <span class="ident">avk</span> <span class="op">=</span> <span class="ident">clerk</span>.<span class="ident">compute_avk</span>();
@@ -653,30 +485,48 @@
             <span class="ident">ProtocolMessagePartKey::SnapshotDigest</span>,
             <span class="ident">snapshot_digest</span>.<span class="ident">clone</span>(),
         );
-        <span class="ident">protocol_message</span>.<span class="ident">set_message_part</span>(
-            <span class="ident">ProtocolMessagePartKey::NextAggregateVerificationKey</span>,
-            <span class="ident">single_signer</span>
-                .<span class="ident">compute_aggregate_verification_key</span>(<span class="kw-2">&amp;</span><span class="ident">stakes</span>)
-                .<span class="ident">unwrap</span>()
-                .<span class="ident">unwrap_or_default</span>(),
-        );
         <span class="kw">let</span> <span class="ident">expected_message</span> <span class="op">=</span> <span class="ident">protocol_message</span>.<span class="ident">compute_hash</span>().<span class="ident">as_bytes</span>().<span class="ident">to_vec</span>();
 
-        <span class="kw">let</span> <span class="ident">sign_result</span> <span class="op">=</span> <span class="ident">single_signer</span>.<span class="ident">compute_single_signatures</span>(
-            <span class="ident">snapshot_digest</span>,
-            <span class="ident">stakes</span>,
-            <span class="kw-2">&amp;</span><span class="ident">protocol_parameters</span>.<span class="ident">into</span>(),
-        );
+        <span class="kw">let</span> <span class="ident">sign_result</span> <span class="op">=</span> <span class="ident">single_signer</span>
+            .<span class="ident">compute_single_signatures</span>(<span class="kw-2">&amp;</span><span class="ident">protocol_message</span>, <span class="kw-2">&amp;</span><span class="ident">signers_with_stake</span>, <span class="kw-2">&amp;</span><span class="ident">current_signer</span>.<span class="number">4</span>)
+            .<span class="ident">expect</span>(<span class="string">&quot;single signer should not fail&quot;</span>)
+            .<span class="ident">expect</span>(<span class="string">&quot;single signer should produce a signature here&quot;</span>);
 
-        <span class="macro">assert!</span>(<span class="kw-2">&amp;</span><span class="ident">single_signer</span>.<span class="ident">get_protocol_initializer</span>().<span class="ident">is_some</span>());
-        <span class="macro">assert!</span>(<span class="ident">sign_result</span>.<span class="ident">as_ref</span>().<span class="ident">unwrap</span>().<span class="ident">is_some</span>());
-        <span class="kw">let</span> <span class="ident">decoded_sig</span>: <span class="ident">ProtocolSingleSignature</span> <span class="op">=</span>
-            <span class="ident">key_decode_hex</span>(<span class="kw-2">&amp;</span><span class="ident">sign_result</span>.<span class="ident">unwrap</span>().<span class="ident">unwrap</span>().<span class="ident">signature</span>).<span class="ident">unwrap</span>();
-        <span class="macro">assert!</span>(<span class="ident">decoded_sig</span>
-            .<span class="ident">verify</span>(<span class="kw-2">&amp;</span><span class="ident">protocol_parameters</span>, <span class="kw-2">&amp;</span><span class="ident">avk</span>, <span class="kw-2">&amp;</span><span class="ident">expected_message</span>)
-            .<span class="ident">is_ok</span>());
+        <span class="kw">let</span> <span class="ident">decoded_sig</span>: <span class="ident">ProtocolSingleSignature</span> <span class="op">=</span> <span class="ident">key_decode_hex</span>(<span class="kw-2">&amp;</span><span class="ident">sign_result</span>.<span class="ident">signature</span>).<span class="ident">unwrap</span>();
+        <span class="macro">assert!</span>(
+            <span class="ident">decoded_sig</span>
+                .<span class="ident">verify</span>(<span class="kw-2">&amp;</span><span class="ident">protocol_parameters</span>, <span class="kw-2">&amp;</span><span class="ident">avk</span>, <span class="kw-2">&amp;</span><span class="ident">expected_message</span>)
+                .<span class="ident">is_ok</span>(),
+            <span class="string">&quot;produced single signature should be valid&quot;</span>
+        );
         <span class="comment">//TODO: decoded_sig.pk should probably be a StmVerificationKeyPoP, uncomment once fixed</span>
         <span class="comment">//assert_eq!(current_signer.2, decoded_sig.pk);</span>
+    }
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">compute_aggregate_verification_key_success</span>() {
+        <span class="kw">let</span> <span class="ident">signers</span> <span class="op">=</span> <span class="ident">setup_signers</span>(<span class="number">5</span>);
+        <span class="kw">let</span> <span class="ident">signers_with_stake</span> <span class="op">=</span> <span class="ident">signers</span>
+            .<span class="ident">iter</span>()
+            .<span class="ident">map</span>(
+                <span class="op">|</span>(<span class="ident">party_id</span>, <span class="ident">stake</span>, <span class="ident">verification_key</span>, <span class="ident">_protocol_signer</span>, <span class="ident">_protocol_initializer</span>)<span class="op">|</span> {
+                    <span class="ident">SignerWithStake::new</span>(
+                        <span class="ident">party_id</span>.<span class="ident">to_owned</span>(),
+                        <span class="ident">key_encode_hex</span>(<span class="ident">verification_key</span>).<span class="ident">unwrap</span>(),
+                        <span class="kw-2">*</span><span class="ident">stake</span>,
+                    )
+                },
+            )
+            .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">SignerWithStake</span><span class="op">&gt;</span><span class="op">&gt;</span>();
+        <span class="kw">let</span> <span class="ident">current_signer</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">signers</span>[<span class="number">0</span>];
+        <span class="kw">let</span> <span class="ident">single_signer</span> <span class="op">=</span> <span class="ident">MithrilSingleSigner::new</span>(<span class="ident">current_signer</span>.<span class="number">0</span>.<span class="ident">to_owned</span>());
+        <span class="kw">let</span> <span class="ident">protocol_initializer</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">current_signer</span>.<span class="number">4</span>;
+        <span class="kw">let</span> <span class="ident">avk</span> <span class="op">=</span> <span class="ident">single_signer</span>
+            .<span class="ident">compute_aggregate_verification_key</span>(<span class="kw-2">&amp;</span><span class="ident">signers_with_stake</span>, <span class="ident">protocol_initializer</span>)
+            .<span class="ident">expect</span>(<span class="string">&quot;compute aggregate verification signature should not fail&quot;</span>)
+            .<span class="ident">expect</span>(<span class="string">&quot;aggregate verification signature should not be empty&quot;</span>);
+
+        <span class="macro">assert_eq!</span>(<span class="string">&quot;7b226d745f636f6d6d69746d656e74223a7b22726f6f74223a5b3133392c3136312c31362c322c3235352c3137392c33382c36342c3231312c34322c31392c36322c3133312c3132352c3230382c3134382c3230362c32372c31362c39382c3234372c372c3138362c3230352c3133352c39352c3134352c3130312c39332c3233362c33312c32332c3132372c322c3232302c3135302c3137322c35372c36342c3133382c3136362c3132302c3137372c3132372c3133342c3137342c33332c3134382c3230322c3134342c3132372c3135372c3131302c392c38332c31332c33342c36302c33392c3230372c33352c3134342c332c36335d2c22686173686572223a6e756c6c7d2c22746f74616c5f7374616b65223a343133307d&quot;</span>, <span class="ident">avk</span>);
     }
 }
 </code></pre></div>
