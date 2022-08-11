@@ -1,3 +1,3 @@
 (function() {var implementors = {};
-implementors["mithril"] = [{"text":"impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.62.1/std/error/trait.Error.html\" title=\"trait std::error::Error\">Error</a> for <a class=\"enum\" href=\"mithril/enum.AggregationFailure.html\" title=\"enum mithril::AggregationFailure\">AggregationFailure</a>","synthetic":false,"types":["mithril::error::AggregationFailure"]}];
+implementors["mithril"] = [{"text":"impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.62.1/std/error/trait.Error.html\" title=\"trait std::error::Error\">Error</a> for <a class=\"enum\" href=\"mithril/enum.AggregationError.html\" title=\"enum mithril::AggregationError\">AggregationError</a>","synthetic":false,"types":["mithril::error::AggregationError"]}];
 if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
