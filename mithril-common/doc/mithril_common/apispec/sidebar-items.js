@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["APISpec","APISpec helps validate conformity to an OpenAPI specification"]]});
+window.SIDEBAR_ITEMS = {"struct":[["APISpec","APISpec helps validate conformity to an OpenAPI specification"]]};
