@@ -789,51 +789,6 @@
 <span id="783">783</span>
 <span id="784">784</span>
 <span id="785">785</span>
-<span id="786">786</span>
-<span id="787">787</span>
-<span id="788">788</span>
-<span id="789">789</span>
-<span id="790">790</span>
-<span id="791">791</span>
-<span id="792">792</span>
-<span id="793">793</span>
-<span id="794">794</span>
-<span id="795">795</span>
-<span id="796">796</span>
-<span id="797">797</span>
-<span id="798">798</span>
-<span id="799">799</span>
-<span id="800">800</span>
-<span id="801">801</span>
-<span id="802">802</span>
-<span id="803">803</span>
-<span id="804">804</span>
-<span id="805">805</span>
-<span id="806">806</span>
-<span id="807">807</span>
-<span id="808">808</span>
-<span id="809">809</span>
-<span id="810">810</span>
-<span id="811">811</span>
-<span id="812">812</span>
-<span id="813">813</span>
-<span id="814">814</span>
-<span id="815">815</span>
-<span id="816">816</span>
-<span id="817">817</span>
-<span id="818">818</span>
-<span id="819">819</span>
-<span id="820">820</span>
-<span id="821">821</span>
-<span id="822">822</span>
-<span id="823">823</span>
-<span id="824">824</span>
-<span id="825">825</span>
-<span id="826">826</span>
-<span id="827">827</span>
-<span id="828">828</span>
-<span id="829">829</span>
-<span id="830">830</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
 <span class="kw">use</span> <span class="ident">chrono::Utc</span>;
 <span class="kw">use</span> <span class="ident">mithril_common::entities::Epoch</span>;
@@ -1274,9 +1229,6 @@
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::dependency</span>::{
-        <span class="ident">ProtocolParametersStoreWrapper</span>, <span class="ident">StakeStoreWrapper</span>, <span class="ident">VerificationKeyStoreWrapper</span>,
-    };
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::multi_signer::MockMultiSigner</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::runtime::RuntimeError</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::snapshotter::OngoingSnapshot</span>;
@@ -1284,54 +1236,13 @@
     <span class="kw">use</span> <span class="kw">crate</span>::{
         <span class="ident">initialize_dependencies</span>,
         <span class="ident">runtime</span>::{<span class="ident">AggregatorRunner</span>, <span class="ident">AggregatorRunnerTrait</span>},
-        <span class="ident">VerificationKeyStorer</span>,
     };
     <span class="kw">use</span> <span class="ident">mithril_common::crypto_helper::tests_setup::setup_certificate_chain</span>;
-    <span class="kw">use</span> <span class="ident">mithril_common::entities</span>::{
-        <span class="ident">Beacon</span>, <span class="ident">CertificatePending</span>, <span class="ident">Epoch</span>, <span class="ident">SignerWithStake</span>, <span class="ident">StakeDistribution</span>,
-    };
-    <span class="kw">use</span> <span class="ident">mithril_common</span>::{
-        <span class="ident">entities::ProtocolMessagePartKey</span>, <span class="ident">fake_data</span>, <span class="ident">store::StakeStorer</span>,
-        <span class="ident">NEXT_SIGNER_EPOCH_RETRIEVAL_OFFSET</span>, <span class="ident">SIGNER_EPOCH_RETRIEVAL_OFFSET</span>,
-    };
+    <span class="kw">use</span> <span class="ident">mithril_common::entities</span>::{<span class="ident">Beacon</span>, <span class="ident">CertificatePending</span>, <span class="ident">Epoch</span>};
+    <span class="kw">use</span> <span class="ident">mithril_common</span>::{<span class="ident">entities::ProtocolMessagePartKey</span>, <span class="ident">fake_data</span>, <span class="ident">store::StakeStorer</span>};
     <span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
     <span class="kw">use</span> <span class="ident">tempfile::NamedTempFile</span>;
     <span class="kw">use</span> <span class="ident">tokio::sync::RwLock</span>;
-
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">save_verification_keys_and_stake_distribution_and_protocol_parameters</span>(
-        <span class="ident">signers</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">SignerWithStake</span><span class="op">&gt;</span>,
-        <span class="ident">beacon</span>: <span class="kw-2">&amp;</span><span class="ident">Beacon</span>,
-        <span class="ident">epoch_offset</span>: <span class="ident">i64</span>,
-        <span class="ident">key_store</span>: <span class="ident">VerificationKeyStoreWrapper</span>,
-        <span class="ident">stake_store</span>: <span class="ident">StakeStoreWrapper</span>,
-        <span class="ident">protocol_parameters_store</span>: <span class="ident">ProtocolParametersStoreWrapper</span>,
-    ) {
-        <span class="kw">let</span> <span class="ident">epoch</span> <span class="op">=</span> <span class="ident">beacon</span>
-            .<span class="ident">epoch</span>
-            .<span class="ident">offset_by</span>(<span class="ident">epoch_offset</span>)
-            .<span class="ident">expect</span>(<span class="string">&quot;epoch.offset_by should not fail&quot;</span>);
-        <span class="kw">for</span> <span class="ident">signer</span> <span class="kw">in</span> <span class="ident">signers</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">into</span>()).<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>() {
-            <span class="ident">key_store</span>
-                .<span class="ident">save_verification_key</span>(<span class="ident">epoch</span>, <span class="ident">signer</span>)
-                .<span class="kw">await</span>
-                .<span class="ident">expect</span>(<span class="string">&quot;save_verification_key should not fail&quot;</span>);
-        }
-        <span class="ident">stake_store</span>
-            .<span class="ident">save_stakes</span>(
-                <span class="ident">epoch</span>,
-                <span class="ident">signers</span>
-                    .<span class="ident">into_iter</span>()
-                    .<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">into</span>())
-                    .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">StakeDistribution</span><span class="op">&gt;</span>(),
-            )
-            .<span class="kw">await</span>
-            .<span class="ident">expect</span>(<span class="string">&quot;save_stakes should not fail&quot;</span>);
-        <span class="kw">let</span> <span class="ident">protocol_parameters</span> <span class="op">=</span> <span class="ident">fake_data::protocol_parameters</span>();
-        <span class="ident">protocol_parameters_store</span>
-            .<span class="ident">save_protocol_parameters</span>(<span class="ident">epoch</span>, <span class="ident">protocol_parameters</span>)
-            .<span class="kw">await</span>
-            .<span class="ident">expect</span>(<span class="string">&quot;save_protocol_parameters should not fail&quot;</span>);
-    }
 
     <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_is_new_beacon</span>() {
@@ -1472,22 +1383,11 @@
         <span class="kw">let</span> <span class="ident">signers</span> <span class="op">=</span> <span class="ident">fake_data::signers_with_stakes</span>(<span class="number">5</span>);
         <span class="kw">let</span> <span class="ident">current_signers</span> <span class="op">=</span> <span class="ident">signers</span>[<span class="number">1</span>..<span class="number">3</span>].<span class="ident">to_vec</span>();
         <span class="kw">let</span> <span class="ident">next_signers</span> <span class="op">=</span> <span class="ident">signers</span>[<span class="number">2</span>..<span class="number">5</span>].<span class="ident">to_vec</span>();
-        <span class="ident">save_verification_keys_and_stake_distribution_and_protocol_parameters</span>(
+        <span class="kw">let</span> <span class="ident">protocol_parameters</span> <span class="op">=</span> <span class="ident">fake_data::protocol_parameters</span>();
+        <span class="ident">deps</span>.<span class="ident">simulate_genesis</span>(
             <span class="ident">current_signers</span>.<span class="ident">clone</span>(),
-            <span class="kw-2">&amp;</span><span class="ident">beacon</span>,
-            <span class="ident">SIGNER_EPOCH_RETRIEVAL_OFFSET</span>,
-            <span class="ident">deps</span>.<span class="ident">verification_key_store</span>.<span class="ident">clone</span>(),
-            <span class="ident">deps</span>.<span class="ident">stake_store</span>.<span class="ident">clone</span>(),
-            <span class="ident">deps</span>.<span class="ident">protocol_parameters_store</span>.<span class="ident">clone</span>(),
-        )
-        .<span class="kw">await</span>;
-        <span class="ident">save_verification_keys_and_stake_distribution_and_protocol_parameters</span>(
             <span class="ident">next_signers</span>.<span class="ident">clone</span>(),
-            <span class="kw-2">&amp;</span><span class="ident">beacon</span>,
-            <span class="ident">NEXT_SIGNER_EPOCH_RETRIEVAL_OFFSET</span>,
-            <span class="ident">deps</span>.<span class="ident">verification_key_store</span>.<span class="ident">clone</span>(),
-            <span class="ident">deps</span>.<span class="ident">stake_store</span>.<span class="ident">clone</span>(),
-            <span class="ident">deps</span>.<span class="ident">protocol_parameters_store</span>.<span class="ident">clone</span>(),
+            <span class="ident">protocol_parameters</span>.<span class="ident">clone</span>(),
         )
         .<span class="kw">await</span>;
 
@@ -1499,8 +1399,8 @@
         <span class="ident">certificate</span>.<span class="ident">next_signers</span>.<span class="ident">sort_by_key</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">party_id</span>.<span class="ident">clone</span>());
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">expected</span> <span class="op">=</span> <span class="ident">CertificatePending::new</span>(
             <span class="ident">beacon</span>,
-            <span class="ident">fake_data::protocol_parameters</span>(),
-            <span class="ident">fake_data::protocol_parameters</span>(),
+            <span class="ident">protocol_parameters</span>.<span class="ident">clone</span>(),
+            <span class="ident">protocol_parameters</span>,
             <span class="ident">current_signers</span>.<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">into</span>()).<span class="ident">collect</span>(),
             <span class="ident">next_signers</span>.<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">into</span>()).<span class="ident">collect</span>(),
         );
@@ -1518,8 +1418,23 @@
         <span class="kw">let</span> <span class="ident">beacon</span> <span class="op">=</span> <span class="ident">runner</span>.<span class="ident">is_new_beacon</span>(<span class="prelude-val">None</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>().<span class="ident">unwrap</span>();
         <span class="kw">let</span> <span class="ident">digest</span> <span class="op">=</span> <span class="string">&quot;1+2+3+4=10&quot;</span>.<span class="ident">to_string</span>();
         <span class="ident">runner</span>.<span class="ident">update_beacon</span>(<span class="kw-2">&amp;</span><span class="ident">beacon</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>();
+        <span class="kw">for</span> <span class="ident">epoch</span> <span class="kw">in</span> [
+            <span class="ident">beacon</span>.<span class="ident">epoch</span>.<span class="ident">offset_to_signer_retrieval_epoch</span>().<span class="ident">unwrap</span>(),
+            <span class="ident">beacon</span>
+                .<span class="ident">epoch</span>
+                .<span class="ident">offset_to_next_signer_retrieval_epoch</span>()
+                .<span class="ident">unwrap</span>(),
+        ] {
+            <span class="ident">deps</span>.<span class="ident">protocol_parameters_store</span>
+                .<span class="ident">save_protocol_parameters</span>(<span class="ident">epoch</span>, <span class="ident">fake_data::protocol_parameters</span>())
+                .<span class="kw">await</span>
+                .<span class="ident">unwrap</span>();
+        }
 
-        <span class="macro">assert!</span>(<span class="ident">runner</span>.<span class="ident">update_message_in_multisigner</span>(<span class="ident">digest</span>).<span class="kw">await</span>.<span class="ident">is_ok</span>());
+        <span class="ident">runner</span>
+            .<span class="ident">update_message_in_multisigner</span>(<span class="ident">digest</span>)
+            .<span class="kw">await</span>
+            .<span class="ident">expect</span>(<span class="string">&quot;update_message_in_multisigner should not fail&quot;</span>);
         <span class="kw">let</span> <span class="ident">message</span> <span class="op">=</span> <span class="ident">deps</span>
             .<span class="ident">multi_signer</span>
             .<span class="ident">read</span>()
@@ -1543,17 +1458,14 @@
         <span class="kw">let</span> <span class="ident">runner</span> <span class="op">=</span> <span class="ident">AggregatorRunner::new</span>(<span class="ident">config</span>, <span class="ident">deps</span>.<span class="ident">clone</span>());
         <span class="kw">let</span> <span class="ident">beacon</span> <span class="op">=</span> <span class="ident">runner</span>.<span class="ident">is_new_beacon</span>(<span class="prelude-val">None</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>().<span class="ident">unwrap</span>();
         <span class="ident">runner</span>.<span class="ident">update_beacon</span>(<span class="kw-2">&amp;</span><span class="ident">beacon</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>();
-        <span class="kw">let</span> <span class="ident">pending_certificate</span> <span class="op">=</span> <span class="ident">runner</span>
-            .<span class="ident">create_new_pending_certificate_from_multisigner</span>(<span class="ident">beacon</span>.<span class="ident">clone</span>())
-            .<span class="kw">await</span>
-            .<span class="ident">unwrap</span>();
-        <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">runner</span>
+        <span class="kw">let</span> <span class="ident">pending_certificate</span> <span class="op">=</span> <span class="ident">fake_data::certificate_pending</span>();
+
+        <span class="ident">runner</span>
             .<span class="ident">save_pending_certificate</span>(<span class="ident">pending_certificate</span>.<span class="ident">clone</span>())
-            .<span class="kw">await</span>;
-        <span class="macro">assert!</span>(<span class="ident">res</span>.<span class="ident">is_ok</span>());
+            .<span class="kw">await</span>
+            .<span class="ident">expect</span>(<span class="string">&quot;save_pending_certificate should not fail&quot;</span>);
 
         <span class="kw">let</span> <span class="ident">saved_cert</span> <span class="op">=</span> <span class="ident">deps</span>.<span class="ident">certificate_pending_store</span>.<span class="ident">get</span>().<span class="kw">await</span>.<span class="ident">unwrap</span>().<span class="ident">unwrap</span>();
-
         <span class="macro">assert_eq!</span>(<span class="ident">pending_certificate</span>, <span class="ident">saved_cert</span>);
     }
 
@@ -1564,18 +1476,16 @@
         <span class="kw">let</span> <span class="ident">runner</span> <span class="op">=</span> <span class="ident">AggregatorRunner::new</span>(<span class="ident">config</span>, <span class="ident">deps</span>.<span class="ident">clone</span>());
         <span class="kw">let</span> <span class="ident">beacon</span> <span class="op">=</span> <span class="ident">runner</span>.<span class="ident">is_new_beacon</span>(<span class="prelude-val">None</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>().<span class="ident">unwrap</span>();
         <span class="ident">runner</span>.<span class="ident">update_beacon</span>(<span class="kw-2">&amp;</span><span class="ident">beacon</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>();
-        <span class="kw">let</span> <span class="ident">pending_certificate</span> <span class="op">=</span> <span class="ident">runner</span>
-            .<span class="ident">create_new_pending_certificate_from_multisigner</span>(<span class="ident">beacon</span>.<span class="ident">clone</span>())
+        <span class="kw">let</span> <span class="ident">pending_certificate</span> <span class="op">=</span> <span class="ident">fake_data::certificate_pending</span>();
+        <span class="ident">deps</span>.<span class="ident">certificate_pending_store</span>
+            .<span class="ident">save</span>(<span class="ident">pending_certificate</span>.<span class="ident">clone</span>())
             .<span class="kw">await</span>
             .<span class="ident">unwrap</span>();
-        <span class="ident">runner</span>
-            .<span class="ident">save_pending_certificate</span>(<span class="ident">pending_certificate</span>.<span class="ident">clone</span>())
-            .<span class="kw">await</span>
-            .<span class="ident">unwrap</span>();
+
         <span class="kw">let</span> <span class="ident">cert</span> <span class="op">=</span> <span class="ident">runner</span>.<span class="ident">drop_pending_certificate</span>().<span class="kw">await</span>.<span class="ident">unwrap</span>();
         <span class="macro">assert_eq!</span>(<span class="ident">pending_certificate</span>, <span class="ident">cert</span>);
         <span class="kw">let</span> <span class="ident">maybe_saved_cert</span> <span class="op">=</span> <span class="ident">deps</span>.<span class="ident">certificate_pending_store</span>.<span class="ident">get</span>().<span class="kw">await</span>.<span class="ident">unwrap</span>();
-        <span class="macro">assert!</span>(<span class="ident">maybe_saved_cert</span>.<span class="ident">is_none</span>());
+        <span class="macro">assert_eq!</span>(<span class="prelude-val">None</span>, <span class="ident">maybe_saved_cert</span>);
     }
 
     <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
@@ -1602,7 +1512,7 @@
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_multi_signer</span> <span class="op">=</span> <span class="ident">MockMultiSigner::new</span>();
         <span class="ident">mock_multi_signer</span>
             .<span class="ident">expect_create_certificate</span>()
-            .<span class="ident">return_once</span>(<span class="kw">move</span> <span class="op">|</span><span class="kw">_</span>, <span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">first_certificate</span>.<span class="ident">to_owned</span>())));
+            .<span class="ident">return_once</span>(<span class="kw">move</span> <span class="op">|</span><span class="kw">_</span>, <span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">first_certificate</span>)));
         <span class="ident">deps</span>.<span class="ident">multi_signer</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">RwLock::new</span>(<span class="ident">mock_multi_signer</span>));
         <span class="kw">let</span> <span class="ident">certificate_store</span> <span class="op">=</span> <span class="ident">deps</span>.<span class="ident">certificate_store</span>.<span class="ident">clone</span>();
         <span class="kw">let</span> <span class="ident">runner</span> <span class="op">=</span> <span class="ident">AggregatorRunner::new</span>(<span class="ident">config</span>, <span class="ident">Arc::new</span>(<span class="ident">deps</span>));

@@ -1147,12 +1147,53 @@
 <span id="1141">1141</span>
 <span id="1142">1142</span>
 <span id="1143">1143</span>
+<span id="1144">1144</span>
+<span id="1145">1145</span>
+<span id="1146">1146</span>
+<span id="1147">1147</span>
+<span id="1148">1148</span>
+<span id="1149">1149</span>
+<span id="1150">1150</span>
+<span id="1151">1151</span>
+<span id="1152">1152</span>
+<span id="1153">1153</span>
+<span id="1154">1154</span>
+<span id="1155">1155</span>
+<span id="1156">1156</span>
+<span id="1157">1157</span>
+<span id="1158">1158</span>
+<span id="1159">1159</span>
+<span id="1160">1160</span>
+<span id="1161">1161</span>
+<span id="1162">1162</span>
+<span id="1163">1163</span>
+<span id="1164">1164</span>
+<span id="1165">1165</span>
+<span id="1166">1166</span>
+<span id="1167">1167</span>
+<span id="1168">1168</span>
+<span id="1169">1169</span>
+<span id="1170">1170</span>
+<span id="1171">1171</span>
+<span id="1172">1172</span>
+<span id="1173">1173</span>
+<span id="1174">1174</span>
+<span id="1175">1175</span>
+<span id="1176">1176</span>
+<span id="1177">1177</span>
+<span id="1178">1178</span>
+<span id="1179">1179</span>
+<span id="1180">1180</span>
+<span id="1181">1181</span>
+<span id="1182">1182</span>
+<span id="1183">1183</span>
+<span id="1184">1184</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std::collections::HashMap</span>;
 
 <span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
 <span class="kw">use</span> <span class="ident">chrono::prelude</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident">hex::ToHex</span>;
-<span class="kw">use</span> <span class="ident">slog_scope::debug</span>;
+<span class="kw">use</span> <span class="ident">slog_scope</span>::{<span class="ident">debug</span>, <span class="ident">trace</span>, <span class="ident">warn</span>};
 <span class="kw">use</span> <span class="ident">thiserror::Error</span>;
 
 <span class="kw">use</span> <span class="ident">mithril_common::crypto_helper</span>::{
@@ -1490,13 +1531,15 @@
             .<span class="ident">epoch</span>
             .<span class="ident">offset_by</span>(<span class="ident">epoch_offset</span>)<span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(
-            <span class="self">self</span>.<span class="ident">protocol_parameters_store</span>
-                .<span class="ident">get_protocol_parameters</span>(<span class="ident">epoch</span>)
-                .<span class="kw">await</span><span class="question-mark">?</span>
-                .<span class="ident">unwrap_or_default</span>()
-                .<span class="ident">into</span>(),
-        ))
+        <span class="kw">match</span> <span class="self">self</span>
+            .<span class="ident">protocol_parameters_store</span>
+            .<span class="ident">get_protocol_parameters</span>(<span class="ident">epoch</span>)
+            .<span class="kw">await</span>
+        {
+            <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">protocol_parameters</span>)) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">protocol_parameters</span>.<span class="ident">into</span>())),
+            <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
+            <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">e</span>.<span class="ident">into</span>()),
+        }
     }
 }
 
@@ -1514,23 +1557,33 @@
         <span class="ident">message</span>: <span class="ident">entities::ProtocolMessage</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">ProtocolError</span><span class="op">&gt;</span> {
         <span class="macro">debug!</span>(<span class="string">&quot;Update current_message to {:?}&quot;</span>, <span class="ident">message</span>);
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">current_message</span>.<span class="ident">clone</span>() <span class="op">!</span><span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">message</span>.<span class="ident">clone</span>()) {
-            <span class="self">self</span>.<span class="ident">multi_signature</span> <span class="op">=</span> <span class="prelude-val">None</span>;
-            <span class="kw">let</span> <span class="ident">signers_with_stake</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">get_signers_with_stake</span>().<span class="kw">await</span><span class="question-mark">?</span>;
-            <span class="kw">let</span> <span class="ident">protocol_parameters</span> <span class="op">=</span> <span class="self">self</span>
-                .<span class="ident">get_protocol_parameters</span>()
-                .<span class="kw">await</span><span class="question-mark">?</span>
-                .<span class="ident">ok_or_else</span>(<span class="ident">ProtocolError::UnavailableProtocolParameters</span>)<span class="question-mark">?</span>;
-            <span class="kw">match</span> <span class="self">self</span>
-                .<span class="ident">create_clerk</span>(<span class="kw-2">&amp;</span><span class="ident">signers_with_stake</span>, <span class="kw-2">&amp;</span><span class="ident">protocol_parameters</span>)
-                .<span class="kw">await</span>
-            {
-                <span class="prelude-val">Ok</span>(<span class="ident">clerk</span>) =&gt; <span class="self">self</span>.<span class="ident">clerk</span> <span class="op">=</span> <span class="ident">clerk</span>,
-                <span class="prelude-val">Err</span>(<span class="ident">ProtocolError::Beacon</span>(<span class="kw">_</span>)) =&gt; {}
-                <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>),
+        <span class="self">self</span>.<span class="ident">multi_signature</span> <span class="op">=</span> <span class="prelude-val">None</span>;
+        <span class="kw">let</span> <span class="ident">signers_with_stake</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">get_signers_with_stake</span>().<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">protocol_parameters</span> <span class="op">=</span> <span class="self">self</span>
+            .<span class="ident">get_protocol_parameters</span>()
+            .<span class="kw">await</span><span class="question-mark">?</span>
+            .<span class="ident">ok_or_else</span>(<span class="ident">ProtocolError::UnavailableProtocolParameters</span>)<span class="question-mark">?</span>;
+        <span class="kw">match</span> <span class="self">self</span>
+            .<span class="ident">create_clerk</span>(<span class="kw-2">&amp;</span><span class="ident">signers_with_stake</span>, <span class="kw-2">&amp;</span><span class="ident">protocol_parameters</span>)
+            .<span class="kw">await</span>
+        {
+            <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">clerk</span>)) =&gt; {
+                <span class="macro">trace!</span>(<span class="string">&quot;update_current_message::new_clerk_created&quot;</span>);
+                <span class="self">self</span>.<span class="ident">clerk</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">clerk</span>)
             }
-            <span class="self">self</span>.<span class="ident">current_initiated_at</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">Utc::now</span>());
+            <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; {
+                <span class="macro">warn!</span>(
+                    <span class="string">&quot;update_current_message::no_clerk_created: probably not enough signers with valid verification keys&quot;</span>;
+                    <span class="string">&quot;signers&quot;</span> =&gt; <span class="question-mark">?</span><span class="ident">signers_with_stake</span>
+                );
+                <span class="self">self</span>.<span class="ident">clerk</span> <span class="op">=</span> <span class="prelude-val">None</span>
+            }
+            <span class="prelude-val">Err</span>(<span class="ident">ProtocolError::Beacon</span>(<span class="ident">err</span>)) =&gt; {
+                <span class="macro">warn!</span>(<span class="string">&quot;update_current_message::error&quot;</span>; <span class="string">&quot;error&quot;</span> =&gt; <span class="question-mark">?</span><span class="ident">err</span>);
+            }
+            <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>),
         }
+        <span class="self">self</span>.<span class="ident">current_initiated_at</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">Utc::now</span>());
         <span class="self">self</span>.<span class="ident">current_message</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">message</span>);
         <span class="prelude-val">Ok</span>(())
     }
@@ -1548,6 +1601,7 @@
         <span class="prelude-val">Ok</span>(())
     }
 
+    <span class="comment">// TODO: protocol parameters should ALWAYS be available</span>
     <span class="doccomment">/// Get protocol parameters</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_protocol_parameters</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ProtocolParameters</span><span class="op">&gt;</span>, <span class="ident">ProtocolError</span><span class="op">&gt;</span> {
         <span class="macro">debug!</span>(<span class="string">&quot;Get protocol parameters&quot;</span>);
@@ -1559,7 +1613,7 @@
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_next_protocol_parameters</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ProtocolParameters</span><span class="op">&gt;</span>, <span class="ident">ProtocolError</span><span class="op">&gt;</span> {
-        <span class="macro">debug!</span>(<span class="string">&quot;Get protocol parameters&quot;</span>);
+        <span class="macro">debug!</span>(<span class="string">&quot;Get next protocol parameters&quot;</span>);
         <span class="self">self</span>.<span class="ident">get_protocol_parameters_with_epoch_offset</span>(<span class="ident">NEXT_SIGNER_EPOCH_RETRIEVAL_OFFSET</span>)
             .<span class="kw">await</span>
     }
@@ -1646,7 +1700,8 @@
             .<span class="ident">ok_or_else</span>(<span class="ident">ProtocolError::UnavailableBeacon</span>)<span class="question-mark">?</span>
             .<span class="ident">epoch</span>
             .<span class="ident">offset_by</span>(<span class="ident">SIGNER_EPOCH_RECORDING_OFFSET</span>)<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="kw">match</span> <span class="self">self</span>
+
+        <span class="kw">match</span> <span class="self">self</span>
             .<span class="ident">verification_key_store</span>
             .<span class="ident">save_verification_key</span>(
                 <span class="ident">epoch</span>,
@@ -1659,9 +1714,7 @@
         {
             <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">ProtocolError::ExistingSigner</span>()),
             <span class="prelude-val">None</span> =&gt; <span class="prelude-val">Ok</span>(()),
-        };
-
-        <span class="ident">result</span>
+        }
     }
 
     <span class="doccomment">/// Get signer verification key</span>
@@ -1809,12 +1862,11 @@
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">create_multi_signature</span>(
         <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ProtocolMultiSignature</span><span class="op">&gt;</span>, <span class="ident">ProtocolError</span><span class="op">&gt;</span> {
+        <span class="macro">debug!</span>(<span class="string">&quot;Create multi signature&quot;</span>);
         <span class="kw">let</span> <span class="ident">message</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>
             .<span class="ident">get_current_message</span>()
             .<span class="kw">await</span>
             .<span class="ident">ok_or_else</span>(<span class="ident">ProtocolError::UnavailableMessage</span>)<span class="question-mark">?</span>;
-
-        <span class="macro">debug!</span>(<span class="string">&quot;Create multi signature&quot;</span>; <span class="string">&quot;protocol_message&quot;</span> =&gt;  #<span class="question-mark">?</span><span class="ident">message</span>, <span class="string">&quot;message&quot;</span> =&gt; <span class="ident">message</span>.<span class="ident">compute_hash</span>().<span class="ident">encode_hex</span>::<span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>());
 
         <span class="kw">let</span> <span class="ident">beacon</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">current_beacon</span>
@@ -1833,11 +1885,25 @@
                     .<span class="ident">ok</span>()
             })
             .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
-        <span class="kw">let</span> <span class="ident">protocol_parameters</span> <span class="op">=</span> <span class="self">self</span>
-            .<span class="ident">get_protocol_parameters</span>()
-            .<span class="kw">await</span><span class="question-mark">?</span>
-            .<span class="ident">ok_or_else</span>(<span class="ident">ProtocolError::UnavailableProtocolParameters</span>)<span class="question-mark">?</span>;
-        <span class="kw">if</span> <span class="ident">protocol_parameters</span>.<span class="ident">k</span>
+
+        <span class="kw">let</span> <span class="ident">protocol_parameters</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">get_protocol_parameters</span>().<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">if</span> <span class="ident">protocol_parameters</span>.<span class="ident">is_none</span>() {
+            <span class="macro">warn!</span>(
+                <span class="string">&quot;no protocol parameters available, can&#39;t produce multi-signature&quot;</span>;
+                <span class="string">&quot;beacon&quot;</span> =&gt;  #<span class="question-mark">?</span><span class="ident">beacon</span>,
+            );
+            <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
+        }
+
+        <span class="kw">let</span> <span class="ident">quorum</span> <span class="op">=</span> <span class="ident">protocol_parameters</span>.<span class="ident">unwrap</span>().<span class="ident">k</span>;
+        <span class="macro">trace!</span>(
+            <span class="string">&quot;Create multi signature&quot;</span>;
+            <span class="string">&quot;beacon&quot;</span> =&gt;  #<span class="question-mark">?</span><span class="ident">beacon</span>,
+            <span class="string">&quot;protocol_message&quot;</span> =&gt;  #<span class="question-mark">?</span><span class="ident">message</span>,
+            <span class="string">&quot;protocol_parameters&quot;</span> =&gt;  #<span class="question-mark">?</span><span class="ident">protocol_parameters</span>,
+            <span class="string">&quot;message&quot;</span> =&gt; <span class="ident">message</span>.<span class="ident">compute_hash</span>().<span class="ident">encode_hex</span>::<span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>()
+        );
+        <span class="kw">if</span> <span class="ident">quorum</span>
             <span class="op">&gt;</span> <span class="ident">signatures</span>
                 .<span class="ident">iter</span>()
                 .<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">indexes</span>.<span class="ident">len</span>())
@@ -1848,10 +1914,11 @@
             <span class="macro">debug!</span>(
                 <span class="string">&quot;Quorum is not reached {} signatures vs {} needed&quot;</span>,
                 <span class="ident">signatures</span>.<span class="ident">len</span>(),
-                <span class="ident">protocol_parameters</span>.<span class="ident">k</span>
+                <span class="ident">quorum</span>
             );
             <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
         }
+
         <span class="kw">let</span> <span class="ident">clerk</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">clerk</span>
             .<span class="ident">as_ref</span>()
@@ -1932,6 +1999,7 @@
     <span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
 
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">setup_multi_signer</span>() -&gt; <span class="ident">MultiSignerImpl</span> {
+        <span class="kw">let</span> <span class="ident">beacon</span> <span class="op">=</span> <span class="ident">fake_data::beacon</span>();
         <span class="kw">let</span> <span class="ident">verification_key_store</span> <span class="op">=</span> <span class="ident">VerificationKeyStore::new</span>(<span class="ident">Box::new</span>(
             <span class="ident">MemoryAdapter</span>::<span class="op">&lt;</span><span class="ident">entities::Epoch</span>, <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">entities::PartyId</span>, <span class="ident">entities::Signer</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="ident">::new</span>(
                 <span class="prelude-val">None</span>,
@@ -1944,15 +2012,29 @@
             )
             .<span class="ident">unwrap</span>(),
         ));
-        <span class="kw">let</span> <span class="ident">single_signature_store</span> <span class="op">=</span> <span class="ident">SingleSignatureStore::new</span>(<span class="ident">Box::new</span>(
-            <span class="ident">MemoryAdapter</span>::<span class="op">&lt;</span>
-                <span class="ident">entities::ImmutableFileNumber</span>,
-                <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">entities::PartyId</span>, <span class="ident">entities::SingleSignatures</span><span class="op">&gt;</span>,
-            <span class="op">&gt;</span><span class="ident">::new</span>(<span class="prelude-val">None</span>)
-            .<span class="ident">unwrap</span>(),
-        ));
+        <span class="kw">let</span> <span class="ident">single_signature_store</span> <span class="op">=</span>
+            <span class="ident">SingleSignatureStore::new</span>(<span class="ident">Box::new</span>(
+                <span class="ident">MemoryAdapter</span>::<span class="op">&lt;</span>
+                    <span class="ident">entities::Beacon</span>,
+                    <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">entities::PartyId</span>, <span class="ident">entities::SingleSignatures</span><span class="op">&gt;</span>,
+                <span class="op">&gt;</span><span class="ident">::new</span>(<span class="prelude-val">None</span>)
+                .<span class="ident">unwrap</span>(),
+            ));
         <span class="kw">let</span> <span class="ident">protocol_parameters_store</span> <span class="op">=</span> <span class="ident">ProtocolParametersStore::new</span>(<span class="ident">Box::new</span>(
-            <span class="ident">MemoryAdapter</span>::<span class="op">&lt;</span><span class="ident">entities::Epoch</span>, <span class="ident">entities::ProtocolParameters</span><span class="op">&gt;</span><span class="ident">::new</span>(<span class="prelude-val">None</span>).<span class="ident">unwrap</span>(),
+            <span class="ident">MemoryAdapter</span>::<span class="op">&lt;</span><span class="ident">entities::Epoch</span>, <span class="ident">entities::ProtocolParameters</span><span class="op">&gt;</span><span class="ident">::new</span>(<span class="prelude-val">Some</span>(<span class="macro">vec!</span>[
+                (
+                    <span class="ident">beacon</span>.<span class="ident">epoch</span>.<span class="ident">offset_to_signer_retrieval_epoch</span>().<span class="ident">unwrap</span>(),
+                    <span class="ident">fake_data::protocol_parameters</span>(),
+                ),
+                (
+                    <span class="ident">beacon</span>
+                        .<span class="ident">epoch</span>
+                        .<span class="ident">offset_to_next_signer_retrieval_epoch</span>()
+                        .<span class="ident">unwrap</span>(),
+                    <span class="ident">fake_data::protocol_parameters</span>(),
+                ),
+            ]))
+            .<span class="ident">unwrap</span>(),
         ));
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">multi_signer</span> <span class="op">=</span> <span class="ident">MultiSignerImpl::new</span>(
             <span class="ident">Arc::new</span>(<span class="ident">verification_key_store</span>),
@@ -1962,7 +2044,7 @@
         );
 
         <span class="ident">multi_signer</span>
-            .<span class="ident">update_current_beacon</span>(<span class="ident">fake_data::beacon</span>())
+            .<span class="ident">update_current_beacon</span>(<span class="ident">beacon</span>)
             .<span class="kw">await</span>
             .<span class="ident">expect</span>(<span class="string">&quot;update_current_beacon should not fail&quot;</span>);
         <span class="ident">multi_signer</span>
