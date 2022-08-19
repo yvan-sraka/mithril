@@ -184,63 +184,28 @@
 <span id="178">178</span>
 <span id="179">179</span>
 <span id="180">180</span>
-<span id="181">181</span>
-<span id="182">182</span>
-<span id="183">183</span>
-<span id="184">184</span>
-<span id="185">185</span>
-<span id="186">186</span>
-<span id="187">187</span>
-<span id="188">188</span>
-<span id="189">189</span>
-<span id="190">190</span>
-<span id="191">191</span>
-<span id="192">192</span>
-<span id="193">193</span>
-<span id="194">194</span>
-<span id="195">195</span>
-<span id="196">196</span>
-<span id="197">197</span>
-<span id="198">198</span>
-<span id="199">199</span>
-<span id="200">200</span>
-<span id="201">201</span>
-<span id="202">202</span>
-<span id="203">203</span>
-<span id="204">204</span>
-<span id="205">205</span>
-<span id="206">206</span>
-<span id="207">207</span>
-<span id="208">208</span>
-<span id="209">209</span>
-<span id="210">210</span>
-<span id="211">211</span>
-<span id="212">212</span>
-<span id="213">213</span>
-<span id="214">214</span>
-<span id="215">215</span>
-<span id="216">216</span>
-<span id="217">217</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Crate specific errors</span>
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::merkle_tree::Path</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;zcash&quot;</span>)]</span>
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;blast&quot;</span>))]</span>
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::multi_sig_zcash</span>::{<span class="ident">Signature</span>, <span class="ident">VerificationKey</span>, <span class="ident">VerificationKeyPoP</span>};
 <span class="kw">use</span> <span class="ident">digest</span>::{<span class="ident">Digest</span>, <span class="ident">FixedOutput</span>};
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;zcash&quot;</span>))]</span>
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;blast&quot;</span>)]</span>
 <span class="kw">use</span> {
-    <span class="ident"><span class="kw">crate</span>::multi_sig</span>::{<span class="ident">Signature</span>, <span class="ident">VerificationKey</span>, <span class="ident">VerificationKeyPoP</span>},
+    <span class="ident"><span class="kw">crate</span>::multi_sig_blast</span>::{<span class="ident">Signature</span>, <span class="ident">VerificationKey</span>, <span class="ident">VerificationKeyPoP</span>},
     <span class="ident">blst::BLST_ERROR</span>,
 };
-
-<span class="comment">// todo: better organise these errors.</span>
 
 <span class="doccomment">/// Error types for multi signatures.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">thiserror::Error</span>, <span class="ident">Eq</span>, <span class="ident">PartialEq</span>)]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">MultiSignatureError</span> {
-    <span class="doccomment">/// Invalid Multi signature</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Invalid multi signature&quot;</span>)]</span>
+    <span class="doccomment">/// Invalid Single signature</span>
+    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Invalid single signature&quot;</span>)]</span>
     <span class="ident">SignatureInvalid</span>(<span class="ident">Signature</span>),
+
+    <span class="doccomment">/// Invalid aggregate signature</span>
+    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Invalid aggregated signature&quot;</span>)]</span>
+    <span class="ident">AggregateSignatureInvalid</span>,
 
     <span class="doccomment">/// This error occurs when the the serialization of the raw bytes failed</span>
     <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Invalid bytes&quot;</span>)]</span>
@@ -282,13 +247,17 @@
     <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;The claimed evaluation of function phi is incorrect.&quot;</span>)]</span>
     <span class="ident">EvalInvalid</span>([<span class="ident">u8</span>; <span class="number">64</span>]),
 
-    <span class="doccomment">/// A party did not actually win the lottery</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;The current party did not win the lottery.&quot;</span>)]</span>
-    <span class="ident">StakeInvalid</span>,
+    <span class="doccomment">/// The lottery was actually lost for the signature</span>
+    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Lottery for this epoch was lost.&quot;</span>)]</span>
+    <span class="ident">LotteryLost</span>,
 
     <span class="doccomment">/// A party submitted an invalid signature</span>
     <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;A provided signature is invalid&quot;</span>)]</span>
-    <span class="ident">SignatureInvalid</span>(<span class="ident">Signature</span>),
+    <span class="ident">SingleSignatureInvalid</span>(<span class="ident">Signature</span>),
+
+    <span class="doccomment">/// The aggregated signature is invalid</span>
+    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Aggregate signature is invalid&quot;</span>)]</span>
+    <span class="ident">SignatureInvalid</span>,
 
     <span class="doccomment">/// This error occurs when the the serialization of the raw bytes failed</span>
     <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Invalid bytes&quot;</span>)]</span>
@@ -305,34 +274,6 @@
     <span class="doccomment">/// This error happens when we try to convert a u64 to a usize and it does not fit</span>
     <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Invalid usize conversion&quot;</span>)]</span>
     <span class="ident">UsizeConversionInvalid</span>,
-}
-
-<span class="doccomment">/// Error types for single signature verification.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">thiserror::Error</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">StmSingleSignatureError</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// The signature index is out of bounds</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Received index, {0}, is higher than what the security parameter allows, {1}.&quot;</span>)]</span>
-    <span class="ident">IndexBoundFailed</span>(<span class="ident">u64</span>, <span class="ident">u64</span>),
-
-    <span class="doccomment">/// The lottery was actually lost for the signature</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Lottery for this epoch was lost.&quot;</span>)]</span>
-    <span class="ident">LotteryLost</span>,
-
-    <span class="doccomment">/// The Merkle Tree is invalid</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;The path of the Merkle Tree is invalid.&quot;</span>)]</span>
-    <span class="ident">PathInvalid</span>(<span class="ident">Path</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>),
-
-    <span class="doccomment">/// The MSP signature is invalid</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Invalid Signature.&quot;</span>)]</span>
-    <span class="ident">SignatureInvalid</span>(<span class="ident">Signature</span>),
-
-    <span class="doccomment">/// This error occurs when the the serialization of the raw bytes failed</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Invalid bytes&quot;</span>)]</span>
-    <span class="ident">SerializationError</span>,
-
-    <span class="doccomment">/// Incorrect proof of possession</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Key with invalid PoP&quot;</span>)]</span>
-    <span class="ident">KeyInvalid</span>(<span class="ident">Box</span><span class="op">&lt;</span><span class="ident">VerificationKeyPoP</span><span class="op">&gt;</span>),
 }
 
 <span class="doccomment">/// Error types related to merkle trees.</span>
@@ -372,6 +313,7 @@
         }
     }
 }
+
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">MerkleTreeError</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">StmSignatureError</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
     <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">e</span>: <span class="ident">MerkleTreeError</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
         <span class="kw">match</span> <span class="ident">e</span> {
@@ -380,42 +322,14 @@
         }
     }
 }
+
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">MultiSignatureError</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">StmSignatureError</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
     <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">e</span>: <span class="ident">MultiSignatureError</span>) -&gt; <span class="self">Self</span> {
         <span class="kw">match</span> <span class="ident">e</span> {
             <span class="ident">MultiSignatureError::SerializationError</span> =&gt; <span class="ident"><span class="self">Self</span>::SerializationError</span>,
             <span class="ident">MultiSignatureError::KeyInvalid</span>(<span class="ident">e</span>) =&gt; <span class="ident"><span class="self">Self</span>::IvkInvalid</span>(<span class="ident">e</span>.<span class="ident">vk</span>),
-            <span class="ident">MultiSignatureError::SignatureInvalid</span>(<span class="ident">e</span>) =&gt; <span class="ident"><span class="self">Self</span>::SignatureInvalid</span>(<span class="ident">e</span>),
-        }
-    }
-}
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">StmSingleSignatureError</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">StmSignatureError</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">e</span>: <span class="ident">StmSingleSignatureError</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
-        <span class="kw">match</span> <span class="ident">e</span> {
-            <span class="ident">StmSingleSignatureError::SignatureInvalid</span>(<span class="ident">e</span>) =&gt; <span class="ident"><span class="self">Self</span>::SignatureInvalid</span>(<span class="ident">e</span>),
-            <span class="ident">StmSingleSignatureError::PathInvalid</span>(<span class="ident">e</span>) =&gt; <span class="ident"><span class="self">Self</span>::PathInvalid</span>(<span class="ident">e</span>),
-            <span class="ident">StmSingleSignatureError::IndexBoundFailed</span>(<span class="ident">e</span>, ..) =&gt; <span class="ident"><span class="self">Self</span>::IndexBoundFailed</span>(<span class="ident">e</span>, <span class="ident">e</span>),
-            <span class="ident">StmSingleSignatureError::LotteryLost</span> =&gt; <span class="ident"><span class="self">Self</span>::StakeInvalid</span>,
-            <span class="ident">StmSingleSignatureError::SerializationError</span> =&gt; <span class="ident"><span class="self">Self</span>::SerializationError</span>,
-            <span class="ident">StmSingleSignatureError::KeyInvalid</span>(<span class="ident">e</span>) =&gt; <span class="ident"><span class="self">Self</span>::IvkInvalid</span>(<span class="ident">e</span>.<span class="ident">vk</span>),
-        }
-    }
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">MerkleTreeError</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">StmSingleSignatureError</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">e</span>: <span class="ident">MerkleTreeError</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
-        <span class="kw">match</span> <span class="ident">e</span> {
-            <span class="ident">MerkleTreeError::PathInvalid</span>(<span class="ident">e</span>) =&gt; <span class="ident"><span class="self">Self</span>::PathInvalid</span>(<span class="ident">e</span>),
-            <span class="ident">MerkleTreeError::SerializationError</span> =&gt; <span class="ident"><span class="self">Self</span>::SerializationError</span>,
-        }
-    }
-}
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">MultiSignatureError</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">StmSingleSignatureError</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">e</span>: <span class="ident">MultiSignatureError</span>) -&gt; <span class="self">Self</span> {
-        <span class="kw">match</span> <span class="ident">e</span> {
-            <span class="ident">MultiSignatureError::SerializationError</span> =&gt; <span class="ident"><span class="self">Self</span>::SerializationError</span>,
-            <span class="ident">MultiSignatureError::SignatureInvalid</span>(<span class="ident">e</span>) =&gt; <span class="ident"><span class="self">Self</span>::SignatureInvalid</span>(<span class="ident">e</span>),
-            <span class="ident">MultiSignatureError::KeyInvalid</span>(<span class="ident">e</span>) =&gt; <span class="ident"><span class="self">Self</span>::KeyInvalid</span>(<span class="ident">e</span>),
+            <span class="ident">MultiSignatureError::SignatureInvalid</span>(<span class="ident">e</span>) =&gt; <span class="ident"><span class="self">Self</span>::SingleSignatureInvalid</span>(<span class="ident">e</span>),
+            <span class="ident">MultiSignatureError::AggregateSignatureInvalid</span> =&gt; <span class="ident"><span class="self">Self</span>::SignatureInvalid</span>,
         }
     }
 }
@@ -426,15 +340,27 @@
             <span class="ident">MultiSignatureError::SerializationError</span> =&gt; <span class="ident"><span class="self">Self</span>::SerializationError</span>,
             <span class="ident">MultiSignatureError::KeyInvalid</span>(<span class="ident">e</span>) =&gt; <span class="ident"><span class="self">Self</span>::KeyInvalid</span>(<span class="ident">e</span>),
             <span class="ident">MultiSignatureError::SignatureInvalid</span>(<span class="kw">_</span>) =&gt; <span class="macro">unreachable!</span>(),
+            <span class="ident">MultiSignatureError::AggregateSignatureInvalid</span> =&gt; <span class="macro">unreachable!</span>(),
         }
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;zcash&quot;</span>))]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">blst_err_to_atms</span>(<span class="ident">e</span>: <span class="ident">BLST_ERROR</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MultiSignatureError</span><span class="op">&gt;</span> {
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;blast&quot;</span>)]</span>
+<span class="doccomment">/// If verifying a single signature, the signature should be provided. If verifying a multi-sig,</span>
+<span class="doccomment">/// no need to provide the signature</span>
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">blst_err_to_atms</span>(
+    <span class="ident">e</span>: <span class="ident">BLST_ERROR</span>,
+    <span class="ident">sig</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Signature</span><span class="op">&gt;</span>,
+) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MultiSignatureError</span><span class="op">&gt;</span> {
     <span class="kw">match</span> <span class="ident">e</span> {
         <span class="ident">BLST_ERROR::BLST_SUCCESS</span> =&gt; <span class="prelude-val">Ok</span>(()),
-        <span class="ident">BLST_ERROR::BLST_VERIFY_FAIL</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">MultiSignatureError::SignatureInvalid</span>),
+        <span class="ident">BLST_ERROR::BLST_VERIFY_FAIL</span> =&gt; {
+            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">s</span>) <span class="op">=</span> <span class="ident">sig</span> {
+                <span class="prelude-val">Err</span>(<span class="ident">MultiSignatureError::SignatureInvalid</span>(<span class="ident">s</span>))
+            } <span class="kw">else</span> {
+                <span class="prelude-val">Err</span>(<span class="ident">MultiSignatureError::AggregateSignatureInvalid</span>)
+            }
+        }
         <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">MultiSignatureError::SerializationError</span>),
     }
 }
