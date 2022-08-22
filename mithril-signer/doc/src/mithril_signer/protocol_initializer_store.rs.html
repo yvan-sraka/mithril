@@ -169,6 +169,13 @@
 <span id="163">163</span>
 <span id="164">164</span>
 <span id="165">165</span>
+<span id="166">166</span>
+<span id="167">167</span>
+<span id="168">168</span>
+<span id="169">169</span>
+<span id="170">170</span>
+<span id="171">171</span>
+<span id="172">172</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
 <span class="kw">use</span> <span class="ident">thiserror::Error</span>;
 <span class="kw">use</span> <span class="ident">tokio::sync::RwLock</span>;
@@ -186,28 +193,35 @@
 }
 
 <span class="attribute">#[<span class="ident">async_trait</span>]</span>
+<span class="doccomment">/// Store the ProtocolInitializer used for each Epoch. This is useful because</span>
+<span class="doccomment">/// protocol parameters and stake distribution change over time.</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">ProtocolInitializerStorer</span>: <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span> {
+    <span class="doccomment">/// Save a protocol initializer for the given Epoch.</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">save_protocol_initializer</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">epoch</span>: <span class="ident">Epoch</span>,
         <span class="ident">protocol_initializer</span>: <span class="ident">ProtocolInitializer</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ProtocolInitializer</span><span class="op">&gt;</span>, <span class="ident">ProtocolInitializerStoreError</span><span class="op">&gt;</span>;
 
+    <span class="doccomment">/// Fetch a protocol initializer if any saved for the given Epoch.</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_protocol_initializer</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">epoch</span>: <span class="ident">Epoch</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ProtocolInitializer</span><span class="op">&gt;</span>, <span class="ident">ProtocolInitializerStoreError</span><span class="op">&gt;</span>;
 
+    <span class="doccomment">/// Return the list of the N last saved protocol initializers if any.</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_last_protocol_initializer</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">last</span>: <span class="ident">usize</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">Epoch</span>, <span class="ident">ProtocolInitializer</span>)<span class="op">&gt;</span>, <span class="ident">ProtocolInitializerStoreError</span><span class="op">&gt;</span>;
 }
+<span class="doccomment">/// Implementation of the ProtocolInitializerStorer</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ProtocolInitializerStore</span> {
     <span class="ident">adapter</span>: <span class="ident">RwLock</span><span class="op">&lt;</span><span class="ident">Adapter</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">ProtocolInitializerStore</span> {
+    <span class="doccomment">/// Create a new ProtocolInitializerStore.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">adapter</span>: <span class="ident">Adapter</span>) -&gt; <span class="self">Self</span> {
         <span class="self">Self</span> {
             <span class="ident">adapter</span>: <span class="ident">RwLock::new</span>(<span class="ident">adapter</span>),
