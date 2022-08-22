@@ -134,6 +134,18 @@
 <span id="128">128</span>
 <span id="129">129</span>
 <span id="130">130</span>
+<span id="131">131</span>
+<span id="132">132</span>
+<span id="133">133</span>
+<span id="134">134</span>
+<span id="135">135</span>
+<span id="136">136</span>
+<span id="137">137</span>
+<span id="138">138</span>
+<span id="139">139</span>
+<span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">AdapterError</span>, <span class="ident">StoreAdapter</span>};
 <span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
 <span class="kw">use</span> <span class="ident">std::marker::PhantomData</span>;
@@ -205,6 +217,12 @@
             <span class="string">&quot;Fail adapter always fails&quot;</span>.<span class="ident">to_string</span>(),
         ))
     }
+
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_iter</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident"><span class="self">Self</span>::Record</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">AdapterError</span><span class="op">&gt;</span> {
+        <span class="prelude-val">Err</span>(<span class="ident">AdapterError::GeneralError</span>(
+            <span class="string">&quot;Fail adapter always fails&quot;</span>.<span class="ident">to_string</span>(),
+        ))
+    }
 }
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
@@ -262,6 +280,12 @@
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_remove_existing_record</span>() {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">adapter</span>: <span class="ident">FailStoreAdapter</span><span class="op">&lt;</span><span class="ident">u64</span>, <span class="ident">String</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">FailStoreAdapter::new</span>();
         <span class="macro">assert!</span>(<span class="ident">adapter</span>.<span class="ident">remove</span>(<span class="kw-2">&amp;</span><span class="number">0</span>).<span class="kw">await</span>.<span class="ident">is_err</span>());
+    }
+
+    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_get_iter</span>() {
+        <span class="kw">let</span> <span class="ident">adapter</span>: <span class="ident">FailStoreAdapter</span><span class="op">&lt;</span><span class="ident">u64</span>, <span class="ident">String</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">FailStoreAdapter::new</span>();
+        <span class="macro">assert!</span>(<span class="ident">adapter</span>.<span class="ident">get_iter</span>().<span class="kw">await</span>.<span class="ident">is_err</span>());
     }
 }
 </code></pre></div>

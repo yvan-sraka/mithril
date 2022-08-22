@@ -187,13 +187,41 @@
 <span id="181">181</span>
 <span id="182">182</span>
 <span id="183">183</span>
+<span id="184">184</span>
+<span id="185">185</span>
+<span id="186">186</span>
+<span id="187">187</span>
+<span id="188">188</span>
+<span id="189">189</span>
+<span id="190">190</span>
+<span id="191">191</span>
+<span id="192">192</span>
+<span id="193">193</span>
+<span id="194">194</span>
+<span id="195">195</span>
+<span id="196">196</span>
+<span id="197">197</span>
+<span id="198">198</span>
+<span id="199">199</span>
+<span id="200">200</span>
+<span id="201">201</span>
+<span id="202">202</span>
+<span id="203">203</span>
+<span id="204">204</span>
+<span id="205">205</span>
+<span id="206">206</span>
+<span id="207">207</span>
+<span id="208">208</span>
+<span id="209">209</span>
+<span id="210">210</span>
+<span id="211">211</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">AdapterError</span>, <span class="ident">StoreAdapter</span>};
 <span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
 
 <span class="doccomment">/// A [StoreAdapter] that store one fixed data record, for testing purpose.</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">DumbStoreAdapter</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">R</span><span class="op">&gt;</span> {
     <span class="ident">last_key</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span>,
-    <span class="ident">last_certificate</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>,
+    <span class="ident">last_value</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">R</span><span class="op">&gt;</span> <span class="ident">DumbStoreAdapter</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">R</span><span class="op">&gt;</span> {
@@ -201,7 +229,7 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="self">Self</span> {
         <span class="self">Self</span> {
             <span class="ident">last_key</span>: <span class="prelude-val">None</span>,
-            <span class="ident">last_certificate</span>: <span class="prelude-val">None</span>,
+            <span class="ident">last_value</span>: <span class="prelude-val">None</span>,
         }
     }
 }
@@ -230,14 +258,14 @@
         <span class="kw">let</span> <span class="ident">record</span> <span class="op">=</span> <span class="ident">record</span>.<span class="ident">clone</span>();
 
         <span class="self">self</span>.<span class="ident">last_key</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">key</span>);
-        <span class="self">self</span>.<span class="ident">last_certificate</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">record</span>);
+        <span class="self">self</span>.<span class="ident">last_value</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">record</span>);
 
         <span class="prelude-val">Ok</span>(())
     }
 
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_record</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">key</span>: <span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::Key</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Record</span><span class="op">&gt;</span>, <span class="ident">AdapterError</span><span class="op">&gt;</span> {
         <span class="kw">if</span> <span class="self">self</span>.<span class="ident">record_exists</span>(<span class="ident">key</span>).<span class="kw">await</span><span class="question-mark">?</span> {
-            <span class="prelude-val">Ok</span>(<span class="self">self</span>.<span class="ident">last_certificate</span>.<span class="ident">as_ref</span>().<span class="ident">cloned</span>())
+            <span class="prelude-val">Ok</span>(<span class="self">self</span>.<span class="ident">last_value</span>.<span class="ident">as_ref</span>().<span class="ident">cloned</span>())
         } <span class="kw">else</span> {
             <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
         }
@@ -255,7 +283,7 @@
             <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">last_key</span> {
                 <span class="prelude-val">Some</span>(<span class="ident">_key</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="macro">vec!</span>[(
                     <span class="self">self</span>.<span class="ident">last_key</span>.<span class="ident">as_ref</span>().<span class="ident">cloned</span>().<span class="ident">unwrap</span>(),
-                    <span class="self">self</span>.<span class="ident">last_certificate</span>.<span class="ident">as_ref</span>().<span class="ident">cloned</span>().<span class="ident">unwrap</span>(),
+                    <span class="self">self</span>.<span class="ident">last_value</span>.<span class="ident">as_ref</span>().<span class="ident">cloned</span>().<span class="ident">unwrap</span>(),
                 )]),
                 <span class="prelude-val">None</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">Vec::new</span>()),
             }
@@ -267,12 +295,20 @@
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">remove</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">key</span>: <span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::Key</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Record</span><span class="op">&gt;</span>, <span class="ident">AdapterError</span><span class="op">&gt;</span> {
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">record</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">get_record</span>(<span class="ident">key</span>).<span class="kw">await</span><span class="question-mark">?</span> {
             <span class="self">self</span>.<span class="ident">last_key</span> <span class="op">=</span> <span class="prelude-val">None</span>;
-            <span class="self">self</span>.<span class="ident">last_certificate</span> <span class="op">=</span> <span class="prelude-val">None</span>;
+            <span class="self">self</span>.<span class="ident">last_value</span> <span class="op">=</span> <span class="prelude-val">None</span>;
 
             <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">record</span>))
         } <span class="kw">else</span> {
             <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
         }
+    }
+
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_iter</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident"><span class="self">Self</span>::Record</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">AdapterError</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">values</span> <span class="op">=</span> <span class="macro">vec!</span>[];
+        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">value</span>) <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">last_value</span> {
+            <span class="ident">values</span>.<span class="ident">push</span>(<span class="ident">value</span>.<span class="ident">clone</span>());
+        }
+        <span class="prelude-val">Ok</span>(<span class="ident">Box::new</span>(<span class="ident">values</span>.<span class="ident">into_iter</span>()))
     }
 }
 
@@ -368,6 +404,26 @@
         <span class="kw">let</span> <span class="ident">maybe_record</span> <span class="op">=</span> <span class="ident">adapter</span>.<span class="ident">remove</span>(<span class="kw-2">&amp;</span><span class="number">0</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>();
 
         <span class="macro">assert!</span>(<span class="ident">maybe_record</span>.<span class="ident">is_none</span>());
+    }
+
+    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_iter_record</span>() {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">adapter</span>: <span class="ident">DumbStoreAdapter</span><span class="op">&lt;</span><span class="ident">u64</span>, <span class="ident">String</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">DumbStoreAdapter::new</span>();
+        <span class="ident">adapter</span>
+            .<span class="ident">store_record</span>(<span class="kw-2">&amp;</span><span class="number">1</span>, <span class="kw-2">&amp;</span><span class="string">&quot;record&quot;</span>.<span class="ident">to_string</span>())
+            .<span class="kw">await</span>
+            .<span class="ident">unwrap</span>();
+        <span class="kw">let</span> <span class="ident">records</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">adapter</span>.<span class="ident">get_iter</span>().<span class="kw">await</span>.<span class="ident">unwrap</span>().<span class="ident">collect</span>();
+
+        <span class="macro">assert_eq!</span>(<span class="macro">vec!</span>[<span class="string">&quot;record&quot;</span>], <span class="ident">records</span>);
+    }
+
+    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_iter_without_record</span>() {
+        <span class="kw">let</span> <span class="ident">adapter</span>: <span class="ident">DumbStoreAdapter</span><span class="op">&lt;</span><span class="ident">u64</span>, <span class="ident">String</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">DumbStoreAdapter::new</span>();
+        <span class="kw">let</span> <span class="ident">records</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">adapter</span>.<span class="ident">get_iter</span>().<span class="kw">await</span>.<span class="ident">unwrap</span>().<span class="ident">collect</span>();
+
+        <span class="macro">assert!</span>(<span class="ident">records</span>.<span class="ident">is_empty</span>());
     }
 }
 </code></pre></div>

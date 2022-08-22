@@ -421,6 +421,29 @@
 <span id="415">415</span>
 <span id="416">416</span>
 <span id="417">417</span>
+<span id="418">418</span>
+<span id="419">419</span>
+<span id="420">420</span>
+<span id="421">421</span>
+<span id="422">422</span>
+<span id="423">423</span>
+<span id="424">424</span>
+<span id="425">425</span>
+<span id="426">426</span>
+<span id="427">427</span>
+<span id="428">428</span>
+<span id="429">429</span>
+<span id="430">430</span>
+<span id="431">431</span>
+<span id="432">432</span>
+<span id="433">433</span>
+<span id="434">434</span>
+<span id="435">435</span>
+<span id="436">436</span>
+<span id="437">437</span>
+<span id="438">438</span>
+<span id="439">439</span>
+<span id="440">440</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">AggregatorRunnerTrait</span>, <span class="ident">RuntimeError</span>};
 
 <span class="kw">use</span> <span class="ident">mithril_common::entities</span>::{<span class="ident">Beacon</span>, <span class="ident">CertificatePending</span>};
@@ -529,10 +552,15 @@
                     .<span class="kw">await</span><span class="question-mark">?</span>
                 {
                     <span class="macro">trace!</span>(<span class="string">&quot;new beacon found = {:?}&quot;</span>, <span class="ident">beacon</span>);
-                    <span class="kw">let</span> <span class="ident">new_state</span> <span class="op">=</span> <span class="self">self</span>
-                        .<span class="ident">transition_from_idle_to_signing</span>(<span class="ident">state</span>.<span class="ident">current_beacon</span>.<span class="ident">clone</span>(), <span class="ident">beacon</span>)
-                        .<span class="kw">await</span><span class="question-mark">?</span>;
-                    <span class="self">self</span>.<span class="ident">state</span> <span class="op">=</span> <span class="ident">AggregatorState::Signing</span>(<span class="ident">new_state</span>);
+
+                    <span class="kw">if</span> <span class="self">self</span>.<span class="ident">runner</span>.<span class="ident">certificate_exist_for_beacon</span>(<span class="kw-2">&amp;</span><span class="ident">beacon</span>).<span class="kw">await</span><span class="question-mark">?</span> {
+                        <span class="macro">info!</span>(<span class="string">&quot;a certificate already exist for this beacon&quot;</span>; <span class="string">&quot;beacon&quot;</span> =&gt; <span class="question-mark">?</span><span class="ident">beacon</span>);
+                    } <span class="kw">else</span> {
+                        <span class="kw">let</span> <span class="ident">new_state</span> <span class="op">=</span> <span class="self">self</span>
+                            .<span class="ident">transition_from_idle_to_signing</span>(<span class="ident">state</span>.<span class="ident">current_beacon</span>.<span class="ident">clone</span>(), <span class="ident">beacon</span>)
+                            .<span class="kw">await</span><span class="question-mark">?</span>;
+                        <span class="self">self</span>.<span class="ident">state</span> <span class="op">=</span> <span class="ident">AggregatorState::Signing</span>(<span class="ident">new_state</span>);
+                    }
                 } <span class="kw">else</span> {
                     <span class="macro">trace!</span>(<span class="string">&quot;nothing to do in IDLE state&quot;</span>)
                 }
@@ -672,10 +700,30 @@
     <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">idle_check_no_new_beacon_with_current_beacon</span>() {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">runner</span> <span class="op">=</span> <span class="ident">MockAggregatorRunner::new</span>();
+        <span class="ident">runner</span>.<span class="ident">expect_is_new_beacon</span>().<span class="ident">once</span>().<span class="ident">returning</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>));
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">runtime</span> <span class="op">=</span> <span class="ident">init_runtime</span>(
+            <span class="prelude-val">Some</span>(<span class="ident">AggregatorState::Idle</span>(<span class="ident">IdleState</span> {
+                <span class="ident">current_beacon</span>: <span class="prelude-val">Some</span>(<span class="ident">fake_data::beacon</span>()),
+            })),
+            <span class="ident">runner</span>,
+        )
+        .<span class="kw">await</span>;
+        <span class="ident">runtime</span>.<span class="ident">cycle</span>().<span class="kw">await</span>.<span class="ident">unwrap</span>();
+
+        <span class="macro">assert_eq!</span>(<span class="string">&quot;idle&quot;</span>.<span class="ident">to_string</span>(), <span class="ident">runtime</span>.<span class="ident">get_state</span>());
+    }
+
+    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
+    <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">idle_certificate_already_exist_for_beacon</span>() {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">runner</span> <span class="op">=</span> <span class="ident">MockAggregatorRunner::new</span>();
         <span class="ident">runner</span>
             .<span class="ident">expect_is_new_beacon</span>()
-            .<span class="ident">times</span>(<span class="number">1</span>)
-            .<span class="ident">returning</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>));
+            .<span class="ident">once</span>()
+            .<span class="ident">returning</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">fake_data::beacon</span>())));
+        <span class="ident">runner</span>
+            .<span class="ident">expect_certificate_exist_for_beacon</span>()
+            .<span class="ident">once</span>()
+            .<span class="ident">returning</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>));
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">runtime</span> <span class="op">=</span> <span class="ident">init_runtime</span>(
             <span class="prelude-val">Some</span>(<span class="ident">AggregatorState::Idle</span>(<span class="ident">IdleState</span> {
                 <span class="ident">current_beacon</span>: <span class="prelude-val">Some</span>(<span class="ident">fake_data::beacon</span>()),
@@ -693,40 +741,44 @@
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">runner</span> <span class="op">=</span> <span class="ident">MockAggregatorRunner::new</span>();
         <span class="ident">runner</span>
             .<span class="ident">expect_is_new_beacon</span>()
-            .<span class="ident">times</span>(<span class="number">1</span>)
+            .<span class="ident">once</span>()
             .<span class="ident">returning</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">fake_data::beacon</span>())));
         <span class="ident">runner</span>
+            .<span class="ident">expect_certificate_exist_for_beacon</span>()
+            .<span class="ident">once</span>()
+            .<span class="ident">returning</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>));
+        <span class="ident">runner</span>
             .<span class="ident">expect_compute_digest</span>()
-            .<span class="ident">times</span>(<span class="number">1</span>)
+            .<span class="ident">once</span>()
             .<span class="ident">returning</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="string">&quot;whatever&quot;</span>.<span class="ident">to_string</span>()));
         <span class="ident">runner</span>
             .<span class="ident">expect_update_beacon</span>()
             .<span class="ident">with</span>(<span class="ident">predicate::eq</span>(<span class="ident">fake_data::beacon</span>()))
-            .<span class="ident">times</span>(<span class="number">1</span>)
+            .<span class="ident">once</span>()
             .<span class="ident">returning</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(()));
         <span class="ident">runner</span>
             .<span class="ident">expect_update_stake_distribution</span>()
             .<span class="ident">with</span>(<span class="ident">predicate::eq</span>(<span class="ident">fake_data::beacon</span>()))
-            .<span class="ident">times</span>(<span class="number">1</span>)
+            .<span class="ident">once</span>()
             .<span class="ident">returning</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(()));
         <span class="ident">runner</span>
             .<span class="ident">expect_update_protocol_parameters_in_multisigner</span>()
             .<span class="ident">with</span>(<span class="ident">predicate::eq</span>(<span class="ident">fake_data::beacon</span>()))
-            .<span class="ident">times</span>(<span class="number">1</span>)
+            .<span class="ident">once</span>()
             .<span class="ident">returning</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(()));
         <span class="ident">runner</span>
             .<span class="ident">expect_update_message_in_multisigner</span>()
             .<span class="ident">with</span>(<span class="ident">predicate::eq</span>(<span class="string">&quot;whatever&quot;</span>.<span class="ident">to_string</span>()))
-            .<span class="ident">times</span>(<span class="number">1</span>)
+            .<span class="ident">once</span>()
             .<span class="ident">returning</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(()));
         <span class="ident">runner</span>
             .<span class="ident">expect_create_new_pending_certificate_from_multisigner</span>()
             .<span class="ident">with</span>(<span class="ident">predicate::eq</span>(<span class="ident">fake_data::beacon</span>()))
-            .<span class="ident">times</span>(<span class="number">1</span>)
+            .<span class="ident">once</span>()
             .<span class="ident">returning</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="ident">fake_data::certificate_pending</span>()));
         <span class="ident">runner</span>
             .<span class="ident">expect_save_pending_certificate</span>()
-            .<span class="ident">times</span>(<span class="number">1</span>)
+            .<span class="ident">once</span>()
             .<span class="ident">returning</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(()));
 
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">runtime</span> <span class="op">=</span> <span class="ident">init_runtime</span>(
@@ -746,11 +798,11 @@
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">runner</span> <span class="op">=</span> <span class="ident">MockAggregatorRunner::new</span>();
         <span class="ident">runner</span>
             .<span class="ident">expect_is_new_beacon</span>()
-            .<span class="ident">times</span>(<span class="number">1</span>)
+            .<span class="ident">once</span>()
             .<span class="ident">returning</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">fake_data::beacon</span>())));
         <span class="ident">runner</span>
             .<span class="ident">expect_drop_pending_certificate</span>()
-            .<span class="ident">times</span>(<span class="number">1</span>)
+            .<span class="ident">once</span>()
             .<span class="ident">returning</span>(<span class="op">|</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">fake_data::certificate_pending</span>())));
 
         <span class="kw">let</span> <span class="ident">state</span> <span class="op">=</span> <span class="ident">SigningState</span> {
@@ -773,13 +825,10 @@
     <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">signing_same_beacon_to_signing</span>() {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">runner</span> <span class="op">=</span> <span class="ident">MockAggregatorRunner::new</span>();
-        <span class="ident">runner</span>
-            .<span class="ident">expect_is_new_beacon</span>()
-            .<span class="ident">times</span>(<span class="number">1</span>)
-            .<span class="ident">returning</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>));
+        <span class="ident">runner</span>.<span class="ident">expect_is_new_beacon</span>().<span class="ident">once</span>().<span class="ident">returning</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>));
         <span class="ident">runner</span>
             .<span class="ident">expect_is_multisig_created</span>()
-            .<span class="ident">times</span>(<span class="number">1</span>)
+            .<span class="ident">once</span>()
             .<span class="ident">returning</span>(<span class="op">|</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>));
         <span class="kw">let</span> <span class="ident">state</span> <span class="op">=</span> <span class="ident">SigningState</span> {
             <span class="ident">current_beacon</span>: <span class="ident">fake_data::beacon</span>(),
@@ -794,21 +843,18 @@
     <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">signing_multisig_ready_to_idle</span>() {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">runner</span> <span class="op">=</span> <span class="ident">MockAggregatorRunner::new</span>();
-        <span class="ident">runner</span>
-            .<span class="ident">expect_is_new_beacon</span>()
-            .<span class="ident">times</span>(<span class="number">1</span>)
-            .<span class="ident">returning</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>));
+        <span class="ident">runner</span>.<span class="ident">expect_is_new_beacon</span>().<span class="ident">once</span>().<span class="ident">returning</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>));
         <span class="ident">runner</span>
             .<span class="ident">expect_is_multisig_created</span>()
-            .<span class="ident">times</span>(<span class="number">1</span>)
+            .<span class="ident">once</span>()
             .<span class="ident">returning</span>(<span class="op">|</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>));
         <span class="ident">runner</span>
             .<span class="ident">expect_drop_pending_certificate</span>()
-            .<span class="ident">times</span>(<span class="number">1</span>)
+            .<span class="ident">once</span>()
             .<span class="ident">returning</span>(<span class="op">|</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">fake_data::certificate_pending</span>())));
         <span class="ident">runner</span>
             .<span class="ident">expect_create_snapshot_archive</span>()
-            .<span class="ident">times</span>(<span class="number">1</span>)
+            .<span class="ident">once</span>()
             .<span class="ident">returning</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> {
                 <span class="prelude-val">Ok</span>(<span class="ident">OngoingSnapshot::new</span>(
                     <span class="ident">Path::new</span>(<span class="string">&quot;/tmp/archive.zip&quot;</span>).<span class="ident">to_path_buf</span>(),
@@ -817,15 +863,15 @@
             });
         <span class="ident">runner</span>
             .<span class="ident">expect_upload_snapshot_archive</span>()
-            .<span class="ident">times</span>(<span class="number">1</span>)
+            .<span class="ident">once</span>()
             .<span class="ident">returning</span>(<span class="op">|</span><span class="ident">_path</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="macro">vec!</span>[<span class="string">&quot;locA&quot;</span>.<span class="ident">to_string</span>(), <span class="string">&quot;locB&quot;</span>.<span class="ident">to_string</span>()]));
         <span class="ident">runner</span>
             .<span class="ident">expect_create_and_save_certificate</span>()
-            .<span class="ident">times</span>(<span class="number">1</span>)
+            .<span class="ident">once</span>()
             .<span class="ident">returning</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="ident">fake_data::certificate</span>(<span class="string">&quot;whatever&quot;</span>.<span class="ident">to_string</span>())));
         <span class="ident">runner</span>
             .<span class="ident">expect_create_and_save_snapshot</span>()
-            .<span class="ident">times</span>(<span class="number">1</span>)
+            .<span class="ident">once</span>()
             .<span class="ident">returning</span>(<span class="op">|</span><span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="ident">fake_data::snapshots</span>(<span class="number">1</span>)[<span class="number">0</span>].<span class="ident">clone</span>()));
 
         <span class="kw">let</span> <span class="ident">state</span> <span class="op">=</span> <span class="ident">SigningState</span> {
