@@ -1274,6 +1274,9 @@
 <span id="1268">1268</span>
 <span id="1269">1269</span>
 <span id="1270">1270</span>
+<span id="1271">1271</span>
+<span id="1272">1272</span>
+<span id="1273">1273</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Top-level API for Mithril Stake-based Threshold Multisignature scheme.</span>
 <span class="doccomment">//! See figure 6 of [the paper](https://eprint.iacr.org/2021/916) for most of the</span>
 <span class="doccomment">//! protocol.</span>
@@ -1339,11 +1342,11 @@
 <span class="doccomment">//! // Close the key registration.</span>
 <span class="doccomment">//! let closed_reg = key_reg.close();</span>
 <span class="doccomment">//!</span>
-<span class="doccomment">//! // Finialize the StmInitializer and turn it into a StmSigner, which can execute the</span>
+<span class="doccomment">//! // Finalize the StmInitializer and turn it into a StmSigner, which can execute the</span>
 <span class="doccomment">//! // rest of the protocol.</span>
 <span class="doccomment">//! let ps = ps</span>
 <span class="doccomment">//!     .into_par_iter()</span>
-<span class="doccomment">//!     .map(|p| p.new_signer(closed_reg.clone()))</span>
+<span class="doccomment">//!     .map(|p| p.new_signer(closed_reg.clone()).unwrap())</span>
 <span class="doccomment">//!     .collect::&lt;Vec&lt;StmSigner&lt;D&gt;&gt;&gt;();</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! /////////////////////</span>
@@ -1564,12 +1567,12 @@
     <span class="doccomment">/// * this `StmSigner`&#39;s parameter valuation</span>
     <span class="doccomment">/// * the `avk` as built from the current registered parties (according to the registration service)</span>
     <span class="doccomment">/// * the current total stake (according to the registration service)</span>
-    <span class="doccomment">/// # Panics</span>
+    <span class="doccomment">/// Returns an error</span>
     <span class="doccomment">/// If the initializer is not registered.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_signer</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span> <span class="op">+</span> <span class="ident">Clone</span><span class="op">&gt;</span>(
         <span class="self">self</span>,
         <span class="ident">closed_reg</span>: <span class="ident">ClosedKeyReg</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>,
-    ) -&gt; <span class="ident">StmSigner</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">StmSigner</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>, <span class="ident">RegisterError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">my_index</span> <span class="op">=</span> <span class="prelude-val">None</span>;
         <span class="kw">for</span> (<span class="ident">i</span>, <span class="ident">rp</span>) <span class="kw">in</span> <span class="ident">closed_reg</span>.<span class="ident">reg_parties</span>.<span class="ident">iter</span>().<span class="ident">enumerate</span>() {
             <span class="kw">if</span> <span class="ident">rp</span>.<span class="number">0</span> <span class="op">==</span> <span class="self">self</span>.<span class="ident">pk</span>.<span class="ident">vk</span> {
@@ -1577,15 +1580,18 @@
                 <span class="kw">break</span>;
             }
         }
-        <span class="ident">StmSigner</span> {
-            <span class="ident">mt_index</span>: <span class="ident">my_index</span>
-                .<span class="ident">expect</span>(<span class="string">&quot;Initializer not registered. Cannot participate as a signer.&quot;</span>),
+        <span class="kw">if</span> <span class="ident">my_index</span>.<span class="ident">is_none</span>() {
+            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">RegisterError::UnregisteredInitializer</span>);
+        }
+
+        <span class="prelude-val">Ok</span>(<span class="ident">StmSigner</span> {
+            <span class="ident">mt_index</span>: <span class="ident">my_index</span>.<span class="ident">unwrap</span>(),
             <span class="ident">stake</span>: <span class="self">self</span>.<span class="ident">stake</span>,
             <span class="ident">params</span>: <span class="self">self</span>.<span class="ident">params</span>,
             <span class="ident">sk</span>: <span class="self">self</span>.<span class="ident">sk</span>,
             <span class="ident">vk</span>: <span class="self">self</span>.<span class="ident">pk</span>.<span class="ident">vk</span>,
             <span class="ident">closed_reg</span>,
-        }
+        })
     }
 
     <span class="doccomment">/// Convert to bytes</span>
@@ -1730,8 +1736,8 @@
     <span class="doccomment">///     // signers can be initialised (we can create the Merkle Tree).</span>
     <span class="doccomment">///     // The (closed) key registration is consumed, to ensure that it</span>
     <span class="doccomment">///     // is not used to initialise a signer at a different epoch.</span>
-    <span class="doccomment">///     let party_0 = party_0_init_e1.new_signer(party_0_key_reg_e1);</span>
-    <span class="doccomment">///     let party_1 = party_1_init_e1.new_signer(party_1_key_reg_e1);</span>
+    <span class="doccomment">///     let party_0 = party_0_init_e1.new_signer(party_0_key_reg_e1).unwrap();</span>
+    <span class="doccomment">///     let party_1 = party_1_init_e1.new_signer(party_1_key_reg_e1).unwrap();</span>
     <span class="doccomment">///</span>
     <span class="doccomment">///     ////////////////////////////////</span>
     <span class="doccomment">///     //////// EPOCH 2 ///////////////</span>
@@ -2180,7 +2186,7 @@
             .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
         <span class="kw">let</span> <span class="ident">closed_reg</span> <span class="op">=</span> <span class="ident">kr</span>.<span class="ident">close</span>();
         <span class="ident">ps</span>.<span class="ident">into_iter</span>()
-            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">p</span><span class="op">|</span> <span class="ident">p</span>.<span class="ident">new_signer</span>(<span class="ident">closed_reg</span>.<span class="ident">clone</span>()))
+            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">p</span><span class="op">|</span> <span class="ident">p</span>.<span class="ident">new_signer</span>(<span class="ident">closed_reg</span>.<span class="ident">clone</span>()).<span class="ident">unwrap</span>())
             .<span class="ident">collect</span>()
     }
 

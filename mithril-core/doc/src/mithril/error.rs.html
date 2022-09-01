@@ -180,6 +180,11 @@
 <span id="174">174</span>
 <span id="175">175</span>
 <span id="176">176</span>
+<span id="177">177</span>
+<span id="178">178</span>
+<span id="179">179</span>
+<span id="180">180</span>
+<span id="181">181</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Crate specific errors</span>
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::merkle_tree::Path</span>;
@@ -282,7 +287,7 @@
 }
 
 <span class="doccomment">/// Errors which can be outputted by key registration.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">thiserror::Error</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">thiserror::Error</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">RegisterError</span> {
     <span class="doccomment">/// This key has already been registered by a participant</span>
     <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;This key has already been registered.&quot;</span>)]</span>
@@ -295,6 +300,10 @@
     <span class="doccomment">/// Serialization error</span>
     <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Serialization error&quot;</span>)]</span>
     <span class="ident">SerializationError</span>,
+
+    <span class="doccomment">/// UnregisteredInitializer error</span>
+    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Initializer not registered. Cannot participate as a signer.&quot;</span>)]</span>
+    <span class="ident">UnregisteredInitializer</span>,
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">RegisterError</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">StmSignatureError</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
@@ -303,6 +312,7 @@
             <span class="ident">RegisterError::SerializationError</span> =&gt; <span class="ident"><span class="self">Self</span>::SerializationError</span>,
             <span class="ident">RegisterError::KeyInvalid</span>(<span class="ident">e</span>) =&gt; <span class="ident"><span class="self">Self</span>::IvkInvalid</span>(<span class="ident">e</span>.<span class="ident">vk</span>),
             <span class="ident">RegisterError::KeyRegistered</span>(<span class="kw">_</span>) =&gt; <span class="macro">unreachable!</span>(),
+            <span class="ident">RegisterError::UnregisteredInitializer</span> =&gt; <span class="macro">unreachable!</span>(),
         }
     }
 }
