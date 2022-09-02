@@ -153,32 +153,14 @@
 <span id="147">147</span>
 <span id="148">148</span>
 <span id="149">149</span>
-<span id="150">150</span>
-<span id="151">151</span>
-<span id="152">152</span>
-<span id="153">153</span>
-<span id="154">154</span>
-<span id="155">155</span>
-<span id="156">156</span>
-<span id="157">157</span>
-<span id="158">158</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
-<span class="kw">use</span> <span class="ident">thiserror::Error</span>;
 <span class="kw">use</span> <span class="ident">tokio::sync::RwLock</span>;
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::entities</span>::{<span class="ident">Epoch</span>, <span class="ident">StakeDistribution</span>};
 
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::adapter</span>::{<span class="ident">AdapterError</span>, <span class="ident">StoreAdapter</span>};
+<span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">adapter::StoreAdapter</span>, <span class="ident">StoreError</span>};
 
 <span class="kw">type</span> <span class="ident">Adapter</span> <span class="op">=</span> <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">StoreAdapter</span><span class="op">&lt;</span><span class="ident">Key</span> <span class="op">=</span> <span class="ident">Epoch</span>, <span class="ident">Record</span> <span class="op">=</span> <span class="ident">StakeDistribution</span><span class="op">&gt;</span><span class="op">&gt;</span>;
-
-<span class="doccomment">/// [StakeStorer] related errors.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Error</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">StakeStoreError</span> {
-    <span class="doccomment">/// Error raised when the underlying [adapter][StoreAdapter] raise an error.</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;adapter error {0}&quot;</span>)]</span>
-    <span class="ident">AdapterError</span>(<span class="attribute">#[<span class="ident">from</span>]</span> <span class="ident">AdapterError</span>),
-}
 
 <span class="doccomment">/// Represent a way to store the stake of mithril party members.</span>
 <span class="attribute">#[<span class="ident">async_trait</span>]</span>
@@ -188,17 +170,17 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">epoch</span>: <span class="ident">Epoch</span>,
         <span class="ident">stakes</span>: <span class="ident">StakeDistribution</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">StakeDistribution</span><span class="op">&gt;</span>, <span class="ident">StakeStoreError</span><span class="op">&gt;</span>;
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">StakeDistribution</span><span class="op">&gt;</span>, <span class="ident">StoreError</span><span class="op">&gt;</span>;
 
     <span class="doccomment">/// Get the stakes of all party at a given `epoch`.</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_stakes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">epoch</span>: <span class="ident">Epoch</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">StakeDistribution</span><span class="op">&gt;</span>, <span class="ident">StakeStoreError</span><span class="op">&gt;</span>;
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_stakes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">epoch</span>: <span class="ident">Epoch</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">StakeDistribution</span><span class="op">&gt;</span>, <span class="ident">StoreError</span><span class="op">&gt;</span>;
 
     <span class="doccomment">/// Return the last stakes recorded in the store</span>
     <span class="doccomment">/// This is mainly used for testing right now</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_last_stakes</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">last</span>: <span class="ident">usize</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">Epoch</span>, <span class="ident">StakeDistribution</span>)<span class="op">&gt;</span>, <span class="ident">StakeStoreError</span><span class="op">&gt;</span>;
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">Epoch</span>, <span class="ident">StakeDistribution</span>)<span class="op">&gt;</span>, <span class="ident">StoreError</span><span class="op">&gt;</span>;
 }
 
 <span class="doccomment">/// A [StakeStorer] that use a [StoreAdapter] to store data.</span>
@@ -221,7 +203,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">epoch</span>: <span class="ident">Epoch</span>,
         <span class="ident">stakes</span>: <span class="ident">StakeDistribution</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">StakeDistribution</span><span class="op">&gt;</span>, <span class="ident">StakeStoreError</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">StakeDistribution</span><span class="op">&gt;</span>, <span class="ident">StoreError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">adapter</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">adapter</span>.<span class="ident">write</span>().<span class="kw">await</span>;
         <span class="kw">let</span> <span class="ident">signers</span> <span class="op">=</span> <span class="ident">adapter</span>.<span class="ident">get_record</span>(<span class="kw-2">&amp;</span><span class="ident">epoch</span>).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="ident">adapter</span>.<span class="ident">store_record</span>(<span class="kw-2">&amp;</span><span class="ident">epoch</span>, <span class="kw-2">&amp;</span><span class="ident">stakes</span>).<span class="kw">await</span><span class="question-mark">?</span>;
@@ -229,14 +211,14 @@
         <span class="prelude-val">Ok</span>(<span class="ident">signers</span>)
     }
 
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_stakes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">epoch</span>: <span class="ident">Epoch</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">StakeDistribution</span><span class="op">&gt;</span>, <span class="ident">StakeStoreError</span><span class="op">&gt;</span> {
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_stakes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">epoch</span>: <span class="ident">Epoch</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">StakeDistribution</span><span class="op">&gt;</span>, <span class="ident">StoreError</span><span class="op">&gt;</span> {
         <span class="prelude-val">Ok</span>(<span class="self">self</span>.<span class="ident">adapter</span>.<span class="ident">read</span>().<span class="kw">await</span>.<span class="ident">get_record</span>(<span class="kw-2">&amp;</span><span class="ident">epoch</span>).<span class="kw">await</span><span class="question-mark">?</span>)
     }
 
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_last_stakes</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">last</span>: <span class="ident">usize</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">Epoch</span>, <span class="ident">StakeDistribution</span>)<span class="op">&gt;</span>, <span class="ident">StakeStoreError</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">Epoch</span>, <span class="ident">StakeDistribution</span>)<span class="op">&gt;</span>, <span class="ident">StoreError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">results</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">adapter</span>.<span class="ident">read</span>().<span class="kw">await</span>.<span class="ident">get_last_n_records</span>(<span class="ident">last</span>).<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(<span class="ident">results</span>)

@@ -1148,18 +1148,6 @@
 <span id="1142">1142</span>
 <span id="1143">1143</span>
 <span id="1144">1144</span>
-<span id="1145">1145</span>
-<span id="1146">1146</span>
-<span id="1147">1147</span>
-<span id="1148">1148</span>
-<span id="1149">1149</span>
-<span id="1150">1150</span>
-<span id="1151">1151</span>
-<span id="1152">1152</span>
-<span id="1153">1153</span>
-<span id="1154">1154</span>
-<span id="1155">1155</span>
-<span id="1156">1156</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std::collections::HashMap</span>;
 
 <span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
@@ -1175,7 +1163,7 @@
     <span class="ident">PROTOCOL_VERSION</span>,
 };
 <span class="kw">use</span> <span class="ident">mithril_common::entities</span>::{<span class="self">self</span>, <span class="ident">SignerWithStake</span>};
-<span class="kw">use</span> <span class="ident">mithril_common::store</span>::{<span class="ident">StakeStoreError</span>, <span class="ident">StakeStorer</span>};
+<span class="kw">use</span> <span class="ident">mithril_common::store</span>::{<span class="ident">StakeStorer</span>, <span class="ident">StoreError</span>};
 <span class="kw">use</span> <span class="ident">mithril_common</span>::{
     <span class="ident">NEXT_SIGNER_EPOCH_RETRIEVAL_OFFSET</span>, <span class="ident">SIGNER_EPOCH_RECORDING_OFFSET</span>,
     <span class="ident">SIGNER_EPOCH_RETRIEVAL_OFFSET</span>,
@@ -1185,11 +1173,8 @@
     <span class="ident">ProtocolParametersStoreWrapper</span>, <span class="ident">SingleSignatureStoreWrapper</span>, <span class="ident">StakeStoreWrapper</span>,
     <span class="ident">VerificationKeyStoreWrapper</span>,
 };
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::store</span>::{
-    <span class="ident">SingleSignatureStoreError</span>, <span class="ident">SingleSignatureStorer</span>, <span class="ident">VerificationKeyStoreError</span>,
-    <span class="ident">VerificationKeyStorer</span>,
-};
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">ProtocolParametersStoreError</span>, <span class="ident">ProtocolParametersStorer</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::store</span>::{<span class="ident">SingleSignatureStorer</span>, <span class="ident">VerificationKeyStorer</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ProtocolParametersStorer</span>;
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="kw">use</span> <span class="ident">mockall::automock</span>;
@@ -1220,17 +1205,8 @@
     <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;no beacon available&quot;</span>)]</span>
     <span class="ident">UnavailableBeacon</span>(),
 
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;verification key store error: &#39;{0}&#39;&quot;</span>)]</span>
-    <span class="ident">VerificationKeyStore</span>(<span class="attribute">#[<span class="ident">from</span>]</span> <span class="ident">VerificationKeyStoreError</span>),
-
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;stake store error: &#39;{0}&#39;&quot;</span>)]</span>
-    <span class="ident">StakeStore</span>(<span class="attribute">#[<span class="ident">from</span>]</span> <span class="ident">StakeStoreError</span>),
-
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;single signature store error: &#39;{0}&#39;&quot;</span>)]</span>
-    <span class="ident">SingleSignatureStore</span>(<span class="attribute">#[<span class="ident">from</span>]</span> <span class="ident">SingleSignatureStoreError</span>),
-
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;protocol parameters store error: &#39;{0}&#39;&quot;</span>)]</span>
-    <span class="ident">ProtocolParametersStore</span>(<span class="attribute">#[<span class="ident">from</span>]</span> <span class="ident">ProtocolParametersStoreError</span>),
+    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;store error: {0}&quot;</span>)]</span>
+    <span class="ident">StoreError</span>(<span class="attribute">#[<span class="ident">from</span>]</span> <span class="ident">StoreError</span>),
 
     <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;beacon error: &#39;{0}&#39;&quot;</span>)]</span>
     <span class="ident">Beacon</span>(<span class="attribute">#[<span class="ident">from</span>]</span> <span class="ident">entities::EpochError</span>),
