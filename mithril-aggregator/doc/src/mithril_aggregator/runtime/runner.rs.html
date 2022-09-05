@@ -856,6 +856,25 @@
 <span id="850">850</span>
 <span id="851">851</span>
 <span id="852">852</span>
+<span id="853">853</span>
+<span id="854">854</span>
+<span id="855">855</span>
+<span id="856">856</span>
+<span id="857">857</span>
+<span id="858">858</span>
+<span id="859">859</span>
+<span id="860">860</span>
+<span id="861">861</span>
+<span id="862">862</span>
+<span id="863">863</span>
+<span id="864">864</span>
+<span id="865">865</span>
+<span id="866">866</span>
+<span id="867">867</span>
+<span id="868">868</span>
+<span id="869">869</span>
+<span id="870">870</span>
+<span id="871">871</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
 <span class="kw">use</span> <span class="ident">chrono::Utc</span>;
 <span class="kw">use</span> <span class="ident">mithril_common::entities::Epoch</span>;
@@ -878,6 +897,8 @@
 <span class="kw">use</span> <span class="ident">mockall::automock</span>;
 
 <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::RuntimeError</span>;
+
+<span class="doccomment">/// Configuration structure dedicated to the AggregatorRuntime.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">AggregatorConfig</span> {
     <span class="doccomment">/// Interval between each snapshot, in ms</span>
@@ -891,6 +912,7 @@
 }
 
 <span class="kw">impl</span> <span class="ident">AggregatorConfig</span> {
+    <span class="doccomment">/// Create a new instance of AggregatorConfig.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">interval</span>: <span class="ident">u64</span>, <span class="ident">network</span>: <span class="ident">CardanoNetwork</span>, <span class="ident">db_directory</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>) -&gt; <span class="self">Self</span> {
         <span class="self">Self</span> {
             <span class="ident">interval</span>,
@@ -900,6 +922,8 @@
     }
 }
 
+<span class="doccomment">/// This trait is intended to allow mocking the AggregatorRunner in tests.</span>
+<span class="doccomment">/// It exposes all the methods needed by the state machine.</span>
 <span class="attribute">#[<span class="ident">async_trait</span>]</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">AggregatorRunnerTrait</span>: <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span> {
     <span class="doccomment">/// Return the current beacon if it is newer than the given one.</span>
@@ -908,31 +932,42 @@
     <span class="doccomment">/// Check if a certificate already have been issued for a given beacon.</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">certificate_exist_for_beacon</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">beacon</span>: <span class="kw-2">&amp;</span><span class="ident">Beacon</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident">RuntimeError</span><span class="op">&gt;</span>;
 
+    <span class="doccomment">/// Compute the digest of the last immutable file of the node.</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">compute_digest</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">new_beacon</span>: <span class="kw-2">&amp;</span><span class="ident">Beacon</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">RuntimeError</span><span class="op">&gt;</span>;
 
+    <span class="doccomment">/// Update the multisigner with the given beacon.</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">update_beacon</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">new_beacon</span>: <span class="kw-2">&amp;</span><span class="ident">Beacon</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">RuntimeError</span><span class="op">&gt;</span>;
 
+    <span class="doccomment">/// Read the stake distribution from the blockchain and store it.</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">update_stake_distribution</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">new_beacon</span>: <span class="kw-2">&amp;</span><span class="ident">Beacon</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">RuntimeError</span><span class="op">&gt;</span>;
 
+    <span class="doccomment">/// Update the multisigner with the protocol parameters from configuration.</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">update_protocol_parameters_in_multisigner</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">new_beacon</span>: <span class="kw-2">&amp;</span><span class="ident">Beacon</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">RuntimeError</span><span class="op">&gt;</span>;
 
+    <span class="doccomment">/// Set the message to sign in the multisigner. The digest is only one part</span>
+    <span class="doccomment">/// of the message, the next signing stake distribution must also be signed</span>
+    <span class="doccomment">/// as part of the message.</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">update_message_in_multisigner</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">digest</span>: <span class="ident">String</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">RuntimeError</span><span class="op">&gt;</span>;
 
+    <span class="doccomment">/// Return the actual pending certificate from the multisigner.</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">create_new_pending_certificate_from_multisigner</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">beacon</span>: <span class="ident">Beacon</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">CertificatePending</span>, <span class="ident">RuntimeError</span><span class="op">&gt;</span>;
 
+    <span class="doccomment">/// Store the given pending certificate.</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">save_pending_certificate</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">pending_certificate</span>: <span class="ident">CertificatePending</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">RuntimeError</span><span class="op">&gt;</span>;
 
+    <span class="doccomment">/// Drop the multisigner&#39;s actual pending certificate.</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">drop_pending_certificate</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">CertificatePending</span><span class="op">&gt;</span>, <span class="ident">RuntimeError</span><span class="op">&gt;</span>;
 
+    <span class="doccomment">/// Check if the multisigner has issued a multi-signature.</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">is_multisig_created</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident">RuntimeError</span><span class="op">&gt;</span>;
 
     <span class="doccomment">/// Create an archive of the cardano node db directory naming it after the given beacon.</span>
@@ -945,17 +980,19 @@
 
     <span class="doccomment">/// Upload the snapshot at the given location using the configured uploader(s).</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// Important: the snapshot is removed after the upload succeeded.</span>
+    <span class="doccomment">/// **Important**: the snapshot is removed after the upload succeeded.</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">upload_snapshot_archive</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">ongoing_snapshot</span>: <span class="kw-2">&amp;</span><span class="ident">OngoingSnapshot</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">SnapshotLocation</span><span class="op">&gt;</span>, <span class="ident">RuntimeError</span><span class="op">&gt;</span>;
 
+    <span class="doccomment">/// Create a signed certificate.</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">create_and_save_certificate</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">beacon</span>: <span class="kw-2">&amp;</span><span class="ident">Beacon</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Certificate</span>, <span class="ident">RuntimeError</span><span class="op">&gt;</span>;
 
+    <span class="doccomment">/// Create a snapshot and save it to the given locations.</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">create_and_save_snapshot</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">certificate</span>: <span class="ident">Certificate</span>,
@@ -964,12 +1001,15 @@
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Snapshot</span>, <span class="ident">RuntimeError</span><span class="op">&gt;</span>;
 }
 
+<span class="doccomment">/// The runner responsibility is to expose a code API for the state machine. It</span>
+<span class="doccomment">/// holds services and configuration.</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">AggregatorRunner</span> {
     <span class="ident">config</span>: <span class="ident">AggregatorConfig</span>,
     <span class="ident">dependencies</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">DependencyManager</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">AggregatorRunner</span> {
+    <span class="doccomment">/// Create a new instance of the Aggrergator Runner.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">config</span>: <span class="ident">AggregatorConfig</span>, <span class="ident">dependencies</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">DependencyManager</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
         <span class="self">Self</span> {
             <span class="ident">config</span>,
@@ -981,8 +1021,6 @@
 <span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">test</span>, <span class="ident">automock</span>)]</span>
 <span class="attribute">#[<span class="ident">async_trait</span>]</span>
 <span class="kw">impl</span> <span class="ident">AggregatorRunnerTrait</span> <span class="kw">for</span> <span class="ident">AggregatorRunner</span> {
-    <span class="doccomment">/// Is there a new beacon?</span>
-    <span class="doccomment">/// returns a new beacon if there is one more recent than the given one</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">is_new_beacon</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">maybe_beacon</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Beacon</span><span class="op">&gt;</span>,
@@ -1165,10 +1203,10 @@
         <span class="prelude-val">Ok</span>(<span class="ident">certificate_pending</span>)
     }
 
-    <span class="doccomment">/// Is a multisignature ready?</span>
-    <span class="doccomment">/// Can we create a multisignature.</span>
+    <span class="doccomment">/// Is a multi-signature ready?</span>
+    <span class="doccomment">/// Can we create a multi-signature.</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">is_multisig_created</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident">RuntimeError</span><span class="op">&gt;</span> {
-        <span class="macro">info!</span>(<span class="string">&quot;RUNNER: check if we can create a multisignature&quot;</span>);
+        <span class="macro">info!</span>(<span class="string">&quot;RUNNER: check if we can create a multi-signature&quot;</span>);
         <span class="kw">let</span> <span class="ident">has_multisig</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">dependencies</span>
             .<span class="ident">multi_signer</span>

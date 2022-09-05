@@ -172,6 +172,15 @@
 <span id="166">166</span>
 <span id="167">167</span>
 <span id="168">168</span>
+<span id="169">169</span>
+<span id="170">170</span>
+<span id="171">171</span>
+<span id="172">172</span>
+<span id="173">173</span>
+<span id="174">174</span>
+<span id="175">175</span>
+<span id="176">176</span>
+<span id="177">177</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">flate2::write::GzEncoder</span>;
 <span class="kw">use</span> <span class="ident">flate2::Compression</span>;
 <span class="kw">use</span> <span class="ident">slog_scope::info</span>;
@@ -182,11 +191,13 @@
 <span class="kw">use</span> <span class="ident">std::sync::RwLock</span>;
 <span class="kw">use</span> <span class="ident">thiserror::Error</span>;
 
+<span class="doccomment">/// Define the ability to create snapshots.</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Snapshotter</span>: <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span> {
+    <span class="doccomment">/// Create a new snapshot with the given archive name.</span>
     <span class="kw">fn</span> <span class="ident">snapshot</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">archive_name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">OngoingSnapshot</span>, <span class="ident">SnapshotError</span><span class="op">&gt;</span>;
 }
 
-<span class="doccomment">/// Snapshotter</span>
+<span class="doccomment">/// Gzip Snapshotter create a compressed file.</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">GzipSnapshotter</span> {
     <span class="doccomment">/// DB directory to snapshot</span>
     <span class="ident">db_directory</span>: <span class="ident">PathBuf</span>,
@@ -214,14 +225,18 @@
     }
 }
 
+<span class="doccomment">/// Snapshotter error type.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Error</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">SnapshotError</span> {
+    <span class="doccomment">/// Set when the snapshotter fails at creating a snapshot.</span>
     <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Create archive error: {0}&quot;</span>)]</span>
     <span class="ident">CreateArchiveError</span>(<span class="attribute">#[<span class="ident">from</span>]</span> <span class="ident">io::Error</span>),
 
+    <span class="doccomment">/// Set when the snapshotter fails at uploading the snapshot.</span>
     <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Upload file error: `{0}`&quot;</span>)]</span>
     <span class="ident">UploadFileError</span>(<span class="ident">String</span>),
 
+    <span class="doccomment">/// General error.</span>
     <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Snapshot General Error: `{0}`&quot;</span>)]</span>
     <span class="ident">GeneralError</span>(<span class="ident">String</span>),
 }
@@ -270,17 +285,20 @@
     }
 }
 
+<span class="doccomment">/// Snapshotter that does nothing. It is mainly used for test purposes.</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">DumbSnapshotter</span> {
     <span class="ident">last_snapshot</span>: <span class="ident">RwLock</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">OngoingSnapshot</span><span class="op">&gt;</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">DumbSnapshotter</span> {
+    <span class="doccomment">/// Create a new instance of DumbSnapshotter.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="self">Self</span> {
         <span class="self">Self</span> {
             <span class="ident">last_snapshot</span>: <span class="ident">RwLock::new</span>(<span class="prelude-val">None</span>),
         }
     }
 
+    <span class="doccomment">/// Return the last fake snapshot produced.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_last_snapshot</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">OngoingSnapshot</span><span class="op">&gt;</span>, <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">StdError</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span> {

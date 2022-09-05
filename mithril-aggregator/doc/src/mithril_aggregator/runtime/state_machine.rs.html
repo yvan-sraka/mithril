@@ -441,9 +441,6 @@
 <span id="435">435</span>
 <span id="436">436</span>
 <span id="437">437</span>
-<span id="438">438</span>
-<span id="439">439</span>
-<span id="440">440</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">AggregatorRunnerTrait</span>, <span class="ident">RuntimeError</span>};
 
 <span class="kw">use</span> <span class="ident">mithril_common::entities</span>::{<span class="ident">Beacon</span>, <span class="ident">CertificatePending</span>};
@@ -478,7 +475,9 @@
     }
 }
 
-<span class="doccomment">/// AggregatorRuntime</span>
+<span class="doccomment">/// The AggregatorRuntime responsibility is to create a state machine to handle</span>
+<span class="doccomment">/// all actions required by the process of getting multi-signatures.</span>
+<span class="doccomment">/// See the [documentation](https://mithril.network/doc/mithril/mithril-network/aggregator#under-the-hood) for more explanations about the Aggregator state machine.</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">AggregatorRuntime</span> {
     <span class="doccomment">/// the internal state of the automate</span>
     <span class="ident">state</span>: <span class="ident">AggregatorState</span>,
@@ -491,10 +490,12 @@
 }
 
 <span class="kw">impl</span> <span class="ident">AggregatorRuntime</span> {
+    <span class="doccomment">/// Return the actual state of the state machine.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_state</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">String</span> {
         <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">to_string</span>()
     }
 
+    <span class="doccomment">/// Create a new instance of the state machine.</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">new</span>(
         <span class="ident">state_sleep</span>: <span class="ident">Duration</span>,
         <span class="ident">init_state</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">AggregatorState</span><span class="op">&gt;</span>,
@@ -519,9 +520,7 @@
         })
     }
 
-    <span class="doccomment">/// run</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// launches an infinite loop ticking the state machine</span>
+    <span class="doccomment">/// Launches an infinite loop ticking the state machine.</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">run</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
         <span class="macro">info!</span>(<span class="string">&quot;Starting runtime&quot;</span>);
         <span class="macro">debug!</span>(<span class="string">&quot;current state: {}&quot;</span>, <span class="self">self</span>.<span class="ident">state</span>);
@@ -536,9 +535,7 @@
         }
     }
 
-    <span class="doccomment">/// cycle</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// one tick of the state machine</span>
+    <span class="doccomment">/// Perform one tick of the state machine.</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">cycle</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">RuntimeError</span><span class="op">&gt;</span> {
         <span class="macro">info!</span>(<span class="string">&quot;================================================================================&quot;</span>);
         <span class="macro">info!</span>(<span class="string">&quot;new cycle&quot;</span>);
@@ -582,7 +579,7 @@
                         .<span class="kw">await</span><span class="question-mark">?</span>;
                     <span class="self">self</span>.<span class="ident">state</span> <span class="op">=</span> <span class="ident">AggregatorState::Idle</span>(<span class="ident">new_state</span>);
                 } <span class="kw">else</span> <span class="kw">if</span> <span class="self">self</span>.<span class="ident">runner</span>.<span class="ident">is_multisig_created</span>().<span class="kw">await</span><span class="question-mark">?</span> {
-                    <span class="macro">trace!</span>(<span class="string">&quot;new multisignature found&quot;</span>);
+                    <span class="macro">trace!</span>(<span class="string">&quot;new multi-signature found&quot;</span>);
                     <span class="kw">let</span> <span class="ident">new_state</span> <span class="op">=</span> <span class="self">self</span>
                         .<span class="ident">transition_from_signing_to_idle_multisignature</span>(<span class="ident">state</span>)
                         .<span class="kw">await</span><span class="question-mark">?</span>;
@@ -595,9 +592,8 @@
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="doccomment">/// transition</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// from SIGNING to IDLE because NEW MULTISIGNATURE</span>
+    <span class="doccomment">/// Perform a transition from `SIGNING` state to `IDLE` state when a new</span>
+    <span class="doccomment">/// multi-signature is issued.</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">transition_from_signing_to_idle_multisignature</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">state</span>: <span class="ident">SigningState</span>,
@@ -625,9 +621,8 @@
         })
     }
 
-    <span class="doccomment">/// transition</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// from SIGNING to IDLE because NEW BEACON</span>
+    <span class="doccomment">/// Perform a transition from `SIGNING` state to `IDLE` state when a new</span>
+    <span class="doccomment">/// beacon is detected.</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">transition_from_signing_to_idle_new_beacon</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">state</span>: <span class="ident">SigningState</span>,
@@ -639,9 +634,8 @@
         })
     }
 
-    <span class="doccomment">/// transition</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// from IDLE state to SIGNING because NEW BEACON</span>
+    <span class="doccomment">/// Perform a transition from `IDLE` state to `SIGNING` state when a new</span>
+    <span class="doccomment">/// beacon is detected.</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">transition_from_idle_to_signing</span>(
         <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
         <span class="ident">maybe_current_beacon</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Beacon</span><span class="op">&gt;</span>,
