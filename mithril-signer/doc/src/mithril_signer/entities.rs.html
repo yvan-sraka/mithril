@@ -50,29 +50,6 @@
 <span id="44">44</span>
 <span id="45">45</span>
 <span id="46">46</span>
-<span id="47">47</span>
-<span id="48">48</span>
-<span id="49">49</span>
-<span id="50">50</span>
-<span id="51">51</span>
-<span id="52">52</span>
-<span id="53">53</span>
-<span id="54">54</span>
-<span id="55">55</span>
-<span id="56">56</span>
-<span id="57">57</span>
-<span id="58">58</span>
-<span id="59">59</span>
-<span id="60">60</span>
-<span id="61">61</span>
-<span id="62">62</span>
-<span id="63">63</span>
-<span id="64">64</span>
-<span id="65">65</span>
-<span id="66">66</span>
-<span id="67">67</span>
-<span id="68">68</span>
-<span id="69">69</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">config::ConfigError</span>;
 <span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
 <span class="kw">use</span> <span class="ident">std::path::PathBuf</span>;
@@ -115,31 +92,8 @@
 <span class="kw">impl</span> <span class="ident">Config</span> {
     <span class="doccomment">/// Return the CardanoNetwork value from the configuration.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_network</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">CardanoNetwork</span>, <span class="ident">ConfigError</span><span class="op">&gt;</span> {
-        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">network</span>.<span class="ident">to_lowercase</span>().<span class="ident">as_str</span>() {
-            <span class="string">&quot;mainnet&quot;</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">CardanoNetwork::MainNet</span>),
-            <span class="string">&quot;testnet&quot;</span> =&gt; {
-                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">magic</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">network_magic</span> {
-                    <span class="prelude-val">Ok</span>(<span class="ident">CardanoNetwork::TestNet</span>(<span class="ident">magic</span>))
-                } <span class="kw">else</span> {
-                    <span class="prelude-val">Err</span>(<span class="ident">ConfigError::Message</span>(
-                        <span class="string">&quot;no NETWORK MAGIC number given for testnet network&quot;</span>.<span class="ident">to_string</span>(),
-                    ))
-                }
-            }
-            <span class="string">&quot;devnet&quot;</span> =&gt; {
-                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">magic</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">network_magic</span> {
-                    <span class="prelude-val">Ok</span>(<span class="ident">CardanoNetwork::DevNet</span>(<span class="ident">magic</span>))
-                } <span class="kw">else</span> {
-                    <span class="prelude-val">Err</span>(<span class="ident">ConfigError::Message</span>(
-                        <span class="string">&quot;no NETWORK MAGIC number given for devnet network&quot;</span>.<span class="ident">to_string</span>(),
-                    ))
-                }
-            }
-            <span class="ident">what</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">ConfigError::Message</span>(<span class="macro">format!</span>(
-                <span class="string">&quot;could not parse network &#39;{}&#39;, the only recognized networks are: mainnet, devnet, testnet&quot;</span>,
-                <span class="ident">what</span>
-            ))),
-        }
+        <span class="ident">CardanoNetwork::from_code</span>(<span class="self">self</span>.<span class="ident">network</span>.<span class="ident">clone</span>(), <span class="self">self</span>.<span class="ident">network_magic</span>)
+            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">ConfigError::Message</span>(<span class="ident">e</span>.<span class="ident">to_string</span>()))
     }
 }
 </code></pre></div>
