@@ -188,7 +188,7 @@
 </pre><pre class="rust"><code><span class="doccomment">//! Crate specific errors</span>
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::merkle_tree::Path</span>;
-<span class="kw">use</span> <span class="ident">digest</span>::{<span class="ident">Digest</span>, <span class="ident">FixedOutput</span>};
+<span class="kw">use</span> <span class="ident">blake2::digest::Digest</span>;
 <span class="kw">use</span> {
     <span class="ident"><span class="kw">crate</span>::multi_sig</span>::{<span class="ident">Signature</span>, <span class="ident">VerificationKey</span>, <span class="ident">VerificationKeyPoP</span>},
     <span class="ident">blst::BLST_ERROR</span>,
@@ -216,7 +216,7 @@
 
 <span class="doccomment">/// Errors which can be output by Mithril verification.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">thiserror::Error</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">StmSignatureError</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span><span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">StmSignatureError</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Digest</span><span class="op">&gt;</span> {
     <span class="doccomment">/// No quorum was found</span>
     <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;No Quorum was found.&quot;</span>)]</span>
     <span class="ident">NoQuorum</span>,
@@ -276,7 +276,7 @@
 
 <span class="doccomment">/// Error types related to merkle trees.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">thiserror::Error</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">MerkleTreeError</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span><span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">MerkleTreeError</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Digest</span><span class="op">&gt;</span> {
     <span class="doccomment">/// Serialization error</span>
     <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Serialization of a merkle tree failed&quot;</span>)]</span>
     <span class="ident">SerializationError</span>,
@@ -306,7 +306,7 @@
     <span class="ident">UnregisteredInitializer</span>,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">RegisterError</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">StmSignatureError</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Digest</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">RegisterError</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">StmSignatureError</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
     <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">e</span>: <span class="ident">RegisterError</span>) -&gt; <span class="self">Self</span> {
         <span class="kw">match</span> <span class="ident">e</span> {
             <span class="ident">RegisterError::SerializationError</span> =&gt; <span class="ident"><span class="self">Self</span>::SerializationError</span>,
@@ -317,7 +317,7 @@
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">MerkleTreeError</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">StmSignatureError</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Digest</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">MerkleTreeError</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">StmSignatureError</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
     <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">e</span>: <span class="ident">MerkleTreeError</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
         <span class="kw">match</span> <span class="ident">e</span> {
             <span class="ident">MerkleTreeError::PathInvalid</span>(<span class="ident">e</span>) =&gt; <span class="ident"><span class="self">Self</span>::PathInvalid</span>(<span class="ident">e</span>),
@@ -326,7 +326,7 @@
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">MultiSignatureError</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">StmSignatureError</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Digest</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">MultiSignatureError</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">StmSignatureError</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
     <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">e</span>: <span class="ident">MultiSignatureError</span>) -&gt; <span class="self">Self</span> {
         <span class="kw">match</span> <span class="ident">e</span> {
             <span class="ident">MultiSignatureError::SerializationError</span> =&gt; <span class="ident"><span class="self">Self</span>::SerializationError</span>,
