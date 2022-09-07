@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkmithril_doc=self.webpackChunkmithril_doc||[]).push([[42],{9849:e=>{e.exports=JSON.parse('[{"label":"genesis","permalink":"/doc/dev-blog/tags/genesis","count":1},{"label":"breaking-change","permalink":"/doc/dev-blog/tags/breaking-change","count":1}]')}}]);

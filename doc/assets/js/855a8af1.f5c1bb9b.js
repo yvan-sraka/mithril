@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkmithril_doc=self.webpackChunkmithril_doc||[]).push([[3907],{3255:e=>{e.exports=JSON.parse('{"title":"ADR","items":[{"title":"1. Record Architecture Decisions\\n","permalink":"/doc/adr/1"},{"title":"2. Use simple structured logging\\n","permalink":"/doc/adr/2"}]}')}}]);
