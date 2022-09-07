@@ -875,6 +875,38 @@
 <span id="869">869</span>
 <span id="870">870</span>
 <span id="871">871</span>
+<span id="872">872</span>
+<span id="873">873</span>
+<span id="874">874</span>
+<span id="875">875</span>
+<span id="876">876</span>
+<span id="877">877</span>
+<span id="878">878</span>
+<span id="879">879</span>
+<span id="880">880</span>
+<span id="881">881</span>
+<span id="882">882</span>
+<span id="883">883</span>
+<span id="884">884</span>
+<span id="885">885</span>
+<span id="886">886</span>
+<span id="887">887</span>
+<span id="888">888</span>
+<span id="889">889</span>
+<span id="890">890</span>
+<span id="891">891</span>
+<span id="892">892</span>
+<span id="893">893</span>
+<span id="894">894</span>
+<span id="895">895</span>
+<span id="896">896</span>
+<span id="897">897</span>
+<span id="898">898</span>
+<span id="899">899</span>
+<span id="900">900</span>
+<span id="901">901</span>
+<span id="902">902</span>
+<span id="903">903</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
 <span class="kw">use</span> <span class="ident">chrono::Utc</span>;
 <span class="kw">use</span> <span class="ident">mithril_common::entities::Epoch</span>;
@@ -926,11 +958,17 @@
 <span class="doccomment">/// It exposes all the methods needed by the state machine.</span>
 <span class="attribute">#[<span class="ident">async_trait</span>]</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">AggregatorRunnerTrait</span>: <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span> {
-    <span class="doccomment">/// Return the current beacon if it is newer than the given one.</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">is_new_beacon</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">beacon</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Beacon</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Beacon</span><span class="op">&gt;</span>, <span class="ident">RuntimeError</span><span class="op">&gt;</span>;
+    <span class="doccomment">/// Return the current beacon from the chain</span>
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_beacon_from_chain</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Beacon</span>, <span class="ident">RuntimeError</span><span class="op">&gt;</span>;
 
     <span class="doccomment">/// Check if a certificate already have been issued for a given beacon.</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">certificate_exist_for_beacon</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">beacon</span>: <span class="kw-2">&amp;</span><span class="ident">Beacon</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident">RuntimeError</span><span class="op">&gt;</span>;
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">does_certificate_exist_for_beacon</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">beacon</span>: <span class="kw-2">&amp;</span><span class="ident">Beacon</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident">RuntimeError</span><span class="op">&gt;</span>;
+
+    <span class="doccomment">/// Check if a certificate chain is valid.</span>
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">is_certificate_chain_valid</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident">RuntimeError</span><span class="op">&gt;</span>;
 
     <span class="doccomment">/// Compute the digest of the last immutable file of the node.</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">compute_digest</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">new_beacon</span>: <span class="kw-2">&amp;</span><span class="ident">Beacon</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">RuntimeError</span><span class="op">&gt;</span>;
@@ -1021,32 +1059,48 @@
 <span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">test</span>, <span class="ident">automock</span>)]</span>
 <span class="attribute">#[<span class="ident">async_trait</span>]</span>
 <span class="kw">impl</span> <span class="ident">AggregatorRunnerTrait</span> <span class="kw">for</span> <span class="ident">AggregatorRunner</span> {
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">is_new_beacon</span>(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">maybe_beacon</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Beacon</span><span class="op">&gt;</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Beacon</span><span class="op">&gt;</span>, <span class="ident">RuntimeError</span><span class="op">&gt;</span> {
-        <span class="macro">info!</span>(<span class="string">&quot;RUNNER: checking if there is a new beacon&quot;</span>);
-        <span class="kw">let</span> <span class="ident">current_beacon</span> <span class="op">=</span> <span class="self">self</span>
+    <span class="doccomment">/// Return the current beacon from the chain</span>
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_beacon_from_chain</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Beacon</span>, <span class="ident">RuntimeError</span><span class="op">&gt;</span> {
+        <span class="macro">info!</span>(<span class="string">&quot;RUNNER: get beacon from chain&quot;</span>);
+        <span class="prelude-val">Ok</span>(<span class="self">self</span>
             .<span class="ident">dependencies</span>
             .<span class="ident">beacon_provider</span>
             .<span class="ident">get_current_beacon</span>()
-            .<span class="kw">await</span><span class="question-mark">?</span>;
+            .<span class="kw">await</span><span class="question-mark">?</span>)
+    }
 
-        <span class="macro">debug!</span>(
-            <span class="string">&quot;checking if there is a new beacon&quot;</span>;
-            <span class="string">&quot;known_beacon&quot;</span> =&gt; #<span class="question-mark">?</span><span class="ident">maybe_beacon</span>,
-            <span class="string">&quot;up_to_date_beacon&quot;</span> =&gt; #<span class="question-mark">?</span><span class="ident">current_beacon</span>,
-        );
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">is_certificate_chain_valid</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident">RuntimeError</span><span class="op">&gt;</span> {
+        <span class="macro">info!</span>(<span class="string">&quot;RUNNER: is_certificate_chain_valid&quot;</span>);
+        <span class="kw">let</span> <span class="ident">certificate_store</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">dependencies</span>.<span class="ident">certificate_store</span>.<span class="ident">clone</span>();
+        <span class="kw">let</span> <span class="ident">latest_certificates</span> <span class="op">=</span> <span class="ident">certificate_store</span>.<span class="ident">get_list</span>(<span class="number">1</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">latest_certificate</span> <span class="op">=</span> <span class="ident">latest_certificates</span>.<span class="ident">first</span>();
+        <span class="kw">if</span> <span class="ident">latest_certificate</span>.<span class="ident">is_none</span>() {
+            <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>);
+        }
 
-        <span class="kw">match</span> <span class="ident">maybe_beacon</span> {
-            <span class="prelude-val">Some</span>(<span class="ident">beacon</span>) <span class="kw">if</span> <span class="ident">current_beacon</span> <span class="op">&gt;</span> <span class="ident">beacon</span> =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">current_beacon</span>)),
-            <span class="prelude-val">None</span> =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">current_beacon</span>)),
-            <span class="kw">_</span> =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
+        <span class="kw">match</span> <span class="self">self</span>
+            .<span class="ident">dependencies</span>
+            .<span class="ident">certificate_verifier</span>
+            .<span class="ident">verify_certificate_chain</span>(
+                <span class="ident">latest_certificate</span>.<span class="ident">unwrap</span>().<span class="ident">to_owned</span>(),
+                <span class="ident">certificate_store</span>.<span class="ident">clone</span>(),
+                <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">dependencies</span>.<span class="ident">genesis_verifier</span>,
+            )
+            .<span class="kw">await</span>
+        {
+            <span class="prelude-val">Ok</span>(()) =&gt; <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>),
+            <span class="prelude-val">Err</span>(<span class="ident">error</span>) =&gt; {
+                <span class="macro">warn!</span>(<span class="string">&quot;Invalid certificate chain&quot;</span>; <span class="string">&quot;error&quot;</span> =&gt; <span class="question-mark">?</span><span class="ident">error</span>);
+                <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>)
+            }
         }
     }
 
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">certificate_exist_for_beacon</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">beacon</span>: <span class="kw-2">&amp;</span><span class="ident">Beacon</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident">RuntimeError</span><span class="op">&gt;</span> {
-        <span class="macro">info!</span>(<span class="string">&quot;RUNNER: certificate_exist_for_beacon&quot;</span>);
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">does_certificate_exist_for_beacon</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">beacon</span>: <span class="kw-2">&amp;</span><span class="ident">Beacon</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident">RuntimeError</span><span class="op">&gt;</span> {
+        <span class="macro">info!</span>(<span class="string">&quot;RUNNER: does_certificate_exist_for_beacon&quot;</span>);
         <span class="kw">let</span> <span class="ident">certificate_exist</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">dependencies</span>
             .<span class="ident">certificate_store</span>
@@ -1316,6 +1370,14 @@
             .<span class="ident">create_certificate</span>(<span class="ident">beacon</span>.<span class="ident">clone</span>(), <span class="ident">previous_hash</span>.<span class="ident">to_owned</span>())
             .<span class="kw">await</span><span class="question-mark">?</span>
             .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">RuntimeError::General</span>(<span class="string">&quot;no certificate generated&quot;</span>.<span class="ident">to_string</span>().<span class="ident">into</span>()))<span class="question-mark">?</span>;
+        <span class="self">self</span>.<span class="ident">dependencies</span>
+            .<span class="ident">certificate_verifier</span>
+            .<span class="ident">verify_certificate</span>(
+                <span class="kw-2">&amp;</span><span class="ident">certificate</span>,
+                <span class="ident">certificate_store</span>.<span class="ident">clone</span>(),
+                <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">dependencies</span>.<span class="ident">genesis_verifier</span>,
+            )
+            .<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="ident">certificate_store</span>.<span class="ident">save</span>(<span class="ident">certificate</span>.<span class="ident">clone</span>()).<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(<span class="ident">certificate</span>)
@@ -1361,44 +1423,40 @@
         <span class="ident">initialize_dependencies</span>,
         <span class="ident">runtime</span>::{<span class="ident">AggregatorRunner</span>, <span class="ident">AggregatorRunnerTrait</span>},
     };
+    <span class="kw">use</span> <span class="ident">mithril_common::chain_observer::FakeObserver</span>;
     <span class="kw">use</span> <span class="ident">mithril_common::crypto_helper::tests_setup::setup_certificate_chain</span>;
+    <span class="kw">use</span> <span class="ident">mithril_common::digesters::DumbImmutableFileObserver</span>;
     <span class="kw">use</span> <span class="ident">mithril_common::entities</span>::{<span class="ident">Beacon</span>, <span class="ident">CertificatePending</span>, <span class="ident">Epoch</span>, <span class="ident">ProtocolMessage</span>};
     <span class="kw">use</span> <span class="ident">mithril_common</span>::{<span class="ident">entities::ProtocolMessagePartKey</span>, <span class="ident">fake_data</span>, <span class="ident">store::StakeStorer</span>};
+    <span class="kw">use</span> <span class="ident">mithril_common</span>::{<span class="ident">BeaconProviderImpl</span>, <span class="ident">CardanoNetwork</span>};
     <span class="kw">use</span> <span class="ident">std::path::Path</span>;
     <span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
     <span class="kw">use</span> <span class="ident">tempfile::NamedTempFile</span>;
     <span class="kw">use</span> <span class="ident">tokio::sync::RwLock</span>;
 
     <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_is_new_beacon</span>() {
-        <span class="kw">let</span> (<span class="ident">dependencies</span>, <span class="ident">config</span>) <span class="op">=</span> <span class="ident">initialize_dependencies</span>().<span class="kw">await</span>;
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_get_beacon_from_chain</span>() {
+        <span class="kw">let</span> <span class="ident">expected_beacon</span> <span class="op">=</span> <span class="ident">Beacon::new</span>(<span class="string">&quot;private&quot;</span>.<span class="ident">to_string</span>(), <span class="number">2</span>, <span class="number">17</span>);
+        <span class="kw">let</span> (<span class="kw-2">mut</span> <span class="ident">dependencies</span>, <span class="ident">config</span>) <span class="op">=</span> <span class="ident">initialize_dependencies</span>().<span class="kw">await</span>;
+        <span class="kw">let</span> <span class="ident">immutable_file_observer</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">DumbImmutableFileObserver::default</span>());
+        <span class="ident">immutable_file_observer</span>
+            .<span class="ident">shall_return</span>(<span class="prelude-val">Some</span>(<span class="ident">expected_beacon</span>.<span class="ident">immutable_file_number</span>))
+            .<span class="kw">await</span>;
+        <span class="kw">let</span> <span class="ident">beacon_provider</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">BeaconProviderImpl::new</span>(
+            <span class="ident">Arc::new</span>(<span class="ident">FakeObserver::new</span>(<span class="prelude-val">Some</span>(<span class="ident">expected_beacon</span>.<span class="ident">clone</span>()))),
+            <span class="ident">immutable_file_observer</span>,
+            <span class="ident">CardanoNetwork::TestNet</span>(<span class="number">42</span>),
+        ));
+        <span class="ident">dependencies</span>.<span class="ident">beacon_provider</span> <span class="op">=</span> <span class="ident">beacon_provider</span>;
         <span class="kw">let</span> <span class="ident">runner</span> <span class="op">=</span> <span class="ident">AggregatorRunner::new</span>(<span class="ident">config</span>, <span class="ident">Arc::new</span>(<span class="ident">dependencies</span>));
 
-        <span class="comment">// No beacon means the current beacon is newer</span>
-        <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">runner</span>.<span class="ident">is_new_beacon</span>(<span class="prelude-val">None</span>).<span class="kw">await</span>;
-        <span class="macro">assert!</span>(<span class="ident">res</span>.<span class="ident">unwrap</span>().<span class="ident">is_some</span>());
-
-        <span class="comment">// old beacon means the current beacon is newer</span>
-        <span class="kw">let</span> <span class="ident">beacon</span> <span class="op">=</span> <span class="ident">Beacon</span> {
-            <span class="ident">network</span>: <span class="string">&quot;private&quot;</span>.<span class="ident">to_string</span>(),
-            <span class="ident">epoch</span>: <span class="ident">Epoch</span>(<span class="number">0</span>),
-            <span class="ident">immutable_file_number</span>: <span class="number">0</span>,
-        };
-        <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">runner</span>.<span class="ident">is_new_beacon</span>(<span class="prelude-val">Some</span>(<span class="ident">beacon</span>)).<span class="kw">await</span>;
-        <span class="macro">assert!</span>(<span class="ident">res</span>.<span class="ident">unwrap</span>().<span class="ident">is_some</span>());
-
-        <span class="comment">// new beacon mens the current beacon is not new</span>
-        <span class="kw">let</span> <span class="ident">beacon</span> <span class="op">=</span> <span class="ident">Beacon</span> {
-            <span class="ident">network</span>: <span class="string">&quot;whatever&quot;</span>.<span class="ident">to_string</span>(),
-            <span class="ident">epoch</span>: <span class="ident">Epoch</span>(<span class="number">9206230</span>),
-            <span class="ident">immutable_file_number</span>: <span class="number">10000</span>,
-        };
-        <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">runner</span>.<span class="ident">is_new_beacon</span>(<span class="prelude-val">Some</span>(<span class="ident">beacon</span>)).<span class="kw">await</span>;
-        <span class="macro">assert!</span>(<span class="ident">res</span>.<span class="ident">unwrap</span>().<span class="ident">is_none</span>());
+        <span class="comment">// Retrieves the expected beacon</span>
+        <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">runner</span>.<span class="ident">get_beacon_from_chain</span>().<span class="kw">await</span>;
+        <span class="macro">assert_eq!</span>(<span class="ident">expected_beacon</span>, <span class="ident">res</span>.<span class="ident">unwrap</span>());
     }
 
     <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_certificate_exist_for_beacon</span>() {
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_does_certificate_exist_for_beacon</span>() {
         <span class="kw">let</span> (<span class="ident">dependencies</span>, <span class="ident">config</span>) <span class="op">=</span> <span class="ident">initialize_dependencies</span>().<span class="kw">await</span>;
         <span class="kw">let</span> <span class="ident">certificate_store</span> <span class="op">=</span> <span class="ident">dependencies</span>.<span class="ident">certificate_store</span>.<span class="ident">clone</span>();
         <span class="kw">let</span> <span class="ident">runner</span> <span class="op">=</span> <span class="ident">AggregatorRunner::new</span>(<span class="ident">config</span>, <span class="ident">Arc::new</span>(<span class="ident">dependencies</span>));
@@ -1407,9 +1465,15 @@
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">certificate</span> <span class="op">=</span> <span class="ident">fake_data::certificate</span>(<span class="string">&quot;certificate_hash&quot;</span>.<span class="ident">to_string</span>());
         <span class="ident">certificate</span>.<span class="ident">beacon</span> <span class="op">=</span> <span class="ident">beacon</span>.<span class="ident">clone</span>();
 
-        <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">runner</span>.<span class="ident">certificate_exist_for_beacon</span>(<span class="kw-2">&amp;</span><span class="ident">beacon</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>());
+        <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">runner</span>
+            .<span class="ident">does_certificate_exist_for_beacon</span>(<span class="kw-2">&amp;</span><span class="ident">beacon</span>)
+            .<span class="kw">await</span>
+            .<span class="ident">unwrap</span>());
         <span class="ident">certificate_store</span>.<span class="ident">save</span>(<span class="ident">certificate</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>();
-        <span class="macro">assert!</span>(<span class="ident">runner</span>.<span class="ident">certificate_exist_for_beacon</span>(<span class="kw-2">&amp;</span><span class="ident">beacon</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>());
+        <span class="macro">assert!</span>(<span class="ident">runner</span>
+            .<span class="ident">does_certificate_exist_for_beacon</span>(<span class="kw-2">&amp;</span><span class="ident">beacon</span>)
+            .<span class="kw">await</span>
+            .<span class="ident">unwrap</span>());
     }
 
     <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
@@ -1417,7 +1481,7 @@
         <span class="kw">let</span> (<span class="ident">deps</span>, <span class="ident">config</span>) <span class="op">=</span> <span class="ident">initialize_dependencies</span>().<span class="kw">await</span>;
         <span class="kw">let</span> <span class="ident">deps</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">deps</span>);
         <span class="kw">let</span> <span class="ident">runner</span> <span class="op">=</span> <span class="ident">AggregatorRunner::new</span>(<span class="ident">config</span>, <span class="ident">deps</span>.<span class="ident">clone</span>());
-        <span class="kw">let</span> <span class="ident">beacon</span> <span class="op">=</span> <span class="ident">runner</span>.<span class="ident">is_new_beacon</span>(<span class="prelude-val">None</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>().<span class="ident">unwrap</span>();
+        <span class="kw">let</span> <span class="ident">beacon</span> <span class="op">=</span> <span class="ident">runner</span>.<span class="ident">get_beacon_from_chain</span>().<span class="kw">await</span>.<span class="ident">unwrap</span>();
         <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">runner</span>.<span class="ident">update_beacon</span>(<span class="kw-2">&amp;</span><span class="ident">beacon</span>).<span class="kw">await</span>;
 
         <span class="macro">assert!</span>(<span class="ident">res</span>.<span class="ident">is_ok</span>());
@@ -1437,7 +1501,7 @@
         <span class="kw">let</span> (<span class="ident">deps</span>, <span class="ident">config</span>) <span class="op">=</span> <span class="ident">initialize_dependencies</span>().<span class="kw">await</span>;
         <span class="kw">let</span> <span class="ident">deps</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">deps</span>);
         <span class="kw">let</span> <span class="ident">runner</span> <span class="op">=</span> <span class="ident">AggregatorRunner::new</span>(<span class="ident">config</span>, <span class="ident">deps</span>.<span class="ident">clone</span>());
-        <span class="kw">let</span> <span class="ident">beacon</span> <span class="op">=</span> <span class="ident">runner</span>.<span class="ident">is_new_beacon</span>(<span class="prelude-val">None</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>().<span class="ident">unwrap</span>();
+        <span class="kw">let</span> <span class="ident">beacon</span> <span class="op">=</span> <span class="ident">runner</span>.<span class="ident">get_beacon_from_chain</span>().<span class="kw">await</span>.<span class="ident">unwrap</span>();
         <span class="ident">runner</span>
             .<span class="ident">update_beacon</span>(<span class="kw-2">&amp;</span><span class="ident">beacon</span>)
             .<span class="kw">await</span>
@@ -1485,7 +1549,7 @@
         <span class="kw">let</span> (<span class="ident">deps</span>, <span class="ident">config</span>) <span class="op">=</span> <span class="ident">initialize_dependencies</span>().<span class="kw">await</span>;
         <span class="kw">let</span> <span class="ident">deps</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">deps</span>);
         <span class="kw">let</span> <span class="ident">runner</span> <span class="op">=</span> <span class="ident">AggregatorRunner::new</span>(<span class="ident">config</span>, <span class="ident">deps</span>.<span class="ident">clone</span>());
-        <span class="kw">let</span> <span class="ident">beacon</span> <span class="op">=</span> <span class="ident">runner</span>.<span class="ident">is_new_beacon</span>(<span class="prelude-val">None</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>().<span class="ident">unwrap</span>();
+        <span class="kw">let</span> <span class="ident">beacon</span> <span class="op">=</span> <span class="ident">runner</span>.<span class="ident">get_beacon_from_chain</span>().<span class="kw">await</span>.<span class="ident">unwrap</span>();
         <span class="ident">runner</span>
             .<span class="ident">update_beacon</span>(<span class="kw-2">&amp;</span><span class="ident">beacon</span>)
             .<span class="kw">await</span>
@@ -1517,7 +1581,7 @@
         <span class="kw">let</span> (<span class="ident">deps</span>, <span class="ident">config</span>) <span class="op">=</span> <span class="ident">initialize_dependencies</span>().<span class="kw">await</span>;
         <span class="kw">let</span> <span class="ident">deps</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">deps</span>);
         <span class="kw">let</span> <span class="ident">runner</span> <span class="op">=</span> <span class="ident">AggregatorRunner::new</span>(<span class="ident">config</span>, <span class="ident">deps</span>.<span class="ident">clone</span>());
-        <span class="kw">let</span> <span class="ident">beacon</span> <span class="op">=</span> <span class="ident">runner</span>.<span class="ident">is_new_beacon</span>(<span class="prelude-val">None</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>().<span class="ident">unwrap</span>();
+        <span class="kw">let</span> <span class="ident">beacon</span> <span class="op">=</span> <span class="ident">runner</span>.<span class="ident">get_beacon_from_chain</span>().<span class="kw">await</span>.<span class="ident">unwrap</span>();
         <span class="ident">runner</span>.<span class="ident">update_beacon</span>(<span class="kw-2">&amp;</span><span class="ident">beacon</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>();
 
         <span class="kw">let</span> <span class="ident">signers</span> <span class="op">=</span> <span class="ident">fake_data::signers_with_stakes</span>(<span class="number">5</span>);
@@ -1555,7 +1619,7 @@
         <span class="kw">let</span> (<span class="ident">deps</span>, <span class="ident">config</span>) <span class="op">=</span> <span class="ident">initialize_dependencies</span>().<span class="kw">await</span>;
         <span class="kw">let</span> <span class="ident">deps</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">deps</span>);
         <span class="kw">let</span> <span class="ident">runner</span> <span class="op">=</span> <span class="ident">AggregatorRunner::new</span>(<span class="ident">config</span>, <span class="ident">deps</span>.<span class="ident">clone</span>());
-        <span class="kw">let</span> <span class="ident">beacon</span> <span class="op">=</span> <span class="ident">runner</span>.<span class="ident">is_new_beacon</span>(<span class="prelude-val">None</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>().<span class="ident">unwrap</span>();
+        <span class="kw">let</span> <span class="ident">beacon</span> <span class="op">=</span> <span class="ident">runner</span>.<span class="ident">get_beacon_from_chain</span>().<span class="kw">await</span>.<span class="ident">unwrap</span>();
         <span class="kw">let</span> <span class="ident">digest</span> <span class="op">=</span> <span class="string">&quot;1+2+3+4=10&quot;</span>.<span class="ident">to_string</span>();
         <span class="ident">runner</span>.<span class="ident">update_beacon</span>(<span class="kw-2">&amp;</span><span class="ident">beacon</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>();
         <span class="kw">for</span> <span class="ident">epoch</span> <span class="kw">in</span> [
@@ -1596,7 +1660,7 @@
         <span class="kw">let</span> (<span class="ident">deps</span>, <span class="ident">config</span>) <span class="op">=</span> <span class="ident">initialize_dependencies</span>().<span class="kw">await</span>;
         <span class="kw">let</span> <span class="ident">deps</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">deps</span>);
         <span class="kw">let</span> <span class="ident">runner</span> <span class="op">=</span> <span class="ident">AggregatorRunner::new</span>(<span class="ident">config</span>, <span class="ident">deps</span>.<span class="ident">clone</span>());
-        <span class="kw">let</span> <span class="ident">beacon</span> <span class="op">=</span> <span class="ident">runner</span>.<span class="ident">is_new_beacon</span>(<span class="prelude-val">None</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>().<span class="ident">unwrap</span>();
+        <span class="kw">let</span> <span class="ident">beacon</span> <span class="op">=</span> <span class="ident">runner</span>.<span class="ident">get_beacon_from_chain</span>().<span class="kw">await</span>.<span class="ident">unwrap</span>();
         <span class="ident">runner</span>.<span class="ident">update_beacon</span>(<span class="kw-2">&amp;</span><span class="ident">beacon</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>();
         <span class="kw">let</span> <span class="ident">pending_certificate</span> <span class="op">=</span> <span class="ident">fake_data::certificate_pending</span>();
 
@@ -1614,7 +1678,7 @@
         <span class="kw">let</span> (<span class="ident">deps</span>, <span class="ident">config</span>) <span class="op">=</span> <span class="ident">initialize_dependencies</span>().<span class="kw">await</span>;
         <span class="kw">let</span> <span class="ident">deps</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">deps</span>);
         <span class="kw">let</span> <span class="ident">runner</span> <span class="op">=</span> <span class="ident">AggregatorRunner::new</span>(<span class="ident">config</span>, <span class="ident">deps</span>.<span class="ident">clone</span>());
-        <span class="kw">let</span> <span class="ident">beacon</span> <span class="op">=</span> <span class="ident">runner</span>.<span class="ident">is_new_beacon</span>(<span class="prelude-val">None</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>().<span class="ident">unwrap</span>();
+        <span class="kw">let</span> <span class="ident">beacon</span> <span class="op">=</span> <span class="ident">runner</span>.<span class="ident">get_beacon_from_chain</span>().<span class="kw">await</span>.<span class="ident">unwrap</span>();
         <span class="ident">runner</span>.<span class="ident">update_beacon</span>(<span class="kw-2">&amp;</span><span class="ident">beacon</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>();
         <span class="kw">let</span> <span class="ident">pending_certificate</span> <span class="op">=</span> <span class="ident">fake_data::certificate_pending</span>();
         <span class="ident">deps</span>.<span class="ident">certificate_pending_store</span>
@@ -1633,7 +1697,7 @@
         <span class="kw">let</span> (<span class="ident">deps</span>, <span class="ident">config</span>) <span class="op">=</span> <span class="ident">initialize_dependencies</span>().<span class="kw">await</span>;
         <span class="kw">let</span> <span class="ident">deps</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">deps</span>);
         <span class="kw">let</span> <span class="ident">runner</span> <span class="op">=</span> <span class="ident">AggregatorRunner::new</span>(<span class="ident">config</span>, <span class="ident">deps</span>.<span class="ident">clone</span>());
-        <span class="kw">let</span> <span class="ident">beacon</span> <span class="op">=</span> <span class="ident">runner</span>.<span class="ident">is_new_beacon</span>(<span class="prelude-val">None</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>().<span class="ident">unwrap</span>();
+        <span class="kw">let</span> <span class="ident">beacon</span> <span class="op">=</span> <span class="ident">runner</span>.<span class="ident">get_beacon_from_chain</span>().<span class="kw">await</span>.<span class="ident">unwrap</span>();
         <span class="ident">runner</span>.<span class="ident">update_beacon</span>(<span class="kw-2">&amp;</span><span class="ident">beacon</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>();
 
         <span class="kw">let</span> <span class="ident">cert</span> <span class="op">=</span> <span class="ident">runner</span>.<span class="ident">drop_pending_certificate</span>().<span class="kw">await</span>.<span class="ident">unwrap</span>();
@@ -1644,7 +1708,7 @@
 
     <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_create_and_save_certificate_ok</span>() {
-        <span class="kw">let</span> <span class="ident">certificate_chain</span> <span class="op">=</span> <span class="ident">setup_certificate_chain</span>(<span class="number">5</span>, <span class="number">1</span>);
+        <span class="kw">let</span> (<span class="ident">certificate_chain</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="ident">setup_certificate_chain</span>(<span class="number">5</span>, <span class="number">1</span>);
         <span class="kw">let</span> <span class="ident">first_certificate</span> <span class="op">=</span> <span class="ident">certificate_chain</span>[<span class="number">0</span>].<span class="ident">clone</span>();
         <span class="kw">let</span> <span class="ident">beacon</span> <span class="op">=</span> <span class="ident">first_certificate</span>.<span class="ident">beacon</span>.<span class="ident">clone</span>();
         <span class="kw">let</span> (<span class="kw-2">mut</span> <span class="ident">deps</span>, <span class="ident">config</span>) <span class="op">=</span> <span class="ident">initialize_dependencies</span>().<span class="kw">await</span>;
@@ -1673,9 +1737,9 @@
         <span class="kw">let</span> <span class="ident">certificate_store</span> <span class="op">=</span> <span class="ident">deps</span>.<span class="ident">certificate_store</span>.<span class="ident">clone</span>();
         <span class="kw">let</span> <span class="ident">runner</span> <span class="op">=</span> <span class="ident">AggregatorRunner::new</span>(<span class="ident">config</span>, <span class="ident">Arc::new</span>(<span class="ident">deps</span>));
         <span class="kw">let</span> <span class="ident">total_certificates</span> <span class="op">=</span> <span class="number">5</span>;
-        <span class="kw">let</span> <span class="ident">certificate_chain</span> <span class="op">=</span> <span class="ident">setup_certificate_chain</span>(<span class="number">5</span>, <span class="number">1</span>);
+        <span class="kw">let</span> (<span class="ident">certificate_chain</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="ident">setup_certificate_chain</span>(<span class="number">5</span>, <span class="number">1</span>);
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">beacon</span> <span class="op">=</span> <span class="ident">certificate_chain</span>.<span class="ident">first</span>().<span class="ident">unwrap</span>().<span class="ident">beacon</span>.<span class="ident">clone</span>();
-        <span class="ident">beacon</span>.<span class="ident">epoch</span> <span class="op">=</span> <span class="ident">beacon</span>.<span class="ident">epoch</span> <span class="op">+</span> <span class="number">2</span>;
+        <span class="ident">beacon</span>.<span class="ident">epoch</span> <span class="op">+</span><span class="op">=</span> <span class="number">2</span>;
         <span class="kw">for</span> <span class="ident">certificate</span> <span class="kw">in</span> <span class="ident">certificate_chain</span>.<span class="ident">into_iter</span>().<span class="ident">rev</span>() {
             <span class="ident">certificate_store</span>
                 .<span class="ident">as_ref</span>()

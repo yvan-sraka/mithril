@@ -1159,10 +1159,13 @@
 <span id="1153">1153</span>
 <span id="1154">1154</span>
 <span id="1155">1155</span>
+<span id="1156">1156</span>
+<span id="1157">1157</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std::collections::HashMap</span>;
 
 <span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
 <span class="kw">use</span> <span class="ident">chrono::prelude</span>::<span class="kw-2">*</span>;
+<span class="kw">use</span> <span class="ident">hex::ToHex</span>;
 <span class="kw">use</span> <span class="ident">slog_scope</span>::{<span class="ident">debug</span>, <span class="ident">trace</span>, <span class="ident">warn</span>};
 <span class="kw">use</span> <span class="ident">thiserror::Error</span>;
 
@@ -1526,7 +1529,8 @@
         <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
         <span class="ident">message</span>: <span class="ident">entities::ProtocolMessage</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">ProtocolError</span><span class="op">&gt;</span> {
-        <span class="macro">debug!</span>(<span class="string">&quot;Update current_message to {:?}&quot;</span>, <span class="ident">message</span>);
+        <span class="macro">debug!</span>(<span class="string">&quot;Update current_message&quot;</span>; <span class="string">&quot;protocol_message&quot;</span> =&gt;  #<span class="question-mark">?</span><span class="ident">message</span>, <span class="string">&quot;signed message&quot;</span> =&gt; <span class="ident">message</span>.<span class="ident">compute_hash</span>().<span class="ident">encode_hex</span>::<span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>());
+
         <span class="self">self</span>.<span class="ident">multi_signature</span> <span class="op">=</span> <span class="prelude-val">None</span>;
         <span class="kw">let</span> <span class="ident">signers_with_stake</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">get_signers_with_stake</span>().<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let</span> <span class="ident">protocol_parameters</span> <span class="op">=</span> <span class="self">self</span>

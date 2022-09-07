@@ -415,6 +415,81 @@
 <span id="409">409</span>
 <span id="410">410</span>
 <span id="411">411</span>
+<span id="412">412</span>
+<span id="413">413</span>
+<span id="414">414</span>
+<span id="415">415</span>
+<span id="416">416</span>
+<span id="417">417</span>
+<span id="418">418</span>
+<span id="419">419</span>
+<span id="420">420</span>
+<span id="421">421</span>
+<span id="422">422</span>
+<span id="423">423</span>
+<span id="424">424</span>
+<span id="425">425</span>
+<span id="426">426</span>
+<span id="427">427</span>
+<span id="428">428</span>
+<span id="429">429</span>
+<span id="430">430</span>
+<span id="431">431</span>
+<span id="432">432</span>
+<span id="433">433</span>
+<span id="434">434</span>
+<span id="435">435</span>
+<span id="436">436</span>
+<span id="437">437</span>
+<span id="438">438</span>
+<span id="439">439</span>
+<span id="440">440</span>
+<span id="441">441</span>
+<span id="442">442</span>
+<span id="443">443</span>
+<span id="444">444</span>
+<span id="445">445</span>
+<span id="446">446</span>
+<span id="447">447</span>
+<span id="448">448</span>
+<span id="449">449</span>
+<span id="450">450</span>
+<span id="451">451</span>
+<span id="452">452</span>
+<span id="453">453</span>
+<span id="454">454</span>
+<span id="455">455</span>
+<span id="456">456</span>
+<span id="457">457</span>
+<span id="458">458</span>
+<span id="459">459</span>
+<span id="460">460</span>
+<span id="461">461</span>
+<span id="462">462</span>
+<span id="463">463</span>
+<span id="464">464</span>
+<span id="465">465</span>
+<span id="466">466</span>
+<span id="467">467</span>
+<span id="468">468</span>
+<span id="469">469</span>
+<span id="470">470</span>
+<span id="471">471</span>
+<span id="472">472</span>
+<span id="473">473</span>
+<span id="474">474</span>
+<span id="475">475</span>
+<span id="476">476</span>
+<span id="477">477</span>
+<span id="478">478</span>
+<span id="479">479</span>
+<span id="480">480</span>
+<span id="481">481</span>
+<span id="482">482</span>
+<span id="483">483</span>
+<span id="484">484</span>
+<span id="485">485</span>
+<span id="486">486</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
 <span class="kw">use</span> <span class="ident">reqwest</span>::{<span class="self">self</span>, <span class="ident">StatusCode</span>};
 <span class="kw">use</span> <span class="ident">slog_scope::debug</span>;
@@ -423,7 +498,7 @@
 <span class="kw">use</span> <span class="ident">tokio::sync::RwLock</span>;
 
 <span class="kw">use</span> <span class="ident">mithril_common</span>::{
-    <span class="ident">entities</span>::{<span class="ident">CertificatePending</span>, <span class="ident">Signer</span>, <span class="ident">SingleSignatures</span>},
+    <span class="ident">entities</span>::{<span class="ident">CertificatePending</span>, <span class="ident">EpochSettings</span>, <span class="ident">Signer</span>, <span class="ident">SingleSignatures</span>},
     <span class="ident">fake_data</span>,
 };
 
@@ -458,6 +533,11 @@
 <span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">test</span>, <span class="ident">automock</span>)]</span>
 <span class="attribute">#[<span class="ident">async_trait</span>]</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">CertificateHandler</span>: <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span> {
+    <span class="doccomment">/// Retrieves epoch settings from the aggregator</span>
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">retrieve_epoch_settings</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">EpochSettings</span><span class="op">&gt;</span>, <span class="ident">CertificateHandlerError</span><span class="op">&gt;</span>;
+
     <span class="doccomment">/// Retrieves a pending certificate from the aggregator</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">retrieve_pending_certificate</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
@@ -490,6 +570,28 @@
 
 <span class="attribute">#[<span class="ident">async_trait</span>]</span>
 <span class="kw">impl</span> <span class="ident">CertificateHandler</span> <span class="kw">for</span> <span class="ident">CertificateHandlerHTTPClient</span> {
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">retrieve_epoch_settings</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">EpochSettings</span><span class="op">&gt;</span>, <span class="ident">CertificateHandlerError</span><span class="op">&gt;</span> {
+        <span class="macro">debug!</span>(<span class="string">&quot;Retrieve epoch settings&quot;</span>);
+        <span class="kw">let</span> <span class="ident">url</span> <span class="op">=</span> <span class="macro">format!</span>(<span class="string">&quot;{}/epoch-settings&quot;</span>, <span class="self">self</span>.<span class="ident">aggregator_endpoint</span>);
+        <span class="kw">let</span> <span class="ident">response</span> <span class="op">=</span> <span class="ident">reqwest::get</span>(<span class="ident">url</span>.<span class="ident">clone</span>()).<span class="kw">await</span>;
+        <span class="kw">match</span> <span class="ident">response</span> {
+            <span class="prelude-val">Ok</span>(<span class="ident">response</span>) =&gt; <span class="kw">match</span> <span class="ident">response</span>.<span class="ident">status</span>() {
+                <span class="ident">StatusCode::OK</span> =&gt; <span class="kw">match</span> <span class="ident">response</span>.<span class="ident">json</span>::<span class="op">&lt;</span><span class="ident">EpochSettings</span><span class="op">&gt;</span>().<span class="kw">await</span> {
+                    <span class="prelude-val">Ok</span>(<span class="ident">epoch_settings</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">epoch_settings</span>)),
+                    <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">CertificateHandlerError::JsonParseFailed</span>(<span class="ident">err</span>.<span class="ident">to_string</span>())),
+                },
+                <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">CertificateHandlerError::RemoteServerTechnical</span>(
+                    <span class="ident">response</span>.<span class="ident">text</span>().<span class="kw">await</span>.<span class="ident">unwrap_or_default</span>(),
+                )),
+            },
+            <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">CertificateHandlerError::RemoteServerUnreachable</span>(
+                <span class="ident">err</span>.<span class="ident">to_string</span>(),
+            )),
+        }
+    }
+
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">retrieve_pending_certificate</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">CertificatePending</span><span class="op">&gt;</span>, <span class="ident">CertificateHandlerError</span><span class="op">&gt;</span> {
@@ -566,6 +668,7 @@
 <span class="doccomment">/// It actually does not communicate with an aggregator host but mimics this behavior.</span>
 <span class="doccomment">/// It is driven by a Tester that controls the CertificatePending it can return and it can return its internal state for testing.</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">DumbCertificateHandler</span> {
+    <span class="ident">epoch_settings</span>: <span class="ident">RwLock</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">EpochSettings</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="ident">certificate_pending</span>: <span class="ident">RwLock</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">CertificatePending</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="ident">last_registered_signer</span>: <span class="ident">RwLock</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Signer</span><span class="op">&gt;</span><span class="op">&gt;</span>,
 }
@@ -574,9 +677,16 @@
     <span class="doccomment">/// Instanciate a new DumbCertificateHandler.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="self">Self</span> {
         <span class="self">Self</span> {
+            <span class="ident">epoch_settings</span>: <span class="ident">RwLock::new</span>(<span class="prelude-val">None</span>),
             <span class="ident">certificate_pending</span>: <span class="ident">RwLock::new</span>(<span class="prelude-val">None</span>),
             <span class="ident">last_registered_signer</span>: <span class="ident">RwLock::new</span>(<span class="prelude-val">None</span>),
         }
+    }
+
+    <span class="doccomment">/// this method pilots the epoch settings handler</span>
+    <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">set_epoch_settings</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">epoch_settings</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">EpochSettings</span><span class="op">&gt;</span>) {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">epoch_settings_writer</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">epoch_settings</span>.<span class="ident">write</span>().<span class="kw">await</span>;
+        <span class="kw-2">*</span><span class="ident">epoch_settings_writer</span> <span class="op">=</span> <span class="ident">epoch_settings</span>;
     }
 
     <span class="doccomment">/// this method pilots the certificate pending handler</span>
@@ -597,6 +707,7 @@
 <span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">DumbCertificateHandler</span> {
     <span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> {
         <span class="self">Self</span> {
+            <span class="ident">epoch_settings</span>: <span class="ident">RwLock::new</span>(<span class="prelude-val">Some</span>(<span class="ident">fake_data::epoch_settings</span>())),
             <span class="ident">certificate_pending</span>: <span class="ident">RwLock::new</span>(<span class="prelude-val">Some</span>(<span class="ident">fake_data::certificate_pending</span>())),
             <span class="ident">last_registered_signer</span>: <span class="ident">RwLock::new</span>(<span class="prelude-val">None</span>),
         }
@@ -605,6 +716,14 @@
 
 <span class="attribute">#[<span class="ident">async_trait</span>]</span>
 <span class="kw">impl</span> <span class="ident">CertificateHandler</span> <span class="kw">for</span> <span class="ident">DumbCertificateHandler</span> {
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">retrieve_epoch_settings</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">EpochSettings</span><span class="op">&gt;</span>, <span class="ident">CertificateHandlerError</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">epoch_settings</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">epoch_settings</span>.<span class="ident">read</span>().<span class="kw">await</span>.<span class="ident">clone</span>();
+
+        <span class="prelude-val">Ok</span>(<span class="ident">epoch_settings</span>)
+    }
+
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">retrieve_pending_certificate</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">CertificatePending</span><span class="op">&gt;</span>, <span class="ident">CertificateHandlerError</span><span class="op">&gt;</span> {
@@ -656,6 +775,37 @@
             <span class="ident">data_stores_directory</span>: <span class="ident">Path::new</span>(<span class="string">&quot;./stores&quot;</span>).<span class="ident">to_path_buf</span>(),
         };
         (<span class="ident">server</span>, <span class="ident">config</span>)
+    }
+
+    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_epoch_settings_ok_200</span>() {
+        <span class="kw">let</span> (<span class="ident">server</span>, <span class="ident">config</span>) <span class="op">=</span> <span class="ident">setup_test</span>();
+        <span class="kw">let</span> <span class="ident">epoch_settings_expected</span> <span class="op">=</span> <span class="ident">fake_data::epoch_settings</span>();
+        <span class="kw">let</span> <span class="ident">_snapshots_mock</span> <span class="op">=</span> <span class="ident">server</span>.<span class="ident">mock</span>(<span class="op">|</span><span class="ident">when</span>, <span class="ident">then</span><span class="op">|</span> {
+            <span class="ident">when</span>.<span class="ident">path</span>(<span class="string">&quot;/epoch-settings&quot;</span>);
+            <span class="ident">then</span>.<span class="ident">status</span>(<span class="number">200</span>)
+                .<span class="ident">body</span>(<span class="macro">json!</span>(<span class="ident">epoch_settings_expected</span>).<span class="ident">to_string</span>());
+        });
+        <span class="kw">let</span> <span class="ident">certificate_handler</span> <span class="op">=</span> <span class="ident">CertificateHandlerHTTPClient::new</span>(<span class="ident">config</span>.<span class="ident">aggregator_endpoint</span>);
+        <span class="kw">let</span> <span class="ident">epoch_settings</span> <span class="op">=</span> <span class="ident">certificate_handler</span>.<span class="ident">retrieve_epoch_settings</span>().<span class="kw">await</span>;
+        <span class="ident">epoch_settings</span>.<span class="ident">as_ref</span>().<span class="ident">expect</span>(<span class="string">&quot;unexpected error&quot;</span>);
+        <span class="macro">assert_eq!</span>(<span class="ident">epoch_settings_expected</span>, <span class="ident">epoch_settings</span>.<span class="ident">unwrap</span>().<span class="ident">unwrap</span>());
+    }
+
+    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_epoch_settings_ko_500</span>() {
+        <span class="kw">let</span> (<span class="ident">server</span>, <span class="ident">config</span>) <span class="op">=</span> <span class="ident">setup_test</span>();
+        <span class="kw">let</span> <span class="ident">_snapshots_mock</span> <span class="op">=</span> <span class="ident">server</span>.<span class="ident">mock</span>(<span class="op">|</span><span class="ident">when</span>, <span class="ident">then</span><span class="op">|</span> {
+            <span class="ident">when</span>.<span class="ident">path</span>(<span class="string">&quot;/epoch-settings&quot;</span>);
+            <span class="ident">then</span>.<span class="ident">status</span>(<span class="number">500</span>).<span class="ident">body</span>(<span class="string">&quot;an error occurred&quot;</span>);
+        });
+        <span class="kw">let</span> <span class="ident">certificate_handler</span> <span class="op">=</span> <span class="ident">CertificateHandlerHTTPClient::new</span>(<span class="ident">config</span>.<span class="ident">aggregator_endpoint</span>);
+        <span class="kw">let</span> <span class="ident">epoch_settings</span> <span class="op">=</span> <span class="ident">certificate_handler</span>.<span class="ident">retrieve_epoch_settings</span>().<span class="kw">await</span>;
+        <span class="macro">assert_eq!</span>(
+            <span class="ident">CertificateHandlerError::RemoteServerTechnical</span>(<span class="string">&quot;an error occurred&quot;</span>.<span class="ident">to_string</span>())
+                .<span class="ident">to_string</span>(),
+            <span class="ident">epoch_settings</span>.<span class="ident">unwrap_err</span>().<span class="ident">to_string</span>()
+        );
     }
 
     <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
