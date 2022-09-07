@@ -128,6 +128,8 @@
 <span id="122">122</span>
 <span id="123">123</span>
 <span id="124">124</span>
+<span id="125">125</span>
+<span id="126">126</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">config::ConfigError</span>;
 <span class="kw">use</span> <span class="ident">mithril_common::entities::ProtocolParameters</span>;
 <span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
@@ -137,10 +139,12 @@
 
 <span class="kw">use</span> <span class="ident">mithril_common</span>::{<span class="ident">store::adapter::JsonFileStoreAdapter</span>, <span class="ident">CardanoNetwork</span>};
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::dependency</span>::{<span class="ident">SnapshotStoreWrapper</span>, <span class="ident">SnapshotUploaderWrapper</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::snapshot_stores::LocalSnapshotStore</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::tools::GcpFileUploader</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">LocalSnapshotUploader</span>, <span class="ident">RemoteSnapshotStore</span>, <span class="ident">RemoteSnapshotUploader</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::{
+    <span class="ident">LocalSnapshotUploader</span>, <span class="ident">RemoteSnapshotStore</span>, <span class="ident">RemoteSnapshotUploader</span>, <span class="ident">SnapshotStore</span>,
+    <span class="ident">SnapshotUploader</span>,
+};
 
 <span class="comment">// TODO: &#39;LIST_SNAPSHOTS_MAX_ITEMS&#39; keep as const or in config, or add a parameter to `list_snapshots`?</span>
 <span class="kw">const</span> <span class="ident">LIST_SNAPSHOTS_MAX_ITEMS</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">20</span>;
@@ -218,7 +222,7 @@
 
 <span class="kw">impl</span> <span class="ident">Configuration</span> {
     <span class="doccomment">/// Create a snapshot store from the configuration settings.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">build_snapshot_store</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">SnapshotStoreWrapper</span>, <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Error</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">build_snapshot_store</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">SnapshotStore</span><span class="op">&gt;</span>, <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Error</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="kw">match</span> <span class="self">self</span>.<span class="ident">snapshot_store_type</span> {
             <span class="ident">SnapshotStoreType::Gcp</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">Arc::new</span>(<span class="ident">RemoteSnapshotStore::new</span>(
                 <span class="ident">Box::new</span>(<span class="ident">GcpFileUploader::default</span>()),
@@ -234,7 +238,7 @@
     }
 
     <span class="doccomment">/// Create a snapshot uploader from configuration settings.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">build_snapshot_uploader</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">SnapshotUploaderWrapper</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">build_snapshot_uploader</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">SnapshotUploader</span><span class="op">&gt;</span> {
         <span class="kw">match</span> <span class="self">self</span>.<span class="ident">snapshot_uploader_type</span> {
             <span class="ident">SnapshotUploaderType::Gcp</span> =&gt; <span class="ident">Arc::new</span>(<span class="ident">RemoteSnapshotUploader::new</span>(<span class="ident">Box::new</span>(
                 <span class="ident">GcpFileUploader::default</span>(),

@@ -1160,8 +1160,8 @@
 <span id="1154">1154</span>
 <span id="1155">1155</span>
 <span id="1156">1156</span>
-<span id="1157">1157</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std::collections::HashMap</span>;
+<span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
 
 <span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
 <span class="kw">use</span> <span class="ident">chrono::prelude</span>::<span class="kw-2">*</span>;
@@ -1177,18 +1177,16 @@
     <span class="ident">PROTOCOL_VERSION</span>,
 };
 <span class="kw">use</span> <span class="ident">mithril_common::entities</span>::{<span class="self">self</span>, <span class="ident">SignerWithStake</span>};
-<span class="kw">use</span> <span class="ident">mithril_common::store</span>::{<span class="ident">StakeStorer</span>, <span class="ident">StoreError</span>};
+<span class="kw">use</span> <span class="ident">mithril_common::store</span>::{<span class="ident">StakeStore</span>, <span class="ident">StakeStorer</span>, <span class="ident">StoreError</span>};
 <span class="kw">use</span> <span class="ident">mithril_common</span>::{
     <span class="ident">NEXT_SIGNER_EPOCH_RETRIEVAL_OFFSET</span>, <span class="ident">SIGNER_EPOCH_RECORDING_OFFSET</span>,
     <span class="ident">SIGNER_EPOCH_RETRIEVAL_OFFSET</span>,
 };
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::dependency</span>::{
-    <span class="ident">ProtocolParametersStoreWrapper</span>, <span class="ident">SingleSignatureStoreWrapper</span>, <span class="ident">StakeStoreWrapper</span>,
-    <span class="ident">VerificationKeyStoreWrapper</span>,
-};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::store</span>::{<span class="ident">SingleSignatureStorer</span>, <span class="ident">VerificationKeyStorer</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ProtocolParametersStorer</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::{
+    <span class="ident">ProtocolParametersStore</span>, <span class="ident">ProtocolParametersStorer</span>, <span class="ident">SingleSignatureStore</span>, <span class="ident">VerificationKeyStore</span>,
+};
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="kw">use</span> <span class="ident">mockall::automock</span>;
@@ -1406,25 +1404,25 @@
     <span class="ident">avk</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ProtocolAggregateVerificationKey</span><span class="op">&gt;</span>,
 
     <span class="doccomment">/// Verification key store</span>
-    <span class="ident">verification_key_store</span>: <span class="ident">VerificationKeyStoreWrapper</span>,
+    <span class="ident">verification_key_store</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">VerificationKeyStore</span><span class="op">&gt;</span>,
 
     <span class="doccomment">/// Stake store</span>
-    <span class="ident">stake_store</span>: <span class="ident">StakeStoreWrapper</span>,
+    <span class="ident">stake_store</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">StakeStore</span><span class="op">&gt;</span>,
 
     <span class="doccomment">/// Single signature store</span>
-    <span class="ident">single_signature_store</span>: <span class="ident">SingleSignatureStoreWrapper</span>,
+    <span class="ident">single_signature_store</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">SingleSignatureStore</span><span class="op">&gt;</span>,
 
     <span class="doccomment">/// Protocol parameters store</span>
-    <span class="ident">protocol_parameters_store</span>: <span class="ident">ProtocolParametersStoreWrapper</span>,
+    <span class="ident">protocol_parameters_store</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">ProtocolParametersStore</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">MultiSignerImpl</span> {
     <span class="doccomment">/// MultiSignerImpl factory</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(
-        <span class="ident">verification_key_store</span>: <span class="ident">VerificationKeyStoreWrapper</span>,
-        <span class="ident">stake_store</span>: <span class="ident">StakeStoreWrapper</span>,
-        <span class="ident">single_signature_store</span>: <span class="ident">SingleSignatureStoreWrapper</span>,
-        <span class="ident">protocol_parameters_store</span>: <span class="ident">ProtocolParametersStoreWrapper</span>,
+        <span class="ident">verification_key_store</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">VerificationKeyStore</span><span class="op">&gt;</span>,
+        <span class="ident">stake_store</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">StakeStore</span><span class="op">&gt;</span>,
+        <span class="ident">single_signature_store</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">SingleSignatureStore</span><span class="op">&gt;</span>,
+        <span class="ident">protocol_parameters_store</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">ProtocolParametersStore</span><span class="op">&gt;</span>,
     ) -&gt; <span class="self">Self</span> {
         <span class="macro">debug!</span>(<span class="string">&quot;New MultiSignerImpl created&quot;</span>);
         <span class="self">Self</span> {

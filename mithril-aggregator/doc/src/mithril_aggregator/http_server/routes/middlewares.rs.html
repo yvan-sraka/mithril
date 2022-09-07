@@ -54,11 +54,11 @@
 <span id="48">48</span>
 <span id="49">49</span>
 <span id="50">50</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::dependency</span>::{
-    <span class="ident">CertificatePendingStoreWrapper</span>, <span class="ident">CertificateStoreWrapper</span>, <span class="ident">MultiSignerWrapper</span>,
-    <span class="ident">ProtocolParametersStoreWrapper</span>, <span class="ident">SnapshotStoreWrapper</span>,
+</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::dependency::MultiSignerWrapper</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::{
+    <span class="ident">CertificatePendingStore</span>, <span class="ident">CertificateStore</span>, <span class="ident">Configuration</span>, <span class="ident">DependencyManager</span>,
+    <span class="ident">ProtocolParametersStore</span>, <span class="ident">SnapshotStore</span>,
 };
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Configuration</span>, <span class="ident">DependencyManager</span>};
 <span class="kw">use</span> <span class="ident">std::convert::Infallible</span>;
 <span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
 <span class="kw">use</span> <span class="ident">warp::Filter</span>;
@@ -66,28 +66,28 @@
 <span class="doccomment">/// With snapshot store middleware</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">with_snapshot_store</span>(
     <span class="ident">dependency_manager</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">DependencyManager</span><span class="op">&gt;</span>,
-) -&gt; <span class="kw">impl</span> <span class="ident">Filter</span><span class="op">&lt;</span><span class="ident">Extract</span> <span class="op">=</span> (<span class="ident">SnapshotStoreWrapper</span>,), <span class="ident">Error</span> <span class="op">=</span> <span class="ident">Infallible</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Clone</span> {
+) -&gt; <span class="kw">impl</span> <span class="ident">Filter</span><span class="op">&lt;</span><span class="ident">Extract</span> <span class="op">=</span> (<span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">SnapshotStore</span><span class="op">&gt;</span>,), <span class="ident">Error</span> <span class="op">=</span> <span class="ident">Infallible</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Clone</span> {
     <span class="ident">warp::any</span>().<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span><span class="op">|</span> <span class="ident">dependency_manager</span>.<span class="ident">snapshot_store</span>.<span class="ident">clone</span>())
 }
 
 <span class="doccomment">/// With certificate store middleware</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">with_certificate_store</span>(
     <span class="ident">dependency_manager</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">DependencyManager</span><span class="op">&gt;</span>,
-) -&gt; <span class="kw">impl</span> <span class="ident">Filter</span><span class="op">&lt;</span><span class="ident">Extract</span> <span class="op">=</span> (<span class="ident">CertificateStoreWrapper</span>,), <span class="ident">Error</span> <span class="op">=</span> <span class="ident">Infallible</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Clone</span> {
+) -&gt; <span class="kw">impl</span> <span class="ident">Filter</span><span class="op">&lt;</span><span class="ident">Extract</span> <span class="op">=</span> (<span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">CertificateStore</span><span class="op">&gt;</span>,), <span class="ident">Error</span> <span class="op">=</span> <span class="ident">Infallible</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Clone</span> {
     <span class="ident">warp::any</span>().<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span><span class="op">|</span> <span class="ident">dependency_manager</span>.<span class="ident">certificate_store</span>.<span class="ident">clone</span>())
 }
 
 <span class="doccomment">/// With certificate pending store</span>
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">with_certificate_pending_store</span>(
     <span class="ident">dependency_manager</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">DependencyManager</span><span class="op">&gt;</span>,
-) -&gt; <span class="kw">impl</span> <span class="ident">Filter</span><span class="op">&lt;</span><span class="ident">Extract</span> <span class="op">=</span> (<span class="ident">CertificatePendingStoreWrapper</span>,), <span class="ident">Error</span> <span class="op">=</span> <span class="ident">Infallible</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Clone</span> {
+) -&gt; <span class="kw">impl</span> <span class="ident">Filter</span><span class="op">&lt;</span><span class="ident">Extract</span> <span class="op">=</span> (<span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">CertificatePendingStore</span><span class="op">&gt;</span>,), <span class="ident">Error</span> <span class="op">=</span> <span class="ident">Infallible</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Clone</span> {
     <span class="ident">warp::any</span>().<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span><span class="op">|</span> <span class="ident">dependency_manager</span>.<span class="ident">certificate_pending_store</span>.<span class="ident">clone</span>())
 }
 
 <span class="doccomment">/// With protocol parameters store</span>
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">with_protocol_parameters_store</span>(
     <span class="ident">dependency_manager</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">DependencyManager</span><span class="op">&gt;</span>,
-) -&gt; <span class="kw">impl</span> <span class="ident">Filter</span><span class="op">&lt;</span><span class="ident">Extract</span> <span class="op">=</span> (<span class="ident">ProtocolParametersStoreWrapper</span>,), <span class="ident">Error</span> <span class="op">=</span> <span class="ident">Infallible</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Clone</span> {
+) -&gt; <span class="kw">impl</span> <span class="ident">Filter</span><span class="op">&lt;</span><span class="ident">Extract</span> <span class="op">=</span> (<span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">ProtocolParametersStore</span><span class="op">&gt;</span>,), <span class="ident">Error</span> <span class="op">=</span> <span class="ident">Infallible</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Clone</span> {
     <span class="ident">warp::any</span>().<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span><span class="op">|</span> <span class="ident">dependency_manager</span>.<span class="ident">protocol_parameters_store</span>.<span class="ident">clone</span>())
 }
 

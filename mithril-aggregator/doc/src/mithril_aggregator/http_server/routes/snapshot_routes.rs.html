@@ -488,18 +488,18 @@
 }
 
 <span class="kw">mod</span> <span class="ident">handlers</span> {
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::dependency::SnapshotStoreWrapper</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::http_server::routes::reply</span>;
     <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::http_server::SERVER_BASE_PATH</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::Configuration</span>;
+    <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Configuration</span>, <span class="ident">SnapshotStore</span>};
     <span class="kw">use</span> <span class="ident">slog_scope</span>::{<span class="ident">debug</span>, <span class="ident">warn</span>};
     <span class="kw">use</span> <span class="ident">std::convert::Infallible</span>;
     <span class="kw">use</span> <span class="ident">std::str::FromStr</span>;
+    <span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
     <span class="kw">use</span> <span class="ident">warp::http</span>::{<span class="ident">StatusCode</span>, <span class="ident">Uri</span>};
 
     <span class="doccomment">/// Snapshots</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">snapshots</span>(
-        <span class="ident">snapshot_store</span>: <span class="ident">SnapshotStoreWrapper</span>,
+        <span class="ident">snapshot_store</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">SnapshotStore</span><span class="op">&gt;</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw">impl</span> <span class="ident">warp::Reply</span>, <span class="ident">Infallible</span><span class="op">&gt;</span> {
         <span class="macro">debug!</span>(<span class="string">&quot;snapshots&quot;</span>);
 
@@ -515,7 +515,7 @@
     <span class="doccomment">/// Download a file if and only if it&#39;s a snapshot archive</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">ensure_downloaded_file_is_a_snapshot</span>(
         <span class="ident">reply</span>: <span class="ident">warp::fs::File</span>,
-        <span class="ident">snapshot_store</span>: <span class="ident">SnapshotStoreWrapper</span>,
+        <span class="ident">snapshot_store</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">SnapshotStore</span><span class="op">&gt;</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw">impl</span> <span class="ident">warp::Reply</span>, <span class="ident">Infallible</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">filepath</span> <span class="op">=</span> <span class="ident">reply</span>.<span class="ident">path</span>().<span class="ident">to_path_buf</span>();
         <span class="macro">debug!</span>(
@@ -546,7 +546,7 @@
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">snapshot_download</span>(
         <span class="ident">digest</span>: <span class="ident">String</span>,
         <span class="ident">config</span>: <span class="ident">Configuration</span>,
-        <span class="ident">snapshot_store</span>: <span class="ident">SnapshotStoreWrapper</span>,
+        <span class="ident">snapshot_store</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">SnapshotStore</span><span class="op">&gt;</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw">impl</span> <span class="ident">warp::Reply</span>, <span class="ident">Infallible</span><span class="op">&gt;</span> {
         <span class="macro">debug!</span>(<span class="string">&quot;snapshot_download/{}&quot;</span>, <span class="ident">digest</span>);
 
@@ -581,7 +581,7 @@
     <span class="doccomment">/// Snapshot by digest</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">snapshot_digest</span>(
         <span class="ident">digest</span>: <span class="ident">String</span>,
-        <span class="ident">snapshot_store</span>: <span class="ident">SnapshotStoreWrapper</span>,
+        <span class="ident">snapshot_store</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">SnapshotStore</span><span class="op">&gt;</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw">impl</span> <span class="ident">warp::Reply</span>, <span class="ident">Infallible</span><span class="op">&gt;</span> {
         <span class="macro">debug!</span>(<span class="string">&quot;snapshot_digest/{}&quot;</span>, <span class="ident">digest</span>);
 
