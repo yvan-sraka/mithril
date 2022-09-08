@@ -558,6 +558,16 @@
 <span id="552">552</span>
 <span id="553">553</span>
 <span id="554">554</span>
+<span id="555">555</span>
+<span id="556">556</span>
+<span id="557">557</span>
+<span id="558">558</span>
+<span id="559">559</span>
+<span id="560">560</span>
+<span id="561">561</span>
+<span id="562">562</span>
+<span id="563">563</span>
+<span id="564">564</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">slog_scope</span>::{<span class="ident">debug</span>, <span class="ident">error</span>, <span class="ident">info</span>};
 <span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">error::Error</span>, <span class="ident">fmt::Display</span>, <span class="ident">thread::sleep</span>, <span class="ident">time::Duration</span>};
 
@@ -610,10 +620,17 @@
 
 <span class="kw">impl</span> <span class="ident">Display</span> <span class="kw">for</span> <span class="ident">SignerState</span> {
     <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">std::fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">std::fmt::Result</span> {
-        <span class="kw">match</span> <span class="kw-2">*</span><span class="self">self</span> {
-            <span class="ident"><span class="self">Self</span>::Unregistered</span>(<span class="kw">_</span>) =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;unregistered&quot;</span>),
-            <span class="ident"><span class="self">Self</span>::Registered</span>(<span class="kw">_</span>) =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;registered&quot;</span>),
-            <span class="ident"><span class="self">Self</span>::Signed</span>(<span class="kw">_</span>) =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;signed&quot;</span>),
+        <span class="kw">match</span> <span class="self">self</span> {
+            <span class="ident"><span class="self">Self</span>::Unregistered</span>(<span class="ident">state</span>) =&gt; <span class="macro">write!</span>(
+                <span class="ident">f</span>,
+                <span class="string">&quot;Unregistered - {}&quot;</span>,
+                <span class="kw">match</span> <span class="ident">state</span> {
+                    <span class="prelude-val">None</span> =&gt; <span class="string">&quot;No Epoch&quot;</span>.<span class="ident">to_string</span>(),
+                    <span class="prelude-val">Some</span>(<span class="ident">e</span>) =&gt; <span class="macro">format!</span>(<span class="string">&quot;Epoch({})&quot;</span>, <span class="ident">e</span>),
+                }
+            ),
+            <span class="ident"><span class="self">Self</span>::Registered</span>(<span class="ident">state</span>) =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;Registered - {}&quot;</span>, <span class="ident">state</span>.<span class="ident">beacon</span>),
+            <span class="ident"><span class="self">Self</span>::Signed</span>(<span class="ident">state</span>) =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;Signed - {}&quot;</span>, <span class="ident">state</span>.<span class="ident">beacon</span>),
         }
     }
 }
@@ -644,54 +661,71 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">state</span>
     }
 
+    <span class="doccomment">/// Launch the state machine until an error occurs or it is interrupted.</span>
+    <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">run</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Error</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+        <span class="macro">info!</span>(<span class="string">&quot;STATE MACHINE: launching&quot;</span>);
+
+        <span class="kw">loop</span> {
+            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">cycle</span>().<span class="kw">await</span> {
+                <span class="macro">error!</span>(<span class="string">&quot;STATE MACHINE: an error occured: &quot;</span>; <span class="string">&quot;error&quot;</span> =&gt; <span class="question-mark">?</span><span class="ident">e</span>);
+            }
+
+            <span class="macro">info!</span>(
+                <span class="string">&quot;… Cycle finished, Sleeping for {} ms&quot;</span>,
+                <span class="self">self</span>.<span class="ident">state_sleep</span>.<span class="ident">as_millis</span>()
+            );
+            <span class="ident">sleep</span>(<span class="self">self</span>.<span class="ident">state_sleep</span>);
+        }
+    }
+
     <span class="doccomment">/// Perform a cycle of the state machine.</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">cycle</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Error</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="macro">info!</span>(<span class="string">&quot;================================================================================&quot;</span>);
-        <span class="macro">debug!</span>(<span class="string">&quot;STATE MACHINE: new cycle&quot;</span>; <span class="string">&quot;current_state&quot;</span> =&gt; <span class="question-mark">?</span><span class="self">self</span>.<span class="ident">state</span>);
+        <span class="macro">info!</span>(<span class="string">&quot;STATE MACHINE: new cycle: {}&quot;</span>, <span class="self">self</span>.<span class="ident">state</span>);
 
         <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">state</span> {
             <span class="ident">SignerState::Unregistered</span>(<span class="ident">maybe_epoch</span>) =&gt; {
                 <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">epoch_settings</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">runner</span>.<span class="ident">get_epoch_settings</span>().<span class="kw">await</span><span class="question-mark">?</span> {
                     <span class="kw">if</span> <span class="ident">maybe_epoch</span>.<span class="ident">map_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="bool-val">true</span>, <span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">epoch_settings</span>.<span class="ident">epoch</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">e</span>) {
-                        <span class="macro">debug!</span>(<span class="string">&quot;→ Epoch settings found, transiting to REGISTERED&quot;</span>);
+                        <span class="macro">info!</span>(<span class="string">&quot;→ Epoch settings found, transiting to REGISTERED&quot;</span>);
                         <span class="kw">let</span> <span class="ident">state</span> <span class="op">=</span> <span class="self">self</span>
                             .<span class="ident">transition_from_unregistered_to_registered</span>(<span class="kw-2">&amp;</span><span class="ident">epoch_settings</span>)
                             .<span class="kw">await</span><span class="question-mark">?</span>;
                         <span class="self">self</span>.<span class="ident">state</span> <span class="op">=</span> <span class="ident">SignerState::Registered</span>(<span class="ident">state</span>);
                     } <span class="kw">else</span> {
-                        <span class="macro">debug!</span>(
-                            <span class="string">&quot;⋅ Epoch settings found, but it&#39;s epoch is behind the known epoch, waiting…&quot;</span>;
+                        <span class="macro">info!</span>(
+                            <span class="string">&quot; ⋅ Epoch settings found, but it&#39;s epoch is behind the known epoch, waiting…&quot;</span>;
                             <span class="string">&quot;epoch_settings&quot;</span> =&gt; <span class="question-mark">?</span><span class="ident">epoch_settings</span>,
                             <span class="string">&quot;known_epoch&quot;</span> =&gt; <span class="question-mark">?</span><span class="ident">maybe_epoch</span>,
                         );
                     }
                 } <span class="kw">else</span> {
-                    <span class="macro">debug!</span>(<span class="string">&quot;⋅ No epoch settings found yet, waiting…&quot;</span>);
+                    <span class="macro">info!</span>(<span class="string">&quot; ⋅ No epoch settings found yet, waiting…&quot;</span>);
                 }
             }
             <span class="ident">SignerState::Registered</span>(<span class="ident">state</span>) =&gt; {
                 <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">new_beacon</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">has_epoch_changed</span>(<span class="kw-2">&amp;</span><span class="ident">state</span>.<span class="ident">beacon</span>).<span class="kw">await</span><span class="question-mark">?</span> {
-                    <span class="macro">debug!</span>(<span class="string">&quot;→ Epoch has changed, transiting to UNREGISTERED&quot;</span>);
+                    <span class="macro">info!</span>(<span class="string">&quot;→ Epoch has changed, transiting to UNREGISTERED&quot;</span>);
                     <span class="self">self</span>.<span class="ident">state</span> <span class="op">=</span> <span class="ident">SignerState::Unregistered</span>(<span class="prelude-val">Some</span>(<span class="ident">new_beacon</span>.<span class="ident">epoch</span>));
                 } <span class="kw">else</span> <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">pending_certificate</span>) <span class="op">=</span>
                     <span class="self">self</span>.<span class="ident">runner</span>.<span class="ident">get_pending_certificate</span>().<span class="kw">await</span><span class="question-mark">?</span>
                 {
-                    <span class="macro">debug!</span>(
-                        <span class="string">&quot;  Epoch has NOT changed but there is a pending certificate&quot;</span>;
+                    <span class="macro">info!</span>(
+                        <span class="string">&quot; ⋅ Epoch has NOT changed but there is a pending certificate&quot;</span>;
                         <span class="string">&quot;pending_certificate&quot;</span> =&gt; <span class="question-mark">?</span><span class="ident">pending_certificate</span>
                     );
 
                     <span class="kw">if</span> <span class="self">self</span>.<span class="ident">runner</span>.<span class="ident">can_i_sign</span>(<span class="kw-2">&amp;</span><span class="ident">pending_certificate</span>).<span class="kw">await</span><span class="question-mark">?</span> {
-                        <span class="macro">debug!</span>(<span class="string">&quot; → we can sign this certificate, transiting to SIGNED&quot;</span>);
+                        <span class="macro">info!</span>(<span class="string">&quot; → we can sign this certificate, transiting to SIGNED&quot;</span>);
                         <span class="kw">let</span> <span class="ident">state</span> <span class="op">=</span> <span class="self">self</span>
                             .<span class="ident">transition_from_registered_to_signed</span>(<span class="kw-2">&amp;</span><span class="ident">pending_certificate</span>)
                             .<span class="kw">await</span><span class="question-mark">?</span>;
                         <span class="self">self</span>.<span class="ident">state</span> <span class="op">=</span> <span class="ident">SignerState::Signed</span>(<span class="ident">state</span>)
                     } <span class="kw">else</span> {
-                        <span class="macro">debug!</span>(<span class="string">&quot; ⋅ cannot sign this pending certificate, waiting…&quot;</span>);
+                        <span class="macro">info!</span>(<span class="string">&quot; ⋅ cannot sign this pending certificate, waiting…&quot;</span>);
                     }
                 } <span class="kw">else</span> {
-                    <span class="macro">debug!</span>(<span class="string">&quot; ⋅ no pending certificate, waiting…&quot;</span>);
+                    <span class="macro">info!</span>(<span class="string">&quot; ⋅ no pending certificate, waiting…&quot;</span>);
                 }
             }
             <span class="ident">SignerState::Signed</span>(<span class="ident">state</span>) =&gt; {
@@ -699,34 +733,20 @@
                     <span class="macro">info!</span>(<span class="string">&quot;  New beacon detected: {:?}&quot;</span>, <span class="ident">new_beacon</span>);
 
                     <span class="kw">if</span> <span class="ident">new_beacon</span>.<span class="ident">epoch</span> <span class="op">&gt;</span> <span class="ident">state</span>.<span class="ident">beacon</span>.<span class="ident">epoch</span> {
-                        <span class="macro">debug!</span>(<span class="string">&quot; → new Epoch detected, transiting to UNREGISTERED&quot;</span>);
+                        <span class="macro">info!</span>(<span class="string">&quot; → new Epoch detected, transiting to UNREGISTERED&quot;</span>);
                         <span class="self">self</span>.<span class="ident">state</span> <span class="op">=</span> <span class="ident">SignerState::Unregistered</span>(<span class="prelude-val">Some</span>(<span class="ident">new_beacon</span>.<span class="ident">epoch</span>));
                     } <span class="kw">else</span> {
-                        <span class="macro">debug!</span>(<span class="string">&quot; → new immutable file detected, transiting to REGISTERED&quot;</span>);
+                        <span class="macro">info!</span>(<span class="string">&quot; → new immutable file detected, transiting to REGISTERED&quot;</span>);
                         <span class="self">self</span>.<span class="ident">state</span> <span class="op">=</span>
                             <span class="ident">SignerState::Registered</span>(<span class="ident">RegisteredState</span> { <span class="ident">beacon</span>: <span class="ident">new_beacon</span> });
                     }
                 } <span class="kw">else</span> {
-                    <span class="macro">debug!</span>(<span class="string">&quot; ⋅ NO new beacon detected, waiting&quot;</span>);
+                    <span class="macro">info!</span>(<span class="string">&quot; ⋅ NO new beacon detected, waiting&quot;</span>);
                 }
             }
         };
 
         <span class="prelude-val">Ok</span>(())
-    }
-
-    <span class="doccomment">/// Launch the state machine until an error occurs or it is interrupted.</span>
-    <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">run</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Error</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="macro">info!</span>(<span class="string">&quot;state machine: launching&quot;</span>);
-
-        <span class="kw">loop</span> {
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">cycle</span>().<span class="kw">await</span> {
-                <span class="macro">error!</span>(<span class="string">&quot;state machine: an error occured: &quot;</span>; <span class="string">&quot;error&quot;</span> =&gt; <span class="question-mark">?</span><span class="ident">e</span>);
-            }
-
-            <span class="macro">info!</span>(<span class="string">&quot;Sleeping for {} ms&quot;</span>, <span class="self">self</span>.<span class="ident">state_sleep</span>.<span class="ident">as_millis</span>());
-            <span class="ident">sleep</span>(<span class="self">self</span>.<span class="ident">state_sleep</span>);
-        }
     }
 
     <span class="doccomment">/// Return true if the epoch is different than the one in the given beacon.</span>
@@ -785,7 +805,7 @@
         );
 
         <span class="macro">debug!</span>(
-            <span class="string">&quot; ⋅ transition_from_registered_to_signed&quot;</span>;
+            <span class="string">&quot; &gt; transition_from_registered_to_signed&quot;</span>;
             <span class="string">&quot;current_epoch&quot;</span> =&gt; <span class="question-mark">?</span><span class="ident">current_beacon</span>.<span class="ident">epoch</span>,
             <span class="string">&quot;retrieval_epoch&quot;</span> =&gt; <span class="question-mark">?</span><span class="ident">retrieval_epoch</span>,
             <span class="string">&quot;next_retrieval_epoch&quot;</span> =&gt; <span class="question-mark">?</span><span class="ident">next_retrieval_epoch</span>,

@@ -1061,7 +1061,7 @@
 <span class="kw">impl</span> <span class="ident">AggregatorRunnerTrait</span> <span class="kw">for</span> <span class="ident">AggregatorRunner</span> {
     <span class="doccomment">/// Return the current beacon from the chain</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_beacon_from_chain</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Beacon</span>, <span class="ident">RuntimeError</span><span class="op">&gt;</span> {
-        <span class="macro">info!</span>(<span class="string">&quot;RUNNER: get beacon from chain&quot;</span>);
+        <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: get beacon from chain&quot;</span>);
         <span class="prelude-val">Ok</span>(<span class="self">self</span>
             .<span class="ident">dependencies</span>
             .<span class="ident">beacon_provider</span>
@@ -1069,8 +1069,22 @@
             .<span class="kw">await</span><span class="question-mark">?</span>)
     }
 
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">does_certificate_exist_for_beacon</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">beacon</span>: <span class="kw-2">&amp;</span><span class="ident">Beacon</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident">RuntimeError</span><span class="op">&gt;</span> {
+        <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: does_certificate_exist_for_beacon&quot;</span>);
+        <span class="kw">let</span> <span class="ident">certificate_exist</span> <span class="op">=</span> <span class="self">self</span>
+            .<span class="ident">dependencies</span>
+            .<span class="ident">certificate_store</span>
+            .<span class="ident">get_from_beacon</span>(<span class="ident">beacon</span>)
+            .<span class="kw">await</span><span class="question-mark">?</span>
+            .<span class="ident">is_some</span>();
+        <span class="prelude-val">Ok</span>(<span class="ident">certificate_exist</span>)
+    }
+
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">is_certificate_chain_valid</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident">RuntimeError</span><span class="op">&gt;</span> {
-        <span class="macro">info!</span>(<span class="string">&quot;RUNNER: is_certificate_chain_valid&quot;</span>);
+        <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: is_certificate_chain_valid&quot;</span>);
         <span class="kw">let</span> <span class="ident">certificate_store</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">dependencies</span>.<span class="ident">certificate_store</span>.<span class="ident">clone</span>();
         <span class="kw">let</span> <span class="ident">latest_certificates</span> <span class="op">=</span> <span class="ident">certificate_store</span>.<span class="ident">get_list</span>(<span class="number">1</span>).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let</span> <span class="ident">latest_certificate</span> <span class="op">=</span> <span class="ident">latest_certificates</span>.<span class="ident">first</span>();
@@ -1090,44 +1104,30 @@
         {
             <span class="prelude-val">Ok</span>(()) =&gt; <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>),
             <span class="prelude-val">Err</span>(<span class="ident">error</span>) =&gt; {
-                <span class="macro">warn!</span>(<span class="string">&quot;Invalid certificate chain&quot;</span>; <span class="string">&quot;error&quot;</span> =&gt; <span class="question-mark">?</span><span class="ident">error</span>);
+                <span class="macro">warn!</span>(<span class="string">&quot; &gt; invalid certificate chain&quot;</span>; <span class="string">&quot;error&quot;</span> =&gt; <span class="question-mark">?</span><span class="ident">error</span>);
                 <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>)
             }
         }
     }
 
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">does_certificate_exist_for_beacon</span>(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">beacon</span>: <span class="kw-2">&amp;</span><span class="ident">Beacon</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident">RuntimeError</span><span class="op">&gt;</span> {
-        <span class="macro">info!</span>(<span class="string">&quot;RUNNER: does_certificate_exist_for_beacon&quot;</span>);
-        <span class="kw">let</span> <span class="ident">certificate_exist</span> <span class="op">=</span> <span class="self">self</span>
-            .<span class="ident">dependencies</span>
-            .<span class="ident">certificate_store</span>
-            .<span class="ident">get_from_beacon</span>(<span class="ident">beacon</span>)
-            .<span class="kw">await</span><span class="question-mark">?</span>
-            .<span class="ident">is_some</span>();
-        <span class="prelude-val">Ok</span>(<span class="ident">certificate_exist</span>)
-    }
-
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">compute_digest</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">new_beacon</span>: <span class="kw-2">&amp;</span><span class="ident">Beacon</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">RuntimeError</span><span class="op">&gt;</span> {
-        <span class="macro">info!</span>(<span class="string">&quot;RUNNER: compute_digest&quot;</span>);
+        <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: compute_digest&quot;</span>);
         <span class="kw">let</span> <span class="ident">digester</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">dependencies</span>.<span class="ident">digester</span>.<span class="ident">clone</span>();
 
-        <span class="macro">debug!</span>(<span class="string">&quot;computing digest&quot;</span>; <span class="string">&quot;db_directory&quot;</span> =&gt; <span class="self">self</span>.<span class="ident">config</span>.<span class="ident">db_directory</span>.<span class="ident">display</span>());
+        <span class="macro">debug!</span>(<span class="string">&quot; &gt; computing digest&quot;</span>; <span class="string">&quot;cardano_db_directory&quot;</span> =&gt; <span class="self">self</span>.<span class="ident">config</span>.<span class="ident">db_directory</span>.<span class="ident">display</span>());
 
-        <span class="macro">debug!</span>(<span class="string">&quot;launching digester thread&quot;</span>);
+        <span class="macro">debug!</span>(<span class="string">&quot; &gt; launching digester thread&quot;</span>);
         <span class="kw">let</span> <span class="ident">digest</span> <span class="op">=</span> <span class="ident">digester</span>
             .<span class="ident">compute_digest</span>(<span class="ident">new_beacon</span>)
             .<span class="kw">await</span>
             .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">RuntimeError::General</span>(<span class="ident">e</span>.<span class="ident">into</span>()))<span class="question-mark">?</span>;
-        <span class="macro">debug!</span>(<span class="string">&quot;computed digest: {}&quot;</span>, <span class="ident">digest</span>);
+        <span class="macro">debug!</span>(<span class="string">&quot; &gt; computed digest: {}&quot;</span>, <span class="ident">digest</span>);
 
         <span class="prelude-val">Ok</span>(<span class="ident">digest</span>)
     }
 
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">update_beacon</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">new_beacon</span>: <span class="kw-2">&amp;</span><span class="ident">Beacon</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">RuntimeError</span><span class="op">&gt;</span> {
-        <span class="macro">info!</span>(<span class="string">&quot;RUNNER: update beacon&quot;</span>; <span class="string">&quot;beacon&quot;</span> =&gt; #<span class="question-mark">?</span><span class="ident">new_beacon</span>);
+        <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: update beacon&quot;</span>; <span class="string">&quot;beacon&quot;</span> =&gt; #<span class="question-mark">?</span><span class="ident">new_beacon</span>);
         <span class="self">self</span>.<span class="ident">dependencies</span>
             .<span class="ident">multi_signer</span>
             .<span class="ident">write</span>()
@@ -1138,7 +1138,7 @@
     }
 
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">update_stake_distribution</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">new_beacon</span>: <span class="kw-2">&amp;</span><span class="ident">Beacon</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">RuntimeError</span><span class="op">&gt;</span> {
-        <span class="macro">info!</span>(<span class="string">&quot;RUNNER: update stake distribution&quot;</span>; <span class="string">&quot;beacon&quot;</span> =&gt; #<span class="question-mark">?</span><span class="ident">new_beacon</span>);
+        <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: update stake distribution&quot;</span>; <span class="string">&quot;beacon&quot;</span> =&gt; #<span class="question-mark">?</span><span class="ident">new_beacon</span>);
         <span class="kw">let</span> <span class="ident">stake_distribution</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">dependencies</span>
             .<span class="ident">chain_observer</span>
@@ -1163,7 +1163,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">new_beacon</span>: <span class="kw-2">&amp;</span><span class="ident">Beacon</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">RuntimeError</span><span class="op">&gt;</span> {
-        <span class="macro">info!</span>(<span class="string">&quot;RUNNER: update protocol parameters&quot;</span>; <span class="string">&quot;beacon&quot;</span> =&gt; #<span class="question-mark">?</span><span class="ident">new_beacon</span>);
+        <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: update protocol parameters&quot;</span>; <span class="string">&quot;beacon&quot;</span> =&gt; #<span class="question-mark">?</span><span class="ident">new_beacon</span>);
         <span class="kw">let</span> <span class="ident">protocol_parameters</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">dependencies</span>.<span class="ident">config</span>.<span class="ident">protocol_parameters</span>.<span class="ident">clone</span>();
         <span class="prelude-val">Ok</span>(<span class="self">self</span>
             .<span class="ident">dependencies</span>
@@ -1175,7 +1175,7 @@
     }
 
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">update_message_in_multisigner</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">digest</span>: <span class="ident">String</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">RuntimeError</span><span class="op">&gt;</span> {
-        <span class="macro">info!</span>(<span class="string">&quot;RUNNER: update message in multisigner&quot;</span>);
+        <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: update message in multisigner&quot;</span>);
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">multi_signer</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">dependencies</span>.<span class="ident">multi_signer</span>.<span class="ident">write</span>().<span class="kw">await</span>;
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">protocol_message</span> <span class="op">=</span> <span class="ident">ProtocolMessage::new</span>();
         <span class="ident">protocol_message</span>.<span class="ident">set_message_part</span>(<span class="ident">ProtocolMessagePartKey::SnapshotDigest</span>, <span class="ident">digest</span>);
@@ -1197,7 +1197,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">beacon</span>: <span class="ident">Beacon</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">CertificatePending</span>, <span class="ident">RuntimeError</span><span class="op">&gt;</span> {
-        <span class="macro">info!</span>(<span class="string">&quot;RUNNER: create new pending certificate from multisigner&quot;</span>);
+        <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: create new pending certificate from multisigner&quot;</span>);
         <span class="kw">let</span> <span class="ident">multi_signer</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">dependencies</span>.<span class="ident">multi_signer</span>.<span class="ident">read</span>().<span class="kw">await</span>;
 
         <span class="kw">let</span> <span class="ident">signers</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">multi_signer</span>.<span class="ident">get_signers</span>().<span class="kw">await</span> {
@@ -1237,7 +1237,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">pending_certificate</span>: <span class="ident">CertificatePending</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">RuntimeError</span><span class="op">&gt;</span> {
-        <span class="macro">info!</span>(<span class="string">&quot;RUNNER: saving pending certificate&quot;</span>);
+        <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: saving pending certificate&quot;</span>);
 
         <span class="self">self</span>.<span class="ident">dependencies</span>
             .<span class="ident">certificate_pending_store</span>
@@ -1247,11 +1247,11 @@
     }
 
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">drop_pending_certificate</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">CertificatePending</span><span class="op">&gt;</span>, <span class="ident">RuntimeError</span><span class="op">&gt;</span> {
-        <span class="macro">info!</span>(<span class="string">&quot;RUNNER: drop pending certificate&quot;</span>);
+        <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: drop pending certificate&quot;</span>);
 
         <span class="kw">let</span> <span class="ident">certificate_pending</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">dependencies</span>.<span class="ident">certificate_pending_store</span>.<span class="ident">remove</span>().<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">if</span> <span class="ident">certificate_pending</span>.<span class="ident">is_none</span>() {
-            <span class="macro">warn!</span>(<span class="string">&quot;drop_pending_certificate::no certificate pending in store, did the previous loop crashed ?&quot;</span>);
+            <span class="macro">warn!</span>(<span class="string">&quot; &gt; drop_pending_certificate::no certificate pending in store, did the previous loop crashed ?&quot;</span>);
         }
 
         <span class="prelude-val">Ok</span>(<span class="ident">certificate_pending</span>)
@@ -1260,7 +1260,7 @@
     <span class="doccomment">/// Is a multi-signature ready?</span>
     <span class="doccomment">/// Can we create a multi-signature.</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">is_multisig_created</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident">RuntimeError</span><span class="op">&gt;</span> {
-        <span class="macro">info!</span>(<span class="string">&quot;RUNNER: check if we can create a multi-signature&quot;</span>);
+        <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: check if we can create a multi-signature&quot;</span>);
         <span class="kw">let</span> <span class="ident">has_multisig</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">dependencies</span>
             .<span class="ident">multi_signer</span>
@@ -1271,9 +1271,9 @@
             .<span class="ident">is_some</span>();
 
         <span class="kw">if</span> <span class="ident">has_multisig</span> {
-            <span class="macro">debug!</span>(<span class="string">&quot;new MULTISIG created&quot;</span>);
+            <span class="macro">debug!</span>(<span class="string">&quot; &gt; new multi-signature created&quot;</span>);
         } <span class="kw">else</span> {
-            <span class="macro">info!</span>(<span class="string">&quot;no multisig created&quot;</span>);
+            <span class="macro">info!</span>(<span class="string">&quot; &gt; no multi-signature created&quot;</span>);
         }
         <span class="prelude-val">Ok</span>(<span class="ident">has_multisig</span>)
     }
@@ -1282,7 +1282,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">beacon</span>: <span class="kw-2">&amp;</span><span class="ident">Beacon</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">OngoingSnapshot</span>, <span class="ident">RuntimeError</span><span class="op">&gt;</span> {
-        <span class="macro">info!</span>(<span class="string">&quot;RUNNER: create snapshot archive&quot;</span>);
+        <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: create snapshot archive&quot;</span>);
 
         <span class="kw">let</span> <span class="ident">snapshotter</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">dependencies</span>.<span class="ident">snapshotter</span>.<span class="ident">clone</span>();
         <span class="kw">let</span> <span class="ident">protocol_message</span> <span class="op">=</span> <span class="self">self</span>
@@ -1310,7 +1310,7 @@
             .<span class="kw">await</span>
             .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">RuntimeError::General</span>(<span class="ident">e</span>.<span class="ident">into</span>()))<span class="question-mark">?</span><span class="question-mark">?</span>;
 
-        <span class="macro">debug!</span>(<span class="string">&quot;snapshot created: &#39;{:?}&#39;&quot;</span>, <span class="ident">ongoing_snapshot</span>);
+        <span class="macro">debug!</span>(<span class="string">&quot; &gt; snapshot created: &#39;{:?}&#39;&quot;</span>, <span class="ident">ongoing_snapshot</span>);
 
         <span class="prelude-val">Ok</span>(<span class="ident">ongoing_snapshot</span>)
     }
@@ -1319,7 +1319,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">ongoing_snapshot</span>: <span class="kw-2">&amp;</span><span class="ident">OngoingSnapshot</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">SnapshotLocation</span><span class="op">&gt;</span>, <span class="ident">RuntimeError</span><span class="op">&gt;</span> {
-        <span class="macro">info!</span>(<span class="string">&quot;RUNNER: upload snapshot archive&quot;</span>);
+        <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: upload snapshot archive&quot;</span>);
         <span class="kw">let</span> <span class="ident">location</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">dependencies</span>
             .<span class="ident">snapshot_uploader</span>
@@ -1329,7 +1329,7 @@
 
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">error</span>) <span class="op">=</span> <span class="ident">tokio::fs::remove_file</span>(<span class="ident">ongoing_snapshot</span>.<span class="ident">get_file_path</span>()).<span class="kw">await</span> {
             <span class="macro">warn!</span>(
-                <span class="string">&quot;Post upload ongoing snapshot file removal failure: {}&quot;</span>,
+                <span class="string">&quot; &gt; Post upload ongoing snapshot file removal failure: {}&quot;</span>,
                 <span class="ident">error</span>
             );
         }
@@ -1341,7 +1341,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">beacon</span>: <span class="kw-2">&amp;</span><span class="ident">Beacon</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Certificate</span>, <span class="ident">RuntimeError</span><span class="op">&gt;</span> {
-        <span class="macro">info!</span>(<span class="string">&quot;RUNNER: create and save certificate&quot;</span>);
+        <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: create and save certificate&quot;</span>);
         <span class="kw">let</span> <span class="ident">certificate_store</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">dependencies</span>.<span class="ident">certificate_store</span>.<span class="ident">clone</span>();
         <span class="kw">let</span> <span class="ident">latest_certificates</span> <span class="op">=</span> <span class="ident">certificate_store</span>.<span class="ident">get_list</span>(<span class="number">2</span>).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let</span> <span class="ident">last_certificate</span> <span class="op">=</span> <span class="ident">latest_certificates</span>.<span class="ident">get</span>(<span class="number">0</span>);
@@ -1389,7 +1389,7 @@
         <span class="ident">ongoing_snapshot</span>: <span class="kw-2">&amp;</span><span class="ident">OngoingSnapshot</span>,
         <span class="ident">remote_locations</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Snapshot</span>, <span class="ident">RuntimeError</span><span class="op">&gt;</span> {
-        <span class="macro">info!</span>(<span class="string">&quot;RUNNER: create and save snapshot&quot;</span>);
+        <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: create and save snapshot&quot;</span>);
         <span class="kw">let</span> <span class="ident">snapshot_digest</span> <span class="op">=</span> <span class="ident">certificate</span>
             .<span class="ident">protocol_message</span>
             .<span class="ident">get_message_part</span>(<span class="kw-2">&amp;</span><span class="ident">ProtocolMessagePartKey::SnapshotDigest</span>)
