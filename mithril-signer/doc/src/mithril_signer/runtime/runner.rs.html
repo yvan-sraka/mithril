@@ -738,6 +738,10 @@
 <span id="732">732</span>
 <span id="733">733</span>
 <span id="734">734</span>
+<span id="735">735</span>
+<span id="736">736</span>
+<span id="737">737</span>
+<span id="738">738</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="kw">use</span> <span class="ident">mockall::automock</span>;
@@ -1157,7 +1161,7 @@
         <span class="kw">let</span> <span class="ident">adapter</span>: <span class="ident">MemoryAdapter</span><span class="op">&lt;</span><span class="ident">Epoch</span>, <span class="ident">ProtocolInitializer</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">MemoryAdapter::new</span>(<span class="prelude-val">None</span>).<span class="ident">unwrap</span>();
         <span class="kw">let</span> <span class="ident">chain_observer</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">FakeObserver::default</span>());
         <span class="ident">SignerServices</span> {
-            <span class="ident">stake_store</span>: <span class="ident">Arc::new</span>(<span class="ident">StakeStore::new</span>(<span class="ident">Box::new</span>(<span class="ident">DumbStoreAdapter::new</span>()))),
+            <span class="ident">stake_store</span>: <span class="ident">Arc::new</span>(<span class="ident">StakeStore::new</span>(<span class="ident">Box::new</span>(<span class="ident">DumbStoreAdapter::new</span>()), <span class="prelude-val">None</span>)),
             <span class="ident">certificate_handler</span>: <span class="ident">Arc::new</span>(<span class="ident">DumbCertificateHandler::default</span>()),
             <span class="ident">chain_observer</span>: <span class="ident">chain_observer</span>.<span class="ident">clone</span>(),
             <span class="ident">digester</span>: <span class="ident">Arc::new</span>(<span class="ident">DumbImmutableDigester::new</span>(<span class="ident">DIGESTER_RESULT</span>, <span class="bool-val">true</span>)),
@@ -1167,7 +1171,10 @@
                 <span class="ident">Arc::new</span>(<span class="ident">DumbImmutableFileObserver::default</span>()),
                 <span class="ident">CardanoNetwork::TestNet</span>(<span class="number">42</span>),
             )),
-            <span class="ident">protocol_initializer_store</span>: <span class="ident">Arc::new</span>(<span class="ident">ProtocolInitializerStore::new</span>(<span class="ident">Box::new</span>(<span class="ident">adapter</span>))),
+            <span class="ident">protocol_initializer_store</span>: <span class="ident">Arc::new</span>(<span class="ident">ProtocolInitializerStore::new</span>(
+                <span class="ident">Box::new</span>(<span class="ident">adapter</span>),
+                <span class="prelude-val">None</span>,
+            )),
         }
     }
 
@@ -1186,6 +1193,7 @@
             <span class="ident">party_id</span>: <span class="string">&quot;1&quot;</span>.<span class="ident">to_string</span>(),
             <span class="ident">run_interval</span>: <span class="number">100</span>,
             <span class="ident">data_stores_directory</span>: <span class="ident">PathBuf::new</span>(),
+            <span class="ident">store_retention_limit</span>: <span class="prelude-val">None</span>,
         };
 
         <span class="ident">SignerRunner</span> {

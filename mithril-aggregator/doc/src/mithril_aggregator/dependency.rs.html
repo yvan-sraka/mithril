@@ -271,6 +271,13 @@
 <span id="265">265</span>
 <span id="266">266</span>
 <span id="267">267</span>
+<span id="268">268</span>
+<span id="269">269</span>
+<span id="270">270</span>
+<span id="271">271</span>
+<span id="272">272</span>
+<span id="273">273</span>
+<span id="274">274</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">mithril_common::certificate_chain::CertificateVerifier</span>;
 <span class="kw">use</span> <span class="ident">mithril_common::crypto_helper::ProtocolGenesisVerifier</span>;
 <span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
@@ -472,6 +479,7 @@
             <span class="ident">snapshot_directory</span>: <span class="ident">PathBuf::new</span>(),
             <span class="ident">data_stores_directory</span>: <span class="ident">PathBuf::new</span>(),
             <span class="ident">genesis_verification_key</span>: <span class="ident">key_encode_hex</span>(<span class="kw-2">&amp;</span><span class="ident">genesis_verification_key</span>).<span class="ident">unwrap</span>(),
+            <span class="ident">store_retention_limit</span>: <span class="prelude-val">None</span>,
         };
         <span class="kw">let</span> <span class="ident">snapshot_store</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">LocalSnapshotStore::new</span>(
             <span class="ident">Box::new</span>(<span class="ident">MemoryAdapter::new</span>(<span class="prelude-val">None</span>).<span class="ident">unwrap</span>()),
@@ -484,16 +492,22 @@
         <span class="kw">let</span> <span class="ident">certificate_store</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">CertificateStore::new</span>(<span class="ident">Box::new</span>(
             <span class="ident">MemoryAdapter::new</span>(<span class="prelude-val">None</span>).<span class="ident">unwrap</span>(),
         )));
-        <span class="kw">let</span> <span class="ident">verification_key_store</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">VerificationKeyStore::new</span>(<span class="ident">Box::new</span>(
-            <span class="ident">MemoryAdapter::new</span>(<span class="prelude-val">None</span>).<span class="ident">unwrap</span>(),
-        )));
-        <span class="kw">let</span> <span class="ident">stake_store</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">StakeStore::new</span>(<span class="ident">Box::new</span>(<span class="ident">MemoryAdapter::new</span>(<span class="prelude-val">None</span>).<span class="ident">unwrap</span>())));
-        <span class="kw">let</span> <span class="ident">single_signature_store</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">SingleSignatureStore::new</span>(<span class="ident">Box::new</span>(
-            <span class="ident">MemoryAdapter::new</span>(<span class="prelude-val">None</span>).<span class="ident">unwrap</span>(),
-        )));
-        <span class="kw">let</span> <span class="ident">protocol_parameters_store</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">ProtocolParametersStore::new</span>(<span class="ident">Box::new</span>(
-            <span class="ident">MemoryAdapter::new</span>(<span class="prelude-val">None</span>).<span class="ident">unwrap</span>(),
-        )));
+        <span class="kw">let</span> <span class="ident">verification_key_store</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">VerificationKeyStore::new</span>(
+            <span class="ident">Box::new</span>(<span class="ident">MemoryAdapter::new</span>(<span class="prelude-val">None</span>).<span class="ident">unwrap</span>()),
+            <span class="ident">config</span>.<span class="ident">store_retention_limit</span>,
+        ));
+        <span class="kw">let</span> <span class="ident">stake_store</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">StakeStore::new</span>(
+            <span class="ident">Box::new</span>(<span class="ident">MemoryAdapter::new</span>(<span class="prelude-val">None</span>).<span class="ident">unwrap</span>()),
+            <span class="ident">config</span>.<span class="ident">store_retention_limit</span>,
+        ));
+        <span class="kw">let</span> <span class="ident">single_signature_store</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">SingleSignatureStore::new</span>(
+            <span class="ident">Box::new</span>(<span class="ident">MemoryAdapter::new</span>(<span class="prelude-val">None</span>).<span class="ident">unwrap</span>()),
+            <span class="ident">config</span>.<span class="ident">store_retention_limit</span>,
+        ));
+        <span class="kw">let</span> <span class="ident">protocol_parameters_store</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">ProtocolParametersStore::new</span>(
+            <span class="ident">Box::new</span>(<span class="ident">MemoryAdapter::new</span>(<span class="prelude-val">None</span>).<span class="ident">unwrap</span>()),
+            <span class="prelude-val">None</span>,
+        ));
         <span class="kw">let</span> <span class="ident">multi_signer</span> <span class="op">=</span> <span class="ident">MultiSignerImpl::new</span>(
             <span class="ident">verification_key_store</span>.<span class="ident">clone</span>(),
             <span class="ident">stake_store</span>.<span class="ident">clone</span>(),
