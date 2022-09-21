@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["mithril_client"] = [{"text":"impl CertificateRetriever for <a class=\"struct\" href=\"mithril_client/struct.AggregatorHTTPClient.html\" title=\"struct mithril_client::AggregatorHTTPClient\">AggregatorHTTPClient</a>","synthetic":false,"types":["mithril_client::aggregator::AggregatorHTTPClient"]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
