@@ -1,3 +1,4 @@
 (function() {var implementors = {};
 implementors["mithril_aggregator_migrate"] = [{"text":"impl Subcommand for <a class=\"enum\" href=\"mithril_aggregator_migrate/enum.MigrationCommand.html\" title=\"enum mithril_aggregator_migrate::MigrationCommand\">MigrationCommand</a>","synthetic":false,"types":["mithril_aggregator_migrate::MigrationCommand"]}];
+implementors["mithril_signer_migrate"] = [{"text":"impl Subcommand for <a class=\"enum\" href=\"mithril_signer_migrate/enum.MigrationCommand.html\" title=\"enum mithril_signer_migrate::MigrationCommand\">MigrationCommand</a>","synthetic":false,"types":["mithril_signer_migrate::MigrationCommand"]}];
 if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

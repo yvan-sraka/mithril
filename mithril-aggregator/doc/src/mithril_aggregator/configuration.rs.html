@@ -130,14 +130,29 @@
 <span id="130">130</span>
 <span id="131">131</span>
 <span id="132">132</span>
+<span id="133">133</span>
+<span id="134">134</span>
+<span id="135">135</span>
+<span id="136">136</span>
+<span id="137">137</span>
+<span id="138">138</span>
+<span id="139">139</span>
+<span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">config::ConfigError</span>;
-<span class="kw">use</span> <span class="ident">mithril_common::entities::ProtocolParameters</span>;
 <span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
 <span class="kw">use</span> <span class="ident">std::error::Error</span>;
 <span class="kw">use</span> <span class="ident">std::path::PathBuf</span>;
 <span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
 
-<span class="kw">use</span> <span class="ident">mithril_common</span>::{<span class="ident">store::adapter::JsonFileStoreAdapter</span>, <span class="ident">CardanoNetwork</span>};
+<span class="kw">use</span> <span class="ident">mithril_common::entities::ProtocolParameters</span>;
+<span class="kw">use</span> <span class="ident">mithril_common::store::adapter::SQLiteAdapter</span>;
+<span class="kw">use</span> <span class="ident">mithril_common::CardanoNetwork</span>;
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::snapshot_stores::LocalSnapshotStore</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::tools::GcpFileUploader</span>;
@@ -148,6 +163,7 @@
 
 <span class="comment">// TODO: &#39;LIST_SNAPSHOTS_MAX_ITEMS&#39; keep as const or in config, or add a parameter to `list_snapshots`?</span>
 <span class="kw">const</span> <span class="ident">LIST_SNAPSHOTS_MAX_ITEMS</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">20</span>;
+<span class="kw">const</span> <span class="ident">SQLITE_FILE</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;aggregator.sqlite3&quot;</span>;
 
 <span class="doccomment">/// Aggregator configuration</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
@@ -235,8 +251,9 @@
                 <span class="self">self</span>.<span class="ident">url_snapshot_manifest</span>.<span class="ident">clone</span>(),
             ))),
             <span class="ident">SnapshotStoreType::Local</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">Arc::new</span>(<span class="ident">LocalSnapshotStore::new</span>(
-                <span class="ident">Box::new</span>(<span class="ident">JsonFileStoreAdapter::new</span>(
-                    <span class="self">self</span>.<span class="ident">data_stores_directory</span>.<span class="ident">join</span>(<span class="string">&quot;snapshot_db&quot;</span>),
+                <span class="ident">Box::new</span>(<span class="ident">SQLiteAdapter::new</span>(
+                    <span class="string">&quot;snapshot&quot;</span>,
+                    <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">get_sqlite_file</span>()),
                 )<span class="question-mark">?</span>),
                 <span class="ident">LIST_SNAPSHOTS_MAX_ITEMS</span>,
             ))),
@@ -260,6 +277,17 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_network</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">CardanoNetwork</span>, <span class="ident">ConfigError</span><span class="op">&gt;</span> {
         <span class="ident">CardanoNetwork::from_code</span>(<span class="self">self</span>.<span class="ident">network</span>.<span class="ident">clone</span>(), <span class="self">self</span>.<span class="ident">network_magic</span>)
             .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">ConfigError::Message</span>(<span class="ident">e</span>.<span class="ident">to_string</span>()))
+    }
+
+    <span class="doccomment">/// Return the file of the SQLite stores. If the directory does not exist, it is created.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_sqlite_file</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">PathBuf</span> {
+        <span class="kw">let</span> <span class="ident">store_dir</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">data_stores_directory</span>;
+
+        <span class="kw">if</span> <span class="op">!</span><span class="ident">store_dir</span>.<span class="ident">exists</span>() {
+            <span class="ident">std::fs::create_dir_all</span>(<span class="ident">store_dir</span>).<span class="ident">unwrap</span>();
+        }
+
+        <span class="self">self</span>.<span class="ident">data_stores_directory</span>.<span class="ident">join</span>(<span class="ident">SQLITE_FILE</span>)
     }
 }
 </code></pre></div>
