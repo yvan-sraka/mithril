@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["DownloadCommand","Download a snapshot."],["ListCommand","List signed snapshots from an Aggregator."],["RestoreCommand","Check a downloaded snapshot and restore it if the signature is OK."],["ShowCommand","Show detailed information about a snapshot."]]};

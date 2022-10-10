@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":[["MigrationCheckOutcome","Migration check outcome."]],"struct":[["AdapterMigration","Migrate data from an adapter to another. Adapters must use the same Key & Value types."]]};
