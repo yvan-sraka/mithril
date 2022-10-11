@@ -430,14 +430,124 @@
 <span id="430">430</span>
 <span id="431">431</span>
 <span id="432">432</span>
+<span id="433">433</span>
+<span id="434">434</span>
+<span id="435">435</span>
+<span id="436">436</span>
+<span id="437">437</span>
+<span id="438">438</span>
+<span id="439">439</span>
+<span id="440">440</span>
+<span id="441">441</span>
+<span id="442">442</span>
+<span id="443">443</span>
+<span id="444">444</span>
+<span id="445">445</span>
+<span id="446">446</span>
+<span id="447">447</span>
+<span id="448">448</span>
+<span id="449">449</span>
+<span id="450">450</span>
+<span id="451">451</span>
+<span id="452">452</span>
+<span id="453">453</span>
+<span id="454">454</span>
+<span id="455">455</span>
+<span id="456">456</span>
+<span id="457">457</span>
+<span id="458">458</span>
+<span id="459">459</span>
+<span id="460">460</span>
+<span id="461">461</span>
+<span id="462">462</span>
+<span id="463">463</span>
+<span id="464">464</span>
+<span id="465">465</span>
+<span id="466">466</span>
+<span id="467">467</span>
+<span id="468">468</span>
+<span id="469">469</span>
+<span id="470">470</span>
+<span id="471">471</span>
+<span id="472">472</span>
+<span id="473">473</span>
+<span id="474">474</span>
+<span id="475">475</span>
+<span id="476">476</span>
+<span id="477">477</span>
+<span id="478">478</span>
+<span id="479">479</span>
+<span id="480">480</span>
+<span id="481">481</span>
+<span id="482">482</span>
+<span id="483">483</span>
+<span id="484">484</span>
+<span id="485">485</span>
+<span id="486">486</span>
+<span id="487">487</span>
+<span id="488">488</span>
+<span id="489">489</span>
+<span id="490">490</span>
+<span id="491">491</span>
+<span id="492">492</span>
+<span id="493">493</span>
+<span id="494">494</span>
+<span id="495">495</span>
+<span id="496">496</span>
+<span id="497">497</span>
+<span id="498">498</span>
+<span id="499">499</span>
+<span id="500">500</span>
+<span id="501">501</span>
+<span id="502">502</span>
+<span id="503">503</span>
+<span id="504">504</span>
+<span id="505">505</span>
+<span id="506">506</span>
+<span id="507">507</span>
+<span id="508">508</span>
+<span id="509">509</span>
+<span id="510">510</span>
+<span id="511">511</span>
+<span id="512">512</span>
+<span id="513">513</span>
+<span id="514">514</span>
+<span id="515">515</span>
+<span id="516">516</span>
+<span id="517">517</span>
+<span id="518">518</span>
+<span id="519">519</span>
+<span id="520">520</span>
+<span id="521">521</span>
+<span id="522">522</span>
+<span id="523">523</span>
+<span id="524">524</span>
+<span id="525">525</span>
+<span id="526">526</span>
+<span id="527">527</span>
+<span id="528">528</span>
+<span id="529">529</span>
+<span id="530">530</span>
+<span id="531">531</span>
+<span id="532">532</span>
+<span id="533">533</span>
+<span id="534">534</span>
+<span id="535">535</span>
+<span id="536">536</span>
+<span id="537">537</span>
+<span id="538">538</span>
+<span id="539">539</span>
+<span id="540">540</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
 <span class="kw">use</span> <span class="ident">nom::IResult</span>;
 <span class="kw">use</span> <span class="ident">serde_json::Value</span>;
 <span class="kw">use</span> <span class="ident">std::error::Error</span>;
+<span class="kw">use</span> <span class="ident">std::fs</span>;
 <span class="kw">use</span> <span class="ident">std::path::PathBuf</span>;
 <span class="kw">use</span> <span class="ident">tokio::process::Command</span>;
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::chain_observer::interface</span>::<span class="kw-2">*</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::crypto_helper</span>::{<span class="ident">KESPeriod</span>, <span class="ident">OpCert</span>, <span class="ident">SerDeShelleyFileFormat</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::entities</span>::{<span class="ident">Epoch</span>, <span class="ident">StakeDistribution</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::CardanoNetwork</span>;
 
@@ -449,6 +559,10 @@
         <span class="ident">stake_pool_id</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Error</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span>;
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">launch_epoch</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Error</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">launch_kes_period</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">opcert_file</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Error</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span>;
 }
 
 <span class="doccomment">/// A runner able to request data from a Cardano node using the</span>
@@ -492,6 +606,18 @@
     <span class="kw">fn</span> <span class="ident">command_for_epoch</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Command</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">command</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">get_command</span>();
         <span class="ident">command</span>.<span class="ident">arg</span>(<span class="string">&quot;query&quot;</span>).<span class="ident">arg</span>(<span class="string">&quot;tip&quot;</span>);
+        <span class="self">self</span>.<span class="ident">post_config_command</span>(<span class="kw-2">&amp;mut</span> <span class="ident">command</span>);
+
+        <span class="ident">command</span>
+    }
+
+    <span class="kw">fn</span> <span class="ident">command_for_kes_period</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">opcert_file</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="ident">Command</span> {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">command</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">get_command</span>();
+        <span class="ident">command</span>
+            .<span class="ident">arg</span>(<span class="string">&quot;query&quot;</span>)
+            .<span class="ident">arg</span>(<span class="string">&quot;kes-period-info&quot;</span>)
+            .<span class="ident">arg</span>(<span class="string">&quot;--op-cert-file&quot;</span>)
+            .<span class="ident">arg</span>(<span class="ident">opcert_file</span>);
         <span class="self">self</span>.<span class="ident">post_config_command</span>(<span class="kw-2">&amp;mut</span> <span class="ident">command</span>);
 
         <span class="ident">command</span>
@@ -575,6 +701,26 @@
             <span class="prelude-val">Err</span>(<span class="macro">format!</span>(
                 <span class="string">&quot;Error launching command {:?}, error = &#39;{}&#39;&quot;</span>,
                 <span class="self">self</span>.<span class="ident">command_for_epoch</span>(),
+                <span class="ident">message</span>
+            )
+            .<span class="ident">into</span>())
+        }
+    }
+
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">launch_kes_period</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">opcert_file</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Error</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">output</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">command_for_kes_period</span>(<span class="ident">opcert_file</span>).<span class="ident">output</span>().<span class="kw">await</span><span class="question-mark">?</span>;
+
+        <span class="kw">if</span> <span class="ident">output</span>.<span class="ident">status</span>.<span class="ident">success</span>() {
+            <span class="prelude-val">Ok</span>(<span class="ident">std::str::from_utf8</span>(<span class="kw-2">&amp;</span><span class="ident">output</span>.<span class="ident">stdout</span>)<span class="question-mark">?</span>.<span class="ident">trim</span>().<span class="ident">to_string</span>())
+        } <span class="kw">else</span> {
+            <span class="kw">let</span> <span class="ident">message</span> <span class="op">=</span> <span class="ident">String::from_utf8_lossy</span>(<span class="kw-2">&amp;</span><span class="ident">output</span>.<span class="ident">stderr</span>);
+
+            <span class="prelude-val">Err</span>(<span class="macro">format!</span>(
+                <span class="string">&quot;Error launching command {:?}, error = &#39;{}&#39;&quot;</span>,
+                <span class="self">self</span>.<span class="ident">command_for_kes_period</span>(<span class="ident">opcert_file</span>),
                 <span class="ident">message</span>
             )
             .<span class="ident">into</span>())
@@ -698,11 +844,45 @@
 
         <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">stake_distribution</span>))
     }
+
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_current_kes_period</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">opcert</span>: <span class="kw-2">&amp;</span><span class="ident">OpCert</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">KESPeriod</span><span class="op">&gt;</span>, <span class="ident">ChainObserverError</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">dir</span> <span class="op">=</span> <span class="ident">std::env::temp_dir</span>().<span class="ident">join</span>(<span class="string">&quot;mithril_kes_period&quot;</span>);
+        <span class="ident">fs::create_dir_all</span>(<span class="kw-2">&amp;</span><span class="ident">dir</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">ChainObserverError::General</span>(<span class="ident">Box::new</span>(<span class="ident">e</span>)))<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">opcert_file</span> <span class="op">=</span>
+            <span class="ident">std::env::temp_dir</span>().<span class="ident">join</span>(<span class="macro">format!</span>(<span class="string">&quot;opcert_kes_period-{}&quot;</span>, <span class="ident">opcert</span>.<span class="ident">compute_hash</span>()));
+        <span class="ident">opcert</span>
+            .<span class="ident">to_file</span>(<span class="kw-2">&amp;</span><span class="ident">opcert_file</span>)
+            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">ChainObserverError::General</span>(<span class="ident">Box::new</span>(<span class="ident">e</span>)))<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">output</span> <span class="op">=</span> <span class="self">self</span>
+            .<span class="ident">cli_runner</span>
+            .<span class="ident">launch_kes_period</span>(<span class="ident">opcert_file</span>.<span class="ident">to_str</span>().<span class="ident">unwrap</span>())
+            .<span class="kw">await</span>
+            .<span class="ident">map_err</span>(<span class="ident">ChainObserverError::General</span>)<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">first_left_curly_bracket_index</span> <span class="op">=</span> <span class="ident">output</span>.<span class="ident">find</span>(<span class="string">&#39;{&#39;</span>).<span class="ident">unwrap_or_default</span>();
+        <span class="kw">let</span> <span class="ident">output_cleaned</span> <span class="op">=</span> <span class="ident">output</span>.<span class="ident">split_at</span>(<span class="ident">first_left_curly_bracket_index</span>).<span class="number">1</span>;
+        <span class="kw">let</span> <span class="ident">v</span>: <span class="ident">Value</span> <span class="op">=</span> <span class="ident">serde_json::from_str</span>(<span class="ident">output_cleaned</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
+            <span class="ident">ChainObserverError::InvalidContent</span>(
+                <span class="macro">format!</span>(<span class="string">&quot;Error: {:?}, output was = &#39;{}&#39;&quot;</span>, <span class="ident">e</span>, <span class="ident">output</span>).<span class="ident">into</span>(),
+            )
+        })<span class="question-mark">?</span>;
+
+        <span class="kw">if</span> <span class="kw">let</span> <span class="ident">Value::Number</span>(<span class="ident">kes_period</span>) <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">v</span>[<span class="string">&quot;qKesCurrentKesPeriod&quot;</span>] {
+            <span class="prelude-val">Ok</span>(<span class="ident">kes_period</span>.<span class="ident">as_u64</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">p</span><span class="op">|</span> <span class="ident">p</span> <span class="kw">as</span> <span class="ident">KESPeriod</span>))
+        } <span class="kw">else</span> {
+            <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
+        }
+    }
 }
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="kw">mod</span> <span class="ident">tests</span> {
     <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::crypto_helper::ColdKeyGenerator</span>;
+
+    <span class="kw">use</span> <span class="ident">kes_summed_ed25519</span>::{<span class="ident">kes::Sum6Kes</span>, <span class="ident">traits::KesSk</span>};
 
     <span class="kw">struct</span> <span class="ident">TestCliRunner</span> {}
 
@@ -764,6 +944,28 @@ pool1qz2vzszautc2c8mljnqre2857dpmheq7kgt6vav0s38tvvhxm6w   1.051e-6
     &quot;epoch&quot;: 120,
     &quot;slot&quot;: 0,
     &quot;block&quot;: 0
+}&quot;#</span>;
+
+            <span class="prelude-val">Ok</span>(<span class="ident">output</span>.<span class="ident">to_string</span>())
+        }
+
+        <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">launch_kes_period</span>(
+            <span class="kw-2">&amp;</span><span class="self">self</span>,
+            <span class="ident">_opcert_file</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
+        ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Error</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+            <span class="kw">let</span> <span class="ident">output</span> <span class="op">=</span> <span class="string">r#&quot;
+✓ The operational certificate counter agrees with the node protocol state counter
+✓ Operational certificate&#39;s kes period is within the correct KES period interval
+{
+    &quot;qKesNodeStateOperationalCertificateNumber&quot;: 6,
+    &quot;qKesCurrentKesPeriod&quot;: 404,
+    &quot;qKesOnDiskOperationalCertificateNumber&quot;: 6,
+    &quot;qKesRemainingSlotsInKesPeriod&quot;: 3760228,
+    &quot;qKesMaxKESEvolutions&quot;: 62,
+    &quot;qKesKesKeyExpiry&quot;: &quot;2022-03-20T21:44:51Z&quot;,
+    &quot;qKesEndKesInterval&quot;: 434,
+    &quot;qKesStartKesInterval&quot;: 372,
+    &quot;qKesSlotsPerKesPeriod&quot;: 129600
 }&quot;#</span>;
 
             <span class="prelude-val">Ok</span>(<span class="ident">output</span>.<span class="ident">to_string</span>())
@@ -860,6 +1062,20 @@ pool1qz2vzszautc2c8mljnqre2857dpmheq7kgt6vav0s38tvvhxm6w   1.051e-6
         <span class="macro">assert!</span>(<span class="ident">results</span>
             .<span class="ident">get</span>(<span class="string">&quot;pool1qpqvz90w7qsex2al2ejjej0rfgrwsguch307w8fraw7a7adf6g8&quot;</span>)
             .<span class="ident">is_none</span>());
+    }
+
+    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_get_current_kes_period</span>() {
+        <span class="kw">let</span> <span class="ident">keypair</span> <span class="op">=</span> <span class="ident">ColdKeyGenerator::create_deterministic_keypair</span>([<span class="number">0u8</span>; <span class="number">32</span>]);
+        <span class="kw">let</span> (<span class="kw">_</span>, <span class="ident">kes_verification_key</span>) <span class="op">=</span> <span class="ident">Sum6Kes::keygen</span>(<span class="kw-2">&amp;mut</span> [<span class="number">0u8</span>; <span class="number">32</span>]);
+        <span class="kw">let</span> <span class="ident">operational_certificate</span> <span class="op">=</span> <span class="ident">OpCert::new</span>(<span class="ident">kes_verification_key</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="ident">keypair</span>);
+        <span class="kw">let</span> <span class="ident">observer</span> <span class="op">=</span> <span class="ident">CardanoCliChainObserver::new</span>(<span class="ident">Box::new</span>(<span class="ident">TestCliRunner</span> {}));
+        <span class="kw">let</span> <span class="ident">kes_period</span> <span class="op">=</span> <span class="ident">observer</span>
+            .<span class="ident">get_current_kes_period</span>(<span class="kw-2">&amp;</span><span class="ident">operational_certificate</span>)
+            .<span class="kw">await</span>
+            .<span class="ident">unwrap</span>()
+            .<span class="ident">unwrap</span>();
+        <span class="macro">assert_eq!</span>(<span class="number">404</span>, <span class="ident">kes_period</span>);
     }
 }
 </code></pre></div>

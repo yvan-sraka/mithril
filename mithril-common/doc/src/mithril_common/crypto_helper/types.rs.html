@@ -42,49 +42,139 @@
 <span id="42">42</span>
 <span id="43">43</span>
 <span id="44">44</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">blake2</span>::{<span class="ident">digest::consts::U32</span>, <span class="ident">Blake2b</span>};
-<span class="kw">use</span> <span class="ident">ed25519_dalek</span>;
-<span class="kw">use</span> <span class="ident">mithril::key_reg::KeyReg</span>;
-<span class="kw">use</span> <span class="ident">mithril::stm</span>::{
-    <span class="ident">Index</span>, <span class="ident">Stake</span>, <span class="ident">StmAggrSig</span>, <span class="ident">StmAggrVerificationKey</span>, <span class="ident">StmClerk</span>, <span class="ident">StmInitializer</span>, <span class="ident">StmParameters</span>,
-    <span class="ident">StmSig</span>, <span class="ident">StmSigner</span>, <span class="ident">StmVerificationKeyPoP</span>,
+<span id="45">45</span>
+<span id="46">46</span>
+<span id="47">47</span>
+<span id="48">48</span>
+<span id="49">49</span>
+<span id="50">50</span>
+<span id="51">51</span>
+<span id="52">52</span>
+<span id="53">53</span>
+<span id="54">54</span>
+<span id="55">55</span>
+<span id="56">56</span>
+<span id="57">57</span>
+<span id="58">58</span>
+<span id="59">59</span>
+<span id="60">60</span>
+<span id="61">61</span>
+<span id="62">62</span>
+<span id="63">63</span>
+<span id="64">64</span>
+<span id="65">65</span>
+<span id="66">66</span>
+<span id="67">67</span>
+<span id="68">68</span>
+<span id="69">69</span>
+<span id="70">70</span>
+<span id="71">71</span>
+<span id="72">72</span>
+<span id="73">73</span>
+<span id="74">74</span>
+<span id="75">75</span>
+<span id="76">76</span>
+<span id="77">77</span>
+<span id="78">78</span>
+<span id="79">79</span>
+<span id="80">80</span>
+<span id="81">81</span>
+<span id="82">82</span>
+<span id="83">83</span>
+<span id="84">84</span>
+<span id="85">85</span>
+<span id="86">86</span>
+<span id="87">87</span>
+<span id="88">88</span>
+<span id="89">89</span>
+</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::crypto_helper::cardano</span>::{
+    <span class="ident">KeyRegWrapper</span>, <span class="ident">ProtocolRegistrationErrorWrapper</span>, <span class="ident">StmInitializerWrapper</span>,
 };
+
+<span class="kw">use</span> <span class="ident">mithril::stm</span>::{
+    <span class="ident">Index</span>, <span class="ident">Stake</span>, <span class="ident">StmAggrSig</span>, <span class="ident">StmAggrVerificationKey</span>, <span class="ident">StmClerk</span>, <span class="ident">StmParameters</span>, <span class="ident">StmSig</span>, <span class="ident">StmSigner</span>,
+    <span class="ident">StmVerificationKeyPoP</span>,
+};
+<span class="kw">use</span> <span class="ident">mithril::AggregationError</span>;
+
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">test</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;allow_skip_signer_certification&quot;</span>))]</span>
+<span class="kw">use</span> <span class="ident">mithril</span>::{<span class="ident">key_reg::KeyReg</span>, <span class="ident">stm::StmInitializer</span>};
+
+<span class="kw">use</span> <span class="ident">blake2</span>::{<span class="ident">digest::consts::U32</span>, <span class="ident">Blake2b</span>};
+<span class="kw">use</span> <span class="ident">ed25519_dalek</span>;
+<span class="kw">use</span> <span class="ident">kes_summed_ed25519::kes::Sum6KesSig</span>;
+
 <span class="doccomment">/// A protocol version</span>
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ProtocolVersion</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">str</span>;
 
 <span class="comment">// Protocol types alias</span>
 <span class="kw">type</span> <span class="ident">D</span> <span class="op">=</span> <span class="ident">Blake2b</span><span class="op">&lt;</span><span class="ident">U32</span><span class="op">&gt;</span>;
+
 <span class="doccomment">/// The id of a mithril party.</span>
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ProtocolPartyId</span> <span class="op">=</span> <span class="ident">String</span>;
+
 <span class="doccomment">/// Alias of [MithrilCore:Stake](https://mithril.network/mithril-core/doc/mithril/stm/type.Stake.html).</span>
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ProtocolStake</span> <span class="op">=</span> <span class="ident">Stake</span>;
+
 <span class="doccomment">/// A list of [Party Id][ProtocolPartyId] associated with its [Stake][ProtocolStake].</span>
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ProtocolStakeDistribution</span> <span class="op">=</span> <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">ProtocolPartyId</span>, <span class="ident">ProtocolStake</span>)<span class="op">&gt;</span>;
+
 <span class="doccomment">/// Alias of [MithrilCore::StmParameters](https://mithril.network/mithril-core/doc/mithril/stm/struct.StmParameters.html).</span>
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ProtocolParameters</span> <span class="op">=</span> <span class="ident">StmParameters</span>;
+
 <span class="doccomment">/// Alias of [MithrilCore::Index](https://mithril.network/mithril-core/doc/mithril/stm/type.Index.html).</span>
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ProtocolLotteryIndex</span> <span class="op">=</span> <span class="ident">Index</span>;
+
 <span class="doccomment">/// Alias of [MithrilCore:StmSigner](https://mithril.network/mithril-core/doc/mithril/stm/struct.StmSigner.html).</span>
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ProtocolSigner</span> <span class="op">=</span> <span class="ident">StmSigner</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>;
-<span class="doccomment">/// Alias of [MithrilCore:StmInitializer](https://mithril.network/mithril-core/doc/mithril/stm/struct.StmInitializer.html).</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ProtocolInitializer</span> <span class="op">=</span> <span class="ident">StmInitializer</span>;
+
+<span class="doccomment">/// Alias of a wrapper of [MithrilCore:StmInitializer](https://mithril.network/mithril-core/doc/mithril/stm/struct.StmInitializer.html).</span>
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ProtocolInitializer</span> <span class="op">=</span> <span class="ident">StmInitializerWrapper</span>;
+
 <span class="doccomment">/// Alias of [MithrilCore:StmClerk](https://mithril.network/mithril-core/doc/mithril/stm/struct.StmClerk.html).</span>
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ProtocolClerk</span> <span class="op">=</span> <span class="ident">StmClerk</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>;
-<span class="doccomment">/// Alias of [MithrilCore:KeyReg](https://mithril.network/mithril-core/doc/mithril/key_reg/struct.KeyReg.html).</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ProtocolKeyRegistration</span> <span class="op">=</span> <span class="ident">KeyReg</span>;
+
+<span class="doccomment">/// Alias of a wrapper of [MithrilCore:KeyReg](https://mithril.network/mithril-core/doc/mithril/key_reg/struct.KeyReg.html).</span>
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ProtocolKeyRegistration</span> <span class="op">=</span> <span class="ident">KeyRegWrapper</span>;
+
 <span class="doccomment">/// Alias of [MithrilCore:StmSig](https://mithril.network/mithril-core/doc/mithril/stm/struct.StmSig.html).</span>
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ProtocolSingleSignature</span> <span class="op">=</span> <span class="ident">StmSig</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>;
+
 <span class="doccomment">/// Alias of [MithrilCore:StmAggrSig](https://mithril.network/mithril-core/doc/mithril/stm/struct.StmAggrSig.html).</span>
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ProtocolMultiSignature</span> <span class="op">=</span> <span class="ident">StmAggrSig</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>;
+
 <span class="doccomment">/// Alias of [MithrilCore:StmVerificationKeyPoP](https://mithril.network/mithril-core/doc/mithril/stm/type.StmVerificationKeyPoP.html).</span>
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ProtocolSignerVerificationKey</span> <span class="op">=</span> <span class="ident">StmVerificationKeyPoP</span>;
+
+<span class="doccomment">/// Alias of [KES:Sum6KesSig](https://github.com/input-output-hk/kes/blob/master/src/kes.rs).</span>
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ProtocolSignerVerificationKeySignature</span> <span class="op">=</span> <span class="ident">Sum6KesSig</span>;
+
 <span class="doccomment">/// Alias of [MithrilCore:StmAggrVerificationKey](https://mithril.network/mithril-core/doc/mithril/stm/struct.StmAggrVerificationKey.html).</span>
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ProtocolAggregateVerificationKey</span> <span class="op">=</span> <span class="ident">StmAggrVerificationKey</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>;
+
 <span class="doccomment">/// Alias of [Ed25519:PublicKey](https://docs.rs/ed25519-dalek/latest/ed25519_dalek/struct.PublicKey.html).</span>
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ProtocolGenesisVerificationKey</span> <span class="op">=</span> <span class="ident">ed25519_dalek::PublicKey</span>;
+
 <span class="doccomment">/// Alias of [Ed25519:SecretKey](https://docs.rs/ed25519-dalek/latest/ed25519_dalek/struct.SecretKey.html).</span>
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ProtocolGenesisSecretKey</span> <span class="op">=</span> <span class="ident">ed25519_dalek::SecretKey</span>;
+
 <span class="doccomment">/// Alias of [Ed25519:Signature](https://docs.rs/ed25519-dalek/latest/ed25519_dalek/struct.Signature.html).</span>
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ProtocolGenesisSignature</span> <span class="op">=</span> <span class="ident">ed25519_dalek::Signature</span>;
+
+<span class="comment">// Error alias</span>
+<span class="doccomment">/// Alias of a wrapper of [MithrilCore:RegisterError](https://mithril.network/mithril-core/doc/mithril/error/enum.RegisterError.html).</span>
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ProtocolRegistrationError</span> <span class="op">=</span> <span class="ident">ProtocolRegistrationErrorWrapper</span>;
+
+<span class="doccomment">/// Alias of [MithrilCore:AggregationError](https://mithril.network/mithril-core/doc/mithril/error/enum.AggregationError.html).</span>
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ProtocolAggregationError</span> <span class="op">=</span> <span class="ident">AggregationError</span>;
+
+<span class="comment">// Test only</span>
+<span class="doccomment">/// (Test only) Alias of [MithrilCore:StmInitializer](https://mithril.network/mithril-core/doc/mithril/stm/struct.StmInitializer.html).</span>
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">test</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;allow_skip_signer_certification&quot;</span>))]</span>
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ProtocolInitializerNotCertified</span> <span class="op">=</span> <span class="ident">StmInitializer</span>;
+
+<span class="doccomment">/// (Test only) Alias of [MithrilCore:KeyReg](https://mithril.network/mithril-core/doc/mithril/key_reg/struct.KeyReg.html). (Test only)</span>
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">test</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;allow_skip_signer_certification&quot;</span>))]</span>
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">ProtocolKeyRegistrationNotCertified</span> <span class="op">=</span> <span class="ident">KeyReg</span>;
 </code></pre></div>
 </section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="mithril_common" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.64.0 (a55dd71d5 2022-09-19)" ></div></body></html>

@@ -736,14 +736,67 @@
 <span id="736">736</span>
 <span id="737">737</span>
 <span id="738">738</span>
+<span id="739">739</span>
+<span id="740">740</span>
+<span id="741">741</span>
+<span id="742">742</span>
+<span id="743">743</span>
+<span id="744">744</span>
+<span id="745">745</span>
+<span id="746">746</span>
+<span id="747">747</span>
+<span id="748">748</span>
+<span id="749">749</span>
+<span id="750">750</span>
+<span id="751">751</span>
+<span id="752">752</span>
+<span id="753">753</span>
+<span id="754">754</span>
+<span id="755">755</span>
+<span id="756">756</span>
+<span id="757">757</span>
+<span id="758">758</span>
+<span id="759">759</span>
+<span id="760">760</span>
+<span id="761">761</span>
+<span id="762">762</span>
+<span id="763">763</span>
+<span id="764">764</span>
+<span id="765">765</span>
+<span id="766">766</span>
+<span id="767">767</span>
+<span id="768">768</span>
+<span id="769">769</span>
+<span id="770">770</span>
+<span id="771">771</span>
+<span id="772">772</span>
+<span id="773">773</span>
+<span id="774">774</span>
+<span id="775">775</span>
+<span id="776">776</span>
+<span id="777">777</span>
+<span id="778">778</span>
+<span id="779">779</span>
+<span id="780">780</span>
+<span id="781">781</span>
+<span id="782">782</span>
+<span id="783">783</span>
+<span id="784">784</span>
+<span id="785">785</span>
+<span id="786">786</span>
+<span id="787">787</span>
+<span id="788">788</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">use</span> <span class="ident">mockall::automock</span>;
 <span class="kw">use</span> <span class="ident">slog_scope</span>::{<span class="ident">debug</span>, <span class="ident">info</span>, <span class="ident">trace</span>, <span class="ident">warn</span>};
 <span class="kw">use</span> <span class="ident">std::error::Error</span> <span class="kw">as</span> <span class="ident">StdError</span>;
 <span class="kw">use</span> <span class="ident">thiserror::Error</span>;
 
-<span class="kw">use</span> <span class="ident">mithril_common::crypto_helper</span>::{<span class="ident">key_decode_hex</span>, <span class="ident">ProtocolSignerVerificationKey</span>};
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
+<span class="kw">use</span> <span class="ident">mockall::automock</span>;
+
+<span class="kw">use</span> <span class="ident">mithril_common::crypto_helper</span>::{
+    <span class="ident">key_decode_hex</span>, <span class="ident">OpCert</span>, <span class="ident">ProtocolSignerVerificationKey</span>, <span class="ident">SerDeShelleyFileFormat</span>,
+};
 <span class="kw">use</span> <span class="ident">mithril_common::entities</span>::{<span class="ident">PartyId</span>, <span class="ident">ProtocolParameters</span>};
 <span class="kw">use</span> <span class="ident">mithril_common</span>::{
     <span class="ident">crypto_helper::key_encode_hex</span>,
@@ -835,6 +888,9 @@
     <span class="doccomment">/// Could not find the stake for one of the signers.</span>
     <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;No stake associated with this signer, party_id: {0}.&quot;</span>)]</span>
     <span class="ident">NoStakeForSigner</span>(<span class="ident">PartyId</span>),
+    <span class="doccomment">/// Parse file error</span>
+    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;File parse failed: {0}.&quot;</span>)]</span>
+    <span class="ident">FileParse</span>(<span class="ident">String</span>),
     <span class="doccomment">/// General subsystem error</span>
     <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Subsystem unavailable: {0}.&quot;</span>)]</span>
     <span class="ident">SubsystemUnavailable</span>(<span class="ident">String</span>),
@@ -904,12 +960,49 @@
             .<span class="kw">await</span><span class="question-mark">?</span>
             .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">RuntimeError::NoValueError</span>(<span class="string">&quot;current_stake_distribution&quot;</span>.<span class="ident">to_string</span>()))<span class="question-mark">?</span>;
         <span class="kw">let</span> <span class="ident">stake</span> <span class="op">=</span> <span class="ident">stake_distribution</span>
-            .<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">config</span>.<span class="ident">party_id</span>)
+            .<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">services</span>.<span class="ident">single_signer</span>.<span class="ident">get_party_id</span>())
             .<span class="ident">ok_or</span>(<span class="ident">RuntimeError::NoStakeForSelf</span>())<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">protocol_initializer</span> <span class="op">=</span>
-            <span class="ident">MithrilProtocolInitializerBuilder::new</span>().<span class="ident">build</span>(<span class="ident">stake</span>, <span class="ident">protocol_parameters</span>)<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">verification_key</span> <span class="op">=</span> <span class="ident">key_encode_hex</span>(<span class="ident">protocol_initializer</span>.<span class="ident">verification_key</span>())<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">signer</span> <span class="op">=</span> <span class="ident">Signer::new</span>(<span class="self">self</span>.<span class="ident">config</span>.<span class="ident">party_id</span>.<span class="ident">to_owned</span>(), <span class="ident">verification_key</span>);
+        <span class="kw">let</span> (<span class="ident">operational_certificate</span>, <span class="ident">operational_certificate_encoded</span>) <span class="op">=</span>
+            <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">config</span>.<span class="ident">operational_certificate_path</span> {
+                <span class="prelude-val">Some</span>(<span class="ident">operational_certificate_path</span>) =&gt; {
+                    <span class="kw">let</span> <span class="ident">opcert</span>: <span class="ident">OpCert</span> <span class="op">=</span>
+                        <span class="ident">OpCert::from_file</span>(<span class="ident">operational_certificate_path</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> {
+                            <span class="ident">RuntimeError::FileParse</span>(<span class="string">&quot;operational_certificate_path&quot;</span>.<span class="ident">to_string</span>())
+                        })<span class="question-mark">?</span>;
+                    (<span class="prelude-val">Some</span>(<span class="ident">opcert</span>.<span class="ident">clone</span>()), <span class="prelude-val">Some</span>(<span class="ident">key_encode_hex</span>(<span class="ident">opcert</span>)<span class="question-mark">?</span>))
+                }
+                <span class="kw">_</span> =&gt; (<span class="prelude-val">None</span>, <span class="prelude-val">None</span>),
+            };
+
+        <span class="kw">let</span> <span class="ident">kes_period</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">operational_certificate</span> {
+            <span class="prelude-val">Some</span>(<span class="ident">operational_certificate</span>) =&gt; <span class="prelude-val">Some</span>(
+                <span class="self">self</span>.<span class="ident">services</span>
+                    .<span class="ident">chain_observer</span>
+                    .<span class="ident">get_current_kes_period</span>(<span class="kw-2">&amp;</span><span class="ident">operational_certificate</span>)
+                    .<span class="kw">await</span><span class="question-mark">?</span>
+                    .<span class="ident">unwrap_or_default</span>(),
+            ),
+            <span class="prelude-val">None</span> =&gt; <span class="prelude-val">None</span>,
+        };
+        <span class="kw">let</span> <span class="ident">protocol_initializer</span> <span class="op">=</span> <span class="ident">MithrilProtocolInitializerBuilder::new</span>().<span class="ident">build</span>(
+            <span class="ident">stake</span>,
+            <span class="ident">protocol_parameters</span>,
+            <span class="self">self</span>.<span class="ident">config</span>.<span class="ident">kes_secret_key_path</span>.<span class="ident">clone</span>(),
+            <span class="ident">kes_period</span>,
+        )<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">verification_key_encoded</span> <span class="op">=</span> <span class="ident">key_encode_hex</span>(<span class="ident">protocol_initializer</span>.<span class="ident">verification_key</span>())<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">verification_key_signature_encoded</span> <span class="op">=</span>
+            <span class="kw">match</span> <span class="ident">protocol_initializer</span>.<span class="ident">verification_key_signature</span>() {
+                <span class="prelude-val">Some</span>(<span class="ident">verification_signature</span>) =&gt; <span class="prelude-val">Some</span>(<span class="ident">key_encode_hex</span>(<span class="ident">verification_signature</span>)<span class="question-mark">?</span>),
+                <span class="kw">_</span> =&gt; <span class="prelude-val">None</span>,
+            };
+        <span class="kw">let</span> <span class="ident">signer</span> <span class="op">=</span> <span class="ident">Signer::new</span>(
+            <span class="self">self</span>.<span class="ident">services</span>.<span class="ident">single_signer</span>.<span class="ident">get_party_id</span>(),
+            <span class="ident">verification_key_encoded</span>,
+            <span class="ident">verification_key_signature_encoded</span>,
+            <span class="ident">operational_certificate_encoded</span>,
+            <span class="ident">kes_period</span>,
+        );
         <span class="self">self</span>.<span class="ident">services</span>
             .<span class="ident">certificate_handler</span>
             .<span class="ident">register_signer</span>(<span class="kw-2">&amp;</span><span class="ident">signer</span>)
@@ -948,7 +1041,9 @@
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">StdError</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: can_i_sign&quot;</span>);
 
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">signer</span>) <span class="op">=</span> <span class="ident">pending_certificate</span>.<span class="ident">get_signer</span>(<span class="self">self</span>.<span class="ident">config</span>.<span class="ident">party_id</span>.<span class="ident">to_owned</span>()) {
+        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">signer</span>) <span class="op">=</span>
+            <span class="ident">pending_certificate</span>.<span class="ident">get_signer</span>(<span class="self">self</span>.<span class="ident">services</span>.<span class="ident">single_signer</span>.<span class="ident">get_party_id</span>())
+        {
             <span class="macro">debug!</span>(<span class="string">&quot; &gt; got a Signer from pending certificate&quot;</span>);
 
             <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">protocol_initializer</span>) <span class="op">=</span> <span class="self">self</span>
@@ -1011,6 +1106,9 @@
             <span class="ident">signers_with_stake</span>.<span class="ident">push</span>(<span class="ident">SignerWithStake::new</span>(
                 <span class="ident">signer</span>.<span class="ident">party_id</span>.<span class="ident">to_owned</span>(),
                 <span class="ident">signer</span>.<span class="ident">verification_key</span>.<span class="ident">to_owned</span>(),
+                <span class="ident">signer</span>.<span class="ident">verification_key_signature</span>.<span class="ident">to_owned</span>(),
+                <span class="ident">signer</span>.<span class="ident">operational_certificate</span>.<span class="ident">to_owned</span>(),
+                <span class="ident">signer</span>.<span class="ident">kes_period</span>.<span class="ident">to_owned</span>(),
                 <span class="kw-2">*</span><span class="ident">stake</span>,
             ));
             <span class="macro">trace!</span>(
@@ -1184,16 +1282,18 @@
             <span class="ident">db_directory</span>: <span class="ident">PathBuf::new</span>(),
             <span class="ident">network</span>: <span class="string">&quot;whatever&quot;</span>.<span class="ident">to_string</span>(),
             <span class="ident">network_magic</span>: <span class="prelude-val">None</span>,
-            <span class="ident">party_id</span>: <span class="string">&quot;1&quot;</span>.<span class="ident">to_string</span>(),
+            <span class="ident">party_id</span>: <span class="prelude-val">Some</span>(<span class="string">&quot;1&quot;</span>.<span class="ident">to_string</span>()),
             <span class="ident">run_interval</span>: <span class="number">100</span>,
             <span class="ident">data_stores_directory</span>: <span class="ident">PathBuf::new</span>(),
+            <span class="ident">kes_secret_key_path</span>: <span class="prelude-val">None</span>,
+            <span class="ident">operational_certificate_path</span>: <span class="prelude-val">None</span>,
             <span class="ident">store_retention_limit</span>: <span class="prelude-val">None</span>,
         };
 
-        <span class="ident">SignerRunner</span> {
-            <span class="ident">config</span>: <span class="ident">maybe_config</span>.<span class="ident">unwrap_or</span>(<span class="ident">config</span>),
-            <span class="ident">services</span>: <span class="ident">maybe_services</span>.<span class="ident">unwrap_or</span>(<span class="ident">services</span>),
-        }
+        <span class="ident">SignerRunner::new</span>(
+            <span class="ident">maybe_config</span>.<span class="ident">unwrap_or</span>(<span class="ident">config</span>),
+            <span class="ident">maybe_services</span>.<span class="ident">unwrap_or</span>(<span class="ident">services</span>),
+        )
     }
 
     <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
@@ -1307,7 +1407,7 @@
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">signer</span> <span class="op">=</span> <span class="kw-2">&amp;mut</span> <span class="ident">pending_certificate</span>.<span class="ident">signers</span>[<span class="number">0</span>];
 
         <span class="kw">let</span> <span class="ident">protocol_initializer</span> <span class="op">=</span> <span class="ident">MithrilProtocolInitializerBuilder::new</span>()
-            .<span class="ident">build</span>(<span class="kw-2">&amp;</span><span class="number">100</span>, <span class="kw-2">&amp;</span><span class="ident">fake_data::protocol_parameters</span>())
+            .<span class="ident">build</span>(<span class="kw-2">&amp;</span><span class="number">100</span>, <span class="kw-2">&amp;</span><span class="ident">fake_data::protocol_parameters</span>(), <span class="prelude-val">None</span>, <span class="prelude-val">None</span>)
             .<span class="ident">expect</span>(<span class="string">&quot;build protocol initializer should not fail&quot;</span>);
         <span class="ident">signer</span>.<span class="ident">verification_key</span> <span class="op">=</span> <span class="ident">key_encode_hex</span>(<span class="ident">protocol_initializer</span>.<span class="ident">verification_key</span>()).<span class="ident">unwrap</span>();
         <span class="ident">protocol_initializer_store</span>
@@ -1338,7 +1438,7 @@
             .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
         <span class="kw">let</span> <span class="ident">stake_distribution</span> <span class="op">=</span> <span class="ident">expected</span>
             .<span class="ident">clone</span>()
-            .<span class="ident">into_iter</span>()
+            .<span class="ident">iter</span>()
             .<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">into</span>())
             .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">StakeDistribution</span><span class="op">&gt;</span>();
 
@@ -1363,8 +1463,10 @@
             .<span class="kw">await</span>
             .<span class="ident">expect</span>(<span class="string">&quot;get_current_beacon should not fail&quot;</span>);
         <span class="kw">let</span> <span class="ident">signers</span> <span class="op">=</span> <span class="ident">setup_signers</span>(<span class="number">5</span>, <span class="kw-2">&amp;</span><span class="ident">setup_protocol_parameters</span>());
-        <span class="kw">let</span> (<span class="ident">party_id</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="ident">protocol_initializer</span>) <span class="op">=</span> <span class="ident">signers</span>.<span class="ident">first</span>().<span class="ident">unwrap</span>();
-        <span class="kw">let</span> <span class="ident">single_signer</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">MithrilSingleSigner::new</span>(<span class="ident">party_id</span>.<span class="ident">to_string</span>()));
+        <span class="kw">let</span> (<span class="ident">signer_with_stake</span>, <span class="kw">_</span>, <span class="ident">protocol_initializer</span>) <span class="op">=</span> <span class="ident">signers</span>.<span class="ident">first</span>().<span class="ident">unwrap</span>();
+        <span class="kw">let</span> <span class="ident">single_signer</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">MithrilSingleSigner::new</span>(
+            <span class="ident">signer_with_stake</span>.<span class="ident">party_id</span>.<span class="ident">to_owned</span>(),
+        ));
         <span class="ident">services</span>.<span class="ident">single_signer</span> <span class="op">=</span> <span class="ident">single_signer</span>.<span class="ident">clone</span>();
         <span class="ident">services</span>
             .<span class="ident">protocol_initializer_store</span>
@@ -1380,9 +1482,7 @@
 
         <span class="kw">let</span> <span class="ident">next_signers</span> <span class="op">=</span> <span class="ident">signers</span>
             .<span class="ident">iter</span>()
-            .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">p</span>, <span class="ident">s</span>, <span class="ident">vk</span>, <span class="kw">_</span>, <span class="kw">_</span>)<span class="op">|</span> {
-                <span class="ident">SignerWithStake::new</span>(<span class="ident">p</span>.<span class="ident">to_string</span>(), <span class="ident">key_encode_hex</span>(<span class="ident">vk</span>).<span class="ident">unwrap</span>(), <span class="kw-2">*</span><span class="ident">s</span>)
-            })
+            .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">signer_with_stake</span>, <span class="kw">_</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="ident">signer_with_stake</span>.<span class="ident">to_owned</span>())
             .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">expected</span> <span class="op">=</span> <span class="ident">ProtocolMessage::new</span>();
         <span class="ident">expected</span>.<span class="ident">set_message_part</span>(
@@ -1414,8 +1514,10 @@
             .<span class="kw">await</span>
             .<span class="ident">expect</span>(<span class="string">&quot;get_current_beacon should not fail&quot;</span>);
         <span class="kw">let</span> <span class="ident">signers</span> <span class="op">=</span> <span class="ident">setup_signers</span>(<span class="number">5</span>, <span class="kw-2">&amp;</span><span class="ident">setup_protocol_parameters</span>());
-        <span class="kw">let</span> (<span class="ident">party_id</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="ident">protocol_initializer</span>) <span class="op">=</span> <span class="ident">signers</span>.<span class="ident">first</span>().<span class="ident">unwrap</span>();
-        <span class="kw">let</span> <span class="ident">single_signer</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">MithrilSingleSigner::new</span>(<span class="ident">party_id</span>.<span class="ident">to_string</span>()));
+        <span class="kw">let</span> (<span class="ident">signer_with_stake</span>, <span class="kw">_</span>, <span class="ident">protocol_initializer</span>) <span class="op">=</span> <span class="ident">signers</span>.<span class="ident">first</span>().<span class="ident">unwrap</span>();
+        <span class="kw">let</span> <span class="ident">single_signer</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">MithrilSingleSigner::new</span>(
+            <span class="ident">signer_with_stake</span>.<span class="ident">party_id</span>.<span class="ident">to_string</span>(),
+        ));
         <span class="ident">services</span>.<span class="ident">single_signer</span> <span class="op">=</span> <span class="ident">single_signer</span>.<span class="ident">clone</span>();
         <span class="ident">services</span>
             .<span class="ident">protocol_initializer_store</span>
@@ -1430,9 +1532,7 @@
             .<span class="ident">expect</span>(<span class="string">&quot;save_protocol_initializer should not fail&quot;</span>);
         <span class="kw">let</span> <span class="ident">signers</span> <span class="op">=</span> <span class="ident">signers</span>
             .<span class="ident">iter</span>()
-            .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">p</span>, <span class="ident">s</span>, <span class="ident">vk</span>, <span class="kw">_</span>, <span class="kw">_</span>)<span class="op">|</span> {
-                <span class="ident">SignerWithStake::new</span>(<span class="ident">p</span>.<span class="ident">to_string</span>(), <span class="ident">key_encode_hex</span>(<span class="ident">vk</span>).<span class="ident">unwrap</span>(), <span class="kw-2">*</span><span class="ident">s</span>)
-            })
+            .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">signer_with_stake</span>, <span class="kw">_</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="ident">signer_with_stake</span>.<span class="ident">to_owned</span>())
             .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
 
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">message</span> <span class="op">=</span> <span class="ident">ProtocolMessage::new</span>();

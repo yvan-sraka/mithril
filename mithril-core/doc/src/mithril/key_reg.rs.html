@@ -147,22 +147,21 @@
 <span id="147">147</span>
 <span id="148">148</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Key registration functionality.</span>
-
+<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::stm::Stake</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::error::RegisterError</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::merkle_tree</span>::{<span class="ident">MTLeaf</span>, <span class="ident">MerkleTree</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::multi_sig</span>::{<span class="ident">VerificationKey</span>, <span class="ident">VerificationKeyPoP</span>};
 <span class="kw">use</span> <span class="ident">blake2::digest::Digest</span>;
 <span class="kw">use</span> <span class="ident">std::collections::hash_map::Entry</span>;
 <span class="kw">use</span> <span class="ident">std::collections::HashMap</span>;
 <span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
 
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::stm::Stake</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::merkle_tree</span>::{<span class="ident">MTLeaf</span>, <span class="ident">MerkleTree</span>};
-
 <span class="doccomment">/// Stores a registered party with its public key and the associated stake.</span>
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">RegParty</span> <span class="op">=</span> <span class="ident">MTLeaf</span>;
 
 <span class="doccomment">/// Struct that collects public keys and stakes of parties.</span>
 <span class="doccomment">/// Each participant (both the signers and the clerks) need to run their own instance of the key registration.</span>
+<span class="comment">// todo: replace with KeyReg</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Default</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">KeyReg</span> {
     <span class="ident">keys</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">VerificationKey</span>, <span class="ident">Stake</span><span class="op">&gt;</span>,
@@ -182,6 +181,7 @@
 
 <span class="kw">impl</span> <span class="ident">KeyReg</span> {
     <span class="doccomment">/// Initialise an empty `KeyReg`.</span>
+    <span class="doccomment">/// todo: remove this init function</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">init</span>() -&gt; <span class="self">Self</span> {
         <span class="self">Self</span> {
             <span class="ident">keys</span>: <span class="ident">HashMap::new</span>(),
@@ -282,7 +282,7 @@
                         <span class="macro">assert!</span>(<span class="ident">a</span>.<span class="ident">check</span>().<span class="ident">is_err</span>());
                     }
                     <span class="prelude-val">Err</span>(<span class="ident">RegisterError::SerializationError</span>) =&gt; <span class="macro">unreachable!</span>(),
-                    <span class="prelude-val">Err</span>(<span class="ident">RegisterError::UnregisteredInitializer</span>) =&gt; <span class="macro">unreachable!</span>(),
+                    <span class="kw">_</span> =&gt; <span class="macro">unreachable!</span>(),
                 }
             }
 
