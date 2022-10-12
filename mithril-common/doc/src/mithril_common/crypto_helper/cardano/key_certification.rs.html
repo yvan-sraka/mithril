@@ -326,6 +326,15 @@
 <span id="326">326</span>
 <span id="327">327</span>
 <span id="328">328</span>
+<span id="329">329</span>
+<span id="330">330</span>
+<span id="331">331</span>
+<span id="332">332</span>
+<span id="333">333</span>
+<span id="334">334</span>
+<span id="335">335</span>
+<span id="336">336</span>
+<span id="337">337</span>
 </pre><pre class="rust"><code><span class="doccomment">//! API for mithril key certification.</span>
 <span class="doccomment">//! Includes the wrappers for StmInitializer and KeyReg, and ProtocolRegistrationErrorWrapper.</span>
 <span class="doccomment">//! These wrappers allows keeping mithril-core agnostic to Cardano, while providing some</span>
@@ -527,17 +536,27 @@
             <span class="ident">opcert</span>
                 .<span class="ident">validate</span>()
                 .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">ProtocolRegistrationErrorWrapper::OpCertInvalid</span>)<span class="question-mark">?</span>;
-            <span class="ident">kes_sig</span>
-                .<span class="ident">ok_or</span>(<span class="ident">ProtocolRegistrationErrorWrapper::KesSignatureMissing</span>)<span class="question-mark">?</span>
-                .<span class="ident">verify</span>(
-                    <span class="ident">kes_period</span>.<span class="ident">ok_or</span>(<span class="ident">ProtocolRegistrationErrorWrapper::KesPeriodMissing</span>)<span class="question-mark">?</span>,
-                    <span class="kw-2">&amp;</span><span class="ident">opcert</span>.<span class="ident">kes_vk</span>,
-                    <span class="kw-2">&amp;</span><span class="ident">pk</span>.<span class="ident">to_bytes</span>(),
-                )
-                .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">ProtocolRegistrationErrorWrapper::KesSignatureInvalid</span>)<span class="question-mark">?</span>;
-            <span class="ident">opcert</span>
-                .<span class="ident">compute_protocol_party_id</span>()
-                .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">ProtocolRegistrationErrorWrapper::PoolAddressEncoding</span>)<span class="question-mark">?</span>
+            <span class="comment">// TODO: List of eligible indices to be defined by CurrentKesPeriod and StartKesPeriod</span>
+            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pool_id</span> <span class="op">=</span> <span class="prelude-val">None</span>;
+            <span class="kw">let</span> <span class="ident">sig</span> <span class="op">=</span> <span class="ident">kes_sig</span>.<span class="ident">ok_or</span>(<span class="ident">ProtocolRegistrationErrorWrapper::KesSignatureMissing</span>)<span class="question-mark">?</span>;
+            <span class="kw">for</span> <span class="ident">kes_period_try</span> <span class="kw">in</span> <span class="number">0</span>..<span class="number">64</span> {
+                <span class="kw">if</span> <span class="ident">sig</span>
+                    .<span class="ident">verify</span>(<span class="ident">kes_period_try</span>, <span class="kw-2">&amp;</span><span class="ident">opcert</span>.<span class="ident">kes_vk</span>, <span class="kw-2">&amp;</span><span class="ident">pk</span>.<span class="ident">to_bytes</span>())
+                    .<span class="ident">is_ok</span>()
+                {
+                    <span class="macro">println!</span>(
+                        <span class="string">&quot;WARNING: KES Signature verified for TryKesPeriod={}, CurrentKesPeriod={:?}, and StartKesPeriod={}&quot;</span>,
+                        <span class="ident">kes_period_try</span>, <span class="ident">kes_period</span>, <span class="kw-2">&amp;</span><span class="ident">opcert</span>.<span class="ident">start_kes_period</span>
+                    );
+                    <span class="ident">pool_id</span> <span class="op">=</span> <span class="prelude-val">Some</span>(
+                        <span class="ident">opcert</span>
+                            .<span class="ident">compute_protocol_party_id</span>()
+                            .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">ProtocolRegistrationErrorWrapper::PoolAddressEncoding</span>)<span class="question-mark">?</span>,
+                    );
+                    <span class="kw">break</span>;
+                }
+            }
+            <span class="ident">pool_id</span>.<span class="ident">ok_or</span>(<span class="ident">ProtocolRegistrationErrorWrapper::KesSignatureInvalid</span>)<span class="question-mark">?</span>
         } <span class="kw">else</span> {
             <span class="macro">println!</span>(<span class="string">&quot;WARNING: Signer certification is skipped! {:?}&quot;</span>, <span class="ident">party_id</span>);
             <span class="ident">party_id</span>.<span class="ident">ok_or</span>(<span class="ident">ProtocolRegistrationErrorWrapper::PartyIdMissing</span>)<span class="question-mark">?</span>
@@ -549,7 +568,6 @@
                 .<span class="ident">map_err</span>(<span class="ident">ProtocolRegistrationErrorWrapper::CoreRegister</span>)<span class="question-mark">?</span>;
             <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">pool_id_bech32</span>);
         }
-
         <span class="prelude-val">Err</span>(<span class="ident">ProtocolRegistrationErrorWrapper::PartyIdNonExisting</span>)
     }
 
