@@ -210,6 +210,12 @@
 <span id="210">210</span>
 <span id="211">211</span>
 <span id="212">212</span>
+<span id="213">213</span>
+<span id="214">214</span>
+<span id="215">215</span>
+<span id="216">216</span>
+<span id="217">217</span>
+<span id="218">218</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::http_server::routes::middlewares</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::DependencyManager</span>;
 <span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
@@ -257,11 +263,17 @@
             }
             <span class="prelude-val">Err</span>(<span class="ident">ProtocolError::Codec</span>(<span class="ident">err</span>)) =&gt; {
                 <span class="macro">warn!</span>(<span class="string">&quot;register_signer::failed_signer_decoding&quot;</span>; <span class="string">&quot;error&quot;</span> =&gt; <span class="question-mark">?</span><span class="ident">err</span>);
-                <span class="prelude-val">Ok</span>(<span class="ident">reply::empty</span>(<span class="ident">StatusCode::BAD_REQUEST</span>))
+                <span class="prelude-val">Ok</span>(<span class="ident">reply::bad_request</span>(
+                    <span class="string">&quot;failed_signer_decoding&quot;</span>.<span class="ident">to_string</span>(),
+                    <span class="ident">err</span>,
+                ))
             }
             <span class="prelude-val">Err</span>(<span class="ident">ProtocolError::FailedSignerRegistration</span>(<span class="ident">err</span>)) =&gt; {
                 <span class="macro">warn!</span>(<span class="string">&quot;register_signer::failed_signer_registration&quot;</span>; <span class="string">&quot;error&quot;</span> =&gt; <span class="question-mark">?</span><span class="ident">err</span>);
-                <span class="prelude-val">Ok</span>(<span class="ident">reply::empty</span>(<span class="ident">StatusCode::BAD_REQUEST</span>))
+                <span class="prelude-val">Ok</span>(<span class="ident">reply::bad_request</span>(
+                    <span class="string">&quot;failed_signer_registration&quot;</span>.<span class="ident">to_string</span>(),
+                    <span class="ident">err</span>.<span class="ident">to_string</span>(),
+                ))
             }
             <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; {
                 <span class="macro">warn!</span>(<span class="string">&quot;register_signer::error&quot;</span>; <span class="string">&quot;error&quot;</span> =&gt; <span class="question-mark">?</span><span class="ident">err</span>);
