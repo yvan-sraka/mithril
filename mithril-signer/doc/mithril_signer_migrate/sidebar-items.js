@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":[["MigrationCommand",""],["StoreType",""]],"fn":[["main",""],["migrate",""],["migrate_one",""]],"struct":[["Args",""],["AutomaticMigrationCommand",""],["ManualMigrationCommand",""]],"type":[["ApplicationResult",""]]};
