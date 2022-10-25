@@ -287,6 +287,15 @@
 <span id="287">287</span>
 <span id="288">288</span>
 <span id="289">289</span>
+<span id="290">290</span>
+<span id="291">291</span>
+<span id="292">292</span>
+<span id="293">293</span>
+<span id="294">294</span>
+<span id="295">295</span>
+<span id="296">296</span>
+<span id="297">297</span>
+<span id="298">298</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">config</span>::{<span class="ident">ConfigError</span>, <span class="ident">Map</span>, <span class="ident">Source</span>, <span class="ident">Value</span>, <span class="ident">ValueKind</span>};
 <span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
 <span class="kw">use</span> <span class="ident">std::error::Error</span>;
@@ -337,6 +346,9 @@
 
     <span class="doccomment">/// Type of snapshot uploader to use</span>
     <span class="kw">pub</span> <span class="ident">snapshot_uploader_type</span>: <span class="ident">SnapshotUploaderType</span>,
+
+    <span class="doccomment">/// Bucket name where the snapshots are stored if snapshot_uploader_type is Gcp</span>
+    <span class="kw">pub</span> <span class="ident">snapshot_bucket_name</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
 
     <span class="doccomment">/// Server listening IP</span>
     <span class="kw">pub</span> <span class="ident">server_ip</span>: <span class="ident">String</span>,
@@ -398,7 +410,11 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">build_snapshot_store</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">SnapshotStore</span><span class="op">&gt;</span>, <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Error</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="kw">match</span> <span class="self">self</span>.<span class="ident">snapshot_store_type</span> {
             <span class="ident">SnapshotStoreType::Gcp</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">Arc::new</span>(<span class="ident">RemoteSnapshotStore::new</span>(
-                <span class="ident">Box::new</span>(<span class="ident">GcpFileUploader::default</span>()),
+                <span class="ident">Box::new</span>(<span class="ident">GcpFileUploader::new</span>(
+                    <span class="self">self</span>.<span class="ident">snapshot_bucket_name</span>.<span class="ident">to_owned</span>().<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> {
+                        <span class="ident">ConfigError::Message</span>(<span class="string">&quot;missing snapshot bucket name&quot;</span>.<span class="ident">to_string</span>())
+                    })<span class="question-mark">?</span>,
+                )),
                 <span class="self">self</span>.<span class="ident">url_snapshot_manifest</span>.<span class="ident">clone</span>(),
             ))),
             <span class="ident">SnapshotStoreType::Local</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">Arc::new</span>(<span class="ident">LocalSnapshotStore::new</span>(
@@ -412,15 +428,17 @@
     }
 
     <span class="doccomment">/// Create a snapshot uploader from configuration settings.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">build_snapshot_uploader</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">SnapshotUploader</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">build_snapshot_uploader</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">SnapshotUploader</span><span class="op">&gt;</span>, <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Error</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="kw">match</span> <span class="self">self</span>.<span class="ident">snapshot_uploader_type</span> {
-            <span class="ident">SnapshotUploaderType::Gcp</span> =&gt; <span class="ident">Arc::new</span>(<span class="ident">RemoteSnapshotUploader::new</span>(<span class="ident">Box::new</span>(
-                <span class="ident">GcpFileUploader::default</span>(),
-            ))),
-            <span class="ident">SnapshotUploaderType::Local</span> =&gt; <span class="ident">Arc::new</span>(<span class="ident">LocalSnapshotUploader::new</span>(
+            <span class="ident">SnapshotUploaderType::Gcp</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">Arc::new</span>(<span class="ident">RemoteSnapshotUploader::new</span>(<span class="ident">Box::new</span>(
+                <span class="ident">GcpFileUploader::new</span>(<span class="self">self</span>.<span class="ident">snapshot_bucket_name</span>.<span class="ident">to_owned</span>().<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> {
+                    <span class="ident">ConfigError::Message</span>(<span class="string">&quot;missing snapshot bucket name&quot;</span>.<span class="ident">to_string</span>())
+                })<span class="question-mark">?</span>),
+            )))),
+            <span class="ident">SnapshotUploaderType::Local</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">Arc::new</span>(<span class="ident">LocalSnapshotUploader::new</span>(
                 <span class="self">self</span>.<span class="ident">get_server_url</span>(),
                 <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">snapshot_directory</span>,
-            )),
+            ))),
         }
     }
 
