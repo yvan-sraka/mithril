@@ -1,3 +1,0 @@
-(function() {var implementors = {};
-implementors["mithril"] = [{"text":"impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.64.0/core/default/trait.Default.html\" title=\"trait core::default::Default\">Default</a> for <a class=\"struct\" href=\"mithril/key_reg/struct.KeyReg.html\" title=\"struct mithril::key_reg::KeyReg\">KeyReg</a>","synthetic":false,"types":["mithril::key_reg::KeyReg"]}];
-if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

@@ -1,3 +1,0 @@
-(function() {var implementors = {};
-implementors["mithril_aggregator"] = [{"text":"impl CommandFactory for <a class=\"struct\" href=\"mithril_aggregator/struct.MainOpts.html\" title=\"struct mithril_aggregator::MainOpts\">MainOpts</a>","synthetic":false,"types":["mithril_aggregator::command_args::MainOpts"]}];
-if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

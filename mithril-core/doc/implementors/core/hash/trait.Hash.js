@@ -1,3 +1,0 @@
-(function() {var implementors = {};
-implementors["mithril"] = [{"text":"impl&lt;D:&nbsp;<a class=\"trait\" href=\"https://doc.rust-lang.org/1.64.0/core/clone/trait.Clone.html\" title=\"trait core::clone::Clone\">Clone</a> + Digest&gt; <a class=\"trait\" href=\"https://doc.rust-lang.org/1.64.0/core/hash/trait.Hash.html\" title=\"trait core::hash::Hash\">Hash</a> for <a class=\"struct\" href=\"mithril/stm/struct.StmSig.html\" title=\"struct mithril::stm::StmSig\">StmSig</a>&lt;D&gt;","synthetic":false,"types":["mithril::stm::StmSig"]}];
-if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

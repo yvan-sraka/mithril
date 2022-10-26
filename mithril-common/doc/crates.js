@@ -1,1 +1,0 @@
-window.ALL_CRATES = ["mithril_common","mithril_signer"];
