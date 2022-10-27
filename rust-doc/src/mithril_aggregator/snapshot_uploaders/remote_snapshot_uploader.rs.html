@@ -68,6 +68,12 @@
 <span id="68">68</span>
 <span id="69">69</span>
 <span id="70">70</span>
+<span id="71">71</span>
+<span id="72">72</span>
+<span id="73">73</span>
+<span id="74">74</span>
+<span id="75">75</span>
+<span id="76">76</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::snapshot_uploaders</span>::{<span class="ident">SnapshotLocation</span>, <span class="ident">SnapshotUploader</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::tools::RemoteFileUploader</span>;
 <span class="kw">use</span> <span class="ident">std::path::Path</span>;
@@ -77,14 +83,18 @@
 
 <span class="doccomment">/// GCPSnapshotUploader is a snapshot uploader working using Google Cloud Platform services</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">RemoteSnapshotUploader</span> {
+    <span class="ident">bucket</span>: <span class="ident">String</span>,
     <span class="ident">file_uploader</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">RemoteFileUploader</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">RemoteSnapshotUploader</span> {
     <span class="doccomment">/// GCPSnapshotUploader factory</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">file_uploader</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">RemoteFileUploader</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">file_uploader</span>: <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">RemoteFileUploader</span><span class="op">&gt;</span>, <span class="ident">bucket</span>: <span class="ident">String</span>) -&gt; <span class="self">Self</span> {
         <span class="macro">debug!</span>(<span class="string">&quot;New GCPSnapshotUploader created&quot;</span>);
-        <span class="self">Self</span> { <span class="ident">file_uploader</span> }
+        <span class="self">Self</span> {
+            <span class="ident">bucket</span>,
+            <span class="ident">file_uploader</span>,
+        }
     }
 }
 
@@ -93,8 +103,8 @@
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">upload_snapshot</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">snapshot_filepath</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">SnapshotLocation</span>, <span class="ident">String</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">archive_name</span> <span class="op">=</span> <span class="ident">snapshot_filepath</span>.<span class="ident">file_name</span>().<span class="ident">unwrap</span>().<span class="ident">to_str</span>().<span class="ident">unwrap</span>();
         <span class="kw">let</span> <span class="ident">location</span> <span class="op">=</span> <span class="macro">format!</span>(
-            <span class="string">&quot;https://storage.googleapis.com/cardano-testnet/{}&quot;</span>,
-            <span class="ident">archive_name</span>
+            <span class="string">&quot;https://storage.googleapis.com/{}/{}&quot;</span>,
+            <span class="self">self</span>.<span class="ident">bucket</span>, <span class="ident">archive_name</span>
         );
 
         <span class="self">self</span>.<span class="ident">file_uploader</span>.<span class="ident">upload_file</span>(<span class="ident">snapshot_filepath</span>).<span class="kw">await</span><span class="question-mark">?</span>;
@@ -114,7 +124,8 @@
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_upload_snapshot_ok</span>() {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">file_uploader</span> <span class="op">=</span> <span class="ident">MockRemoteFileUploader::new</span>();
         <span class="ident">file_uploader</span>.<span class="ident">expect_upload_file</span>().<span class="ident">return_const</span>(<span class="prelude-val">Ok</span>(()));
-        <span class="kw">let</span> <span class="ident">snapshot_uploader</span> <span class="op">=</span> <span class="ident">RemoteSnapshotUploader::new</span>(<span class="ident">Box::new</span>(<span class="ident">file_uploader</span>));
+        <span class="kw">let</span> <span class="ident">snapshot_uploader</span> <span class="op">=</span>
+            <span class="ident">RemoteSnapshotUploader::new</span>(<span class="ident">Box::new</span>(<span class="ident">file_uploader</span>), <span class="string">&quot;cardano-testnet&quot;</span>.<span class="ident">to_string</span>());
         <span class="kw">let</span> <span class="ident">snapshot_filepath</span> <span class="op">=</span> <span class="ident">Path::new</span>(<span class="string">&quot;test/snapshot.xxx.tar.gz&quot;</span>);
         <span class="kw">let</span> <span class="ident">expected_location</span> <span class="op">=</span>
             <span class="string">&quot;https://storage.googleapis.com/cardano-testnet/snapshot.xxx.tar.gz&quot;</span>.<span class="ident">to_string</span>();
@@ -131,7 +142,8 @@
         <span class="ident">file_uploader</span>
             .<span class="ident">expect_upload_file</span>()
             .<span class="ident">return_const</span>(<span class="prelude-val">Err</span>(<span class="string">&quot;unexpected error&quot;</span>.<span class="ident">to_string</span>()));
-        <span class="kw">let</span> <span class="ident">snapshot_uploader</span> <span class="op">=</span> <span class="ident">RemoteSnapshotUploader::new</span>(<span class="ident">Box::new</span>(<span class="ident">file_uploader</span>));
+        <span class="kw">let</span> <span class="ident">snapshot_uploader</span> <span class="op">=</span>
+            <span class="ident">RemoteSnapshotUploader::new</span>(<span class="ident">Box::new</span>(<span class="ident">file_uploader</span>), <span class="string">&quot;&quot;</span>.<span class="ident">to_string</span>());
         <span class="kw">let</span> <span class="ident">snapshot_filepath</span> <span class="op">=</span> <span class="ident">Path::new</span>(<span class="string">&quot;test/snapshot.xxx.tar.gz&quot;</span>);
 
         <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">snapshot_uploader</span>.<span class="ident">upload_snapshot</span>(<span class="ident">snapshot_filepath</span>).<span class="kw">await</span>;
