@@ -146,12 +146,15 @@
 <span id="146">146</span>
 <span id="147">147</span>
 <span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Key registration functionality.</span>
 <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::stm::Stake</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::error::RegisterError</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::merkle_tree</span>::{<span class="ident">MTLeaf</span>, <span class="ident">MerkleTree</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::multi_sig</span>::{<span class="ident">VerificationKey</span>, <span class="ident">VerificationKeyPoP</span>};
-<span class="kw">use</span> <span class="ident">blake2::digest::Digest</span>;
+<span class="kw">use</span> <span class="ident">blake2::digest</span>::{<span class="ident">Digest</span>, <span class="ident">FixedOutput</span>};
 <span class="kw">use</span> <span class="ident">std::collections::hash_map::Entry</span>;
 <span class="kw">use</span> <span class="ident">std::collections::HashMap</span>;
 <span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
@@ -205,7 +208,10 @@
 
     <span class="doccomment">/// Finalize the key registration.</span>
     <span class="doccomment">/// This function disables `KeyReg::register`, consumes the instance of `self`, and returns a `ClosedKeyReg`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">close</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Digest</span><span class="op">&gt;</span>(<span class="self">self</span>) -&gt; <span class="ident">ClosedKeyReg</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">close</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>(<span class="self">self</span>) -&gt; <span class="ident">ClosedKeyReg</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>
+    <span class="kw">where</span>
+        <span class="ident">D</span>: <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span>,
+    {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">total_stake</span>: <span class="ident">Stake</span> <span class="op">=</span> <span class="number">0</span>;
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">reg_parties</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">keys</span>

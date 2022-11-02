@@ -354,6 +354,9 @@
 <span id="354">354</span>
 <span id="355">355</span>
 <span id="356">356</span>
+<span id="357">357</span>
+<span id="358">358</span>
+<span id="359">359</span>
 </pre><pre class="rust"><code><span class="doccomment">//! API for mithril key certification.</span>
 <span class="doccomment">//! Includes the wrappers for StmInitializer and KeyReg, and ProtocolRegistrationErrorWrapper.</span>
 <span class="doccomment">//! These wrappers allows keeping mithril-core agnostic to Cardano, while providing some</span>
@@ -369,7 +372,10 @@
 <span class="kw">use</span> <span class="ident">mithril::stm</span>::{<span class="ident">Stake</span>, <span class="ident">StmInitializer</span>, <span class="ident">StmParameters</span>, <span class="ident">StmSigner</span>, <span class="ident">StmVerificationKeyPoP</span>};
 <span class="kw">use</span> <span class="ident">mithril::RegisterError</span>;
 
-<span class="kw">use</span> <span class="ident">blake2</span>::{<span class="ident">digest::consts::U32</span>, <span class="ident">Blake2b</span>, <span class="ident">Digest</span>};
+<span class="kw">use</span> <span class="ident">blake2</span>::{
+    <span class="ident">digest</span>::{<span class="ident">consts::U32</span>, <span class="ident">FixedOutput</span>},
+    <span class="ident">Blake2b</span>, <span class="ident">Digest</span>,
+};
 <span class="kw">use</span> <span class="ident">kes_summed_ed25519::kes</span>::{<span class="ident">Sum6Kes</span>, <span class="ident">Sum6KesSig</span>};
 <span class="kw">use</span> <span class="ident">kes_summed_ed25519::traits</span>::{<span class="ident">KesSig</span>, <span class="ident">KesSk</span>};
 <span class="kw">use</span> <span class="ident">rand_core</span>::{<span class="ident">CryptoRng</span>, <span class="ident">RngCore</span>};
@@ -611,7 +617,7 @@
 
     <span class="doccomment">/// Finalize the key registration.</span>
     <span class="doccomment">/// This function disables `KeyReg::register`, consumes the instance of `self`, and returns a `ClosedKeyReg`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">close</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Digest</span><span class="op">&gt;</span>(<span class="self">self</span>) -&gt; <span class="ident">ClosedKeyReg</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">close</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span><span class="op">&gt;</span>(<span class="self">self</span>) -&gt; <span class="ident">ClosedKeyReg</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">stm_key_reg</span>.<span class="ident">close</span>()
     }
 }
