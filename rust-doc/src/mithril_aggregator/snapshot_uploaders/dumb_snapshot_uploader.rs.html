@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `mithril-aggregator/src/snapshot_uploaders/dumb_snapshot_uploader.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>dumb_snapshot_uploader.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../mithril_aggregator/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../mithril_aggregator/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../mithril_aggregator/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `mithril-aggregator/src/snapshot_uploaders/dumb_snapshot_uploader.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>dumb_snapshot_uploader.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../mithril_aggregator/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../mithril_aggregator/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../mithril_aggregator/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -74,81 +74,81 @@
 <span id="74">74</span>
 <span id="75">75</span>
 <span id="76">76</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
-<span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">error::Error</span>, <span class="ident">path::Path</span>, <span class="ident">sync::RwLock</span>};
+</pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
+<span class="kw">use </span>std::{error::Error, path::Path, sync::RwLock};
 
-<span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">SnapshotLocation</span>, <span class="ident">SnapshotUploader</span>};
+<span class="kw">use super</span>::{SnapshotLocation, SnapshotUploader};
 
-<span class="doccomment">/// Dummy uploader for test purposes.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// It actually does NOT upload any snapshot but remembers the last snapshot it</span>
-<span class="doccomment">/// was asked to upload. This is intended to by used by integration tests.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">DumbSnapshotUploader</span> {
-    <span class="ident">last_uploaded</span>: <span class="ident">RwLock</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+<span class="doccomment">/// Dummy uploader for test purposes.
+///
+/// It actually does NOT upload any snapshot but remembers the last snapshot it
+/// was asked to upload. This is intended to by used by integration tests.
+</span><span class="kw">pub struct </span>DumbSnapshotUploader {
+    last_uploaded: RwLock&lt;<span class="prelude-ty">Option</span>&lt;String&gt;&gt;,
 }
 
-<span class="kw">impl</span> <span class="ident">DumbSnapshotUploader</span> {
-    <span class="doccomment">/// Create a new instance.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> {
-            <span class="ident">last_uploaded</span>: <span class="ident">RwLock::new</span>(<span class="prelude-val">None</span>),
+<span class="kw">impl </span>DumbSnapshotUploader {
+    <span class="doccomment">/// Create a new instance.
+    </span><span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            last_uploaded: RwLock::new(<span class="prelude-val">None</span>),
         }
     }
 
-    <span class="doccomment">/// Return the last upload that was triggered.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_last_upload</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>, <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Error</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">value</span> <span class="op">=</span> <span class="self">self</span>
-            .<span class="ident">last_uploaded</span>
-            .<span class="ident">read</span>()
-            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="macro">format!</span>(<span class="string">&quot;Error while saving filepath location: {}&quot;</span>, <span class="ident">e</span>))<span class="question-mark">?</span>;
+    <span class="doccomment">/// Return the last upload that was triggered.
+    </span><span class="kw">pub fn </span>get_last_upload(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;String&gt;, Box&lt;<span class="kw">dyn </span>Error + Sync + Send&gt;&gt; {
+        <span class="kw">let </span>value = <span class="self">self
+            </span>.last_uploaded
+            .read()
+            .map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;Error while saving filepath location: {}&quot;</span>, e))<span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(<span class="ident">value</span>.<span class="ident">as_ref</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">v</span><span class="op">|</span> <span class="ident">v</span>.<span class="ident">to_string</span>()))
+        <span class="prelude-val">Ok</span>(value.as_ref().map(|v| v.to_string()))
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">DumbSnapshotUploader</span> {
-    <span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> {
-        <span class="ident"><span class="self">Self</span>::new</span>()
+<span class="kw">impl </span>Default <span class="kw">for </span>DumbSnapshotUploader {
+    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::new()
     }
 }
 
-<span class="attribute">#[<span class="ident">async_trait</span>]</span>
-<span class="kw">impl</span> <span class="ident">SnapshotUploader</span> <span class="kw">for</span> <span class="ident">DumbSnapshotUploader</span> {
-    <span class="doccomment">/// Upload a snapshot</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">upload_snapshot</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">snapshot_filepath</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">SnapshotLocation</span>, <span class="ident">String</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">value</span> <span class="op">=</span> <span class="self">self</span>
-            .<span class="ident">last_uploaded</span>
-            .<span class="ident">write</span>()
-            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="macro">format!</span>(<span class="string">&quot;Error while saving filepath location: {}&quot;</span>, <span class="ident">e</span>))<span class="question-mark">?</span>;
+<span class="attribute">#[async_trait]
+</span><span class="kw">impl </span>SnapshotUploader <span class="kw">for </span>DumbSnapshotUploader {
+    <span class="doccomment">/// Upload a snapshot
+    </span><span class="kw">async fn </span>upload_snapshot(<span class="kw-2">&amp;</span><span class="self">self</span>, snapshot_filepath: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Result</span>&lt;SnapshotLocation, String&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>value = <span class="self">self
+            </span>.last_uploaded
+            .write()
+            .map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;Error while saving filepath location: {}&quot;</span>, e))<span class="question-mark">?</span>;
 
-        <span class="kw-2">*</span><span class="ident">value</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">snapshot_filepath</span>.<span class="ident">to_string_lossy</span>().<span class="ident">to_string</span>());
+        <span class="kw-2">*</span>value = <span class="prelude-val">Some</span>(snapshot_filepath.to_string_lossy().to_string());
 
-        <span class="prelude-val">Ok</span>(<span class="string">&quot;http://whatev.er&quot;</span>.<span class="ident">into</span>())
+        <span class="prelude-val">Ok</span>(<span class="string">&quot;http://whatev.er&quot;</span>.into())
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
-    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_dumb_uploader</span>() {
-        <span class="kw">let</span> <span class="ident">uploader</span> <span class="op">=</span> <span class="ident">DumbSnapshotUploader::new</span>();
-        <span class="macro">assert!</span>(<span class="ident">uploader</span>
-            .<span class="ident">get_last_upload</span>()
-            .<span class="ident">expect</span>(<span class="string">&quot;uploader should not fail&quot;</span>)
-            .<span class="ident">is_none</span>());
-        <span class="kw">let</span> <span class="ident">_res</span> <span class="op">=</span> <span class="ident">uploader</span>
-            .<span class="ident">upload_snapshot</span>(<span class="ident">Path::new</span>(<span class="string">&quot;/tmp/whatever&quot;</span>))
-            .<span class="kw">await</span>
-            .<span class="ident">expect</span>(<span class="string">&quot;uploading with a dumb uploader should not fail&quot;</span>);
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>test_dumb_uploader() {
+        <span class="kw">let </span>uploader = DumbSnapshotUploader::new();
+        <span class="macro">assert!</span>(uploader
+            .get_last_upload()
+            .expect(<span class="string">&quot;uploader should not fail&quot;</span>)
+            .is_none());
+        <span class="kw">let </span>_res = uploader
+            .upload_snapshot(Path::new(<span class="string">&quot;/tmp/whatever&quot;</span>))
+            .<span class="kw">await
+            </span>.expect(<span class="string">&quot;uploading with a dumb uploader should not fail&quot;</span>);
         <span class="macro">assert_eq!</span>(
-            <span class="prelude-val">Some</span>(<span class="string">&quot;/tmp/whatever&quot;</span>.<span class="ident">to_string</span>()),
-            <span class="ident">uploader</span>
-                .<span class="ident">get_last_upload</span>()
-                .<span class="ident">expect</span>(<span class="string">&quot;getting dumb uploader last value after a fake download should not fail&quot;</span>)
+            <span class="prelude-val">Some</span>(<span class="string">&quot;/tmp/whatever&quot;</span>.to_string()),
+            uploader
+                .get_last_upload()
+                .expect(<span class="string">&quot;getting dumb uploader last value after a fake download should not fail&quot;</span>)
         );
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="mithril_aggregator" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.64.0 (a55dd71d5 2022-09-19)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="mithril_aggregator" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0 (897e37553 2022-11-02)" ></div></body></html>

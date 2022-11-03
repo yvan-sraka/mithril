@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `mithril-common/src/certificate_chain/certificate_verifier.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>certificate_verifier.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../mithril_common/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../mithril_common/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../mithril_common/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `mithril-common/src/certificate_chain/certificate_verifier.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>certificate_verifier.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../mithril_common/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../mithril_common/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../mithril_common/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -555,562 +555,562 @@
 <span id="555">555</span>
 <span id="556">556</span>
 <span id="557">557</span>
-</pre><pre class="rust"><code><span class="doccomment">//! A module used to validate the Certificate Chain created by an aggregator</span>
-<span class="doccomment">//!</span>
-<span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
-<span class="kw">use</span> <span class="ident">hex</span>::{<span class="ident">FromHex</span>, <span class="ident">ToHex</span>};
-<span class="kw">use</span> <span class="ident">slog</span>::{<span class="ident">debug</span>, <span class="ident">Logger</span>};
-<span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
-<span class="kw">use</span> <span class="ident">thiserror::Error</span>;
+</pre><pre class="rust"><code><span class="doccomment">//! A module used to validate the Certificate Chain created by an aggregator
+//!
+</span><span class="kw">use </span>async_trait::async_trait;
+<span class="kw">use </span>hex::{FromHex, ToHex};
+<span class="kw">use </span>slog::{debug, Logger};
+<span class="kw">use </span>std::sync::Arc;
+<span class="kw">use </span>thiserror::Error;
 
-<span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">CertificateRetriever</span>, <span class="ident">CertificateRetrieverError</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::crypto_helper</span>::{
-    <span class="ident">key_decode_hex</span>, <span class="ident">ProtocolGenesisError</span>, <span class="ident">ProtocolGenesisSignature</span>, <span class="ident">ProtocolGenesisVerifier</span>,
-    <span class="ident">ProtocolMultiSignature</span>,
+<span class="kw">use super</span>::{CertificateRetriever, CertificateRetrieverError};
+<span class="kw">use </span><span class="kw">crate</span>::crypto_helper::{
+    key_decode_hex, ProtocolGenesisError, ProtocolGenesisSignature, ProtocolGenesisVerifier,
+    ProtocolMultiSignature,
 };
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::entities</span>::{<span class="ident">Certificate</span>, <span class="ident">ProtocolMessagePartKey</span>, <span class="ident">ProtocolParameters</span>};
+<span class="kw">use </span><span class="kw">crate</span>::entities::{Certificate, ProtocolMessagePartKey, ProtocolParameters};
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">use</span> <span class="ident">mockall::automock</span>;
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">use </span>mockall::automock;
 
-<span class="doccomment">/// [CertificateVerifier] related errors.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Error</span>, <span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">CertificateVerifierError</span> {
-    <span class="doccomment">/// Error raised when the multi signatures verification fails.</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;multi signature verification failed: &#39;{0}&#39;&quot;</span>)]</span>
-    <span class="ident">VerifyMultiSignature</span>(<span class="ident">String</span>),
+<span class="doccomment">/// [CertificateVerifier] related errors.
+</span><span class="attribute">#[derive(Error, Debug)]
+</span><span class="kw">pub enum </span>CertificateVerifierError {
+    <span class="doccomment">/// Error raised when the multi signatures verification fails.
+    </span><span class="attribute">#[error(<span class="string">&quot;multi signature verification failed: &#39;{0}&#39;&quot;</span>)]
+    </span>VerifyMultiSignature(String),
 
-    <span class="doccomment">/// Error raised when encoding or decoding of data to hex fails.</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;codec hex error: &#39;{0}&#39;&quot;</span>)]</span>
-    <span class="ident">Codec</span>(<span class="ident">String</span>),
+    <span class="doccomment">/// Error raised when encoding or decoding of data to hex fails.
+    </span><span class="attribute">#[error(<span class="string">&quot;codec hex error: &#39;{0}&#39;&quot;</span>)]
+    </span>Codec(String),
 
-    <span class="doccomment">/// Error raised when encoding or decoding of data to genesis type.</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;codec genesis error: &#39;{0}&#39;&quot;</span>)]</span>
-    <span class="ident">CodecGenesis</span>(<span class="ident">String</span>),
+    <span class="doccomment">/// Error raised when encoding or decoding of data to genesis type.
+    </span><span class="attribute">#[error(<span class="string">&quot;codec genesis error: &#39;{0}&#39;&quot;</span>)]
+    </span>CodecGenesis(String),
 
-    <span class="doccomment">/// Error raised when a CertificateRetriever tries to retrieve a [Certificate].</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;certificate retriever error: &#39;{0}&#39;&quot;</span>)]</span>
-    <span class="ident">CertificateRetriever</span>(<span class="attribute">#[<span class="ident">from</span>]</span> <span class="ident">CertificateRetrieverError</span>),
+    <span class="doccomment">/// Error raised when a CertificateRetriever tries to retrieve a [Certificate].
+    </span><span class="attribute">#[error(<span class="string">&quot;certificate retriever error: &#39;{0}&#39;&quot;</span>)]
+    </span>CertificateRetriever(<span class="attribute">#[from] </span>CertificateRetrieverError),
 
-    <span class="doccomment">/// Error raised when the Genesis Signature stored in a [Certificate] is invalid.</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;certificate genesis error: &#39;{0}&#39;&quot;</span>)]</span>
-    <span class="ident">CertificateGenesis</span>(<span class="attribute">#[<span class="ident">from</span>]</span> <span class="ident">ProtocolGenesisError</span>),
+    <span class="doccomment">/// Error raised when the Genesis Signature stored in a [Certificate] is invalid.
+    </span><span class="attribute">#[error(<span class="string">&quot;certificate genesis error: &#39;{0}&#39;&quot;</span>)]
+    </span>CertificateGenesis(<span class="attribute">#[from] </span>ProtocolGenesisError),
 
-    <span class="doccomment">/// Error raised when the hash stored in a [Certificate] doesn&#39;t match a recomputed hash.</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;certificate hash unmatch error&quot;</span>)]</span>
-    <span class="ident">CertificateHashUnmatch</span>,
+    <span class="doccomment">/// Error raised when the hash stored in a [Certificate] doesn&#39;t match a recomputed hash.
+    </span><span class="attribute">#[error(<span class="string">&quot;certificate hash unmatch error&quot;</span>)]
+    </span>CertificateHashUnmatch,
 
-    <span class="doccomment">/// Error raised when validating the certificate chain if a previous [Certificate] hash isn&#39;t</span>
-    <span class="doccomment">/// equal to the current certificate `previous_hash`.</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;certificate chain previous hash unmatch error&quot;</span>)]</span>
-    <span class="ident">CertificateChainPreviousHashUnmatch</span>,
+    <span class="doccomment">/// Error raised when validating the certificate chain if a previous [Certificate] hash isn&#39;t
+    /// equal to the current certificate `previous_hash`.
+    </span><span class="attribute">#[error(<span class="string">&quot;certificate chain previous hash unmatch error&quot;</span>)]
+    </span>CertificateChainPreviousHashUnmatch,
 
-    <span class="doccomment">/// Error raised when validating the certificate chain if the current [Certificate]</span>
-    <span class="doccomment">/// `aggregate_verification_key` doesn&#39;t match the previous `aggregate_verification_key` (if</span>
-    <span class="doccomment">/// the certificates are on the same epoch) or the previous `next_aggregate_verification_key`</span>
-    <span class="doccomment">/// (if the certificates are on different epoch).</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;certificate chain AVK unmatch error&quot;</span>)]</span>
-    <span class="ident">CertificateChainAVKUnmatch</span>,
+    <span class="doccomment">/// Error raised when validating the certificate chain if the current [Certificate]
+    /// `aggregate_verification_key` doesn&#39;t match the previous `aggregate_verification_key` (if
+    /// the certificates are on the same epoch) or the previous `next_aggregate_verification_key`
+    /// (if the certificates are on different epoch).
+    </span><span class="attribute">#[error(<span class="string">&quot;certificate chain AVK unmatch error&quot;</span>)]
+    </span>CertificateChainAVKUnmatch,
 
-    <span class="doccomment">/// Error raised when validating the certificate chain if the chain loops.</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;certificate chain infinite loop error&quot;</span>)]</span>
-    <span class="ident">CertificateChainInfiniteLoop</span>,
+    <span class="doccomment">/// Error raised when validating the certificate chain if the chain loops.
+    </span><span class="attribute">#[error(<span class="string">&quot;certificate chain infinite loop error&quot;</span>)]
+    </span>CertificateChainInfiniteLoop,
 }
 
-<span class="doccomment">/// CertificateVerifier is the cryptographic engine in charge of verifying multi signatures and</span>
-<span class="doccomment">/// [certificates](Certificate)</span>
-<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">test</span>, <span class="ident">automock</span>)]</span>
-<span class="attribute">#[<span class="ident">async_trait</span>]</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">CertificateVerifier</span>: <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span> {
-    <span class="doccomment">/// Verify a multi signature</span>
-    <span class="kw">fn</span> <span class="ident">verify_multi_signature</span>(
+<span class="doccomment">/// CertificateVerifier is the cryptographic engine in charge of verifying multi signatures and
+/// [certificates](Certificate)
+</span><span class="attribute">#[cfg_attr(test, automock)]
+#[async_trait]
+</span><span class="kw">pub trait </span>CertificateVerifier: Send + Sync {
+    <span class="doccomment">/// Verify a multi signature
+    </span><span class="kw">fn </span>verify_multi_signature(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">message</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
-        <span class="ident">multi_signature</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
-        <span class="ident">aggregate_verification_key</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
-        <span class="ident">protocol_parameters</span>: <span class="kw-2">&amp;</span><span class="ident">ProtocolParameters</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">CertificateVerifierError</span><span class="op">&gt;</span>;
+        message: <span class="kw-2">&amp;</span>[u8],
+        multi_signature: <span class="kw-2">&amp;</span>str,
+        aggregate_verification_key: <span class="kw-2">&amp;</span>str,
+        protocol_parameters: <span class="kw-2">&amp;</span>ProtocolParameters,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), CertificateVerifierError&gt;;
 
-    <span class="doccomment">/// Verify Genesis certificate</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">verify_genesis_certificate</span>(
+    <span class="doccomment">/// Verify Genesis certificate
+    </span><span class="kw">async fn </span>verify_genesis_certificate(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">certificate</span>: <span class="kw-2">&amp;</span><span class="ident">Certificate</span>,
-        <span class="ident">genesis_verifier</span>: <span class="kw-2">&amp;</span><span class="ident">ProtocolGenesisVerifier</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">CertificateVerifierError</span><span class="op">&gt;</span>;
+        certificate: <span class="kw-2">&amp;</span>Certificate,
+        genesis_verifier: <span class="kw-2">&amp;</span>ProtocolGenesisVerifier,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), CertificateVerifierError&gt;;
 
-    <span class="doccomment">/// Verify Standard certificate</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">verify_standard_certificate</span>(
+    <span class="doccomment">/// Verify Standard certificate
+    </span><span class="kw">async fn </span>verify_standard_certificate(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">certificate</span>: <span class="kw-2">&amp;</span><span class="ident">Certificate</span>,
-        <span class="ident">certificate_retriever</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">CertificateRetriever</span><span class="op">&gt;</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Certificate</span><span class="op">&gt;</span>, <span class="ident">CertificateVerifierError</span><span class="op">&gt;</span>;
+        certificate: <span class="kw-2">&amp;</span>Certificate,
+        certificate_retriever: Arc&lt;<span class="kw">dyn </span>CertificateRetriever&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Certificate&gt;, CertificateVerifierError&gt;;
 
-    <span class="doccomment">/// Verify if a Certificate is valid and returns the previous Certificate in the chain if exists</span>
-    <span class="doccomment">/// Step 1: Check if the hash is valid (i.e. the Certificate has not been tampered by modifying its content)</span>
-    <span class="doccomment">/// Step 2: Check that the multi signature is valid if it is a Standard Certificate (i.e verifiction of the Mithril multi signature)</span>
-    <span class="doccomment">/// Step 3: Check that the aggregate verification key of the Certificate is registered in the previous Certificate in the chain</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">verify_certificate</span>(
+    <span class="doccomment">/// Verify if a Certificate is valid and returns the previous Certificate in the chain if exists
+    /// Step 1: Check if the hash is valid (i.e. the Certificate has not been tampered by modifying its content)
+    /// Step 2: Check that the multi signature is valid if it is a Standard Certificate (i.e verifiction of the Mithril multi signature)
+    /// Step 3: Check that the aggregate verification key of the Certificate is registered in the previous Certificate in the chain
+    </span><span class="kw">async fn </span>verify_certificate(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">certificate</span>: <span class="kw-2">&amp;</span><span class="ident">Certificate</span>,
-        <span class="ident">certificate_retriever</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">CertificateRetriever</span><span class="op">&gt;</span>,
-        <span class="ident">genesis_verifier</span>: <span class="kw-2">&amp;</span><span class="ident">ProtocolGenesisVerifier</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Certificate</span><span class="op">&gt;</span>, <span class="ident">CertificateVerifierError</span><span class="op">&gt;</span>;
+        certificate: <span class="kw-2">&amp;</span>Certificate,
+        certificate_retriever: Arc&lt;<span class="kw">dyn </span>CertificateRetriever&gt;,
+        genesis_verifier: <span class="kw-2">&amp;</span>ProtocolGenesisVerifier,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Certificate&gt;, CertificateVerifierError&gt;;
 
-    <span class="doccomment">/// Verify that the Certificate Chain associated to a Certificate is valid</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">verify_certificate_chain</span>(
+    <span class="doccomment">/// Verify that the Certificate Chain associated to a Certificate is valid
+    </span><span class="kw">async fn </span>verify_certificate_chain(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">certificate</span>: <span class="ident">Certificate</span>,
-        <span class="ident">certificate_retriever</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">CertificateRetriever</span><span class="op">&gt;</span>,
-        <span class="ident">genesis_verifier</span>: <span class="kw-2">&amp;</span><span class="ident">ProtocolGenesisVerifier</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">CertificateVerifierError</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">certificate</span> <span class="op">=</span> <span class="ident">certificate</span>;
-        <span class="kw">while</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">previous_certificate</span>) <span class="op">=</span> <span class="self">self</span>
-            .<span class="ident">verify_certificate</span>(
-                <span class="kw-2">&amp;</span><span class="ident">certificate</span>,
-                <span class="ident">certificate_retriever</span>.<span class="ident">clone</span>(),
-                <span class="ident">genesis_verifier</span>,
+        certificate: Certificate,
+        certificate_retriever: Arc&lt;<span class="kw">dyn </span>CertificateRetriever&gt;,
+        genesis_verifier: <span class="kw-2">&amp;</span>ProtocolGenesisVerifier,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), CertificateVerifierError&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>certificate = certificate;
+        <span class="kw">while let </span><span class="prelude-val">Some</span>(previous_certificate) = <span class="self">self
+            </span>.verify_certificate(
+                <span class="kw-2">&amp;</span>certificate,
+                certificate_retriever.clone(),
+                genesis_verifier,
             )
-            .<span class="kw">await</span><span class="question-mark">?</span>
-        {
-            <span class="ident">certificate</span> <span class="op">=</span> <span class="ident">previous_certificate</span>;
+            .<span class="kw">await</span><span class="question-mark">?
+        </span>{
+            certificate = previous_certificate;
         }
         <span class="prelude-val">Ok</span>(())
     }
 }
 
-<span class="doccomment">/// MithrilCertificateVerifier is an implementation of the CertificateVerifier</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MithrilCertificateVerifier</span> {
-    <span class="doccomment">/// The logger where the logs should be written</span>
-    <span class="ident">logger</span>: <span class="ident">Logger</span>,
+<span class="doccomment">/// MithrilCertificateVerifier is an implementation of the CertificateVerifier
+</span><span class="kw">pub struct </span>MithrilCertificateVerifier {
+    <span class="doccomment">/// The logger where the logs should be written
+    </span>logger: Logger,
 }
 
-<span class="kw">impl</span> <span class="ident">MithrilCertificateVerifier</span> {
-    <span class="doccomment">/// MithrilCertificateVerifier factory</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">logger</span>: <span class="ident">Logger</span>) -&gt; <span class="self">Self</span> {
-        <span class="macro">debug!</span>(<span class="ident">logger</span>, <span class="string">&quot;New MithrilCertificateVerifier created&quot;</span>);
-        <span class="self">Self</span> { <span class="ident">logger</span> }
+<span class="kw">impl </span>MithrilCertificateVerifier {
+    <span class="doccomment">/// MithrilCertificateVerifier factory
+    </span><span class="kw">pub fn </span>new(logger: Logger) -&gt; <span class="self">Self </span>{
+        <span class="macro">debug!</span>(logger, <span class="string">&quot;New MithrilCertificateVerifier created&quot;</span>);
+        <span class="self">Self </span>{ logger }
     }
 }
 
-<span class="attribute">#[<span class="ident">async_trait</span>]</span>
-<span class="kw">impl</span> <span class="ident">CertificateVerifier</span> <span class="kw">for</span> <span class="ident">MithrilCertificateVerifier</span> {
-    <span class="doccomment">/// Verify a multi signature</span>
-    <span class="kw">fn</span> <span class="ident">verify_multi_signature</span>(
+<span class="attribute">#[async_trait]
+</span><span class="kw">impl </span>CertificateVerifier <span class="kw">for </span>MithrilCertificateVerifier {
+    <span class="doccomment">/// Verify a multi signature
+    </span><span class="kw">fn </span>verify_multi_signature(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">message</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
-        <span class="ident">multi_signature</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
-        <span class="ident">aggregate_verification_key</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
-        <span class="ident">protocol_parameters</span>: <span class="kw-2">&amp;</span><span class="ident">ProtocolParameters</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">CertificateVerifierError</span><span class="op">&gt;</span> {
+        message: <span class="kw-2">&amp;</span>[u8],
+        multi_signature: <span class="kw-2">&amp;</span>str,
+        aggregate_verification_key: <span class="kw-2">&amp;</span>str,
+        protocol_parameters: <span class="kw-2">&amp;</span>ProtocolParameters,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), CertificateVerifierError&gt; {
         <span class="macro">debug!</span>(
-            <span class="self">self</span>.<span class="ident">logger</span>,
+            <span class="self">self</span>.logger,
             <span class="string">&quot;Verify multi signature for {:?}&quot;</span>,
-            <span class="ident">message</span>.<span class="ident">encode_hex</span>::<span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>()
+            message.encode_hex::&lt;String&gt;()
         );
-        <span class="kw">let</span> <span class="ident">multi_signature</span>: <span class="ident">ProtocolMultiSignature</span> <span class="op">=</span> <span class="ident">key_decode_hex</span>(<span class="kw-2">&amp;</span><span class="ident">multi_signature</span>.<span class="ident">to_string</span>())
-            .<span class="ident">map_err</span>(<span class="ident">CertificateVerifierError::Codec</span>)<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">aggregate_verification_key</span> <span class="op">=</span> <span class="ident">key_decode_hex</span>(<span class="kw-2">&amp;</span><span class="ident">aggregate_verification_key</span>.<span class="ident">to_string</span>())
-            .<span class="ident">map_err</span>(<span class="ident">CertificateVerifierError::Codec</span>)<span class="question-mark">?</span>;
-        <span class="ident">multi_signature</span>
-            .<span class="ident">verify</span>(
-                <span class="ident">message</span>,
-                <span class="kw-2">&amp;</span><span class="ident">aggregate_verification_key</span>,
-                <span class="kw-2">&amp;</span><span class="ident">protocol_parameters</span>.<span class="ident">to_owned</span>().<span class="ident">into</span>(),
+        <span class="kw">let </span>multi_signature: ProtocolMultiSignature = key_decode_hex(<span class="kw-2">&amp;</span>multi_signature.to_string())
+            .map_err(CertificateVerifierError::Codec)<span class="question-mark">?</span>;
+        <span class="kw">let </span>aggregate_verification_key = key_decode_hex(<span class="kw-2">&amp;</span>aggregate_verification_key.to_string())
+            .map_err(CertificateVerifierError::Codec)<span class="question-mark">?</span>;
+        multi_signature
+            .verify(
+                message,
+                <span class="kw-2">&amp;</span>aggregate_verification_key,
+                <span class="kw-2">&amp;</span>protocol_parameters.to_owned().into(),
             )
-            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">CertificateVerifierError::VerifyMultiSignature</span>(<span class="ident">e</span>.<span class="ident">to_string</span>()))
+            .map_err(|e| CertificateVerifierError::VerifyMultiSignature(e.to_string()))
     }
 
-    <span class="doccomment">/// Verify Genesis certificate</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">verify_genesis_certificate</span>(
+    <span class="doccomment">/// Verify Genesis certificate
+    </span><span class="kw">async fn </span>verify_genesis_certificate(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">certificate</span>: <span class="kw-2">&amp;</span><span class="ident">Certificate</span>,
-        <span class="ident">genesis_verifier</span>: <span class="kw-2">&amp;</span><span class="ident">ProtocolGenesisVerifier</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">CertificateVerifierError</span><span class="op">&gt;</span> {
+        certificate: <span class="kw-2">&amp;</span>Certificate,
+        genesis_verifier: <span class="kw-2">&amp;</span>ProtocolGenesisVerifier,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), CertificateVerifierError&gt; {
         <span class="macro">println!</span>(
             <span class="string">&quot;Verify genesis certificate #{} @ epoch #{}&quot;</span>,
-            <span class="ident">certificate</span>.<span class="ident">hash</span>, <span class="ident">certificate</span>.<span class="ident">beacon</span>.<span class="ident">epoch</span>
+            certificate.hash, certificate.beacon.epoch
         );
-        <span class="kw">let</span> <span class="ident">genesis_signature</span> <span class="op">=</span> <span class="ident">ProtocolGenesisSignature::from_bytes</span>(
-            <span class="kw-2">&amp;</span><span class="ident">Vec::from_hex</span>(<span class="kw-2">&amp;</span><span class="ident">certificate</span>.<span class="ident">genesis_signature</span>)
-                .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">CertificateVerifierError::Codec</span>(<span class="ident">e</span>.<span class="ident">to_string</span>()))<span class="question-mark">?</span>,
+        <span class="kw">let </span>genesis_signature = ProtocolGenesisSignature::from_bytes(
+            <span class="kw-2">&amp;</span>Vec::from_hex(<span class="kw-2">&amp;</span>certificate.genesis_signature)
+                .map_err(|e| CertificateVerifierError::Codec(e.to_string()))<span class="question-mark">?</span>,
         )
-        .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">CertificateVerifierError::CodecGenesis</span>(<span class="ident">e</span>.<span class="ident">to_string</span>()))<span class="question-mark">?</span>;
-        <span class="ident">genesis_verifier</span>.<span class="ident">verify</span>(<span class="ident">certificate</span>.<span class="ident">signed_message</span>.<span class="ident">as_bytes</span>(), <span class="kw-2">&amp;</span><span class="ident">genesis_signature</span>)<span class="question-mark">?</span>;
+        .map_err(|e| CertificateVerifierError::CodecGenesis(e.to_string()))<span class="question-mark">?</span>;
+        genesis_verifier.verify(certificate.signed_message.as_bytes(), <span class="kw-2">&amp;</span>genesis_signature)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="doccomment">/// Verify Standard certificate</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">verify_standard_certificate</span>(
+    <span class="doccomment">/// Verify Standard certificate
+    </span><span class="kw">async fn </span>verify_standard_certificate(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">certificate</span>: <span class="kw-2">&amp;</span><span class="ident">Certificate</span>,
-        <span class="ident">certificate_retriever</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">CertificateRetriever</span><span class="op">&gt;</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Certificate</span><span class="op">&gt;</span>, <span class="ident">CertificateVerifierError</span><span class="op">&gt;</span> {
+        certificate: <span class="kw-2">&amp;</span>Certificate,
+        certificate_retriever: Arc&lt;<span class="kw">dyn </span>CertificateRetriever&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Certificate&gt;, CertificateVerifierError&gt; {
         <span class="macro">println!</span>(
             <span class="string">&quot;Verify standard certificate #{} @ epoch #{}&quot;</span>,
-            <span class="ident">certificate</span>.<span class="ident">hash</span>, <span class="ident">certificate</span>.<span class="ident">beacon</span>.<span class="ident">epoch</span>
+            certificate.hash, certificate.beacon.epoch
         );
-        <span class="self">self</span>.<span class="ident">verify_multi_signature</span>(
-            <span class="ident">certificate</span>.<span class="ident">signed_message</span>.<span class="ident">as_bytes</span>(),
-            <span class="kw-2">&amp;</span><span class="ident">certificate</span>.<span class="ident">multi_signature</span>,
-            <span class="kw-2">&amp;</span><span class="ident">certificate</span>.<span class="ident">aggregate_verification_key</span>,
-            <span class="kw-2">&amp;</span><span class="ident">certificate</span>.<span class="ident">metadata</span>.<span class="ident">protocol_parameters</span>,
+        <span class="self">self</span>.verify_multi_signature(
+            certificate.signed_message.as_bytes(),
+            <span class="kw-2">&amp;</span>certificate.multi_signature,
+            <span class="kw-2">&amp;</span>certificate.aggregate_verification_key,
+            <span class="kw-2">&amp;</span>certificate.metadata.protocol_parameters,
         )<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">previous_certificate</span> <span class="op">=</span> <span class="ident">certificate_retriever</span>
-            .<span class="ident">get_certificate_details</span>(<span class="kw-2">&amp;</span><span class="ident">certificate</span>.<span class="ident">previous_hash</span>)
+        <span class="kw">let </span>previous_certificate = certificate_retriever
+            .get_certificate_details(<span class="kw-2">&amp;</span>certificate.previous_hash)
             .<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">valid_certificate_has_different_epoch_as_previous</span> <span class="op">=</span>
-            <span class="op">|</span><span class="ident">next_aggregate_verification_key</span>: <span class="kw-2">&amp;</span><span class="ident">String</span><span class="op">|</span> -&gt; <span class="ident">bool</span> {
-                <span class="ident">next_aggregate_verification_key</span> <span class="op">==</span> <span class="kw-2">&amp;</span><span class="ident">certificate</span>.<span class="ident">aggregate_verification_key</span>
-                    <span class="op">&amp;&amp;</span> <span class="ident">previous_certificate</span>.<span class="ident">beacon</span>.<span class="ident">epoch</span> <span class="op">!</span><span class="op">=</span> <span class="ident">certificate</span>.<span class="ident">beacon</span>.<span class="ident">epoch</span>
+        <span class="kw">let </span>valid_certificate_has_different_epoch_as_previous =
+            |next_aggregate_verification_key: <span class="kw-2">&amp;</span>String| -&gt; bool {
+                next_aggregate_verification_key == <span class="kw-2">&amp;</span>certificate.aggregate_verification_key
+                    &amp;&amp; previous_certificate.beacon.epoch != certificate.beacon.epoch
             };
-        <span class="kw">let</span> <span class="ident">valid_certificate_has_same_epoch_as_previous</span> <span class="op">=</span> <span class="op">|</span><span class="op">|</span> -&gt; <span class="ident">bool</span> {
-            <span class="ident">previous_certificate</span>.<span class="ident">aggregate_verification_key</span>
-                <span class="op">==</span> <span class="ident">certificate</span>.<span class="ident">aggregate_verification_key</span>
-                <span class="op">&amp;&amp;</span> <span class="ident">previous_certificate</span>.<span class="ident">beacon</span>.<span class="ident">epoch</span> <span class="op">==</span> <span class="ident">certificate</span>.<span class="ident">beacon</span>.<span class="ident">epoch</span>
+        <span class="kw">let </span>valid_certificate_has_same_epoch_as_previous = || -&gt; bool {
+            previous_certificate.aggregate_verification_key
+                == certificate.aggregate_verification_key
+                &amp;&amp; previous_certificate.beacon.epoch == certificate.beacon.epoch
         };
-        <span class="kw">if</span> <span class="ident">previous_certificate</span>.<span class="ident">hash</span> <span class="op">!</span><span class="op">=</span> <span class="ident">certificate</span>.<span class="ident">previous_hash</span> {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">CertificateVerifierError::CertificateChainPreviousHashUnmatch</span>);
+        <span class="kw">if </span>previous_certificate.hash != certificate.previous_hash {
+            <span class="kw">return </span><span class="prelude-val">Err</span>(CertificateVerifierError::CertificateChainPreviousHashUnmatch);
         }
 
-        <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="ident">previous_certificate</span>
-            .<span class="ident">protocol_message</span>
-            .<span class="ident">get_message_part</span>(<span class="kw-2">&amp;</span><span class="ident">ProtocolMessagePartKey::NextAggregateVerificationKey</span>)
+        <span class="kw">match </span><span class="kw-2">&amp;</span>previous_certificate
+            .protocol_message
+            .get_message_part(<span class="kw-2">&amp;</span>ProtocolMessagePartKey::NextAggregateVerificationKey)
         {
-            <span class="prelude-val">Some</span>(<span class="ident">next_aggregate_verification_key</span>)
-                <span class="kw">if</span> <span class="ident">valid_certificate_has_different_epoch_as_previous</span>(
-                    <span class="kw-2">*</span><span class="ident">next_aggregate_verification_key</span>,
+            <span class="prelude-val">Some</span>(next_aggregate_verification_key)
+                <span class="kw">if </span>valid_certificate_has_different_epoch_as_previous(
+                    <span class="kw-2">*</span>next_aggregate_verification_key,
                 ) =&gt;
             {
-                <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">previous_certificate</span>.<span class="ident">to_owned</span>()))
+                <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(previous_certificate.to_owned()))
             }
-            <span class="prelude-val">Some</span>(<span class="kw">_</span>) <span class="kw">if</span> <span class="ident">valid_certificate_has_same_epoch_as_previous</span>() =&gt; {
-                <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">previous_certificate</span>.<span class="ident">to_owned</span>()))
+            <span class="prelude-val">Some</span>(<span class="kw">_</span>) <span class="kw">if </span>valid_certificate_has_same_epoch_as_previous() =&gt; {
+                <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(previous_certificate.to_owned()))
             }
-            <span class="prelude-val">None</span> =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
-            <span class="kw">_</span> =&gt; {
+            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
+            <span class="kw">_ </span>=&gt; {
                 <span class="macro">debug!</span>(
-                    <span class="self">self</span>.<span class="ident">logger</span>,
-                    <span class="string">&quot;Previous certificate {:#?}&quot;</span>, <span class="ident">previous_certificate</span>
+                    <span class="self">self</span>.logger,
+                    <span class="string">&quot;Previous certificate {:#?}&quot;</span>, previous_certificate
                 );
-                <span class="prelude-val">Err</span>(<span class="ident">CertificateVerifierError::CertificateChainAVKUnmatch</span>)
+                <span class="prelude-val">Err</span>(CertificateVerifierError::CertificateChainAVKUnmatch)
             }
         }
     }
 
-    <span class="doccomment">/// Verify a certificate</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">verify_certificate</span>(
+    <span class="doccomment">/// Verify a certificate
+    </span><span class="kw">async fn </span>verify_certificate(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">certificate</span>: <span class="kw-2">&amp;</span><span class="ident">Certificate</span>,
-        <span class="ident">certificate_retriever</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">CertificateRetriever</span><span class="op">&gt;</span>,
-        <span class="ident">genesis_verifier</span>: <span class="kw-2">&amp;</span><span class="ident">ProtocolGenesisVerifier</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Certificate</span><span class="op">&gt;</span>, <span class="ident">CertificateVerifierError</span><span class="op">&gt;</span> {
+        certificate: <span class="kw-2">&amp;</span>Certificate,
+        certificate_retriever: Arc&lt;<span class="kw">dyn </span>CertificateRetriever&gt;,
+        genesis_verifier: <span class="kw-2">&amp;</span>ProtocolGenesisVerifier,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Certificate&gt;, CertificateVerifierError&gt; {
         <span class="macro">debug!</span>(
-            <span class="self">self</span>.<span class="ident">logger</span>,
+            <span class="self">self</span>.logger,
             <span class="string">&quot;Verifying certificate&quot;</span>;
-            <span class="string">&quot;certificate_hash&quot;</span> =&gt; <span class="kw-2">&amp;</span><span class="ident">certificate</span>.<span class="ident">hash</span>,
-            <span class="string">&quot;certificate_previous_hash&quot;</span> =&gt; <span class="kw-2">&amp;</span><span class="ident">certificate</span>.<span class="ident">previous_hash</span>,
-            <span class="string">&quot;certificate_beacon&quot;</span> =&gt; <span class="question-mark">?</span><span class="ident">certificate</span>.<span class="ident">beacon</span>
+            <span class="string">&quot;certificate_hash&quot; </span>=&gt; <span class="kw-2">&amp;</span>certificate.hash,
+            <span class="string">&quot;certificate_previous_hash&quot; </span>=&gt; <span class="kw-2">&amp;</span>certificate.previous_hash,
+            <span class="string">&quot;certificate_beacon&quot; </span>=&gt; <span class="question-mark">?</span>certificate.beacon
         );
 
-        <span class="ident">certificate</span>
-            .<span class="ident">hash</span>
-            .<span class="ident">eq</span>(<span class="kw-2">&amp;</span><span class="ident">certificate</span>.<span class="ident">compute_hash</span>())
-            .<span class="ident">then</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">certificate</span>.<span class="ident">hash</span>.<span class="ident">clone</span>())
-            .<span class="ident">ok_or</span>(<span class="ident">CertificateVerifierError::CertificateHashUnmatch</span>)<span class="question-mark">?</span>;
-        <span class="kw">match</span> <span class="ident">certificate</span>.<span class="ident">previous_hash</span>.<span class="ident">as_str</span>() {
-            <span class="string">&quot;&quot;</span> =&gt; {
-                <span class="self">self</span>.<span class="ident">verify_genesis_certificate</span>(<span class="ident">certificate</span>, <span class="ident">genesis_verifier</span>)
+        certificate
+            .hash
+            .eq(<span class="kw-2">&amp;</span>certificate.compute_hash())
+            .then(|| certificate.hash.clone())
+            .ok_or(CertificateVerifierError::CertificateHashUnmatch)<span class="question-mark">?</span>;
+        <span class="kw">match </span>certificate.previous_hash.as_str() {
+            <span class="string">&quot;&quot; </span>=&gt; {
+                <span class="self">self</span>.verify_genesis_certificate(certificate, genesis_verifier)
                     .<span class="kw">await</span><span class="question-mark">?</span>;
                 <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
             }
-            <span class="ident">previous_hash</span> <span class="kw">if</span> <span class="ident">previous_hash</span> <span class="op">==</span> <span class="ident">certificate</span>.<span class="ident">hash</span> =&gt; {
-                <span class="prelude-val">Err</span>(<span class="ident">CertificateVerifierError::CertificateChainInfiniteLoop</span>)
+            previous_hash <span class="kw">if </span>previous_hash == certificate.hash =&gt; {
+                <span class="prelude-val">Err</span>(CertificateVerifierError::CertificateChainInfiniteLoop)
             }
-            <span class="kw">_</span> =&gt; {
-                <span class="self">self</span>.<span class="ident">verify_standard_certificate</span>(<span class="ident">certificate</span>, <span class="ident">certificate_retriever</span>)
-                    .<span class="kw">await</span>
-            }
+            <span class="kw">_ </span>=&gt; {
+                <span class="self">self</span>.verify_standard_certificate(certificate, certificate_retriever)
+                    .<span class="kw">await
+            </span>}
         }
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
-    <span class="kw">use</span> <span class="ident">mockall::mock</span>;
-    <span class="kw">use</span> <span class="ident">slog_scope</span>;
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use </span>async_trait::async_trait;
+    <span class="kw">use </span>mockall::mock;
+    <span class="kw">use </span>slog_scope;
 
-    <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::CertificateRetriever</span>;
-    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use </span><span class="kw">super</span>::CertificateRetriever;
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::crypto_helper::tests_setup</span>::<span class="kw-2">*</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::crypto_helper</span>::{<span class="ident">key_encode_hex</span>, <span class="ident">ProtocolClerk</span>};
+    <span class="kw">use </span><span class="kw">crate</span>::crypto_helper::tests_setup::<span class="kw-2">*</span>;
+    <span class="kw">use </span><span class="kw">crate</span>::crypto_helper::{key_encode_hex, ProtocolClerk};
 
-    <span class="macro">mock!</span> {
-        <span class="kw">pub</span> <span class="ident">CertificateRetrieverImpl</span> { }
+    <span class="macro">mock! </span>{
+        <span class="kw">pub </span>CertificateRetrieverImpl { }
 
-        <span class="attribute">#[<span class="ident">async_trait</span>]</span>
-        <span class="kw">impl</span> <span class="ident">CertificateRetriever</span> <span class="kw">for</span> <span class="ident">CertificateRetrieverImpl</span> {
+        <span class="attribute">#[async_trait]
+        </span><span class="kw">impl </span>CertificateRetriever <span class="kw">for </span>CertificateRetrieverImpl {
 
-            <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_certificate_details</span>(
+            <span class="kw">async fn </span>get_certificate_details(
                 <span class="kw-2">&amp;</span><span class="self">self</span>,
-                <span class="ident">certificate_hash</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
-            ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Certificate</span>, <span class="ident">CertificateRetrieverError</span><span class="op">&gt;</span>;
+                certificate_hash: <span class="kw-2">&amp;</span>str,
+            ) -&gt; <span class="prelude-ty">Result</span>&lt;Certificate, CertificateRetrieverError&gt;;
         }
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">test_verify_multi_signature_ok</span>() {
-        <span class="kw">let</span> <span class="ident">protocol_parameters</span> <span class="op">=</span> <span class="ident">setup_protocol_parameters</span>();
-        <span class="kw">let</span> <span class="ident">signers</span> <span class="op">=</span> <span class="ident">setup_signers</span>(<span class="number">5</span>, <span class="kw-2">&amp;</span><span class="ident">protocol_parameters</span>);
-        <span class="kw">let</span> <span class="ident">message</span> <span class="op">=</span> <span class="ident">setup_message</span>();
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>test_verify_multi_signature_ok() {
+        <span class="kw">let </span>protocol_parameters = setup_protocol_parameters();
+        <span class="kw">let </span>signers = setup_signers(<span class="number">5</span>, <span class="kw-2">&amp;</span>protocol_parameters);
+        <span class="kw">let </span>message = setup_message();
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">single_signatures</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
-        <span class="ident">signers</span>.<span class="ident">iter</span>().<span class="ident">for_each</span>(<span class="op">|</span>(<span class="kw">_</span>, <span class="ident">protocol_signer</span>, <span class="kw">_</span>)<span class="op">|</span> {
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">signature</span>) <span class="op">=</span> <span class="ident">protocol_signer</span>.<span class="ident">sign</span>(<span class="ident">message</span>.<span class="ident">compute_hash</span>().<span class="ident">as_bytes</span>()) {
-                <span class="ident">single_signatures</span>.<span class="ident">push</span>(<span class="ident">signature</span>);
+        <span class="kw">let </span><span class="kw-2">mut </span>single_signatures = Vec::new();
+        signers.iter().for_each(|(<span class="kw">_</span>, protocol_signer, <span class="kw">_</span>)| {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(signature) = protocol_signer.sign(message.compute_hash().as_bytes()) {
+                single_signatures.push(signature);
             }
         });
 
-        <span class="kw">let</span> <span class="ident">first_signer</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">signers</span>.<span class="ident">first</span>().<span class="ident">unwrap</span>().<span class="number">1</span>;
-        <span class="kw">let</span> <span class="ident">clerk</span> <span class="op">=</span> <span class="ident">ProtocolClerk::from_signer</span>(<span class="ident">first_signer</span>);
-        <span class="kw">let</span> <span class="ident">aggregate_verification_key</span> <span class="op">=</span> <span class="ident">clerk</span>.<span class="ident">compute_avk</span>();
-        <span class="kw">let</span> <span class="ident">multi_signature</span> <span class="op">=</span> <span class="ident">clerk</span>
-            .<span class="ident">aggregate</span>(<span class="kw-2">&amp;</span><span class="ident">single_signatures</span>, <span class="ident">message</span>.<span class="ident">compute_hash</span>().<span class="ident">as_bytes</span>())
-            .<span class="ident">unwrap</span>();
+        <span class="kw">let </span>first_signer = <span class="kw-2">&amp;</span>signers.first().unwrap().<span class="number">1</span>;
+        <span class="kw">let </span>clerk = ProtocolClerk::from_signer(first_signer);
+        <span class="kw">let </span>aggregate_verification_key = clerk.compute_avk();
+        <span class="kw">let </span>multi_signature = clerk
+            .aggregate(<span class="kw-2">&amp;</span>single_signatures, message.compute_hash().as_bytes())
+            .unwrap();
 
-        <span class="kw">let</span> <span class="ident">verifier</span> <span class="op">=</span> <span class="ident">MithrilCertificateVerifier::new</span>(<span class="ident">slog_scope::logger</span>());
-        <span class="kw">let</span> <span class="ident">protocol_parameters</span> <span class="op">=</span> <span class="ident">protocol_parameters</span>.<span class="ident">into</span>();
-        <span class="kw">let</span> <span class="ident">message_tampered</span> <span class="op">=</span> <span class="ident">message</span>.<span class="ident">compute_hash</span>().<span class="ident">as_bytes</span>()[<span class="number">1</span>..].<span class="ident">to_vec</span>();
+        <span class="kw">let </span>verifier = MithrilCertificateVerifier::new(slog_scope::logger());
+        <span class="kw">let </span>protocol_parameters = protocol_parameters.into();
+        <span class="kw">let </span>message_tampered = message.compute_hash().as_bytes()[<span class="number">1</span>..].to_vec();
         <span class="macro">assert!</span>(
-            <span class="ident">verifier</span>
-                .<span class="ident">verify_multi_signature</span>(
-                    <span class="kw-2">&amp;</span><span class="ident">message_tampered</span>,
-                    <span class="kw-2">&amp;</span><span class="ident">key_encode_hex</span>(<span class="kw-2">&amp;</span><span class="ident">multi_signature</span>).<span class="ident">unwrap</span>(),
-                    <span class="kw-2">&amp;</span><span class="ident">key_encode_hex</span>(<span class="kw-2">&amp;</span><span class="ident">aggregate_verification_key</span>).<span class="ident">unwrap</span>(),
-                    <span class="kw-2">&amp;</span><span class="ident">protocol_parameters</span>,
+            verifier
+                .verify_multi_signature(
+                    <span class="kw-2">&amp;</span>message_tampered,
+                    <span class="kw-2">&amp;</span>key_encode_hex(<span class="kw-2">&amp;</span>multi_signature).unwrap(),
+                    <span class="kw-2">&amp;</span>key_encode_hex(<span class="kw-2">&amp;</span>aggregate_verification_key).unwrap(),
+                    <span class="kw-2">&amp;</span>protocol_parameters,
                 )
-                .<span class="ident">is_err</span>(),
-            <span class="string">&quot;multi signature verification should have failed&quot;</span>
-        );
-        <span class="ident">verifier</span>
-            .<span class="ident">verify_multi_signature</span>(
-                <span class="ident">message</span>.<span class="ident">compute_hash</span>().<span class="ident">as_bytes</span>(),
-                <span class="kw-2">&amp;</span><span class="ident">key_encode_hex</span>(<span class="kw-2">&amp;</span><span class="ident">multi_signature</span>).<span class="ident">unwrap</span>(),
-                <span class="kw-2">&amp;</span><span class="ident">key_encode_hex</span>(<span class="kw-2">&amp;</span><span class="ident">aggregate_verification_key</span>).<span class="ident">unwrap</span>(),
-                <span class="kw-2">&amp;</span><span class="ident">protocol_parameters</span>,
+                .is_err(),
+            <span class="string">&quot;multi signature verification should have failed&quot;
+        </span>);
+        verifier
+            .verify_multi_signature(
+                message.compute_hash().as_bytes(),
+                <span class="kw-2">&amp;</span>key_encode_hex(<span class="kw-2">&amp;</span>multi_signature).unwrap(),
+                <span class="kw-2">&amp;</span>key_encode_hex(<span class="kw-2">&amp;</span>aggregate_verification_key).unwrap(),
+                <span class="kw-2">&amp;</span>protocol_parameters,
             )
-            .<span class="ident">expect</span>(<span class="string">&quot;multi signature verification should have succeeded&quot;</span>);
+            .expect(<span class="string">&quot;multi signature verification should have succeeded&quot;</span>);
     }
 
-    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_verify_certificate_ok_different_epochs</span>() {
-        <span class="kw">let</span> <span class="ident">total_certificates</span> <span class="op">=</span> <span class="number">5</span>;
-        <span class="kw">let</span> <span class="ident">certificates_per_epoch</span> <span class="op">=</span> <span class="number">1</span>;
-        <span class="kw">let</span> (<span class="ident">fake_certificates</span>, <span class="ident">genesis_verifier</span>) <span class="op">=</span>
-            <span class="ident">setup_certificate_chain</span>(<span class="ident">total_certificates</span>, <span class="ident">certificates_per_epoch</span>);
-        <span class="kw">let</span> <span class="ident">fake_certificate1</span> <span class="op">=</span> <span class="ident">fake_certificates</span>[<span class="number">0</span>].<span class="ident">clone</span>();
-        <span class="kw">let</span> <span class="ident">fake_certificate2</span> <span class="op">=</span> <span class="ident">fake_certificates</span>[<span class="number">1</span>].<span class="ident">clone</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_certificate_retriever</span> <span class="op">=</span> <span class="ident">MockCertificateRetrieverImpl::new</span>();
-        <span class="ident">mock_certificate_retriever</span>
-            .<span class="ident">expect_get_certificate_details</span>()
-            .<span class="ident">returning</span>(<span class="kw">move</span> <span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="ident">fake_certificate2</span>.<span class="ident">clone</span>()))
-            .<span class="ident">times</span>(<span class="number">1</span>);
-        <span class="kw">let</span> <span class="ident">verifier</span> <span class="op">=</span> <span class="ident">MithrilCertificateVerifier::new</span>(<span class="ident">slog_scope::logger</span>());
-        <span class="kw">let</span> <span class="ident">verify</span> <span class="op">=</span> <span class="ident">verifier</span>
-            .<span class="ident">verify_certificate</span>(
-                <span class="kw-2">&amp;</span><span class="ident">fake_certificate1</span>,
-                <span class="ident">Arc::new</span>(<span class="ident">mock_certificate_retriever</span>),
-                <span class="kw-2">&amp;</span><span class="ident">genesis_verifier</span>,
-            )
-            .<span class="kw">await</span>;
-        <span class="ident">verify</span>.<span class="ident">expect</span>(<span class="string">&quot;unexpected error&quot;</span>);
-    }
-
-    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_verify_certificate_ok_same_epoch</span>() {
-        <span class="kw">let</span> <span class="ident">total_certificates</span> <span class="op">=</span> <span class="number">5</span>;
-        <span class="kw">let</span> <span class="ident">certificates_per_epoch</span> <span class="op">=</span> <span class="number">2</span>;
-        <span class="kw">let</span> (<span class="ident">fake_certificates</span>, <span class="ident">genesis_verifier</span>) <span class="op">=</span>
-            <span class="ident">setup_certificate_chain</span>(<span class="ident">total_certificates</span>, <span class="ident">certificates_per_epoch</span>);
-        <span class="kw">let</span> <span class="ident">fake_certificate1</span> <span class="op">=</span> <span class="ident">fake_certificates</span>[<span class="number">0</span>].<span class="ident">clone</span>();
-        <span class="kw">let</span> <span class="ident">fake_certificate2</span> <span class="op">=</span> <span class="ident">fake_certificates</span>[<span class="number">1</span>].<span class="ident">clone</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_certificate_retriever</span> <span class="op">=</span> <span class="ident">MockCertificateRetrieverImpl::new</span>();
-        <span class="ident">mock_certificate_retriever</span>
-            .<span class="ident">expect_get_certificate_details</span>()
-            .<span class="ident">returning</span>(<span class="kw">move</span> <span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="ident">fake_certificate2</span>.<span class="ident">clone</span>()))
-            .<span class="ident">times</span>(<span class="number">1</span>);
-        <span class="kw">let</span> <span class="ident">verifier</span> <span class="op">=</span> <span class="ident">MithrilCertificateVerifier::new</span>(<span class="ident">slog_scope::logger</span>());
-        <span class="kw">let</span> <span class="ident">verify</span> <span class="op">=</span> <span class="ident">verifier</span>
-            .<span class="ident">verify_certificate</span>(
-                <span class="kw-2">&amp;</span><span class="ident">fake_certificate1</span>,
-                <span class="ident">Arc::new</span>(<span class="ident">mock_certificate_retriever</span>),
-                <span class="kw-2">&amp;</span><span class="ident">genesis_verifier</span>,
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>test_verify_certificate_ok_different_epochs() {
+        <span class="kw">let </span>total_certificates = <span class="number">5</span>;
+        <span class="kw">let </span>certificates_per_epoch = <span class="number">1</span>;
+        <span class="kw">let </span>(fake_certificates, genesis_verifier) =
+            setup_certificate_chain(total_certificates, certificates_per_epoch);
+        <span class="kw">let </span>fake_certificate1 = fake_certificates[<span class="number">0</span>].clone();
+        <span class="kw">let </span>fake_certificate2 = fake_certificates[<span class="number">1</span>].clone();
+        <span class="kw">let </span><span class="kw-2">mut </span>mock_certificate_retriever = MockCertificateRetrieverImpl::new();
+        mock_certificate_retriever
+            .expect_get_certificate_details()
+            .returning(<span class="kw">move </span>|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(fake_certificate2.clone()))
+            .times(<span class="number">1</span>);
+        <span class="kw">let </span>verifier = MithrilCertificateVerifier::new(slog_scope::logger());
+        <span class="kw">let </span>verify = verifier
+            .verify_certificate(
+                <span class="kw-2">&amp;</span>fake_certificate1,
+                Arc::new(mock_certificate_retriever),
+                <span class="kw-2">&amp;</span>genesis_verifier,
             )
             .<span class="kw">await</span>;
-        <span class="ident">verify</span>.<span class="ident">expect</span>(<span class="string">&quot;unexpected error&quot;</span>);
+        verify.expect(<span class="string">&quot;unexpected error&quot;</span>);
     }
 
-    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_verify_certificate_ko_certificate_chain_previous_hash_unmatch</span>() {
-        <span class="kw">let</span> <span class="ident">total_certificates</span> <span class="op">=</span> <span class="number">5</span>;
-        <span class="kw">let</span> <span class="ident">certificates_per_epoch</span> <span class="op">=</span> <span class="number">1</span>;
-        <span class="kw">let</span> (<span class="ident">fake_certificates</span>, <span class="ident">genesis_verifier</span>) <span class="op">=</span>
-            <span class="ident">setup_certificate_chain</span>(<span class="ident">total_certificates</span>, <span class="ident">certificates_per_epoch</span>);
-        <span class="kw">let</span> <span class="ident">fake_certificate1</span> <span class="op">=</span> <span class="ident">fake_certificates</span>[<span class="number">0</span>].<span class="ident">clone</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">fake_certificate2</span> <span class="op">=</span> <span class="ident">fake_certificates</span>[<span class="number">1</span>].<span class="ident">clone</span>();
-        <span class="ident">fake_certificate2</span>.<span class="ident">previous_hash</span> <span class="op">=</span> <span class="string">&quot;another-hash&quot;</span>.<span class="ident">to_string</span>();
-        <span class="ident">fake_certificate2</span>.<span class="ident">hash</span> <span class="op">=</span> <span class="ident">fake_certificate2</span>.<span class="ident">compute_hash</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_certificate_retriever</span> <span class="op">=</span> <span class="ident">MockCertificateRetrieverImpl::new</span>();
-        <span class="ident">mock_certificate_retriever</span>
-            .<span class="ident">expect_get_certificate_details</span>()
-            .<span class="ident">returning</span>(<span class="kw">move</span> <span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="ident">fake_certificate2</span>.<span class="ident">clone</span>()))
-            .<span class="ident">times</span>(<span class="number">1</span>);
-        <span class="kw">let</span> <span class="ident">verifier</span> <span class="op">=</span> <span class="ident">MithrilCertificateVerifier::new</span>(<span class="ident">slog_scope::logger</span>());
-        <span class="kw">let</span> <span class="ident">verify</span> <span class="op">=</span> <span class="ident">verifier</span>
-            .<span class="ident">verify_certificate</span>(
-                <span class="kw-2">&amp;</span><span class="ident">fake_certificate1</span>,
-                <span class="ident">Arc::new</span>(<span class="ident">mock_certificate_retriever</span>),
-                <span class="kw-2">&amp;</span><span class="ident">genesis_verifier</span>,
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>test_verify_certificate_ok_same_epoch() {
+        <span class="kw">let </span>total_certificates = <span class="number">5</span>;
+        <span class="kw">let </span>certificates_per_epoch = <span class="number">2</span>;
+        <span class="kw">let </span>(fake_certificates, genesis_verifier) =
+            setup_certificate_chain(total_certificates, certificates_per_epoch);
+        <span class="kw">let </span>fake_certificate1 = fake_certificates[<span class="number">0</span>].clone();
+        <span class="kw">let </span>fake_certificate2 = fake_certificates[<span class="number">1</span>].clone();
+        <span class="kw">let </span><span class="kw-2">mut </span>mock_certificate_retriever = MockCertificateRetrieverImpl::new();
+        mock_certificate_retriever
+            .expect_get_certificate_details()
+            .returning(<span class="kw">move </span>|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(fake_certificate2.clone()))
+            .times(<span class="number">1</span>);
+        <span class="kw">let </span>verifier = MithrilCertificateVerifier::new(slog_scope::logger());
+        <span class="kw">let </span>verify = verifier
+            .verify_certificate(
+                <span class="kw-2">&amp;</span>fake_certificate1,
+                Arc::new(mock_certificate_retriever),
+                <span class="kw-2">&amp;</span>genesis_verifier,
             )
             .<span class="kw">await</span>;
-        <span class="macro">assert!</span>(
-            <span class="macro">matches!</span>(
-                <span class="ident">verify</span>,
-                <span class="prelude-val">Err</span>(<span class="ident">CertificateVerifierError::CertificateChainPreviousHashUnmatch</span>)
-            ),
-            <span class="string">&quot;unexpected error type: {:?}&quot;</span>,
-            <span class="ident">verify</span>
-        );
+        verify.expect(<span class="string">&quot;unexpected error&quot;</span>);
     }
 
-    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_verify_certificate_ko_certificate_chain_avk_unmatch</span>() {
-        <span class="kw">let</span> <span class="ident">total_certificates</span> <span class="op">=</span> <span class="number">5</span>;
-        <span class="kw">let</span> <span class="ident">certificates_per_epoch</span> <span class="op">=</span> <span class="number">1</span>;
-        <span class="kw">let</span> (<span class="ident">fake_certificates</span>, <span class="ident">genesis_verifier</span>) <span class="op">=</span>
-            <span class="ident">setup_certificate_chain</span>(<span class="ident">total_certificates</span>, <span class="ident">certificates_per_epoch</span>);
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">fake_certificate1</span> <span class="op">=</span> <span class="ident">fake_certificates</span>[<span class="number">0</span>].<span class="ident">clone</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">fake_certificate2</span> <span class="op">=</span> <span class="ident">fake_certificates</span>[<span class="number">1</span>].<span class="ident">clone</span>();
-        <span class="ident">fake_certificate2</span>.<span class="ident">protocol_message</span>.<span class="ident">set_message_part</span>(
-            <span class="ident">ProtocolMessagePartKey::NextAggregateVerificationKey</span>,
-            <span class="string">&quot;another-avk&quot;</span>.<span class="ident">to_string</span>(),
-        );
-        <span class="ident">fake_certificate2</span>.<span class="ident">hash</span> <span class="op">=</span> <span class="ident">fake_certificate2</span>.<span class="ident">compute_hash</span>();
-        <span class="ident">fake_certificate1</span>.<span class="ident">previous_hash</span> <span class="op">=</span> <span class="ident">fake_certificate2</span>.<span class="ident">hash</span>.<span class="ident">clone</span>();
-        <span class="ident">fake_certificate1</span>.<span class="ident">hash</span> <span class="op">=</span> <span class="ident">fake_certificate1</span>.<span class="ident">compute_hash</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_certificate_retriever</span> <span class="op">=</span> <span class="ident">MockCertificateRetrieverImpl::new</span>();
-        <span class="ident">mock_certificate_retriever</span>
-            .<span class="ident">expect_get_certificate_details</span>()
-            .<span class="ident">returning</span>(<span class="kw">move</span> <span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="ident">fake_certificate2</span>.<span class="ident">clone</span>()))
-            .<span class="ident">times</span>(<span class="number">1</span>);
-        <span class="kw">let</span> <span class="ident">verifier</span> <span class="op">=</span> <span class="ident">MithrilCertificateVerifier::new</span>(<span class="ident">slog_scope::logger</span>());
-        <span class="kw">let</span> <span class="ident">verify</span> <span class="op">=</span> <span class="ident">verifier</span>
-            .<span class="ident">verify_certificate</span>(
-                <span class="kw-2">&amp;</span><span class="ident">fake_certificate1</span>,
-                <span class="ident">Arc::new</span>(<span class="ident">mock_certificate_retriever</span>),
-                <span class="kw-2">&amp;</span><span class="ident">genesis_verifier</span>,
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>test_verify_certificate_ko_certificate_chain_previous_hash_unmatch() {
+        <span class="kw">let </span>total_certificates = <span class="number">5</span>;
+        <span class="kw">let </span>certificates_per_epoch = <span class="number">1</span>;
+        <span class="kw">let </span>(fake_certificates, genesis_verifier) =
+            setup_certificate_chain(total_certificates, certificates_per_epoch);
+        <span class="kw">let </span>fake_certificate1 = fake_certificates[<span class="number">0</span>].clone();
+        <span class="kw">let </span><span class="kw-2">mut </span>fake_certificate2 = fake_certificates[<span class="number">1</span>].clone();
+        fake_certificate2.previous_hash = <span class="string">&quot;another-hash&quot;</span>.to_string();
+        fake_certificate2.hash = fake_certificate2.compute_hash();
+        <span class="kw">let </span><span class="kw-2">mut </span>mock_certificate_retriever = MockCertificateRetrieverImpl::new();
+        mock_certificate_retriever
+            .expect_get_certificate_details()
+            .returning(<span class="kw">move </span>|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(fake_certificate2.clone()))
+            .times(<span class="number">1</span>);
+        <span class="kw">let </span>verifier = MithrilCertificateVerifier::new(slog_scope::logger());
+        <span class="kw">let </span>verify = verifier
+            .verify_certificate(
+                <span class="kw-2">&amp;</span>fake_certificate1,
+                Arc::new(mock_certificate_retriever),
+                <span class="kw-2">&amp;</span>genesis_verifier,
             )
             .<span class="kw">await</span>;
         <span class="macro">assert!</span>(
             <span class="macro">matches!</span>(
-                <span class="ident">verify</span>,
-                <span class="prelude-val">Err</span>(<span class="ident">CertificateVerifierError::CertificateChainAVKUnmatch</span>)
+                verify,
+                <span class="prelude-val">Err</span>(CertificateVerifierError::CertificateChainPreviousHashUnmatch)
             ),
             <span class="string">&quot;unexpected error type: {:?}&quot;</span>,
-            <span class="ident">verify</span>
+            verify
         );
     }
 
-    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_verify_certificate_ko_certificate_hash_not_matching</span>() {
-        <span class="kw">let</span> <span class="ident">total_certificates</span> <span class="op">=</span> <span class="number">5</span>;
-        <span class="kw">let</span> <span class="ident">certificates_per_epoch</span> <span class="op">=</span> <span class="number">1</span>;
-        <span class="kw">let</span> (<span class="ident">fake_certificates</span>, <span class="ident">genesis_verifier</span>) <span class="op">=</span>
-            <span class="ident">setup_certificate_chain</span>(<span class="ident">total_certificates</span>, <span class="ident">certificates_per_epoch</span>);
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">fake_certificate1</span> <span class="op">=</span> <span class="ident">fake_certificates</span>[<span class="number">0</span>].<span class="ident">clone</span>();
-        <span class="ident">fake_certificate1</span>.<span class="ident">hash</span> <span class="op">=</span> <span class="string">&quot;another-hash&quot;</span>.<span class="ident">to_string</span>();
-        <span class="kw">let</span> <span class="ident">mock_certificate_retriever</span> <span class="op">=</span> <span class="ident">MockCertificateRetrieverImpl::new</span>();
-        <span class="kw">let</span> <span class="ident">verifier</span> <span class="op">=</span> <span class="ident">MithrilCertificateVerifier::new</span>(<span class="ident">slog_scope::logger</span>());
-        <span class="kw">let</span> <span class="ident">verify</span> <span class="op">=</span> <span class="ident">verifier</span>
-            .<span class="ident">verify_certificate</span>(
-                <span class="kw-2">&amp;</span><span class="ident">fake_certificate1</span>,
-                <span class="ident">Arc::new</span>(<span class="ident">mock_certificate_retriever</span>),
-                <span class="kw-2">&amp;</span><span class="ident">genesis_verifier</span>,
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>test_verify_certificate_ko_certificate_chain_avk_unmatch() {
+        <span class="kw">let </span>total_certificates = <span class="number">5</span>;
+        <span class="kw">let </span>certificates_per_epoch = <span class="number">1</span>;
+        <span class="kw">let </span>(fake_certificates, genesis_verifier) =
+            setup_certificate_chain(total_certificates, certificates_per_epoch);
+        <span class="kw">let </span><span class="kw-2">mut </span>fake_certificate1 = fake_certificates[<span class="number">0</span>].clone();
+        <span class="kw">let </span><span class="kw-2">mut </span>fake_certificate2 = fake_certificates[<span class="number">1</span>].clone();
+        fake_certificate2.protocol_message.set_message_part(
+            ProtocolMessagePartKey::NextAggregateVerificationKey,
+            <span class="string">&quot;another-avk&quot;</span>.to_string(),
+        );
+        fake_certificate2.hash = fake_certificate2.compute_hash();
+        fake_certificate1.previous_hash = fake_certificate2.hash.clone();
+        fake_certificate1.hash = fake_certificate1.compute_hash();
+        <span class="kw">let </span><span class="kw-2">mut </span>mock_certificate_retriever = MockCertificateRetrieverImpl::new();
+        mock_certificate_retriever
+            .expect_get_certificate_details()
+            .returning(<span class="kw">move </span>|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(fake_certificate2.clone()))
+            .times(<span class="number">1</span>);
+        <span class="kw">let </span>verifier = MithrilCertificateVerifier::new(slog_scope::logger());
+        <span class="kw">let </span>verify = verifier
+            .verify_certificate(
+                <span class="kw-2">&amp;</span>fake_certificate1,
+                Arc::new(mock_certificate_retriever),
+                <span class="kw-2">&amp;</span>genesis_verifier,
             )
             .<span class="kw">await</span>;
         <span class="macro">assert!</span>(
             <span class="macro">matches!</span>(
-                <span class="ident">verify</span>,
-                <span class="prelude-val">Err</span>(<span class="ident">CertificateVerifierError::CertificateHashUnmatch</span>)
+                verify,
+                <span class="prelude-val">Err</span>(CertificateVerifierError::CertificateChainAVKUnmatch)
             ),
             <span class="string">&quot;unexpected error type: {:?}&quot;</span>,
-            <span class="ident">verify</span>
+            verify
         );
     }
 
-    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_verify_certificate_chain_ok</span>() {
-        <span class="kw">let</span> <span class="ident">total_certificates</span> <span class="op">=</span> <span class="number">15</span>;
-        <span class="kw">let</span> <span class="ident">certificates_per_epoch</span> <span class="op">=</span> <span class="number">2</span>;
-        <span class="kw">let</span> (<span class="ident">fake_certificates</span>, <span class="ident">genesis_verifier</span>) <span class="op">=</span>
-            <span class="ident">setup_certificate_chain</span>(<span class="ident">total_certificates</span>, <span class="ident">certificates_per_epoch</span>);
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_certificate_retriever</span> <span class="op">=</span> <span class="ident">MockCertificateRetrieverImpl::new</span>();
-        <span class="kw">let</span> <span class="ident">certificate_to_verify</span> <span class="op">=</span> <span class="ident">fake_certificates</span>[<span class="number">0</span>].<span class="ident">clone</span>();
-        <span class="kw">for</span> <span class="ident">fake_certificate</span> <span class="kw">in</span> <span class="ident">fake_certificates</span>.<span class="ident">into_iter</span>().<span class="ident">skip</span>(<span class="number">1</span>) {
-            <span class="ident">mock_certificate_retriever</span>
-                .<span class="ident">expect_get_certificate_details</span>()
-                .<span class="ident">returning</span>(<span class="kw">move</span> <span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="ident">fake_certificate</span>.<span class="ident">clone</span>()))
-                .<span class="ident">times</span>(<span class="number">1</span>);
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>test_verify_certificate_ko_certificate_hash_not_matching() {
+        <span class="kw">let </span>total_certificates = <span class="number">5</span>;
+        <span class="kw">let </span>certificates_per_epoch = <span class="number">1</span>;
+        <span class="kw">let </span>(fake_certificates, genesis_verifier) =
+            setup_certificate_chain(total_certificates, certificates_per_epoch);
+        <span class="kw">let </span><span class="kw-2">mut </span>fake_certificate1 = fake_certificates[<span class="number">0</span>].clone();
+        fake_certificate1.hash = <span class="string">&quot;another-hash&quot;</span>.to_string();
+        <span class="kw">let </span>mock_certificate_retriever = MockCertificateRetrieverImpl::new();
+        <span class="kw">let </span>verifier = MithrilCertificateVerifier::new(slog_scope::logger());
+        <span class="kw">let </span>verify = verifier
+            .verify_certificate(
+                <span class="kw-2">&amp;</span>fake_certificate1,
+                Arc::new(mock_certificate_retriever),
+                <span class="kw-2">&amp;</span>genesis_verifier,
+            )
+            .<span class="kw">await</span>;
+        <span class="macro">assert!</span>(
+            <span class="macro">matches!</span>(
+                verify,
+                <span class="prelude-val">Err</span>(CertificateVerifierError::CertificateHashUnmatch)
+            ),
+            <span class="string">&quot;unexpected error type: {:?}&quot;</span>,
+            verify
+        );
+    }
+
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>test_verify_certificate_chain_ok() {
+        <span class="kw">let </span>total_certificates = <span class="number">15</span>;
+        <span class="kw">let </span>certificates_per_epoch = <span class="number">2</span>;
+        <span class="kw">let </span>(fake_certificates, genesis_verifier) =
+            setup_certificate_chain(total_certificates, certificates_per_epoch);
+        <span class="kw">let </span><span class="kw-2">mut </span>mock_certificate_retriever = MockCertificateRetrieverImpl::new();
+        <span class="kw">let </span>certificate_to_verify = fake_certificates[<span class="number">0</span>].clone();
+        <span class="kw">for </span>fake_certificate <span class="kw">in </span>fake_certificates.into_iter().skip(<span class="number">1</span>) {
+            mock_certificate_retriever
+                .expect_get_certificate_details()
+                .returning(<span class="kw">move </span>|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(fake_certificate.clone()))
+                .times(<span class="number">1</span>);
         }
-        <span class="kw">let</span> <span class="ident">verifier</span> <span class="op">=</span> <span class="ident">MithrilCertificateVerifier::new</span>(<span class="ident">slog_scope::logger</span>());
-        <span class="kw">let</span> <span class="ident">verify</span> <span class="op">=</span> <span class="ident">verifier</span>
-            .<span class="ident">verify_certificate_chain</span>(
-                <span class="ident">certificate_to_verify</span>,
-                <span class="ident">Arc::new</span>(<span class="ident">mock_certificate_retriever</span>),
-                <span class="kw-2">&amp;</span><span class="ident">genesis_verifier</span>,
+        <span class="kw">let </span>verifier = MithrilCertificateVerifier::new(slog_scope::logger());
+        <span class="kw">let </span>verify = verifier
+            .verify_certificate_chain(
+                certificate_to_verify,
+                Arc::new(mock_certificate_retriever),
+                <span class="kw-2">&amp;</span>genesis_verifier,
             )
             .<span class="kw">await</span>;
-        <span class="ident">verify</span>.<span class="ident">expect</span>(<span class="string">&quot;unexpected error&quot;</span>);
+        verify.expect(<span class="string">&quot;unexpected error&quot;</span>);
     }
 
-    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_verify_certificate_chain_ko</span>() {
-        <span class="kw">let</span> <span class="ident">total_certificates</span> <span class="op">=</span> <span class="number">15</span>;
-        <span class="kw">let</span> <span class="ident">certificates_per_epoch</span> <span class="op">=</span> <span class="number">2</span>;
-        <span class="kw">let</span> (<span class="kw-2">mut</span> <span class="ident">fake_certificates</span>, <span class="ident">genesis_verifier</span>) <span class="op">=</span>
-            <span class="ident">setup_certificate_chain</span>(<span class="ident">total_certificates</span>, <span class="ident">certificates_per_epoch</span>);
-        <span class="kw">let</span> <span class="ident">index_certificate_fail</span> <span class="op">=</span> (<span class="ident">total_certificates</span> <span class="op">/</span> <span class="number">2</span>) <span class="kw">as</span> <span class="ident">usize</span>;
-        <span class="ident">fake_certificates</span>[<span class="ident">index_certificate_fail</span>].<span class="ident">hash</span> <span class="op">=</span> <span class="string">&quot;tampered-hash&quot;</span>.<span class="ident">to_string</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mock_certificate_retriever</span> <span class="op">=</span> <span class="ident">MockCertificateRetrieverImpl::new</span>();
-        <span class="kw">let</span> <span class="ident">certificate_to_verify</span> <span class="op">=</span> <span class="ident">fake_certificates</span>[<span class="number">0</span>].<span class="ident">clone</span>();
-        <span class="kw">for</span> <span class="ident">fake_certificate</span> <span class="kw">in</span> <span class="ident">fake_certificates</span>
-            .<span class="ident">into_iter</span>()
-            .<span class="ident">skip</span>(<span class="number">1</span>)
-            .<span class="ident">take</span>(<span class="ident">index_certificate_fail</span>)
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>test_verify_certificate_chain_ko() {
+        <span class="kw">let </span>total_certificates = <span class="number">15</span>;
+        <span class="kw">let </span>certificates_per_epoch = <span class="number">2</span>;
+        <span class="kw">let </span>(<span class="kw-2">mut </span>fake_certificates, genesis_verifier) =
+            setup_certificate_chain(total_certificates, certificates_per_epoch);
+        <span class="kw">let </span>index_certificate_fail = (total_certificates / <span class="number">2</span>) <span class="kw">as </span>usize;
+        fake_certificates[index_certificate_fail].hash = <span class="string">&quot;tampered-hash&quot;</span>.to_string();
+        <span class="kw">let </span><span class="kw-2">mut </span>mock_certificate_retriever = MockCertificateRetrieverImpl::new();
+        <span class="kw">let </span>certificate_to_verify = fake_certificates[<span class="number">0</span>].clone();
+        <span class="kw">for </span>fake_certificate <span class="kw">in </span>fake_certificates
+            .into_iter()
+            .skip(<span class="number">1</span>)
+            .take(index_certificate_fail)
         {
-            <span class="ident">mock_certificate_retriever</span>
-                .<span class="ident">expect_get_certificate_details</span>()
-                .<span class="ident">returning</span>(<span class="kw">move</span> <span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="ident">fake_certificate</span>.<span class="ident">clone</span>()))
-                .<span class="ident">times</span>(<span class="number">1</span>);
+            mock_certificate_retriever
+                .expect_get_certificate_details()
+                .returning(<span class="kw">move </span>|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(fake_certificate.clone()))
+                .times(<span class="number">1</span>);
         }
-        <span class="kw">let</span> <span class="ident">verifier</span> <span class="op">=</span> <span class="ident">MithrilCertificateVerifier::new</span>(<span class="ident">slog_scope::logger</span>());
-        <span class="kw">let</span> <span class="ident">verify</span> <span class="op">=</span> <span class="ident">verifier</span>
-            .<span class="ident">verify_certificate_chain</span>(
-                <span class="ident">certificate_to_verify</span>,
-                <span class="ident">Arc::new</span>(<span class="ident">mock_certificate_retriever</span>),
-                <span class="kw-2">&amp;</span><span class="ident">genesis_verifier</span>,
+        <span class="kw">let </span>verifier = MithrilCertificateVerifier::new(slog_scope::logger());
+        <span class="kw">let </span>verify = verifier
+            .verify_certificate_chain(
+                certificate_to_verify,
+                Arc::new(mock_certificate_retriever),
+                <span class="kw-2">&amp;</span>genesis_verifier,
             )
             .<span class="kw">await</span>;
         <span class="macro">assert!</span>(
             <span class="macro">matches!</span>(
-                <span class="ident">verify</span>,
-                <span class="prelude-val">Err</span>(<span class="ident">CertificateVerifierError::CertificateChainPreviousHashUnmatch</span>)
+                verify,
+                <span class="prelude-val">Err</span>(CertificateVerifierError::CertificateChainPreviousHashUnmatch)
             ),
             <span class="string">&quot;unexpected error type: {:?}&quot;</span>,
-            <span class="ident">verify</span>
+            verify
         );
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="mithril_common" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.64.0 (a55dd71d5 2022-09-19)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="mithril_common" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0 (897e37553 2022-11-02)" ></div></body></html>

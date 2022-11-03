@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `mithril-common/src/digesters/cardano_immutable_digester.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>cardano_immutable_digester.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../mithril_common/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../mithril_common/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../mithril_common/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `mithril-common/src/digesters/cardano_immutable_digester.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>cardano_immutable_digester.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../mithril_common/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../mithril_common/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../mithril_common/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -146,153 +146,153 @@
 <span id="146">146</span>
 <span id="147">147</span>
 <span id="148">148</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::digesters</span>::{<span class="ident">ImmutableDigester</span>, <span class="ident">ImmutableDigesterError</span>, <span class="ident">ImmutableFile</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::entities::Beacon</span>;
+</pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::digesters::{ImmutableDigester, ImmutableDigesterError, ImmutableFile};
+<span class="kw">use </span><span class="kw">crate</span>::entities::Beacon;
 
-<span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
-<span class="kw">use</span> <span class="ident">sha2</span>::{<span class="ident">Digest</span>, <span class="ident">Sha256</span>};
-<span class="kw">use</span> <span class="ident">slog</span>::{<span class="ident">debug</span>, <span class="ident">info</span>, <span class="ident">Logger</span>};
-<span class="kw">use</span> <span class="ident">std::fs::File</span>;
-<span class="kw">use</span> <span class="ident">std::io</span>;
-<span class="kw">use</span> <span class="ident">std::path::PathBuf</span>;
+<span class="kw">use </span>async_trait::async_trait;
+<span class="kw">use </span>sha2::{Digest, Sha256};
+<span class="kw">use </span>slog::{debug, info, Logger};
+<span class="kw">use </span>std::fs::File;
+<span class="kw">use </span>std::io;
+<span class="kw">use </span>std::path::PathBuf;
 
-<span class="doccomment">/// A digester working directly on a Cardano DB immutables files</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">CardanoImmutableDigester</span> {
-    <span class="doccomment">/// A cardano node DB directory</span>
-    <span class="ident">db_directory</span>: <span class="ident">PathBuf</span>,
+<span class="doccomment">/// A digester working directly on a Cardano DB immutables files
+</span><span class="kw">pub struct </span>CardanoImmutableDigester {
+    <span class="doccomment">/// A cardano node DB directory
+    </span>db_directory: PathBuf,
 
-    <span class="doccomment">/// The logger where the logs should be written</span>
-    <span class="ident">logger</span>: <span class="ident">Logger</span>,
+    <span class="doccomment">/// The logger where the logs should be written
+    </span>logger: Logger,
 }
 
-<span class="kw">impl</span> <span class="ident">CardanoImmutableDigester</span> {
-    <span class="doccomment">/// ImmutableDigester factory</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">db_directory</span>: <span class="ident">PathBuf</span>, <span class="ident">logger</span>: <span class="ident">Logger</span>) -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> {
-            <span class="ident">db_directory</span>,
-            <span class="ident">logger</span>,
+<span class="kw">impl </span>CardanoImmutableDigester {
+    <span class="doccomment">/// ImmutableDigester factory
+    </span><span class="kw">pub fn </span>new(db_directory: PathBuf, logger: Logger) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            db_directory,
+            logger,
         }
     }
 }
 
-<span class="attribute">#[<span class="ident">async_trait</span>]</span>
-<span class="kw">impl</span> <span class="ident">ImmutableDigester</span> <span class="kw">for</span> <span class="ident">CardanoImmutableDigester</span> {
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">compute_digest</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">beacon</span>: <span class="kw-2">&amp;</span><span class="ident">Beacon</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">ImmutableDigesterError</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">up_to_file_number</span> <span class="op">=</span> <span class="ident">beacon</span>.<span class="ident">immutable_file_number</span>;
-        <span class="kw">let</span> <span class="ident">immutables</span> <span class="op">=</span> <span class="ident">ImmutableFile::list_completed_in_dir</span>(<span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="self">self</span>.<span class="ident">db_directory</span>)<span class="question-mark">?</span>
-            .<span class="ident">into_iter</span>()
-            .<span class="ident">filter</span>(<span class="op">|</span><span class="ident">f</span><span class="op">|</span> <span class="ident">f</span>.<span class="ident">number</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">up_to_file_number</span>)
-            .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
+<span class="attribute">#[async_trait]
+</span><span class="kw">impl </span>ImmutableDigester <span class="kw">for </span>CardanoImmutableDigester {
+    <span class="kw">async fn </span>compute_digest(<span class="kw-2">&amp;</span><span class="self">self</span>, beacon: <span class="kw-2">&amp;</span>Beacon) -&gt; <span class="prelude-ty">Result</span>&lt;String, ImmutableDigesterError&gt; {
+        <span class="kw">let </span>up_to_file_number = beacon.immutable_file_number;
+        <span class="kw">let </span>immutables = ImmutableFile::list_completed_in_dir(<span class="kw-2">&amp;*</span><span class="self">self</span>.db_directory)<span class="question-mark">?
+            </span>.into_iter()
+            .filter(|f| f.number &lt;= up_to_file_number)
+            .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 
-        <span class="kw">match</span> <span class="ident">immutables</span>.<span class="ident">last</span>() {
-            <span class="prelude-val">None</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">ImmutableDigesterError::NotEnoughImmutable</span> {
-                <span class="ident">expected_number</span>: <span class="ident">up_to_file_number</span>,
-                <span class="ident">found_number</span>: <span class="prelude-val">None</span>,
+        <span class="kw">match </span>immutables.last() {
+            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(ImmutableDigesterError::NotEnoughImmutable {
+                expected_number: up_to_file_number,
+                found_number: <span class="prelude-val">None</span>,
             }),
-            <span class="prelude-val">Some</span>(<span class="ident">last_immutable_file</span>) <span class="kw">if</span> <span class="ident">last_immutable_file</span>.<span class="ident">number</span> <span class="op">&lt;</span> <span class="ident">up_to_file_number</span> =&gt; {
-                <span class="prelude-val">Err</span>(<span class="ident">ImmutableDigesterError::NotEnoughImmutable</span> {
-                    <span class="ident">expected_number</span>: <span class="ident">up_to_file_number</span>,
-                    <span class="ident">found_number</span>: <span class="prelude-val">Some</span>(<span class="ident">last_immutable_file</span>.<span class="ident">number</span>),
+            <span class="prelude-val">Some</span>(last_immutable_file) <span class="kw">if </span>last_immutable_file.number &lt; up_to_file_number =&gt; {
+                <span class="prelude-val">Err</span>(ImmutableDigesterError::NotEnoughImmutable {
+                    expected_number: up_to_file_number,
+                    found_number: <span class="prelude-val">Some</span>(last_immutable_file.number),
                 })
             }
             <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; {
-                <span class="macro">info!</span>(<span class="self">self</span>.<span class="ident">logger</span>, <span class="string">&quot;#compute_digest&quot;</span>; <span class="string">&quot;beacon&quot;</span> =&gt; #<span class="question-mark">?</span><span class="ident">beacon</span>, <span class="string">&quot;nb_of_immutables&quot;</span> =&gt; <span class="ident">immutables</span>.<span class="ident">len</span>());
+                <span class="macro">info!</span>(<span class="self">self</span>.logger, <span class="string">&quot;#compute_digest&quot;</span>; <span class="string">&quot;beacon&quot; </span>=&gt; #<span class="question-mark">?</span>beacon, <span class="string">&quot;nb_of_immutables&quot; </span>=&gt; immutables.len());
 
-                <span class="comment">// digest is done in a separate thread because it is blocking the whole task</span>
-                <span class="kw">let</span> <span class="ident">logger</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">logger</span>.<span class="ident">clone</span>();
-                <span class="kw">let</span> <span class="ident">thread_beacon</span> <span class="op">=</span> <span class="ident">beacon</span>.<span class="ident">clone</span>();
-                <span class="kw">let</span> <span class="ident">hash</span> <span class="op">=</span> <span class="ident">tokio::task::spawn_blocking</span>(<span class="kw">move</span> <span class="op">|</span><span class="op">|</span> -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>[<span class="ident">u8</span>; <span class="number">32</span>], <span class="ident">io::Error</span><span class="op">&gt;</span> {
-                    <span class="ident">compute_hash</span>(<span class="ident">logger</span>, <span class="kw-2">&amp;</span><span class="ident">thread_beacon</span>, <span class="kw-2">&amp;</span><span class="ident">immutables</span>)
+                <span class="comment">// digest is done in a separate thread because it is blocking the whole task
+                </span><span class="kw">let </span>logger = <span class="self">self</span>.logger.clone();
+                <span class="kw">let </span>thread_beacon = beacon.clone();
+                <span class="kw">let </span>hash = tokio::task::spawn_blocking(<span class="kw">move </span>|| -&gt; <span class="prelude-ty">Result</span>&lt;[u8; <span class="number">32</span>], io::Error&gt; {
+                    compute_hash(logger, <span class="kw-2">&amp;</span>thread_beacon, <span class="kw-2">&amp;</span>immutables)
                 })
-                .<span class="kw">await</span>
-                .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">ImmutableDigesterError::DigestComputationError</span>(<span class="ident">e</span>.<span class="ident">into</span>()))<span class="question-mark">?</span><span class="question-mark">?</span>;
-                <span class="kw">let</span> <span class="ident">digest</span> <span class="op">=</span> <span class="ident">hex::encode</span>(<span class="ident">hash</span>);
+                .<span class="kw">await
+                </span>.map_err(|e| ImmutableDigesterError::DigestComputationError(e.into()))<span class="question-mark">??</span>;
+                <span class="kw">let </span>digest = hex::encode(hash);
 
-                <span class="macro">debug!</span>(<span class="self">self</span>.<span class="ident">logger</span>, <span class="string">&quot;#computed digest: {:?}&quot;</span>, <span class="ident">digest</span>);
+                <span class="macro">debug!</span>(<span class="self">self</span>.logger, <span class="string">&quot;#computed digest: {:?}&quot;</span>, digest);
 
-                <span class="prelude-val">Ok</span>(<span class="ident">digest</span>)
+                <span class="prelude-val">Ok</span>(digest)
             }
         }
     }
 }
 
-<span class="kw">fn</span> <span class="ident">compute_hash</span>(
-    <span class="ident">logger</span>: <span class="ident">Logger</span>,
-    <span class="ident">beacon</span>: <span class="kw-2">&amp;</span><span class="ident">Beacon</span>,
-    <span class="ident">entries</span>: <span class="kw-2">&amp;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">ImmutableFile</span><span class="op">&gt;</span>,
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>[<span class="ident">u8</span>; <span class="number">32</span>], <span class="ident">io::Error</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">hasher</span> <span class="op">=</span> <span class="ident">Sha256::new</span>();
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">progress</span> <span class="op">=</span> <span class="ident">Progress</span> {
-        <span class="ident">index</span>: <span class="number">0</span>,
-        <span class="ident">total</span>: <span class="ident">entries</span>.<span class="ident">len</span>(),
+<span class="kw">fn </span>compute_hash(
+    logger: Logger,
+    beacon: <span class="kw-2">&amp;</span>Beacon,
+    entries: <span class="kw-2">&amp;</span>Vec&lt;ImmutableFile&gt;,
+) -&gt; <span class="prelude-ty">Result</span>&lt;[u8; <span class="number">32</span>], io::Error&gt; {
+    <span class="kw">let </span><span class="kw-2">mut </span>hasher = Sha256::new();
+    <span class="kw">let </span><span class="kw-2">mut </span>progress = Progress {
+        index: <span class="number">0</span>,
+        total: entries.len(),
     };
 
-    <span class="ident">hasher</span>.<span class="ident">update</span>(<span class="ident">beacon</span>.<span class="ident">compute_hash</span>().<span class="ident">as_bytes</span>());
+    hasher.update(beacon.compute_hash().as_bytes());
 
-    <span class="kw">for</span> (<span class="ident">ix</span>, <span class="ident">entry</span>) <span class="kw">in</span> <span class="ident">entries</span>.<span class="ident">iter</span>().<span class="ident">enumerate</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">file</span> <span class="op">=</span> <span class="ident">File::open</span>(<span class="kw-2">&amp;</span><span class="ident">entry</span>.<span class="ident">path</span>)<span class="question-mark">?</span>;
+    <span class="kw">for </span>(ix, entry) <span class="kw">in </span>entries.iter().enumerate() {
+        <span class="kw">let </span><span class="kw-2">mut </span>file = File::open(<span class="kw-2">&amp;</span>entry.path)<span class="question-mark">?</span>;
 
-        <span class="ident">io::copy</span>(<span class="kw-2">&amp;mut</span> <span class="ident">file</span>, <span class="kw-2">&amp;mut</span> <span class="ident">hasher</span>)<span class="question-mark">?</span>;
+        io::copy(<span class="kw-2">&amp;mut </span>file, <span class="kw-2">&amp;mut </span>hasher)<span class="question-mark">?</span>;
 
-        <span class="kw">if</span> <span class="ident">progress</span>.<span class="ident">report</span>(<span class="ident">ix</span>) {
-            <span class="macro">info!</span>(<span class="ident">logger</span>, <span class="string">&quot;hashing: {}&quot;</span>, <span class="kw-2">&amp;</span><span class="ident">progress</span>);
+        <span class="kw">if </span>progress.report(ix) {
+            <span class="macro">info!</span>(logger, <span class="string">&quot;hashing: {}&quot;</span>, <span class="kw-2">&amp;</span>progress);
         }
     }
 
-    <span class="prelude-val">Ok</span>(<span class="ident">hasher</span>.<span class="ident">finalize</span>().<span class="ident">into</span>())
+    <span class="prelude-val">Ok</span>(hasher.finalize().into())
 }
 
-<span class="kw">struct</span> <span class="ident">Progress</span> {
-    <span class="ident">index</span>: <span class="ident">usize</span>,
-    <span class="ident">total</span>: <span class="ident">usize</span>,
+<span class="kw">struct </span>Progress {
+    index: usize,
+    total: usize,
 }
 
-<span class="kw">impl</span> <span class="ident">Progress</span> {
-    <span class="kw">fn</span> <span class="ident">report</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">ix</span>: <span class="ident">usize</span>) -&gt; <span class="ident">bool</span> {
-        <span class="self">self</span>.<span class="ident">index</span> <span class="op">=</span> <span class="ident">ix</span>;
-        (<span class="number">20</span> <span class="op">*</span> <span class="ident">ix</span>) <span class="op">%</span> <span class="self">self</span>.<span class="ident">total</span> <span class="op">==</span> <span class="number">0</span>
-    }
+<span class="kw">impl </span>Progress {
+    <span class="kw">fn </span>report(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ix: usize) -&gt; bool {
+        <span class="self">self</span>.index = ix;
+        (<span class="number">20 </span>* ix) % <span class="self">self</span>.total == <span class="number">0
+    </span>}
 
-    <span class="kw">fn</span> <span class="ident">percent</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">f64</span> {
-        (<span class="self">self</span>.<span class="ident">index</span> <span class="kw">as</span> <span class="ident">f64</span> <span class="op">*</span> <span class="number">100.0</span> <span class="op">/</span> <span class="self">self</span>.<span class="ident">total</span> <span class="kw">as</span> <span class="ident">f64</span>).<span class="ident">ceil</span>()
-    }
-}
-
-<span class="kw">impl</span> <span class="ident">std::fmt::Display</span> <span class="kw">for</span> <span class="ident">Progress</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;mut</span> <span class="ident">std::fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">std::fmt::Error</span><span class="op">&gt;</span> {
-        <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;{}/{} ({}%)&quot;</span>, <span class="self">self</span>.<span class="ident">index</span>, <span class="self">self</span>.<span class="ident">total</span>, <span class="self">self</span>.<span class="ident">percent</span>())
+    <span class="kw">fn </span>percent(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; f64 {
+        (<span class="self">self</span>.index <span class="kw">as </span>f64 * <span class="number">100.0 </span>/ <span class="self">self</span>.total <span class="kw">as </span>f64).ceil()
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::Progress</span>;
+<span class="kw">impl </span>std::fmt::Display <span class="kw">for </span>Progress {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), std::fmt::Error&gt; {
+        <span class="macro">write!</span>(f, <span class="string">&quot;{}/{} ({}%)&quot;</span>, <span class="self">self</span>.index, <span class="self">self</span>.total, <span class="self">self</span>.percent())
+    }
+}
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">reports_progress_every_5_percent</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">progress</span> <span class="op">=</span> <span class="ident">Progress</span> {
-            <span class="ident">index</span>: <span class="number">0</span>,
-            <span class="ident">total</span>: <span class="number">7000</span>,
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use </span><span class="kw">super</span>::Progress;
+
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>reports_progress_every_5_percent() {
+        <span class="kw">let </span><span class="kw-2">mut </span>progress = Progress {
+            index: <span class="number">0</span>,
+            total: <span class="number">7000</span>,
         };
 
-        <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">progress</span>.<span class="ident">report</span>(<span class="number">1</span>));
-        <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">progress</span>.<span class="ident">report</span>(<span class="number">4</span>));
-        <span class="macro">assert!</span>(<span class="ident">progress</span>.<span class="ident">report</span>(<span class="number">350</span>));
-        <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">progress</span>.<span class="ident">report</span>(<span class="number">351</span>));
+        <span class="macro">assert!</span>(!progress.report(<span class="number">1</span>));
+        <span class="macro">assert!</span>(!progress.report(<span class="number">4</span>));
+        <span class="macro">assert!</span>(progress.report(<span class="number">350</span>));
+        <span class="macro">assert!</span>(!progress.report(<span class="number">351</span>));
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">reports_progress_when_total_lower_than_20</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">progress</span> <span class="op">=</span> <span class="ident">Progress</span> {
-            <span class="ident">index</span>: <span class="number">0</span>,
-            <span class="ident">total</span>: <span class="number">16</span>,
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>reports_progress_when_total_lower_than_20() {
+        <span class="kw">let </span><span class="kw-2">mut </span>progress = Progress {
+            index: <span class="number">0</span>,
+            total: <span class="number">16</span>,
         };
 
-        <span class="macro">assert!</span>(<span class="ident">progress</span>.<span class="ident">report</span>(<span class="number">4</span>));
-        <span class="macro">assert!</span>(<span class="ident">progress</span>.<span class="ident">report</span>(<span class="number">12</span>));
-        <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">progress</span>.<span class="ident">report</span>(<span class="number">3</span>));
-        <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">progress</span>.<span class="ident">report</span>(<span class="number">15</span>));
+        <span class="macro">assert!</span>(progress.report(<span class="number">4</span>));
+        <span class="macro">assert!</span>(progress.report(<span class="number">12</span>));
+        <span class="macro">assert!</span>(!progress.report(<span class="number">3</span>));
+        <span class="macro">assert!</span>(!progress.report(<span class="number">15</span>));
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="mithril_common" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.64.0 (a55dd71d5 2022-09-19)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="mithril_common" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0 (897e37553 2022-11-02)" ></div></body></html>

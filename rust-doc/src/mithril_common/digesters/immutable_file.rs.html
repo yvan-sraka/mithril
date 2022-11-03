@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `mithril-common/src/digesters/immutable_file.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>immutable_file.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../mithril_common/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../mithril_common/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../mithril_common/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `mithril-common/src/digesters/immutable_file.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>immutable_file.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../mithril_common/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../mithril_common/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../mithril_common/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -232,154 +232,154 @@
 <span id="232">232</span>
 <span id="233">233</span>
 <span id="234">234</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::entities::ImmutableFileNumber</span>;
-<span class="kw">use</span> <span class="ident">std::cmp::Ordering</span>;
+</pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::entities::ImmutableFileNumber;
+<span class="kw">use </span>std::cmp::Ordering;
 
-<span class="kw">use</span> <span class="ident">std::ffi::OsStr</span>;
-<span class="kw">use</span> <span class="ident">std::io</span>;
-<span class="kw">use</span> <span class="ident">std::num::ParseIntError</span>;
-<span class="kw">use</span> <span class="ident">std::path</span>::{<span class="ident">Path</span>, <span class="ident">PathBuf</span>};
-<span class="kw">use</span> <span class="ident">thiserror::Error</span>;
-<span class="kw">use</span> <span class="ident">walkdir::WalkDir</span>;
+<span class="kw">use </span>std::ffi::OsStr;
+<span class="kw">use </span>std::io;
+<span class="kw">use </span>std::num::ParseIntError;
+<span class="kw">use </span>std::path::{Path, PathBuf};
+<span class="kw">use </span>thiserror::Error;
+<span class="kw">use </span>walkdir::WalkDir;
 
-<span class="kw">fn</span> <span class="ident">is_immutable</span>(<span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>) -&gt; <span class="ident">bool</span> {
-    <span class="kw">let</span> <span class="ident">immutable</span> <span class="op">=</span> <span class="ident">OsStr::new</span>(<span class="string">&quot;immutable&quot;</span>);
-    <span class="ident">path</span>.<span class="ident">iter</span>().<span class="ident">any</span>(<span class="op">|</span><span class="ident">component</span><span class="op">|</span> <span class="ident">component</span> <span class="op">==</span> <span class="ident">immutable</span>)
+<span class="kw">fn </span>is_immutable(path: <span class="kw-2">&amp;</span>Path) -&gt; bool {
+    <span class="kw">let </span>immutable = OsStr::new(<span class="string">&quot;immutable&quot;</span>);
+    path.iter().any(|component| component == immutable)
 }
 
-<span class="doccomment">/// Represent an immutable file in a Cardano node database directory</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ImmutableFile</span> {
-    <span class="doccomment">/// The path to the immutable file</span>
-    <span class="kw">pub</span> <span class="ident">path</span>: <span class="ident">PathBuf</span>,
+<span class="doccomment">/// Represent an immutable file in a Cardano node database directory
+</span><span class="attribute">#[derive(Debug, PartialEq, Eq)]
+</span><span class="kw">pub struct </span>ImmutableFile {
+    <span class="doccomment">/// The path to the immutable file
+    </span><span class="kw">pub </span>path: PathBuf,
 
-    <span class="doccomment">/// The immutable file number</span>
-    <span class="kw">pub</span> <span class="ident">number</span>: <span class="ident">ImmutableFileNumber</span>,
+    <span class="doccomment">/// The immutable file number
+    </span><span class="kw">pub </span>number: ImmutableFileNumber,
 }
 
-<span class="doccomment">/// [ImmutableFile::new] related errors.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Error</span>, <span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">ImmutableFileCreationError</span> {
-    <span class="doccomment">/// Raised when the immutable file stem extraction fails.</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Couldn&#39;t extract the file stem for &#39;{path:?}&#39;&quot;</span>)]</span>
-    <span class="ident">FileStemExtraction</span> {
-        <span class="doccomment">/// Path for which file stem extraction failed.</span>
-        <span class="ident">path</span>: <span class="ident">PathBuf</span>,
+<span class="doccomment">/// [ImmutableFile::new] related errors.
+</span><span class="attribute">#[derive(Error, Debug)]
+</span><span class="kw">pub enum </span>ImmutableFileCreationError {
+    <span class="doccomment">/// Raised when the immutable file stem extraction fails.
+    </span><span class="attribute">#[error(<span class="string">&quot;Couldn&#39;t extract the file stem for &#39;{path:?}&#39;&quot;</span>)]
+    </span>FileStemExtraction {
+        <span class="doccomment">/// Path for which file stem extraction failed.
+        </span>path: PathBuf,
     },
 
-    <span class="doccomment">/// Raised when the immutable file filename extraction fails.</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Couldn&#39;t extract the filename as string for &#39;{path:?}&#39;&quot;</span>)]</span>
-    <span class="ident">FileNameExtraction</span> {
-        <span class="doccomment">/// Path for which filename extraction failed.</span>
-        <span class="ident">path</span>: <span class="ident">PathBuf</span>,
+    <span class="doccomment">/// Raised when the immutable file filename extraction fails.
+    </span><span class="attribute">#[error(<span class="string">&quot;Couldn&#39;t extract the filename as string for &#39;{path:?}&#39;&quot;</span>)]
+    </span>FileNameExtraction {
+        <span class="doccomment">/// Path for which filename extraction failed.
+        </span>path: PathBuf,
     },
 
-    <span class="doccomment">/// Raised when the immutable file number parsing, from the filename, fails.</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Error while parsing immutable file number: {0}&quot;</span>)]</span>
-    <span class="ident">FileNumberParsing</span>(<span class="attribute">#[<span class="ident">from</span>]</span> <span class="ident">ParseIntError</span>),
+    <span class="doccomment">/// Raised when the immutable file number parsing, from the filename, fails.
+    </span><span class="attribute">#[error(<span class="string">&quot;Error while parsing immutable file number: {0}&quot;</span>)]
+    </span>FileNumberParsing(<span class="attribute">#[from] </span>ParseIntError),
 }
 
-<span class="doccomment">/// [ImmutableFile::list_completed_in_dir] related errors.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Error</span>, <span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">ImmutableFileListingError</span> {
-    <span class="doccomment">/// Raised when the metadata of a file could not be read.</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;metadata parsing failed: {0}&quot;</span>)]</span>
-    <span class="ident">MetadataParsing</span>(<span class="attribute">#[<span class="ident">from</span>]</span> <span class="ident">io::Error</span>),
+<span class="doccomment">/// [ImmutableFile::list_completed_in_dir] related errors.
+</span><span class="attribute">#[derive(Error, Debug)]
+</span><span class="kw">pub enum </span>ImmutableFileListingError {
+    <span class="doccomment">/// Raised when the metadata of a file could not be read.
+    </span><span class="attribute">#[error(<span class="string">&quot;metadata parsing failed: {0}&quot;</span>)]
+    </span>MetadataParsing(<span class="attribute">#[from] </span>io::Error),
 
-    <span class="doccomment">/// Raised when [ImmutableFile::new] fails.</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;immutable file creation error: {0}&quot;</span>)]</span>
-    <span class="ident">ImmutableFileCreation</span>(<span class="attribute">#[<span class="ident">from</span>]</span> <span class="ident">ImmutableFileCreationError</span>),
+    <span class="doccomment">/// Raised when [ImmutableFile::new] fails.
+    </span><span class="attribute">#[error(<span class="string">&quot;immutable file creation error: {0}&quot;</span>)]
+    </span>ImmutableFileCreation(<span class="attribute">#[from] </span>ImmutableFileCreationError),
 }
 
-<span class="kw">impl</span> <span class="ident">ImmutableFile</span> {
-    <span class="doccomment">/// ImmutableFile factory</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">path</span>: <span class="ident">PathBuf</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">ImmutableFileCreationError</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">filename</span> <span class="op">=</span> <span class="ident">path</span>
-            .<span class="ident">file_stem</span>()
-            .<span class="ident">ok_or</span>(<span class="ident">ImmutableFileCreationError::FileStemExtraction</span> { <span class="ident">path</span>: <span class="ident">path</span>.<span class="ident">clone</span>() })<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">filename</span> <span class="op">=</span> <span class="ident">filename</span>
-            .<span class="ident">to_str</span>()
-            .<span class="ident">ok_or</span>(<span class="ident">ImmutableFileCreationError::FileNameExtraction</span> { <span class="ident">path</span>: <span class="ident">path</span>.<span class="ident">clone</span>() })<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">immutable_file_number</span> <span class="op">=</span> <span class="ident">filename</span>.<span class="ident">parse</span>::<span class="op">&lt;</span><span class="ident">ImmutableFileNumber</span><span class="op">&gt;</span>()<span class="question-mark">?</span>;
+<span class="kw">impl </span>ImmutableFile {
+    <span class="doccomment">/// ImmutableFile factory
+    </span><span class="kw">pub fn </span>new(path: PathBuf) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, ImmutableFileCreationError&gt; {
+        <span class="kw">let </span>filename = path
+            .file_stem()
+            .ok_or(ImmutableFileCreationError::FileStemExtraction { path: path.clone() })<span class="question-mark">?</span>;
+        <span class="kw">let </span>filename = filename
+            .to_str()
+            .ok_or(ImmutableFileCreationError::FileNameExtraction { path: path.clone() })<span class="question-mark">?</span>;
+        <span class="kw">let </span>immutable_file_number = filename.parse::&lt;ImmutableFileNumber&gt;()<span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(<span class="self">Self</span> {
-            <span class="ident">path</span>,
-            <span class="ident">number</span>: <span class="ident">immutable_file_number</span>,
+        <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
+            path,
+            number: immutable_file_number,
         })
     }
 
-    <span class="doccomment">/// List all [`ImmutableFile`] in a given directory.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Important Note: It will skip the last chunk / primary / secondary trio since they&#39;re not yet</span>
-    <span class="doccomment">/// complete.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">list_completed_in_dir</span>(
-        <span class="ident">dir</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">ImmutableFile</span><span class="op">&gt;</span>, <span class="ident">ImmutableFileListingError</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">files</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">ImmutableFile</span><span class="op">&gt;</span> <span class="op">=</span> <span class="macro">vec!</span>[];
+    <span class="doccomment">/// List all [`ImmutableFile`] in a given directory.
+    ///
+    /// Important Note: It will skip the last chunk / primary / secondary trio since they&#39;re not yet
+    /// complete.
+    </span><span class="kw">pub fn </span>list_completed_in_dir(
+        dir: <span class="kw-2">&amp;</span>Path,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;ImmutableFile&gt;, ImmutableFileListingError&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>files: Vec&lt;ImmutableFile&gt; = <span class="macro">vec!</span>[];
 
-        <span class="kw">for</span> <span class="ident">path</span> <span class="kw">in</span> <span class="ident">WalkDir::new</span>(<span class="ident">dir</span>)
-            .<span class="ident">into_iter</span>()
-            .<span class="ident">filter_map</span>(<span class="op">|</span><span class="ident">file</span><span class="op">|</span> <span class="ident">file</span>.<span class="ident">ok</span>())
-            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">f</span><span class="op">|</span> <span class="ident">f</span>.<span class="ident">path</span>().<span class="ident">to_owned</span>())
+        <span class="kw">for </span>path <span class="kw">in </span>WalkDir::new(dir)
+            .into_iter()
+            .filter_map(|file| file.ok())
+            .map(|f| f.path().to_owned())
         {
-            <span class="kw">let</span> <span class="ident">metadata</span> <span class="op">=</span> <span class="ident">path</span>.<span class="ident">metadata</span>()<span class="question-mark">?</span>;
-            <span class="kw">if</span> <span class="ident">metadata</span>.<span class="ident">is_file</span>() <span class="op">&amp;&amp;</span> <span class="ident">is_immutable</span>(<span class="kw-2">&amp;</span><span class="ident">path</span>) {
-                <span class="kw">let</span> <span class="ident">immutable_file</span> <span class="op">=</span> <span class="ident">ImmutableFile::new</span>(<span class="ident">path</span>)<span class="question-mark">?</span>;
-                <span class="ident">files</span>.<span class="ident">push</span>(<span class="ident">immutable_file</span>);
+            <span class="kw">let </span>metadata = path.metadata()<span class="question-mark">?</span>;
+            <span class="kw">if </span>metadata.is_file() &amp;&amp; is_immutable(<span class="kw-2">&amp;</span>path) {
+                <span class="kw">let </span>immutable_file = ImmutableFile::new(path)<span class="question-mark">?</span>;
+                files.push(immutable_file);
             }
         }
-        <span class="ident">files</span>.<span class="ident">sort</span>();
+        files.sort();
 
-        <span class="prelude-val">Ok</span>(<span class="ident">files</span>.<span class="ident">into_iter</span>().<span class="ident">rev</span>().<span class="ident">skip</span>(<span class="number">3</span>).<span class="ident">rev</span>().<span class="ident">collect</span>())
+        <span class="prelude-val">Ok</span>(files.into_iter().rev().skip(<span class="number">3</span>).rev().collect())
     }
 }
 
-<span class="kw">impl</span> <span class="ident">PartialOrd</span> <span class="kw">for</span> <span class="ident">ImmutableFile</span> {
-    <span class="kw">fn</span> <span class="ident">partial_cmp</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Ordering</span><span class="op">&gt;</span> {
-        <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">cmp</span>(<span class="ident">other</span>))
+<span class="kw">impl </span>PartialOrd <span class="kw">for </span>ImmutableFile {
+    <span class="kw">fn </span>partial_cmp(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Ordering&gt; {
+        <span class="prelude-val">Some</span>(<span class="self">self</span>.cmp(other))
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Ord</span> <span class="kw">for</span> <span class="ident">ImmutableFile</span> {
-    <span class="kw">fn</span> <span class="ident">cmp</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">other</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="ident">Ordering</span> {
-        <span class="self">self</span>.<span class="ident">number</span>
-            .<span class="ident">cmp</span>(<span class="kw-2">&amp;</span><span class="ident">other</span>.<span class="ident">number</span>)
-            .<span class="ident">then</span>(<span class="self">self</span>.<span class="ident">path</span>.<span class="ident">cmp</span>(<span class="kw-2">&amp;</span><span class="ident">other</span>.<span class="ident">path</span>))
+<span class="kw">impl </span>Ord <span class="kw">for </span>ImmutableFile {
+    <span class="kw">fn </span>cmp(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; Ordering {
+        <span class="self">self</span>.number
+            .cmp(<span class="kw-2">&amp;</span>other.number)
+            .then(<span class="self">self</span>.path.cmp(<span class="kw-2">&amp;</span>other.path))
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::ImmutableFile</span>;
-    <span class="kw">use</span> <span class="ident">std::fs</span>;
-    <span class="kw">use</span> <span class="ident">std::fs::File</span>;
-    <span class="kw">use</span> <span class="ident">std::io::prelude</span>::<span class="kw-2">*</span>;
-    <span class="kw">use</span> <span class="ident">std::path</span>::{<span class="ident">Path</span>, <span class="ident">PathBuf</span>};
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use </span><span class="kw">super</span>::ImmutableFile;
+    <span class="kw">use </span>std::fs;
+    <span class="kw">use </span>std::fs::File;
+    <span class="kw">use </span>std::io::prelude::<span class="kw-2">*</span>;
+    <span class="kw">use </span>std::path::{Path, PathBuf};
 
-    <span class="kw">fn</span> <span class="ident">get_test_dir</span>(<span class="ident">subdir_name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="ident">PathBuf</span> {
-        <span class="kw">let</span> <span class="ident">parent_dir</span> <span class="op">=</span> <span class="ident">std::env::temp_dir</span>().<span class="ident">join</span>(<span class="string">&quot;mithril_test&quot;</span>).<span class="ident">join</span>(<span class="ident">subdir_name</span>);
+    <span class="kw">fn </span>get_test_dir(subdir_name: <span class="kw-2">&amp;</span>str) -&gt; PathBuf {
+        <span class="kw">let </span>parent_dir = std::env::temp_dir().join(<span class="string">&quot;mithril_test&quot;</span>).join(subdir_name);
 
-        <span class="kw">if</span> <span class="ident">parent_dir</span>.<span class="ident">exists</span>() {
-            <span class="ident">fs::remove_dir_all</span>(<span class="kw-2">&amp;</span><span class="ident">parent_dir</span>)
-                .<span class="ident">expect</span>(<span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="macro">format!</span>(<span class="string">&quot;Could not remove dir {:?}&quot;</span>, <span class="ident">parent_dir</span>));
+        <span class="kw">if </span>parent_dir.exists() {
+            fs::remove_dir_all(<span class="kw-2">&amp;</span>parent_dir)
+                .expect(<span class="kw-2">&amp;*</span><span class="macro">format!</span>(<span class="string">&quot;Could not remove dir {:?}&quot;</span>, parent_dir));
         }
-        <span class="ident">fs::create_dir_all</span>(<span class="kw-2">&amp;</span><span class="ident">parent_dir</span>).<span class="ident">expect</span>(<span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="macro">format!</span>(<span class="string">&quot;Could not create dir {:?}&quot;</span>, <span class="ident">parent_dir</span>));
+        fs::create_dir_all(<span class="kw-2">&amp;</span>parent_dir).expect(<span class="kw-2">&amp;*</span><span class="macro">format!</span>(<span class="string">&quot;Could not create dir {:?}&quot;</span>, parent_dir));
 
-        <span class="ident">parent_dir</span>
+        parent_dir
     }
 
-    <span class="kw">fn</span> <span class="ident">create_fake_files</span>(<span class="ident">parent_dir</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>, <span class="ident">child_filenames</span>: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span><span class="ident">str</span>]) {
-        <span class="kw">for</span> <span class="ident">filename</span> <span class="kw">in</span> <span class="ident">child_filenames</span> {
-            <span class="kw">let</span> <span class="ident">file</span> <span class="op">=</span> <span class="ident">parent_dir</span>.<span class="ident">join</span>(<span class="ident">Path::new</span>(<span class="ident">filename</span>));
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">source_file</span> <span class="op">=</span> <span class="ident">File::create</span>(<span class="kw-2">&amp;</span><span class="ident">file</span>).<span class="ident">unwrap</span>();
-            <span class="macro">write!</span>(<span class="ident">source_file</span>, <span class="string">&quot;This is a test file named &#39;{}&#39;&quot;</span>, <span class="ident">filename</span>).<span class="ident">unwrap</span>();
+    <span class="kw">fn </span>create_fake_files(parent_dir: <span class="kw-2">&amp;</span>Path, child_filenames: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str]) {
+        <span class="kw">for </span>filename <span class="kw">in </span>child_filenames {
+            <span class="kw">let </span>file = parent_dir.join(Path::new(filename));
+            <span class="kw">let </span><span class="kw-2">mut </span>source_file = File::create(<span class="kw-2">&amp;</span>file).unwrap();
+            <span class="macro">write!</span>(source_file, <span class="string">&quot;This is a test file named &#39;{}&#39;&quot;</span>, filename).unwrap();
         }
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">list_immutable_file_should_skip_last_number</span>() {
-        <span class="kw">let</span> <span class="ident">target_dir</span> <span class="op">=</span> <span class="ident">get_test_dir</span>(<span class="string">&quot;list_immutable_file_should_skip_last_number/immutable&quot;</span>);
-        <span class="kw">let</span> <span class="ident">entries</span> <span class="op">=</span> <span class="macro">vec!</span>[
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>list_immutable_file_should_skip_last_number() {
+        <span class="kw">let </span>target_dir = get_test_dir(<span class="string">&quot;list_immutable_file_should_skip_last_number/immutable&quot;</span>);
+        <span class="kw">let </span>entries = <span class="macro">vec!</span>[
             <span class="string">&quot;123.chunk&quot;</span>,
             <span class="string">&quot;123.primary&quot;</span>,
             <span class="string">&quot;123.secondary&quot;</span>,
@@ -402,36 +402,36 @@
             <span class="string">&quot;21.primary&quot;</span>,
             <span class="string">&quot;21.secondary&quot;</span>,
         ];
-        <span class="ident">create_fake_files</span>(<span class="kw-2">&amp;</span><span class="ident">target_dir</span>, <span class="kw-2">&amp;</span><span class="ident">entries</span>);
-        <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">ImmutableFile::list_completed_in_dir</span>(<span class="ident">target_dir</span>.<span class="ident">parent</span>().<span class="ident">unwrap</span>())
-            .<span class="ident">expect</span>(<span class="string">&quot;ImmutableFile::list_in_dir Failed&quot;</span>);
+        create_fake_files(<span class="kw-2">&amp;</span>target_dir, <span class="kw-2">&amp;</span>entries);
+        <span class="kw">let </span>result = ImmutableFile::list_completed_in_dir(target_dir.parent().unwrap())
+            .expect(<span class="string">&quot;ImmutableFile::list_in_dir Failed&quot;</span>);
 
-        <span class="macro">assert_eq!</span>(<span class="ident">result</span>.<span class="ident">last</span>().<span class="ident">unwrap</span>().<span class="ident">number</span>, <span class="number">423</span>);
+        <span class="macro">assert_eq!</span>(result.last().unwrap().number, <span class="number">423</span>);
         <span class="macro">assert_eq!</span>(
-            <span class="ident">result</span>.<span class="ident">len</span>(),
-            <span class="ident">entries</span>.<span class="ident">len</span>() <span class="op">-</span> <span class="number">3</span>,
+            result.len(),
+            entries.len() - <span class="number">3</span>,
             <span class="string">&quot;Expected to find {} files since The last (chunk, primary, secondary) trio is skipped, but found {}&quot;</span>,
-            <span class="ident">entries</span>.<span class="ident">len</span>() <span class="op">-</span> <span class="number">3</span>,
-            <span class="ident">result</span>.<span class="ident">len</span>(),
+            entries.len() - <span class="number">3</span>,
+            result.len(),
         );
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">list_immutable_file_should_works_in_a_empty_folder</span>() {
-        <span class="kw">let</span> <span class="ident">target_dir</span> <span class="op">=</span>
-            <span class="ident">get_test_dir</span>(<span class="string">&quot;list_immutable_file_should_works_even_in_a_empty_folder/immutable&quot;</span>);
-        <span class="kw">let</span> <span class="ident">entries</span> <span class="op">=</span> <span class="macro">vec!</span>[];
-        <span class="ident">create_fake_files</span>(<span class="kw-2">&amp;</span><span class="ident">target_dir</span>, <span class="kw-2">&amp;</span><span class="ident">entries</span>);
-        <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">ImmutableFile::list_completed_in_dir</span>(<span class="ident">target_dir</span>.<span class="ident">parent</span>().<span class="ident">unwrap</span>())
-            .<span class="ident">expect</span>(<span class="string">&quot;ImmutableFile::list_in_dir Failed&quot;</span>);
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>list_immutable_file_should_works_in_a_empty_folder() {
+        <span class="kw">let </span>target_dir =
+            get_test_dir(<span class="string">&quot;list_immutable_file_should_works_even_in_a_empty_folder/immutable&quot;</span>);
+        <span class="kw">let </span>entries = <span class="macro">vec!</span>[];
+        create_fake_files(<span class="kw-2">&amp;</span>target_dir, <span class="kw-2">&amp;</span>entries);
+        <span class="kw">let </span>result = ImmutableFile::list_completed_in_dir(target_dir.parent().unwrap())
+            .expect(<span class="string">&quot;ImmutableFile::list_in_dir Failed&quot;</span>);
 
-        <span class="macro">assert!</span>(<span class="ident">result</span>.<span class="ident">is_empty</span>());
+        <span class="macro">assert!</span>(result.is_empty());
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">immutable_order_should_be_deterministic</span>() {
-        <span class="kw">let</span> <span class="ident">target_dir</span> <span class="op">=</span> <span class="ident">get_test_dir</span>(<span class="string">&quot;immutable_order_should_be_deterministic/immutable&quot;</span>);
-        <span class="kw">let</span> <span class="ident">entries</span> <span class="op">=</span> <span class="macro">vec!</span>[
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>immutable_order_should_be_deterministic() {
+        <span class="kw">let </span>target_dir = get_test_dir(<span class="string">&quot;immutable_order_should_be_deterministic/immutable&quot;</span>);
+        <span class="kw">let </span>entries = <span class="macro">vec!</span>[
             <span class="string">&quot;21.chunk&quot;</span>,
             <span class="string">&quot;21.primary&quot;</span>,
             <span class="string">&quot;21.secondary&quot;</span>,
@@ -454,17 +454,17 @@
             <span class="string">&quot;424.primary&quot;</span>,
             <span class="string">&quot;424.secondary&quot;</span>,
         ];
-        <span class="ident">create_fake_files</span>(<span class="kw-2">&amp;</span><span class="ident">target_dir</span>, <span class="kw-2">&amp;</span><span class="ident">entries</span>);
-        <span class="kw">let</span> <span class="ident">immutables</span> <span class="op">=</span> <span class="ident">ImmutableFile::list_completed_in_dir</span>(<span class="ident">target_dir</span>.<span class="ident">parent</span>().<span class="ident">unwrap</span>())
-            .<span class="ident">expect</span>(<span class="string">&quot;ImmutableFile::list_in_dir Failed&quot;</span>);
-        <span class="kw">let</span> <span class="ident">immutables_names</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">immutables</span>
-            .<span class="ident">into_iter</span>()
-            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">i</span><span class="op">|</span> <span class="ident">i</span>.<span class="ident">path</span>.<span class="ident">file_name</span>().<span class="ident">unwrap</span>().<span class="ident">to_str</span>().<span class="ident">unwrap</span>().<span class="ident">to_owned</span>())
-            .<span class="ident">collect</span>();
+        create_fake_files(<span class="kw-2">&amp;</span>target_dir, <span class="kw-2">&amp;</span>entries);
+        <span class="kw">let </span>immutables = ImmutableFile::list_completed_in_dir(target_dir.parent().unwrap())
+            .expect(<span class="string">&quot;ImmutableFile::list_in_dir Failed&quot;</span>);
+        <span class="kw">let </span>immutables_names: Vec&lt;String&gt; = immutables
+            .into_iter()
+            .map(|i| i.path.file_name().unwrap().to_str().unwrap().to_owned())
+            .collect();
 
-        <span class="kw">let</span> <span class="ident">expected</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">entries</span>.<span class="ident">into_iter</span>().<span class="ident">rev</span>().<span class="ident">skip</span>(<span class="number">3</span>).<span class="ident">rev</span>().<span class="ident">collect</span>();
-        <span class="macro">assert_eq!</span>(<span class="ident">expected</span>, <span class="ident">immutables_names</span>);
+        <span class="kw">let </span>expected: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = entries.into_iter().rev().skip(<span class="number">3</span>).rev().collect();
+        <span class="macro">assert_eq!</span>(expected, immutables_names);
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="mithril_common" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.64.0 (a55dd71d5 2022-09-19)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="mithril_common" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0 (897e37553 2022-11-02)" ></div></body></html>

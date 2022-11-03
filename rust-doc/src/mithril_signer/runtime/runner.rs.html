@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `mithril-signer/src/runtime/runner.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>runner.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../mithril_signer/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../mithril_signer/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../mithril_signer/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `mithril-signer/src/runtime/runner.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>runner.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../mithril_signer/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../mithril_signer/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../mithril_signer/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -787,429 +787,429 @@
 <span id="787">787</span>
 <span id="788">788</span>
 <span id="789">789</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
-<span class="kw">use</span> <span class="ident">slog_scope</span>::{<span class="ident">debug</span>, <span class="ident">info</span>, <span class="ident">trace</span>, <span class="ident">warn</span>};
-<span class="kw">use</span> <span class="ident">std::error::Error</span> <span class="kw">as</span> <span class="ident">StdError</span>;
-<span class="kw">use</span> <span class="ident">thiserror::Error</span>;
+</pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
+<span class="kw">use </span>slog_scope::{debug, info, trace, warn};
+<span class="kw">use </span>std::error::Error <span class="kw">as </span>StdError;
+<span class="kw">use </span>thiserror::Error;
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">use</span> <span class="ident">mockall::automock</span>;
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">use </span>mockall::automock;
 
-<span class="kw">use</span> <span class="ident">mithril_common::crypto_helper</span>::{
-    <span class="ident">key_decode_hex</span>, <span class="ident">KESPeriod</span>, <span class="ident">OpCert</span>, <span class="ident">ProtocolSignerVerificationKey</span>, <span class="ident">SerDeShelleyFileFormat</span>,
+<span class="kw">use </span>mithril_common::crypto_helper::{
+    key_decode_hex, KESPeriod, OpCert, ProtocolSignerVerificationKey, SerDeShelleyFileFormat,
 };
-<span class="kw">use</span> <span class="ident">mithril_common::entities</span>::{<span class="ident">PartyId</span>, <span class="ident">ProtocolParameters</span>};
-<span class="kw">use</span> <span class="ident">mithril_common</span>::{
-    <span class="ident">crypto_helper::key_encode_hex</span>,
-    <span class="ident">entities</span>::{
-        <span class="ident">Beacon</span>, <span class="ident">CertificatePending</span>, <span class="ident">Epoch</span>, <span class="ident">EpochSettings</span>, <span class="ident">ProtocolMessage</span>, <span class="ident">ProtocolMessagePartKey</span>,
-        <span class="ident">Signer</span>, <span class="ident">SignerWithStake</span>, <span class="ident">SingleSignatures</span>,
+<span class="kw">use </span>mithril_common::entities::{PartyId, ProtocolParameters};
+<span class="kw">use </span>mithril_common::{
+    crypto_helper::key_encode_hex,
+    entities::{
+        Beacon, CertificatePending, Epoch, EpochSettings, ProtocolMessage, ProtocolMessagePartKey,
+        Signer, SignerWithStake, SingleSignatures,
     },
-    <span class="ident">store::StakeStorer</span>,
+    store::StakeStorer,
 };
 
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Config</span>, <span class="ident">MithrilProtocolInitializerBuilder</span>};
+<span class="kw">use crate</span>::{Config, MithrilProtocolInitializerBuilder};
 
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::signer_services::SignerServices</span>;
+<span class="kw">use </span><span class="kw">super</span>::signer_services::SignerServices;
 
-<span class="doccomment">/// This trait is mainly intended for mocking.</span>
-<span class="attribute">#[<span class="ident">async_trait</span>]</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Runner</span> {
-    <span class="doccomment">/// Fetch the current epoch settings if any.</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_epoch_settings</span>(
+<span class="doccomment">/// This trait is mainly intended for mocking.
+</span><span class="attribute">#[async_trait]
+</span><span class="kw">pub trait </span>Runner {
+    <span class="doccomment">/// Fetch the current epoch settings if any.
+    </span><span class="kw">async fn </span>get_epoch_settings(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">EpochSettings</span><span class="op">&gt;</span>, <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">StdError</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;EpochSettings&gt;, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
 
-    <span class="doccomment">/// Fetch the current pending certificate if any.</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_pending_certificate</span>(
+    <span class="doccomment">/// Fetch the current pending certificate if any.
+    </span><span class="kw">async fn </span>get_pending_certificate(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">CertificatePending</span><span class="op">&gt;</span>, <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">StdError</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;CertificatePending&gt;, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
 
-    <span class="doccomment">/// Fetch the current beacon from the Cardano node.</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_current_beacon</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Beacon</span>, <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">StdError</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+    <span class="doccomment">/// Fetch the current beacon from the Cardano node.
+    </span><span class="kw">async fn </span>get_current_beacon(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Beacon, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
 
-    <span class="doccomment">/// Register the signer verification key to the aggregator.</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">register_signer_to_aggregator</span>(
+    <span class="doccomment">/// Register the signer verification key to the aggregator.
+    </span><span class="kw">async fn </span>register_signer_to_aggregator(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">epoch</span>: <span class="ident">Epoch</span>,
-        <span class="ident">protocol_parameters</span>: <span class="kw-2">&amp;</span><span class="ident">ProtocolParameters</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">StdError</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+        epoch: Epoch,
+        protocol_parameters: <span class="kw-2">&amp;</span>ProtocolParameters,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
 
-    <span class="doccomment">/// Read the stake distribution and store it.</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">update_stake_distribution</span>(
+    <span class="doccomment">/// Read the stake distribution and store it.
+    </span><span class="kw">async fn </span>update_stake_distribution(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">epoch</span>: <span class="ident">Epoch</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">StdError</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+        epoch: Epoch,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
 
-    <span class="doccomment">/// Check if all prerequisites for signing are met.</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">can_i_sign</span>(
+    <span class="doccomment">/// Check if all prerequisites for signing are met.
+    </span><span class="kw">async fn </span>can_i_sign(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">pending_certificate</span>: <span class="kw-2">&amp;</span><span class="ident">CertificatePending</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">StdError</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+        pending_certificate: <span class="kw-2">&amp;</span>CertificatePending,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;bool, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
 
-    <span class="doccomment">/// From a list of signers, associate them with the stake read on the</span>
-    <span class="doccomment">/// Cardano node.</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">associate_signers_with_stake</span>(
+    <span class="doccomment">/// From a list of signers, associate them with the stake read on the
+    /// Cardano node.
+    </span><span class="kw">async fn </span>associate_signers_with_stake(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">epoch</span>: <span class="ident">Epoch</span>,
-        <span class="ident">signers</span>: <span class="kw-2">&amp;</span>[<span class="ident">Signer</span>],
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">SignerWithStake</span><span class="op">&gt;</span>, <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">StdError</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+        epoch: Epoch,
+        signers: <span class="kw-2">&amp;</span>[Signer],
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;SignerWithStake&gt;, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
 
-    <span class="doccomment">/// Create the message to be signed with the single signature.</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">compute_message</span>(
+    <span class="doccomment">/// Create the message to be signed with the single signature.
+    </span><span class="kw">async fn </span>compute_message(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">beacon</span>: <span class="kw-2">&amp;</span><span class="ident">Beacon</span>,
-        <span class="ident">next_signers</span>: <span class="kw-2">&amp;</span>[<span class="ident">SignerWithStake</span>],
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ProtocolMessage</span>, <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">StdError</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+        beacon: <span class="kw-2">&amp;</span>Beacon,
+        next_signers: <span class="kw-2">&amp;</span>[SignerWithStake],
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;ProtocolMessage, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
 
-    <span class="doccomment">/// Create the single signature.</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">compute_single_signature</span>(
+    <span class="doccomment">/// Create the single signature.
+    </span><span class="kw">async fn </span>compute_single_signature(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">epoch</span>: <span class="ident">Epoch</span>,
-        <span class="ident">message</span>: <span class="kw-2">&amp;</span><span class="ident">ProtocolMessage</span>,
-        <span class="ident">signers</span>: <span class="kw-2">&amp;</span>[<span class="ident">SignerWithStake</span>],
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">SingleSignatures</span><span class="op">&gt;</span>, <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">StdError</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+        epoch: Epoch,
+        message: <span class="kw-2">&amp;</span>ProtocolMessage,
+        signers: <span class="kw-2">&amp;</span>[SignerWithStake],
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;SingleSignatures&gt;, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
 
-    <span class="doccomment">/// Send the single signature to the aggregator in order to be aggregated.</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">send_single_signature</span>(
+    <span class="doccomment">/// Send the single signature to the aggregator in order to be aggregated.
+    </span><span class="kw">async fn </span>send_single_signature(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">maybe_signature</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">SingleSignatures</span><span class="op">&gt;</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">StdError</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+        maybe_signature: <span class="prelude-ty">Option</span>&lt;SingleSignatures&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
 }
 
-<span class="doccomment">/// This type represents the errors thrown from the Runner.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Error</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">RuntimeError</span> {
-    <span class="doccomment">/// Value was expected from a subsystem but None was returned.</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;No value returned by the subsystem for `{0}`.&quot;</span>)]</span>
-    <span class="ident">NoValueError</span>(<span class="ident">String</span>),
-    <span class="doccomment">/// Could not associate my node with a stake.</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;No stake associated with myself.&quot;</span>)]</span>
-    <span class="ident">NoStakeForSelf</span>(),
-    <span class="doccomment">/// Could not find the stake for one of the signers.</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;No stake associated with this signer, party_id: {0}.&quot;</span>)]</span>
-    <span class="ident">NoStakeForSigner</span>(<span class="ident">PartyId</span>),
-    <span class="doccomment">/// Parse file error</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;File parse failed: {0}.&quot;</span>)]</span>
-    <span class="ident">FileParse</span>(<span class="ident">String</span>),
-    <span class="doccomment">/// General subsystem error</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Subsystem unavailable: {0}.&quot;</span>)]</span>
-    <span class="ident">SubsystemUnavailable</span>(<span class="ident">String</span>),
+<span class="doccomment">/// This type represents the errors thrown from the Runner.
+</span><span class="attribute">#[derive(Debug, Clone, PartialEq, Eq, Error)]
+</span><span class="kw">pub enum </span>RuntimeError {
+    <span class="doccomment">/// Value was expected from a subsystem but None was returned.
+    </span><span class="attribute">#[error(<span class="string">&quot;No value returned by the subsystem for `{0}`.&quot;</span>)]
+    </span>NoValueError(String),
+    <span class="doccomment">/// Could not associate my node with a stake.
+    </span><span class="attribute">#[error(<span class="string">&quot;No stake associated with myself.&quot;</span>)]
+    </span>NoStakeForSelf(),
+    <span class="doccomment">/// Could not find the stake for one of the signers.
+    </span><span class="attribute">#[error(<span class="string">&quot;No stake associated with this signer, party_id: {0}.&quot;</span>)]
+    </span>NoStakeForSigner(PartyId),
+    <span class="doccomment">/// Parse file error
+    </span><span class="attribute">#[error(<span class="string">&quot;File parse failed: {0}.&quot;</span>)]
+    </span>FileParse(String),
+    <span class="doccomment">/// General subsystem error
+    </span><span class="attribute">#[error(<span class="string">&quot;Subsystem unavailable: {0}.&quot;</span>)]
+    </span>SubsystemUnavailable(String),
 }
 
-<span class="doccomment">/// Controller methods for the Signer&#39;s state machine.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">SignerRunner</span> {
-    <span class="ident">config</span>: <span class="ident">Config</span>,
-    <span class="ident">services</span>: <span class="ident">SignerServices</span>,
+<span class="doccomment">/// Controller methods for the Signer&#39;s state machine.
+</span><span class="kw">pub struct </span>SignerRunner {
+    config: Config,
+    services: SignerServices,
 }
 
-<span class="kw">impl</span> <span class="ident">SignerRunner</span> {
-    <span class="doccomment">/// Create a new Runner instance.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">config</span>: <span class="ident">Config</span>, <span class="ident">services</span>: <span class="ident">SignerServices</span>) -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> { <span class="ident">services</span>, <span class="ident">config</span> }
+<span class="kw">impl </span>SignerRunner {
+    <span class="doccomment">/// Create a new Runner instance.
+    </span><span class="kw">pub fn </span>new(config: Config, services: SignerServices) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{ services, config }
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">test</span>, <span class="ident">automock</span>)]</span>
-<span class="attribute">#[<span class="ident">async_trait</span>]</span>
-<span class="kw">impl</span> <span class="ident">Runner</span> <span class="kw">for</span> <span class="ident">SignerRunner</span> {
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_epoch_settings</span>(
+<span class="attribute">#[cfg_attr(test, automock)]
+#[async_trait]
+</span><span class="kw">impl </span>Runner <span class="kw">for </span>SignerRunner {
+    <span class="kw">async fn </span>get_epoch_settings(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">EpochSettings</span><span class="op">&gt;</span>, <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">StdError</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;EpochSettings&gt;, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: get_epoch_settings&quot;</span>);
 
-        <span class="self">self</span>.<span class="ident">services</span>
-            .<span class="ident">certificate_handler</span>
-            .<span class="ident">retrieve_epoch_settings</span>()
-            .<span class="kw">await</span>
-            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">e</span>.<span class="ident">into</span>())
+        <span class="self">self</span>.services
+            .certificate_handler
+            .retrieve_epoch_settings()
+            .<span class="kw">await
+            </span>.map_err(|e| e.into())
     }
 
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_pending_certificate</span>(
+    <span class="kw">async fn </span>get_pending_certificate(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">CertificatePending</span><span class="op">&gt;</span>, <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">StdError</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;CertificatePending&gt;, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: get_pending_certificate&quot;</span>);
 
-        <span class="self">self</span>.<span class="ident">services</span>
-            .<span class="ident">certificate_handler</span>
-            .<span class="ident">retrieve_pending_certificate</span>()
-            .<span class="kw">await</span>
-            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">e</span>.<span class="ident">into</span>())
+        <span class="self">self</span>.services
+            .certificate_handler
+            .retrieve_pending_certificate()
+            .<span class="kw">await
+            </span>.map_err(|e| e.into())
     }
 
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_current_beacon</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Beacon</span>, <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">StdError</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">async fn </span>get_current_beacon(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Beacon, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: get_current_epoch&quot;</span>);
 
-        <span class="self">self</span>.<span class="ident">services</span>
-            .<span class="ident">beacon_provider</span>
-            .<span class="ident">get_current_beacon</span>()
-            .<span class="kw">await</span>
-            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">e</span>.<span class="ident">into</span>())
+        <span class="self">self</span>.services
+            .beacon_provider
+            .get_current_beacon()
+            .<span class="kw">await
+            </span>.map_err(|e| e.into())
     }
 
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">register_signer_to_aggregator</span>(
+    <span class="kw">async fn </span>register_signer_to_aggregator(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">epoch</span>: <span class="ident">Epoch</span>,
-        <span class="ident">protocol_parameters</span>: <span class="kw-2">&amp;</span><span class="ident">ProtocolParameters</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">StdError</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+        epoch: Epoch,
+        protocol_parameters: <span class="kw-2">&amp;</span>ProtocolParameters,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: register_signer_to_aggregator&quot;</span>);
 
-        <span class="kw">let</span> <span class="ident">stake_distribution</span> <span class="op">=</span> <span class="self">self</span>
-            .<span class="ident">services</span>
-            .<span class="ident">chain_observer</span>
-            .<span class="ident">get_current_stake_distribution</span>()
-            .<span class="kw">await</span><span class="question-mark">?</span>
-            .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">RuntimeError::NoValueError</span>(<span class="string">&quot;current_stake_distribution&quot;</span>.<span class="ident">to_string</span>()))<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">stake</span> <span class="op">=</span> <span class="ident">stake_distribution</span>
-            .<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">services</span>.<span class="ident">single_signer</span>.<span class="ident">get_party_id</span>())
-            .<span class="ident">ok_or</span>(<span class="ident">RuntimeError::NoStakeForSelf</span>())<span class="question-mark">?</span>;
-        <span class="kw">let</span> (<span class="ident">operational_certificate</span>, <span class="ident">operational_certificate_encoded</span>) <span class="op">=</span>
-            <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">config</span>.<span class="ident">operational_certificate_path</span> {
-                <span class="prelude-val">Some</span>(<span class="ident">operational_certificate_path</span>) =&gt; {
-                    <span class="kw">let</span> <span class="ident">opcert</span>: <span class="ident">OpCert</span> <span class="op">=</span>
-                        <span class="ident">OpCert::from_file</span>(<span class="ident">operational_certificate_path</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> {
-                            <span class="ident">RuntimeError::FileParse</span>(<span class="string">&quot;operational_certificate_path&quot;</span>.<span class="ident">to_string</span>())
+        <span class="kw">let </span>stake_distribution = <span class="self">self
+            </span>.services
+            .chain_observer
+            .get_current_stake_distribution()
+            .<span class="kw">await</span><span class="question-mark">?
+            </span>.ok_or_else(|| RuntimeError::NoValueError(<span class="string">&quot;current_stake_distribution&quot;</span>.to_string()))<span class="question-mark">?</span>;
+        <span class="kw">let </span>stake = stake_distribution
+            .get(<span class="kw-2">&amp;</span><span class="self">self</span>.services.single_signer.get_party_id())
+            .ok_or(RuntimeError::NoStakeForSelf())<span class="question-mark">?</span>;
+        <span class="kw">let </span>(operational_certificate, operational_certificate_encoded) =
+            <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.config.operational_certificate_path {
+                <span class="prelude-val">Some</span>(operational_certificate_path) =&gt; {
+                    <span class="kw">let </span>opcert: OpCert =
+                        OpCert::from_file(operational_certificate_path).map_err(|<span class="kw">_</span>| {
+                            RuntimeError::FileParse(<span class="string">&quot;operational_certificate_path&quot;</span>.to_string())
                         })<span class="question-mark">?</span>;
-                    (<span class="prelude-val">Some</span>(<span class="ident">opcert</span>.<span class="ident">clone</span>()), <span class="prelude-val">Some</span>(<span class="ident">key_encode_hex</span>(<span class="ident">opcert</span>)<span class="question-mark">?</span>))
+                    (<span class="prelude-val">Some</span>(opcert.clone()), <span class="prelude-val">Some</span>(key_encode_hex(opcert)<span class="question-mark">?</span>))
                 }
-                <span class="kw">_</span> =&gt; (<span class="prelude-val">None</span>, <span class="prelude-val">None</span>),
+                <span class="kw">_ </span>=&gt; (<span class="prelude-val">None</span>, <span class="prelude-val">None</span>),
             };
 
-        <span class="kw">let</span> <span class="ident">kes_period</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">operational_certificate</span> {
-            <span class="prelude-val">Some</span>(<span class="ident">operational_certificate</span>) =&gt; <span class="prelude-val">Some</span>(
-                <span class="self">self</span>.<span class="ident">services</span>
-                    .<span class="ident">chain_observer</span>
-                    .<span class="ident">get_current_kes_period</span>(<span class="kw-2">&amp;</span><span class="ident">operational_certificate</span>)
-                    .<span class="kw">await</span><span class="question-mark">?</span>
-                    .<span class="ident">unwrap_or_default</span>()
-                    <span class="op">-</span> <span class="ident">operational_certificate</span>.<span class="ident">start_kes_period</span> <span class="kw">as</span> <span class="ident">KESPeriod</span>,
+        <span class="kw">let </span>kes_period = <span class="kw">match </span>operational_certificate {
+            <span class="prelude-val">Some</span>(operational_certificate) =&gt; <span class="prelude-val">Some</span>(
+                <span class="self">self</span>.services
+                    .chain_observer
+                    .get_current_kes_period(<span class="kw-2">&amp;</span>operational_certificate)
+                    .<span class="kw">await</span><span class="question-mark">?
+                    </span>.unwrap_or_default()
+                    - operational_certificate.start_kes_period <span class="kw">as </span>KESPeriod,
             ),
-            <span class="prelude-val">None</span> =&gt; <span class="prelude-val">None</span>,
+            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">None</span>,
         };
-        <span class="kw">let</span> <span class="ident">protocol_initializer</span> <span class="op">=</span> <span class="ident">MithrilProtocolInitializerBuilder::new</span>().<span class="ident">build</span>(
-            <span class="ident">stake</span>,
-            <span class="ident">protocol_parameters</span>,
-            <span class="self">self</span>.<span class="ident">config</span>.<span class="ident">kes_secret_key_path</span>.<span class="ident">clone</span>(),
-            <span class="ident">kes_period</span>,
+        <span class="kw">let </span>protocol_initializer = MithrilProtocolInitializerBuilder::new().build(
+            stake,
+            protocol_parameters,
+            <span class="self">self</span>.config.kes_secret_key_path.clone(),
+            kes_period,
         )<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">verification_key_encoded</span> <span class="op">=</span> <span class="ident">key_encode_hex</span>(<span class="ident">protocol_initializer</span>.<span class="ident">verification_key</span>())<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">verification_key_signature_encoded</span> <span class="op">=</span>
-            <span class="kw">match</span> <span class="ident">protocol_initializer</span>.<span class="ident">verification_key_signature</span>() {
-                <span class="prelude-val">Some</span>(<span class="ident">verification_signature</span>) =&gt; <span class="prelude-val">Some</span>(<span class="ident">key_encode_hex</span>(<span class="ident">verification_signature</span>)<span class="question-mark">?</span>),
-                <span class="kw">_</span> =&gt; <span class="prelude-val">None</span>,
+        <span class="kw">let </span>verification_key_encoded = key_encode_hex(protocol_initializer.verification_key())<span class="question-mark">?</span>;
+        <span class="kw">let </span>verification_key_signature_encoded =
+            <span class="kw">match </span>protocol_initializer.verification_key_signature() {
+                <span class="prelude-val">Some</span>(verification_signature) =&gt; <span class="prelude-val">Some</span>(key_encode_hex(verification_signature)<span class="question-mark">?</span>),
+                <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
             };
-        <span class="kw">let</span> <span class="ident">signer</span> <span class="op">=</span> <span class="ident">Signer::new</span>(
-            <span class="self">self</span>.<span class="ident">services</span>.<span class="ident">single_signer</span>.<span class="ident">get_party_id</span>(),
-            <span class="ident">verification_key_encoded</span>,
-            <span class="ident">verification_key_signature_encoded</span>,
-            <span class="ident">operational_certificate_encoded</span>,
-            <span class="ident">kes_period</span>,
+        <span class="kw">let </span>signer = Signer::new(
+            <span class="self">self</span>.services.single_signer.get_party_id(),
+            verification_key_encoded,
+            verification_key_signature_encoded,
+            operational_certificate_encoded,
+            kes_period,
         );
-        <span class="self">self</span>.<span class="ident">services</span>
-            .<span class="ident">certificate_handler</span>
-            .<span class="ident">register_signer</span>(<span class="kw-2">&amp;</span><span class="ident">signer</span>)
+        <span class="self">self</span>.services
+            .certificate_handler
+            .register_signer(<span class="kw-2">&amp;</span>signer)
             .<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="self">self</span>.<span class="ident">services</span>
-            .<span class="ident">protocol_initializer_store</span>
-            .<span class="ident">save_protocol_initializer</span>(<span class="ident">epoch</span>.<span class="ident">offset_to_recording_epoch</span>()<span class="question-mark">?</span>, <span class="ident">protocol_initializer</span>)
+        <span class="self">self</span>.services
+            .protocol_initializer_store
+            .save_protocol_initializer(epoch.offset_to_recording_epoch()<span class="question-mark">?</span>, protocol_initializer)
             .<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">update_stake_distribution</span>(
+    <span class="kw">async fn </span>update_stake_distribution(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">epoch</span>: <span class="ident">Epoch</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">StdError</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+        epoch: Epoch,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: update_stake_distribution&quot;</span>);
 
-        <span class="kw">let</span> <span class="ident">stake_distribution</span> <span class="op">=</span> <span class="self">self</span>
-            .<span class="ident">services</span>
-            .<span class="ident">chain_observer</span>
-            .<span class="ident">get_current_stake_distribution</span>()
-            .<span class="kw">await</span><span class="question-mark">?</span>
-            .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">RuntimeError::NoValueError</span>(<span class="string">&quot;current_stake_distribution&quot;</span>.<span class="ident">to_string</span>()))<span class="question-mark">?</span>;
-        <span class="self">self</span>.<span class="ident">services</span>
-            .<span class="ident">stake_store</span>
-            .<span class="ident">save_stakes</span>(<span class="ident">epoch</span>.<span class="ident">offset_to_recording_epoch</span>()<span class="question-mark">?</span>, <span class="ident">stake_distribution</span>)
+        <span class="kw">let </span>stake_distribution = <span class="self">self
+            </span>.services
+            .chain_observer
+            .get_current_stake_distribution()
+            .<span class="kw">await</span><span class="question-mark">?
+            </span>.ok_or_else(|| RuntimeError::NoValueError(<span class="string">&quot;current_stake_distribution&quot;</span>.to_string()))<span class="question-mark">?</span>;
+        <span class="self">self</span>.services
+            .stake_store
+            .save_stakes(epoch.offset_to_recording_epoch()<span class="question-mark">?</span>, stake_distribution)
             .<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">can_i_sign</span>(
+    <span class="kw">async fn </span>can_i_sign(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">pending_certificate</span>: <span class="kw-2">&amp;</span><span class="ident">CertificatePending</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">StdError</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+        pending_certificate: <span class="kw-2">&amp;</span>CertificatePending,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;bool, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: can_i_sign&quot;</span>);
 
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">signer</span>) <span class="op">=</span>
-            <span class="ident">pending_certificate</span>.<span class="ident">get_signer</span>(<span class="self">self</span>.<span class="ident">services</span>.<span class="ident">single_signer</span>.<span class="ident">get_party_id</span>())
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(signer) =
+            pending_certificate.get_signer(<span class="self">self</span>.services.single_signer.get_party_id())
         {
             <span class="macro">debug!</span>(<span class="string">&quot; &gt; got a Signer from pending certificate&quot;</span>);
 
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">protocol_initializer</span>) <span class="op">=</span> <span class="self">self</span>
-                .<span class="ident">services</span>
-                .<span class="ident">protocol_initializer_store</span>
-                .<span class="ident">get_protocol_initializer</span>(
-                    <span class="ident">pending_certificate</span>
-                        .<span class="ident">beacon</span>
-                        .<span class="ident">epoch</span>
-                        .<span class="ident">offset_to_signer_retrieval_epoch</span>()<span class="question-mark">?</span>,
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(protocol_initializer) = <span class="self">self
+                </span>.services
+                .protocol_initializer_store
+                .get_protocol_initializer(
+                    pending_certificate
+                        .beacon
+                        .epoch
+                        .offset_to_signer_retrieval_epoch()<span class="question-mark">?</span>,
                 )
-                .<span class="kw">await</span><span class="question-mark">?</span>
-            {
+                .<span class="kw">await</span><span class="question-mark">?
+            </span>{
                 <span class="macro">debug!</span>(
                     <span class="string">&quot; &gt; got protocol initializer for this epoch ({})&quot;</span>,
-                    <span class="ident">pending_certificate</span>.<span class="ident">beacon</span>.<span class="ident">epoch</span>
+                    pending_certificate.beacon.epoch
                 );
-                <span class="kw">let</span> <span class="ident">recorded_verification_key</span> <span class="op">=</span>
-                    <span class="ident">key_decode_hex</span>::<span class="op">&lt;</span><span class="ident">ProtocolSignerVerificationKey</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="ident">signer</span>.<span class="ident">verification_key</span>)<span class="question-mark">?</span>;
+                <span class="kw">let </span>recorded_verification_key =
+                    key_decode_hex::&lt;ProtocolSignerVerificationKey&gt;(<span class="kw-2">&amp;</span>signer.verification_key)<span class="question-mark">?</span>;
 
-                <span class="kw">if</span> <span class="ident">recorded_verification_key</span> <span class="op">==</span> <span class="ident">protocol_initializer</span>.<span class="ident">verification_key</span>() {
+                <span class="kw">if </span>recorded_verification_key == protocol_initializer.verification_key() {
                     <span class="macro">debug!</span>(<span class="string">&quot;verification keys match, we can sign&quot;</span>);
 
-                    <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>);
+                    <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="bool-val">true</span>);
                 }
                 <span class="macro">debug!</span>(<span class="string">&quot; &gt; verification key do not match, can NOT sign&quot;</span>);
-            } <span class="kw">else</span> {
+            } <span class="kw">else </span>{
                 <span class="macro">warn!</span>(
                     <span class="string">&quot; &gt; NO protocol initializer found for this epoch ({})&quot;</span>,
-                    <span class="ident">pending_certificate</span>.<span class="ident">beacon</span>.<span class="ident">epoch</span>
+                    pending_certificate.beacon.epoch
                 );
             }
-        } <span class="kw">else</span> {
+        } <span class="kw">else </span>{
             <span class="macro">debug!</span>(<span class="string">&quot; &gt; Signer not found in the certificate pending&quot;</span>);
         }
 
         <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>)
     }
 
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">associate_signers_with_stake</span>(
+    <span class="kw">async fn </span>associate_signers_with_stake(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">epoch</span>: <span class="ident">Epoch</span>,
-        <span class="ident">signers</span>: <span class="kw-2">&amp;</span>[<span class="ident">Signer</span>],
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">SignerWithStake</span><span class="op">&gt;</span>, <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">StdError</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+        epoch: Epoch,
+        signers: <span class="kw-2">&amp;</span>[Signer],
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;SignerWithStake&gt;, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: associate_signers_with_stake&quot;</span>);
 
-        <span class="kw">let</span> <span class="ident">stakes</span> <span class="op">=</span> <span class="self">self</span>
-            .<span class="ident">services</span>
-            .<span class="ident">stake_store</span>
-            .<span class="ident">get_stakes</span>(<span class="ident">epoch</span>)
-            .<span class="kw">await</span><span class="question-mark">?</span>
-            .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">RuntimeError::NoValueError</span>(<span class="macro">format!</span>(<span class="string">&quot;stakes at epoch {}&quot;</span>, <span class="ident">epoch</span>)))<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">signers_with_stake</span> <span class="op">=</span> <span class="macro">vec!</span>[];
+        <span class="kw">let </span>stakes = <span class="self">self
+            </span>.services
+            .stake_store
+            .get_stakes(epoch)
+            .<span class="kw">await</span><span class="question-mark">?
+            </span>.ok_or_else(|| RuntimeError::NoValueError(<span class="macro">format!</span>(<span class="string">&quot;stakes at epoch {}&quot;</span>, epoch)))<span class="question-mark">?</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>signers_with_stake = <span class="macro">vec!</span>[];
 
-        <span class="kw">for</span> <span class="ident">signer</span> <span class="kw">in</span> <span class="ident">signers</span> {
-            <span class="kw">let</span> <span class="ident">stake</span> <span class="op">=</span> <span class="ident">stakes</span>
-                .<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">signer</span>.<span class="ident">party_id</span>)
-                .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">RuntimeError::NoStakeForSigner</span>(<span class="ident">signer</span>.<span class="ident">party_id</span>.<span class="ident">to_string</span>()))<span class="question-mark">?</span>;
+        <span class="kw">for </span>signer <span class="kw">in </span>signers {
+            <span class="kw">let </span>stake = stakes
+                .get(<span class="kw-2">&amp;*</span>signer.party_id)
+                .ok_or_else(|| RuntimeError::NoStakeForSigner(signer.party_id.to_string()))<span class="question-mark">?</span>;
 
-            <span class="ident">signers_with_stake</span>.<span class="ident">push</span>(<span class="ident">SignerWithStake::new</span>(
-                <span class="ident">signer</span>.<span class="ident">party_id</span>.<span class="ident">to_owned</span>(),
-                <span class="ident">signer</span>.<span class="ident">verification_key</span>.<span class="ident">to_owned</span>(),
-                <span class="ident">signer</span>.<span class="ident">verification_key_signature</span>.<span class="ident">to_owned</span>(),
-                <span class="ident">signer</span>.<span class="ident">operational_certificate</span>.<span class="ident">to_owned</span>(),
-                <span class="ident">signer</span>.<span class="ident">kes_period</span>.<span class="ident">to_owned</span>(),
-                <span class="kw-2">*</span><span class="ident">stake</span>,
+            signers_with_stake.push(SignerWithStake::new(
+                signer.party_id.to_owned(),
+                signer.verification_key.to_owned(),
+                signer.verification_key_signature.to_owned(),
+                signer.operational_certificate.to_owned(),
+                signer.kes_period.to_owned(),
+                <span class="kw-2">*</span>stake,
             ));
             <span class="macro">trace!</span>(
                 <span class="string">&quot; &gt; associating signer_id {} with stake {}&quot;</span>,
-                <span class="ident">signer</span>.<span class="ident">party_id</span>,
-                <span class="kw-2">*</span><span class="ident">stake</span>
+                signer.party_id,
+                <span class="kw-2">*</span>stake
             );
         }
-        <span class="prelude-val">Ok</span>(<span class="ident">signers_with_stake</span>)
+        <span class="prelude-val">Ok</span>(signers_with_stake)
     }
 
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">compute_message</span>(
+    <span class="kw">async fn </span>compute_message(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">beacon</span>: <span class="kw-2">&amp;</span><span class="ident">Beacon</span>,
-        <span class="ident">next_signers</span>: <span class="kw-2">&amp;</span>[<span class="ident">SignerWithStake</span>],
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ProtocolMessage</span>, <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">StdError</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+        beacon: <span class="kw-2">&amp;</span>Beacon,
+        next_signers: <span class="kw-2">&amp;</span>[SignerWithStake],
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;ProtocolMessage, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: compute_message&quot;</span>);
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">message</span> <span class="op">=</span> <span class="ident">ProtocolMessage::new</span>();
-        <span class="comment">// 1 set the digest in the message</span>
-        <span class="kw">let</span> <span class="ident">digest</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">services</span>.<span class="ident">digester</span>.<span class="ident">compute_digest</span>(<span class="ident">beacon</span>).<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="macro">info!</span>(<span class="string">&quot; &gt; set message digest: {}&quot;</span>, <span class="ident">digest</span>);
-        <span class="ident">message</span>.<span class="ident">set_message_part</span>(<span class="ident">ProtocolMessagePartKey::SnapshotDigest</span>, <span class="ident">digest</span>);
+        <span class="kw">let </span><span class="kw-2">mut </span>message = ProtocolMessage::new();
+        <span class="comment">// 1 set the digest in the message
+        </span><span class="kw">let </span>digest = <span class="self">self</span>.services.digester.compute_digest(beacon).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="macro">info!</span>(<span class="string">&quot; &gt; set message digest: {}&quot;</span>, digest);
+        message.set_message_part(ProtocolMessagePartKey::SnapshotDigest, digest);
 
-        <span class="comment">// 2 set the next signers keys and stakes in the message</span>
-        <span class="kw">let</span> <span class="ident">next_signer_retrieval_epoch</span> <span class="op">=</span> <span class="ident">beacon</span>.<span class="ident">epoch</span>.<span class="ident">offset_to_next_signer_retrieval_epoch</span>()<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">next_protocol_initializer</span> <span class="op">=</span> <span class="self">self</span>
-            .<span class="ident">services</span>
-            .<span class="ident">protocol_initializer_store</span>
-            .<span class="ident">get_protocol_initializer</span>(<span class="ident">next_signer_retrieval_epoch</span>)
-            .<span class="kw">await</span><span class="question-mark">?</span>
-            .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> {
-                <span class="ident">RuntimeError::NoValueError</span>(<span class="macro">format!</span>(
+        <span class="comment">// 2 set the next signers keys and stakes in the message
+        </span><span class="kw">let </span>next_signer_retrieval_epoch = beacon.epoch.offset_to_next_signer_retrieval_epoch()<span class="question-mark">?</span>;
+        <span class="kw">let </span>next_protocol_initializer = <span class="self">self
+            </span>.services
+            .protocol_initializer_store
+            .get_protocol_initializer(next_signer_retrieval_epoch)
+            .<span class="kw">await</span><span class="question-mark">?
+            </span>.ok_or_else(|| {
+                RuntimeError::NoValueError(<span class="macro">format!</span>(
                     <span class="string">&quot;protocol_initializer at epoch {}&quot;</span>,
-                    <span class="ident">next_signer_retrieval_epoch</span>
+                    next_signer_retrieval_epoch
                 ))
             })<span class="question-mark">?</span>;
 
-        <span class="kw">let</span> <span class="ident">avk</span> <span class="op">=</span> <span class="self">self</span>
-            .<span class="ident">services</span>
-            .<span class="ident">single_signer</span>
-            .<span class="ident">compute_aggregate_verification_key</span>(<span class="ident">next_signers</span>, <span class="kw-2">&amp;</span><span class="ident">next_protocol_initializer</span>)<span class="question-mark">?</span>
-            .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">RuntimeError::NoValueError</span>(<span class="string">&quot;next_signers avk&quot;</span>.<span class="ident">to_string</span>()))<span class="question-mark">?</span>;
-        <span class="ident">message</span>.<span class="ident">set_message_part</span>(<span class="ident">ProtocolMessagePartKey::NextAggregateVerificationKey</span>, <span class="ident">avk</span>);
+        <span class="kw">let </span>avk = <span class="self">self
+            </span>.services
+            .single_signer
+            .compute_aggregate_verification_key(next_signers, <span class="kw-2">&amp;</span>next_protocol_initializer)<span class="question-mark">?
+            </span>.ok_or_else(|| RuntimeError::NoValueError(<span class="string">&quot;next_signers avk&quot;</span>.to_string()))<span class="question-mark">?</span>;
+        message.set_message_part(ProtocolMessagePartKey::NextAggregateVerificationKey, avk);
 
-        <span class="prelude-val">Ok</span>(<span class="ident">message</span>)
+        <span class="prelude-val">Ok</span>(message)
     }
 
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">compute_single_signature</span>(
+    <span class="kw">async fn </span>compute_single_signature(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">epoch</span>: <span class="ident">Epoch</span>,
-        <span class="ident">message</span>: <span class="kw-2">&amp;</span><span class="ident">ProtocolMessage</span>,
-        <span class="ident">signers</span>: <span class="kw-2">&amp;</span>[<span class="ident">SignerWithStake</span>],
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">SingleSignatures</span><span class="op">&gt;</span>, <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">StdError</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+        epoch: Epoch,
+        message: <span class="kw-2">&amp;</span>ProtocolMessage,
+        signers: <span class="kw-2">&amp;</span>[SignerWithStake],
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;SingleSignatures&gt;, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: compute_single_signature&quot;</span>);
 
-        <span class="kw">let</span> <span class="ident">signer_retrieval_epoch</span> <span class="op">=</span> <span class="ident">epoch</span>.<span class="ident">offset_to_signer_retrieval_epoch</span>()<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">protocol_initializer</span> <span class="op">=</span> <span class="self">self</span>
-            .<span class="ident">services</span>
-            .<span class="ident">protocol_initializer_store</span>
-            .<span class="ident">get_protocol_initializer</span>(<span class="ident">signer_retrieval_epoch</span>)
-            .<span class="kw">await</span><span class="question-mark">?</span>
-            .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> {
-                <span class="ident">RuntimeError::NoValueError</span>(<span class="macro">format!</span>(
+        <span class="kw">let </span>signer_retrieval_epoch = epoch.offset_to_signer_retrieval_epoch()<span class="question-mark">?</span>;
+        <span class="kw">let </span>protocol_initializer = <span class="self">self
+            </span>.services
+            .protocol_initializer_store
+            .get_protocol_initializer(signer_retrieval_epoch)
+            .<span class="kw">await</span><span class="question-mark">?
+            </span>.ok_or_else(|| {
+                RuntimeError::NoValueError(<span class="macro">format!</span>(
                     <span class="string">&quot;protocol_initializer at epoch {}&quot;</span>,
-                    <span class="ident">signer_retrieval_epoch</span>
+                    signer_retrieval_epoch
                 ))
             })<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">signature</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">services</span>.<span class="ident">single_signer</span>.<span class="ident">compute_single_signatures</span>(
-            <span class="ident">message</span>,
-            <span class="ident">signers</span>,
-            <span class="kw-2">&amp;</span><span class="ident">protocol_initializer</span>,
+        <span class="kw">let </span>signature = <span class="self">self</span>.services.single_signer.compute_single_signatures(
+            message,
+            signers,
+            <span class="kw-2">&amp;</span>protocol_initializer,
         )<span class="question-mark">?</span>;
         <span class="macro">info!</span>(
             <span class="string">&quot; &gt; {}&quot;</span>,
-            <span class="kw">if</span> <span class="ident">signature</span>.<span class="ident">is_some</span>() {
-                <span class="string">&quot;could compute a single signature!&quot;</span>
-            } <span class="kw">else</span> {
-                <span class="string">&quot;NO single signature was computed.&quot;</span>
-            }
+            <span class="kw">if </span>signature.is_some() {
+                <span class="string">&quot;could compute a single signature!&quot;
+            </span>} <span class="kw">else </span>{
+                <span class="string">&quot;NO single signature was computed.&quot;
+            </span>}
         );
 
-        <span class="prelude-val">Ok</span>(<span class="ident">signature</span>)
+        <span class="prelude-val">Ok</span>(signature)
     }
 
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">send_single_signature</span>(
+    <span class="kw">async fn </span>send_single_signature(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">maybe_signature</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">SingleSignatures</span><span class="op">&gt;</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">StdError</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+        maybe_signature: <span class="prelude-ty">Option</span>&lt;SingleSignatures&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: send_single_signature&quot;</span>);
 
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">single_signatures</span>) <span class="op">=</span> <span class="ident">maybe_signature</span> {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(single_signatures) = maybe_signature {
             <span class="macro">debug!</span>(<span class="string">&quot; &gt; there is a single signature to send&quot;</span>);
-            <span class="self">self</span>.<span class="ident">services</span>
-                .<span class="ident">certificate_handler</span>
-                .<span class="ident">register_signatures</span>(<span class="kw-2">&amp;</span><span class="ident">single_signatures</span>)
-                .<span class="kw">await</span>
-                .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">e</span>.<span class="ident">into</span>())
-        } <span class="kw">else</span> {
+            <span class="self">self</span>.services
+                .certificate_handler
+                .register_signatures(<span class="kw-2">&amp;</span>single_signatures)
+                .<span class="kw">await
+                </span>.map_err(|e| e.into())
+        } <span class="kw">else </span>{
             <span class="macro">debug!</span>(<span class="string">&quot; &gt; NO single signature to send, doing nothing&quot;</span>);
 
             <span class="prelude-val">Ok</span>(())
@@ -1217,364 +1217,364 @@
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="ident">mockall::mock</span>;
-    <span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">path::PathBuf</span>, <span class="ident">sync::Arc</span>};
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use </span>mockall::mock;
+    <span class="kw">use </span>std::{path::PathBuf, sync::Arc};
 
-    <span class="kw">use</span> <span class="ident">mithril_common::crypto_helper::tests_setup</span>::{<span class="ident">setup_protocol_parameters</span>, <span class="ident">setup_signers</span>};
-    <span class="kw">use</span> <span class="ident">mithril_common::crypto_helper::ProtocolInitializer</span>;
-    <span class="kw">use</span> <span class="ident">mithril_common::digesters</span>::{<span class="ident">DumbImmutableDigester</span>, <span class="ident">DumbImmutableFileObserver</span>};
-    <span class="kw">use</span> <span class="ident">mithril_common::entities</span>::{<span class="ident">Epoch</span>, <span class="ident">StakeDistribution</span>};
-    <span class="kw">use</span> <span class="ident">mithril_common::store::adapter</span>::{<span class="ident">DumbStoreAdapter</span>, <span class="ident">MemoryAdapter</span>};
-    <span class="kw">use</span> <span class="ident">mithril_common::store</span>::{<span class="ident">StakeStore</span>, <span class="ident">StakeStorer</span>};
-    <span class="kw">use</span> <span class="ident">mithril_common</span>::{
-        <span class="ident">chain_observer::FakeObserver</span>, <span class="ident">BeaconProvider</span>, <span class="ident">BeaconProviderError</span>, <span class="ident">BeaconProviderImpl</span>,
+    <span class="kw">use </span>mithril_common::crypto_helper::tests_setup::{setup_protocol_parameters, setup_signers};
+    <span class="kw">use </span>mithril_common::crypto_helper::ProtocolInitializer;
+    <span class="kw">use </span>mithril_common::digesters::{DumbImmutableDigester, DumbImmutableFileObserver};
+    <span class="kw">use </span>mithril_common::entities::{Epoch, StakeDistribution};
+    <span class="kw">use </span>mithril_common::store::adapter::{DumbStoreAdapter, MemoryAdapter};
+    <span class="kw">use </span>mithril_common::store::{StakeStore, StakeStorer};
+    <span class="kw">use </span>mithril_common::{
+        chain_observer::FakeObserver, BeaconProvider, BeaconProviderError, BeaconProviderImpl,
     };
-    <span class="kw">use</span> <span class="ident">mithril_common</span>::{<span class="ident">fake_data</span>, <span class="ident">CardanoNetwork</span>};
+    <span class="kw">use </span>mithril_common::{fake_data, CardanoNetwork};
 
-    <span class="kw">use</span> <span class="kw">crate</span>::{
-        <span class="ident">CertificateHandler</span>, <span class="ident">DumbCertificateHandler</span>, <span class="ident">MithrilSingleSigner</span>, <span class="ident">MockCertificateHandler</span>,
-        <span class="ident">ProtocolInitializerStore</span>, <span class="ident">SingleSigner</span>,
+    <span class="kw">use crate</span>::{
+        CertificateHandler, DumbCertificateHandler, MithrilSingleSigner, MockCertificateHandler,
+        ProtocolInitializerStore, SingleSigner,
     };
 
-    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
-    <span class="kw">const</span> <span class="ident">DIGESTER_RESULT</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;a digest&quot;</span>;
+    <span class="kw">const </span>DIGESTER_RESULT: <span class="kw-2">&amp;</span>str = <span class="string">&quot;a digest&quot;</span>;
 
-    <span class="macro">mock!</span> {
-        <span class="kw">pub</span> <span class="ident">FakeBeaconProvider</span> { }
+    <span class="macro">mock! </span>{
+        <span class="kw">pub </span>FakeBeaconProvider { }
 
-        <span class="attribute">#[<span class="ident">async_trait</span>]</span>
-        <span class="kw">impl</span> <span class="ident">BeaconProvider</span> <span class="kw">for</span> <span class="ident">FakeBeaconProvider</span> {
-            <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_current_beacon</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Beacon</span>, <span class="ident">BeaconProviderError</span><span class="op">&gt;</span>;
+        <span class="attribute">#[async_trait]
+        </span><span class="kw">impl </span>BeaconProvider <span class="kw">for </span>FakeBeaconProvider {
+            <span class="kw">async fn </span>get_current_beacon(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Beacon, BeaconProviderError&gt;;
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">init_services</span>() -&gt; <span class="ident">SignerServices</span> {
-        <span class="kw">let</span> <span class="ident">adapter</span>: <span class="ident">MemoryAdapter</span><span class="op">&lt;</span><span class="ident">Epoch</span>, <span class="ident">ProtocolInitializer</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">MemoryAdapter::new</span>(<span class="prelude-val">None</span>).<span class="ident">unwrap</span>();
-        <span class="kw">let</span> <span class="ident">chain_observer</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">FakeObserver::default</span>());
-        <span class="ident">SignerServices</span> {
-            <span class="ident">stake_store</span>: <span class="ident">Arc::new</span>(<span class="ident">StakeStore::new</span>(<span class="ident">Box::new</span>(<span class="ident">DumbStoreAdapter::new</span>()), <span class="prelude-val">None</span>)),
-            <span class="ident">certificate_handler</span>: <span class="ident">Arc::new</span>(<span class="ident">DumbCertificateHandler::default</span>()),
-            <span class="ident">chain_observer</span>: <span class="ident">chain_observer</span>.<span class="ident">clone</span>(),
-            <span class="ident">digester</span>: <span class="ident">Arc::new</span>(<span class="ident">DumbImmutableDigester::new</span>(<span class="ident">DIGESTER_RESULT</span>, <span class="bool-val">true</span>)),
-            <span class="ident">single_signer</span>: <span class="ident">Arc::new</span>(<span class="ident">MithrilSingleSigner::new</span>(<span class="string">&quot;1&quot;</span>.<span class="ident">to_string</span>())),
-            <span class="ident">beacon_provider</span>: <span class="ident">Arc::new</span>(<span class="ident">BeaconProviderImpl::new</span>(
-                <span class="ident">chain_observer</span>,
-                <span class="ident">Arc::new</span>(<span class="ident">DumbImmutableFileObserver::default</span>()),
-                <span class="ident">CardanoNetwork::TestNet</span>(<span class="number">42</span>),
+    <span class="kw">fn </span>init_services() -&gt; SignerServices {
+        <span class="kw">let </span>adapter: MemoryAdapter&lt;Epoch, ProtocolInitializer&gt; = MemoryAdapter::new(<span class="prelude-val">None</span>).unwrap();
+        <span class="kw">let </span>chain_observer = Arc::new(FakeObserver::default());
+        SignerServices {
+            stake_store: Arc::new(StakeStore::new(Box::new(DumbStoreAdapter::new()), <span class="prelude-val">None</span>)),
+            certificate_handler: Arc::new(DumbCertificateHandler::default()),
+            chain_observer: chain_observer.clone(),
+            digester: Arc::new(DumbImmutableDigester::new(DIGESTER_RESULT, <span class="bool-val">true</span>)),
+            single_signer: Arc::new(MithrilSingleSigner::new(<span class="string">&quot;1&quot;</span>.to_string())),
+            beacon_provider: Arc::new(BeaconProviderImpl::new(
+                chain_observer,
+                Arc::new(DumbImmutableFileObserver::default()),
+                CardanoNetwork::TestNet(<span class="number">42</span>),
             )),
-            <span class="ident">protocol_initializer_store</span>: <span class="ident">Arc::new</span>(<span class="ident">ProtocolInitializerStore::new</span>(
-                <span class="ident">Box::new</span>(<span class="ident">adapter</span>),
+            protocol_initializer_store: Arc::new(ProtocolInitializerStore::new(
+                Box::new(adapter),
                 <span class="prelude-val">None</span>,
             )),
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">init_runner</span>(
-        <span class="ident">maybe_services</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">SignerServices</span><span class="op">&gt;</span>,
-        <span class="ident">maybe_config</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Config</span><span class="op">&gt;</span>,
-    ) -&gt; <span class="ident">SignerRunner</span> {
-        <span class="kw">let</span> <span class="ident">services</span> <span class="op">=</span> <span class="ident">init_services</span>();
-        <span class="kw">let</span> <span class="ident">config</span> <span class="op">=</span> <span class="ident">Config</span> {
-            <span class="ident">aggregator_endpoint</span>: <span class="string">&quot;http://0.0.0.0:3000&quot;</span>.<span class="ident">to_string</span>(),
-            <span class="ident">cardano_cli_path</span>: <span class="ident">PathBuf::new</span>(),
-            <span class="ident">cardano_node_socket_path</span>: <span class="ident">PathBuf::new</span>(),
-            <span class="ident">db_directory</span>: <span class="ident">PathBuf::new</span>(),
-            <span class="ident">network</span>: <span class="string">&quot;whatever&quot;</span>.<span class="ident">to_string</span>(),
-            <span class="ident">network_magic</span>: <span class="prelude-val">None</span>,
-            <span class="ident">party_id</span>: <span class="prelude-val">Some</span>(<span class="string">&quot;1&quot;</span>.<span class="ident">to_string</span>()),
-            <span class="ident">run_interval</span>: <span class="number">100</span>,
-            <span class="ident">data_stores_directory</span>: <span class="ident">PathBuf::new</span>(),
-            <span class="ident">kes_secret_key_path</span>: <span class="prelude-val">None</span>,
-            <span class="ident">operational_certificate_path</span>: <span class="prelude-val">None</span>,
-            <span class="ident">store_retention_limit</span>: <span class="prelude-val">None</span>,
+    <span class="kw">fn </span>init_runner(
+        maybe_services: <span class="prelude-ty">Option</span>&lt;SignerServices&gt;,
+        maybe_config: <span class="prelude-ty">Option</span>&lt;Config&gt;,
+    ) -&gt; SignerRunner {
+        <span class="kw">let </span>services = init_services();
+        <span class="kw">let </span>config = Config {
+            aggregator_endpoint: <span class="string">&quot;http://0.0.0.0:3000&quot;</span>.to_string(),
+            cardano_cli_path: PathBuf::new(),
+            cardano_node_socket_path: PathBuf::new(),
+            db_directory: PathBuf::new(),
+            network: <span class="string">&quot;whatever&quot;</span>.to_string(),
+            network_magic: <span class="prelude-val">None</span>,
+            party_id: <span class="prelude-val">Some</span>(<span class="string">&quot;1&quot;</span>.to_string()),
+            run_interval: <span class="number">100</span>,
+            data_stores_directory: PathBuf::new(),
+            kes_secret_key_path: <span class="prelude-val">None</span>,
+            operational_certificate_path: <span class="prelude-val">None</span>,
+            store_retention_limit: <span class="prelude-val">None</span>,
         };
 
-        <span class="ident">SignerRunner::new</span>(
-            <span class="ident">maybe_config</span>.<span class="ident">unwrap_or</span>(<span class="ident">config</span>),
-            <span class="ident">maybe_services</span>.<span class="ident">unwrap_or</span>(<span class="ident">services</span>),
+        SignerRunner::new(
+            maybe_config.unwrap_or(config),
+            maybe_services.unwrap_or(services),
         )
     }
 
-    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_get_current_beacon</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">services</span> <span class="op">=</span> <span class="ident">init_services</span>();
-        <span class="kw">let</span> <span class="ident">expected</span> <span class="op">=</span> <span class="ident">fake_data::beacon</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">beacon_provider</span> <span class="op">=</span> <span class="ident">MockFakeBeaconProvider::new</span>();
-        <span class="ident">beacon_provider</span>
-            .<span class="ident">expect_get_current_beacon</span>()
-            .<span class="ident">once</span>()
-            .<span class="ident">returning</span>(<span class="op">|</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="ident">fake_data::beacon</span>()));
-        <span class="ident">services</span>.<span class="ident">beacon_provider</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">beacon_provider</span>);
-        <span class="kw">let</span> <span class="ident">runner</span> <span class="op">=</span> <span class="ident">init_runner</span>(<span class="prelude-val">Some</span>(<span class="ident">services</span>), <span class="prelude-val">None</span>);
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>test_get_current_beacon() {
+        <span class="kw">let </span><span class="kw-2">mut </span>services = init_services();
+        <span class="kw">let </span>expected = fake_data::beacon();
+        <span class="kw">let </span><span class="kw-2">mut </span>beacon_provider = MockFakeBeaconProvider::new();
+        beacon_provider
+            .expect_get_current_beacon()
+            .once()
+            .returning(|| <span class="prelude-val">Ok</span>(fake_data::beacon()));
+        services.beacon_provider = Arc::new(beacon_provider);
+        <span class="kw">let </span>runner = init_runner(<span class="prelude-val">Some</span>(services), <span class="prelude-val">None</span>);
 
         <span class="macro">assert_eq!</span>(
-            <span class="ident">expected</span>,
-            <span class="ident">runner</span>
-                .<span class="ident">get_current_beacon</span>()
-                .<span class="kw">await</span>
-                .<span class="ident">expect</span>(<span class="string">&quot;Get current beacon should not fail.&quot;</span>)
+            expected,
+            runner
+                .get_current_beacon()
+                .<span class="kw">await
+                </span>.expect(<span class="string">&quot;Get current beacon should not fail.&quot;</span>)
         );
     }
 
-    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_update_stake_distribution</span>() {
-        <span class="kw">let</span> <span class="ident">services</span> <span class="op">=</span> <span class="ident">init_services</span>();
-        <span class="kw">let</span> <span class="ident">stake_store</span> <span class="op">=</span> <span class="ident">services</span>.<span class="ident">stake_store</span>.<span class="ident">clone</span>();
-        <span class="kw">let</span> <span class="ident">current_epoch</span> <span class="op">=</span> <span class="ident">services</span>
-            .<span class="ident">chain_observer</span>
-            .<span class="ident">get_current_epoch</span>()
-            .<span class="kw">await</span>
-            .<span class="ident">expect</span>(<span class="string">&quot;chain observer should not fail&quot;</span>)
-            .<span class="ident">expect</span>(<span class="string">&quot;the observer should return an epoch&quot;</span>);
-        <span class="kw">let</span> <span class="ident">runner</span> <span class="op">=</span> <span class="ident">init_runner</span>(<span class="prelude-val">Some</span>(<span class="ident">services</span>), <span class="prelude-val">None</span>);
-        <span class="macro">assert!</span>(<span class="ident">stake_store</span>
-            .<span class="ident">get_stakes</span>(<span class="ident">current_epoch</span>)
-            .<span class="kw">await</span>
-            .<span class="ident">expect</span>(<span class="string">&quot;getting stakes from store should not fail&quot;</span>)
-            .<span class="ident">is_none</span>());
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>test_update_stake_distribution() {
+        <span class="kw">let </span>services = init_services();
+        <span class="kw">let </span>stake_store = services.stake_store.clone();
+        <span class="kw">let </span>current_epoch = services
+            .chain_observer
+            .get_current_epoch()
+            .<span class="kw">await
+            </span>.expect(<span class="string">&quot;chain observer should not fail&quot;</span>)
+            .expect(<span class="string">&quot;the observer should return an epoch&quot;</span>);
+        <span class="kw">let </span>runner = init_runner(<span class="prelude-val">Some</span>(services), <span class="prelude-val">None</span>);
+        <span class="macro">assert!</span>(stake_store
+            .get_stakes(current_epoch)
+            .<span class="kw">await
+            </span>.expect(<span class="string">&quot;getting stakes from store should not fail&quot;</span>)
+            .is_none());
 
-        <span class="ident">runner</span>
-            .<span class="ident">update_stake_distribution</span>(<span class="ident">current_epoch</span>)
-            .<span class="kw">await</span>
-            .<span class="ident">expect</span>(<span class="string">&quot;update_stake_distribution should not fail.&quot;</span>);
+        runner
+            .update_stake_distribution(current_epoch)
+            .<span class="kw">await
+            </span>.expect(<span class="string">&quot;update_stake_distribution should not fail.&quot;</span>);
 
-        <span class="kw">let</span> <span class="ident">stake_distribution</span> <span class="op">=</span> <span class="ident">stake_store</span>
-            .<span class="ident">get_stakes</span>(
-                <span class="ident">current_epoch</span>
-                    .<span class="ident">offset_to_recording_epoch</span>()
-                    .<span class="ident">expect</span>(<span class="string">&quot;offset_to_recording_epoch should not fail&quot;</span>),
+        <span class="kw">let </span>stake_distribution = stake_store
+            .get_stakes(
+                current_epoch
+                    .offset_to_recording_epoch()
+                    .expect(<span class="string">&quot;offset_to_recording_epoch should not fail&quot;</span>),
             )
-            .<span class="kw">await</span>
-            .<span class="ident">expect</span>(<span class="string">&quot;getting stakes from store should not fail&quot;</span>)
-            .<span class="ident">expect</span>(<span class="string">&quot;there should be stakes for this epoch&quot;</span>);
+            .<span class="kw">await
+            </span>.expect(<span class="string">&quot;getting stakes from store should not fail&quot;</span>)
+            .expect(<span class="string">&quot;there should be stakes for this epoch&quot;</span>);
 
-        <span class="macro">assert_eq!</span>(<span class="number">2</span>, <span class="ident">stake_distribution</span>.<span class="ident">len</span>());
+        <span class="macro">assert_eq!</span>(<span class="number">2</span>, stake_distribution.len());
     }
 
-    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_register_signer_to_aggregator</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">services</span> <span class="op">=</span> <span class="ident">init_services</span>();
-        <span class="kw">let</span> <span class="ident">certificate_handler</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">DumbCertificateHandler::default</span>());
-        <span class="ident">services</span>.<span class="ident">certificate_handler</span> <span class="op">=</span> <span class="ident">certificate_handler</span>.<span class="ident">clone</span>();
-        <span class="kw">let</span> <span class="ident">protocol_initializer_store</span> <span class="op">=</span> <span class="ident">services</span>.<span class="ident">protocol_initializer_store</span>.<span class="ident">clone</span>();
-        <span class="kw">let</span> <span class="ident">chain_observer</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">FakeObserver::default</span>());
-        <span class="ident">services</span>.<span class="ident">chain_observer</span> <span class="op">=</span> <span class="ident">chain_observer</span>.<span class="ident">clone</span>();
-        <span class="kw">let</span> <span class="ident">runner</span> <span class="op">=</span> <span class="ident">init_runner</span>(<span class="prelude-val">Some</span>(<span class="ident">services</span>), <span class="prelude-val">None</span>);
-        <span class="kw">let</span> <span class="ident">epoch</span> <span class="op">=</span> <span class="ident">chain_observer</span>
-            .<span class="ident">current_beacon</span>
-            .<span class="ident">read</span>()
-            .<span class="kw">await</span>
-            .<span class="ident">clone</span>()
-            .<span class="ident">expect</span>(<span class="string">&quot;chain_observer should have a current_beacon&quot;</span>)
-            .<span class="ident">epoch</span>;
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>test_register_signer_to_aggregator() {
+        <span class="kw">let </span><span class="kw-2">mut </span>services = init_services();
+        <span class="kw">let </span>certificate_handler = Arc::new(DumbCertificateHandler::default());
+        services.certificate_handler = certificate_handler.clone();
+        <span class="kw">let </span>protocol_initializer_store = services.protocol_initializer_store.clone();
+        <span class="kw">let </span>chain_observer = Arc::new(FakeObserver::default());
+        services.chain_observer = chain_observer.clone();
+        <span class="kw">let </span>runner = init_runner(<span class="prelude-val">Some</span>(services), <span class="prelude-val">None</span>);
+        <span class="kw">let </span>epoch = chain_observer
+            .current_beacon
+            .read()
+            .<span class="kw">await
+            </span>.clone()
+            .expect(<span class="string">&quot;chain_observer should have a current_beacon&quot;</span>)
+            .epoch;
 
-        <span class="kw">let</span> <span class="ident">pending_certificate</span> <span class="op">=</span> <span class="ident">certificate_handler</span>
-            .<span class="ident">retrieve_pending_certificate</span>()
-            .<span class="kw">await</span>
-            .<span class="ident">expect</span>(<span class="string">&quot;getting pending certificate should not fail&quot;</span>)
-            .<span class="ident">expect</span>(<span class="string">&quot;there should be a pending certificate, None returned&quot;</span>);
-        <span class="ident">runner</span>
-            .<span class="ident">register_signer_to_aggregator</span>(<span class="ident">epoch</span>, <span class="kw-2">&amp;</span><span class="ident">pending_certificate</span>.<span class="ident">protocol_parameters</span>)
-            .<span class="kw">await</span>
-            .<span class="ident">expect</span>(<span class="string">&quot;registering a signer to the aggregator should not fail&quot;</span>);
+        <span class="kw">let </span>pending_certificate = certificate_handler
+            .retrieve_pending_certificate()
+            .<span class="kw">await
+            </span>.expect(<span class="string">&quot;getting pending certificate should not fail&quot;</span>)
+            .expect(<span class="string">&quot;there should be a pending certificate, None returned&quot;</span>);
+        runner
+            .register_signer_to_aggregator(epoch, <span class="kw-2">&amp;</span>pending_certificate.protocol_parameters)
+            .<span class="kw">await
+            </span>.expect(<span class="string">&quot;registering a signer to the aggregator should not fail&quot;</span>);
 
-        <span class="macro">assert!</span>(<span class="ident">certificate_handler</span>
-            .<span class="ident">get_last_registered_signer</span>()
-            .<span class="kw">await</span>
-            .<span class="ident">is_some</span>());
-        <span class="kw">let</span> <span class="ident">maybe_protocol_initializer</span> <span class="op">=</span> <span class="ident">protocol_initializer_store</span>
-            .<span class="ident">get_protocol_initializer</span>(
-                <span class="ident">epoch</span>
-                    .<span class="ident">offset_to_recording_epoch</span>()
-                    .<span class="ident">expect</span>(<span class="string">&quot;offset_to_recording_epoch should not fail&quot;</span>),
+        <span class="macro">assert!</span>(certificate_handler
+            .get_last_registered_signer()
+            .<span class="kw">await
+            </span>.is_some());
+        <span class="kw">let </span>maybe_protocol_initializer = protocol_initializer_store
+            .get_protocol_initializer(
+                epoch
+                    .offset_to_recording_epoch()
+                    .expect(<span class="string">&quot;offset_to_recording_epoch should not fail&quot;</span>),
             )
-            .<span class="kw">await</span>
-            .<span class="ident">expect</span>(<span class="string">&quot;get_protocol_initializer should not fail&quot;</span>);
+            .<span class="kw">await
+            </span>.expect(<span class="string">&quot;get_protocol_initializer should not fail&quot;</span>);
         <span class="macro">assert!</span>(
-            <span class="ident">maybe_protocol_initializer</span>.<span class="ident">is_some</span>(),
-            <span class="string">&quot;A protocol initializer should have been registered at the &#39;Recording&#39; epoch&quot;</span>
-        );
+            maybe_protocol_initializer.is_some(),
+            <span class="string">&quot;A protocol initializer should have been registered at the &#39;Recording&#39; epoch&quot;
+        </span>);
     }
 
-    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_can_i_sign</span>() {
-        <span class="kw">let</span> <span class="ident">services</span> <span class="op">=</span> <span class="ident">init_services</span>();
-        <span class="kw">let</span> <span class="ident">protocol_initializer_store</span> <span class="op">=</span> <span class="ident">services</span>.<span class="ident">protocol_initializer_store</span>.<span class="ident">clone</span>();
-        <span class="kw">let</span> <span class="ident">runner</span> <span class="op">=</span> <span class="ident">init_runner</span>(<span class="prelude-val">Some</span>(<span class="ident">services</span>), <span class="prelude-val">None</span>);
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pending_certificate</span> <span class="op">=</span> <span class="ident">fake_data::certificate_pending</span>();
-        <span class="kw">let</span> <span class="ident">epoch</span> <span class="op">=</span> <span class="ident">pending_certificate</span>.<span class="ident">beacon</span>.<span class="ident">epoch</span>;
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">signer</span> <span class="op">=</span> <span class="kw-2">&amp;mut</span> <span class="ident">pending_certificate</span>.<span class="ident">signers</span>[<span class="number">0</span>];
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>test_can_i_sign() {
+        <span class="kw">let </span>services = init_services();
+        <span class="kw">let </span>protocol_initializer_store = services.protocol_initializer_store.clone();
+        <span class="kw">let </span>runner = init_runner(<span class="prelude-val">Some</span>(services), <span class="prelude-val">None</span>);
+        <span class="kw">let </span><span class="kw-2">mut </span>pending_certificate = fake_data::certificate_pending();
+        <span class="kw">let </span>epoch = pending_certificate.beacon.epoch;
+        <span class="kw">let </span><span class="kw-2">mut </span>signer = <span class="kw-2">&amp;mut </span>pending_certificate.signers[<span class="number">0</span>];
 
-        <span class="kw">let</span> <span class="ident">protocol_initializer</span> <span class="op">=</span> <span class="ident">MithrilProtocolInitializerBuilder::new</span>()
-            .<span class="ident">build</span>(<span class="kw-2">&amp;</span><span class="number">100</span>, <span class="kw-2">&amp;</span><span class="ident">fake_data::protocol_parameters</span>(), <span class="prelude-val">None</span>, <span class="prelude-val">None</span>)
-            .<span class="ident">expect</span>(<span class="string">&quot;build protocol initializer should not fail&quot;</span>);
-        <span class="ident">signer</span>.<span class="ident">verification_key</span> <span class="op">=</span> <span class="ident">key_encode_hex</span>(<span class="ident">protocol_initializer</span>.<span class="ident">verification_key</span>()).<span class="ident">unwrap</span>();
-        <span class="ident">protocol_initializer_store</span>
-            .<span class="ident">save_protocol_initializer</span>(
-                <span class="ident">epoch</span>
-                    .<span class="ident">offset_to_signer_retrieval_epoch</span>()
-                    .<span class="ident">expect</span>(<span class="string">&quot;offset_to_signer_retrieval_epoch should not fail&quot;</span>),
-                <span class="ident">protocol_initializer</span>,
+        <span class="kw">let </span>protocol_initializer = MithrilProtocolInitializerBuilder::new()
+            .build(<span class="kw-2">&amp;</span><span class="number">100</span>, <span class="kw-2">&amp;</span>fake_data::protocol_parameters(), <span class="prelude-val">None</span>, <span class="prelude-val">None</span>)
+            .expect(<span class="string">&quot;build protocol initializer should not fail&quot;</span>);
+        signer.verification_key = key_encode_hex(protocol_initializer.verification_key()).unwrap();
+        protocol_initializer_store
+            .save_protocol_initializer(
+                epoch
+                    .offset_to_signer_retrieval_epoch()
+                    .expect(<span class="string">&quot;offset_to_signer_retrieval_epoch should not fail&quot;</span>),
+                protocol_initializer,
             )
-            .<span class="kw">await</span>
-            .<span class="ident">expect</span>(<span class="string">&quot;save_protocol_initializer should not fail&quot;</span>);
+            .<span class="kw">await
+            </span>.expect(<span class="string">&quot;save_protocol_initializer should not fail&quot;</span>);
 
-        <span class="kw">let</span> <span class="ident">can_i_sign_result</span> <span class="op">=</span> <span class="ident">runner</span>.<span class="ident">can_i_sign</span>(<span class="kw-2">&amp;</span><span class="ident">pending_certificate</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>();
-        <span class="macro">assert!</span>(<span class="ident">can_i_sign_result</span>);
+        <span class="kw">let </span>can_i_sign_result = runner.can_i_sign(<span class="kw-2">&amp;</span>pending_certificate).<span class="kw">await</span>.unwrap();
+        <span class="macro">assert!</span>(can_i_sign_result);
     }
 
-    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_associate_signers_with_stake</span>() {
-        <span class="kw">let</span> <span class="ident">services</span> <span class="op">=</span> <span class="ident">init_services</span>();
-        <span class="kw">let</span> <span class="ident">stake_store</span> <span class="op">=</span> <span class="ident">services</span>.<span class="ident">stake_store</span>.<span class="ident">clone</span>();
-        <span class="kw">let</span> <span class="ident">runner</span> <span class="op">=</span> <span class="ident">init_runner</span>(<span class="prelude-val">Some</span>(<span class="ident">services</span>), <span class="prelude-val">None</span>);
-        <span class="kw">let</span> <span class="ident">epoch</span> <span class="op">=</span> <span class="ident">Epoch</span>(<span class="number">12</span>);
-        <span class="kw">let</span> <span class="ident">expected</span> <span class="op">=</span> <span class="ident">fake_data::signers_with_stakes</span>(<span class="number">5</span>);
-        <span class="kw">let</span> <span class="ident">signers</span> <span class="op">=</span> <span class="ident">expected</span>
-            .<span class="ident">clone</span>()
-            .<span class="ident">into_iter</span>()
-            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">into</span>())
-            .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
-        <span class="kw">let</span> <span class="ident">stake_distribution</span> <span class="op">=</span> <span class="ident">expected</span>
-            .<span class="ident">clone</span>()
-            .<span class="ident">iter</span>()
-            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">into</span>())
-            .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">StakeDistribution</span><span class="op">&gt;</span>();
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>test_associate_signers_with_stake() {
+        <span class="kw">let </span>services = init_services();
+        <span class="kw">let </span>stake_store = services.stake_store.clone();
+        <span class="kw">let </span>runner = init_runner(<span class="prelude-val">Some</span>(services), <span class="prelude-val">None</span>);
+        <span class="kw">let </span>epoch = Epoch(<span class="number">12</span>);
+        <span class="kw">let </span>expected = fake_data::signers_with_stakes(<span class="number">5</span>);
+        <span class="kw">let </span>signers = expected
+            .clone()
+            .into_iter()
+            .map(|s| s.into())
+            .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+        <span class="kw">let </span>stake_distribution = expected
+            .clone()
+            .iter()
+            .map(|s| s.into())
+            .collect::&lt;StakeDistribution&gt;();
 
-        <span class="ident">stake_store</span>
-            .<span class="ident">save_stakes</span>(<span class="ident">epoch</span>, <span class="ident">stake_distribution</span>)
-            .<span class="kw">await</span>
-            .<span class="ident">expect</span>(<span class="string">&quot;save_stakes should not fail&quot;</span>);
+        stake_store
+            .save_stakes(epoch, stake_distribution)
+            .<span class="kw">await
+            </span>.expect(<span class="string">&quot;save_stakes should not fail&quot;</span>);
 
-        <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">runner</span>
-            .<span class="ident">associate_signers_with_stake</span>(<span class="ident">epoch</span>, <span class="kw-2">&amp;</span><span class="ident">signers</span>)
-            .<span class="kw">await</span>
-            .<span class="ident">expect</span>(<span class="string">&quot;associate_signers_with_stake should not fail&quot;</span>);
-        <span class="macro">assert_eq!</span>(<span class="ident">expected</span>, <span class="ident">result</span>);
+        <span class="kw">let </span>result = runner
+            .associate_signers_with_stake(epoch, <span class="kw-2">&amp;</span>signers)
+            .<span class="kw">await
+            </span>.expect(<span class="string">&quot;associate_signers_with_stake should not fail&quot;</span>);
+        <span class="macro">assert_eq!</span>(expected, result);
     }
 
-    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_compute_message</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">services</span> <span class="op">=</span> <span class="ident">init_services</span>();
-        <span class="kw">let</span> <span class="ident">current_beacon</span> <span class="op">=</span> <span class="ident">services</span>
-            .<span class="ident">beacon_provider</span>
-            .<span class="ident">get_current_beacon</span>()
-            .<span class="kw">await</span>
-            .<span class="ident">expect</span>(<span class="string">&quot;get_current_beacon should not fail&quot;</span>);
-        <span class="kw">let</span> <span class="ident">signers</span> <span class="op">=</span> <span class="ident">setup_signers</span>(<span class="number">5</span>, <span class="kw-2">&amp;</span><span class="ident">setup_protocol_parameters</span>());
-        <span class="kw">let</span> (<span class="ident">signer_with_stake</span>, <span class="kw">_</span>, <span class="ident">protocol_initializer</span>) <span class="op">=</span> <span class="ident">signers</span>.<span class="ident">first</span>().<span class="ident">unwrap</span>();
-        <span class="kw">let</span> <span class="ident">single_signer</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">MithrilSingleSigner::new</span>(
-            <span class="ident">signer_with_stake</span>.<span class="ident">party_id</span>.<span class="ident">to_owned</span>(),
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>test_compute_message() {
+        <span class="kw">let </span><span class="kw-2">mut </span>services = init_services();
+        <span class="kw">let </span>current_beacon = services
+            .beacon_provider
+            .get_current_beacon()
+            .<span class="kw">await
+            </span>.expect(<span class="string">&quot;get_current_beacon should not fail&quot;</span>);
+        <span class="kw">let </span>signers = setup_signers(<span class="number">5</span>, <span class="kw-2">&amp;</span>setup_protocol_parameters());
+        <span class="kw">let </span>(signer_with_stake, <span class="kw">_</span>, protocol_initializer) = signers.first().unwrap();
+        <span class="kw">let </span>single_signer = Arc::new(MithrilSingleSigner::new(
+            signer_with_stake.party_id.to_owned(),
         ));
-        <span class="ident">services</span>.<span class="ident">single_signer</span> <span class="op">=</span> <span class="ident">single_signer</span>.<span class="ident">clone</span>();
-        <span class="ident">services</span>
-            .<span class="ident">protocol_initializer_store</span>
-            .<span class="ident">save_protocol_initializer</span>(
-                <span class="ident">current_beacon</span>
-                    .<span class="ident">epoch</span>
-                    .<span class="ident">offset_to_next_signer_retrieval_epoch</span>()
-                    .<span class="ident">expect</span>(<span class="string">&quot;offset_to_signer_retrieval_epoch should not fail&quot;</span>),
-                <span class="ident">protocol_initializer</span>.<span class="ident">clone</span>(),
+        services.single_signer = single_signer.clone();
+        services
+            .protocol_initializer_store
+            .save_protocol_initializer(
+                current_beacon
+                    .epoch
+                    .offset_to_next_signer_retrieval_epoch()
+                    .expect(<span class="string">&quot;offset_to_signer_retrieval_epoch should not fail&quot;</span>),
+                protocol_initializer.clone(),
             )
-            .<span class="kw">await</span>
-            .<span class="ident">expect</span>(<span class="string">&quot;save_protocol_initializer should not fail&quot;</span>);
+            .<span class="kw">await
+            </span>.expect(<span class="string">&quot;save_protocol_initializer should not fail&quot;</span>);
 
-        <span class="kw">let</span> <span class="ident">next_signers</span> <span class="op">=</span> <span class="ident">signers</span>
-            .<span class="ident">iter</span>()
-            .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">signer_with_stake</span>, <span class="kw">_</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="ident">signer_with_stake</span>.<span class="ident">to_owned</span>())
-            .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">expected</span> <span class="op">=</span> <span class="ident">ProtocolMessage::new</span>();
-        <span class="ident">expected</span>.<span class="ident">set_message_part</span>(
-            <span class="ident">ProtocolMessagePartKey::SnapshotDigest</span>,
-            <span class="ident">DIGESTER_RESULT</span>.<span class="ident">to_string</span>(),
+        <span class="kw">let </span>next_signers = signers
+            .iter()
+            .map(|(signer_with_stake, <span class="kw">_</span>, <span class="kw">_</span>)| signer_with_stake.to_owned())
+            .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+        <span class="kw">let </span><span class="kw-2">mut </span>expected = ProtocolMessage::new();
+        expected.set_message_part(
+            ProtocolMessagePartKey::SnapshotDigest,
+            DIGESTER_RESULT.to_string(),
         );
-        <span class="kw">let</span> <span class="ident">avk</span> <span class="op">=</span> <span class="ident">services</span>
-            .<span class="ident">single_signer</span>
-            .<span class="ident">compute_aggregate_verification_key</span>(<span class="kw-2">&amp;</span><span class="ident">next_signers</span>, <span class="ident">protocol_initializer</span>)
-            .<span class="ident">expect</span>(<span class="string">&quot;compute_aggregate_verification_key should not fail&quot;</span>)
-            .<span class="ident">expect</span>(<span class="string">&quot;an avk should have been computed&quot;</span>);
-        <span class="ident">expected</span>.<span class="ident">set_message_part</span>(<span class="ident">ProtocolMessagePartKey::NextAggregateVerificationKey</span>, <span class="ident">avk</span>);
+        <span class="kw">let </span>avk = services
+            .single_signer
+            .compute_aggregate_verification_key(<span class="kw-2">&amp;</span>next_signers, protocol_initializer)
+            .expect(<span class="string">&quot;compute_aggregate_verification_key should not fail&quot;</span>)
+            .expect(<span class="string">&quot;an avk should have been computed&quot;</span>);
+        expected.set_message_part(ProtocolMessagePartKey::NextAggregateVerificationKey, avk);
 
-        <span class="kw">let</span> <span class="ident">runner</span> <span class="op">=</span> <span class="ident">init_runner</span>(<span class="prelude-val">Some</span>(<span class="ident">services</span>), <span class="prelude-val">None</span>);
-        <span class="kw">let</span> <span class="ident">message</span> <span class="op">=</span> <span class="ident">runner</span>
-            .<span class="ident">compute_message</span>(<span class="kw-2">&amp;</span><span class="ident">current_beacon</span>, <span class="kw-2">&amp;</span><span class="ident">next_signers</span>)
-            .<span class="kw">await</span>
-            .<span class="ident">expect</span>(<span class="string">&quot;compute_message should not fail&quot;</span>);
+        <span class="kw">let </span>runner = init_runner(<span class="prelude-val">Some</span>(services), <span class="prelude-val">None</span>);
+        <span class="kw">let </span>message = runner
+            .compute_message(<span class="kw-2">&amp;</span>current_beacon, <span class="kw-2">&amp;</span>next_signers)
+            .<span class="kw">await
+            </span>.expect(<span class="string">&quot;compute_message should not fail&quot;</span>);
 
-        <span class="macro">assert_eq!</span>(<span class="ident">expected</span>, <span class="ident">message</span>);
+        <span class="macro">assert_eq!</span>(expected, message);
     }
 
-    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_compute_single_signature</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">services</span> <span class="op">=</span> <span class="ident">init_services</span>();
-        <span class="kw">let</span> <span class="ident">current_beacon</span> <span class="op">=</span> <span class="ident">services</span>
-            .<span class="ident">beacon_provider</span>
-            .<span class="ident">get_current_beacon</span>()
-            .<span class="kw">await</span>
-            .<span class="ident">expect</span>(<span class="string">&quot;get_current_beacon should not fail&quot;</span>);
-        <span class="kw">let</span> <span class="ident">signers</span> <span class="op">=</span> <span class="ident">setup_signers</span>(<span class="number">5</span>, <span class="kw-2">&amp;</span><span class="ident">setup_protocol_parameters</span>());
-        <span class="kw">let</span> (<span class="ident">signer_with_stake</span>, <span class="kw">_</span>, <span class="ident">protocol_initializer</span>) <span class="op">=</span> <span class="ident">signers</span>.<span class="ident">first</span>().<span class="ident">unwrap</span>();
-        <span class="kw">let</span> <span class="ident">single_signer</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">MithrilSingleSigner::new</span>(
-            <span class="ident">signer_with_stake</span>.<span class="ident">party_id</span>.<span class="ident">to_string</span>(),
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>test_compute_single_signature() {
+        <span class="kw">let </span><span class="kw-2">mut </span>services = init_services();
+        <span class="kw">let </span>current_beacon = services
+            .beacon_provider
+            .get_current_beacon()
+            .<span class="kw">await
+            </span>.expect(<span class="string">&quot;get_current_beacon should not fail&quot;</span>);
+        <span class="kw">let </span>signers = setup_signers(<span class="number">5</span>, <span class="kw-2">&amp;</span>setup_protocol_parameters());
+        <span class="kw">let </span>(signer_with_stake, <span class="kw">_</span>, protocol_initializer) = signers.first().unwrap();
+        <span class="kw">let </span>single_signer = Arc::new(MithrilSingleSigner::new(
+            signer_with_stake.party_id.to_string(),
         ));
-        <span class="ident">services</span>.<span class="ident">single_signer</span> <span class="op">=</span> <span class="ident">single_signer</span>.<span class="ident">clone</span>();
-        <span class="ident">services</span>
-            .<span class="ident">protocol_initializer_store</span>
-            .<span class="ident">save_protocol_initializer</span>(
-                <span class="ident">current_beacon</span>
-                    .<span class="ident">epoch</span>
-                    .<span class="ident">offset_to_signer_retrieval_epoch</span>()
-                    .<span class="ident">expect</span>(<span class="string">&quot;offset_to_signer_retrieval_epoch should not fail&quot;</span>),
-                <span class="ident">protocol_initializer</span>.<span class="ident">clone</span>(),
+        services.single_signer = single_signer.clone();
+        services
+            .protocol_initializer_store
+            .save_protocol_initializer(
+                current_beacon
+                    .epoch
+                    .offset_to_signer_retrieval_epoch()
+                    .expect(<span class="string">&quot;offset_to_signer_retrieval_epoch should not fail&quot;</span>),
+                protocol_initializer.clone(),
             )
-            .<span class="kw">await</span>
-            .<span class="ident">expect</span>(<span class="string">&quot;save_protocol_initializer should not fail&quot;</span>);
-        <span class="kw">let</span> <span class="ident">signers</span> <span class="op">=</span> <span class="ident">signers</span>
-            .<span class="ident">iter</span>()
-            .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">signer_with_stake</span>, <span class="kw">_</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="ident">signer_with_stake</span>.<span class="ident">to_owned</span>())
-            .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
+            .<span class="kw">await
+            </span>.expect(<span class="string">&quot;save_protocol_initializer should not fail&quot;</span>);
+        <span class="kw">let </span>signers = signers
+            .iter()
+            .map(|(signer_with_stake, <span class="kw">_</span>, <span class="kw">_</span>)| signer_with_stake.to_owned())
+            .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">message</span> <span class="op">=</span> <span class="ident">ProtocolMessage::new</span>();
-        <span class="ident">message</span>.<span class="ident">set_message_part</span>(
-            <span class="ident">ProtocolMessagePartKey::SnapshotDigest</span>,
-            <span class="string">&quot;a message&quot;</span>.<span class="ident">to_string</span>(),
+        <span class="kw">let </span><span class="kw-2">mut </span>message = ProtocolMessage::new();
+        message.set_message_part(
+            ProtocolMessagePartKey::SnapshotDigest,
+            <span class="string">&quot;a message&quot;</span>.to_string(),
         );
-        <span class="ident">message</span>.<span class="ident">set_message_part</span>(
-            <span class="ident">ProtocolMessagePartKey::NextAggregateVerificationKey</span>,
-            <span class="string">&quot;an avk&quot;</span>.<span class="ident">to_string</span>(),
+        message.set_message_part(
+            ProtocolMessagePartKey::NextAggregateVerificationKey,
+            <span class="string">&quot;an avk&quot;</span>.to_string(),
         );
 
-        <span class="kw">let</span> <span class="ident">expected</span> <span class="op">=</span> <span class="ident">single_signer</span>
-            .<span class="ident">compute_single_signatures</span>(<span class="kw-2">&amp;</span><span class="ident">message</span>, <span class="kw-2">&amp;</span><span class="ident">signers</span>, <span class="ident">protocol_initializer</span>)
-            .<span class="ident">expect</span>(<span class="string">&quot;compute_single_signatures should not fail&quot;</span>);
+        <span class="kw">let </span>expected = single_signer
+            .compute_single_signatures(<span class="kw-2">&amp;</span>message, <span class="kw-2">&amp;</span>signers, protocol_initializer)
+            .expect(<span class="string">&quot;compute_single_signatures should not fail&quot;</span>);
 
-        <span class="kw">let</span> <span class="ident">runner</span> <span class="op">=</span> <span class="ident">init_runner</span>(<span class="prelude-val">Some</span>(<span class="ident">services</span>), <span class="prelude-val">None</span>);
-        <span class="kw">let</span> <span class="ident">single_signature</span> <span class="op">=</span> <span class="ident">runner</span>
-            .<span class="ident">compute_single_signature</span>(<span class="ident">current_beacon</span>.<span class="ident">epoch</span>, <span class="kw-2">&amp;</span><span class="ident">message</span>, <span class="kw-2">&amp;</span><span class="ident">signers</span>)
-            .<span class="kw">await</span>
-            .<span class="ident">expect</span>(<span class="string">&quot;compute_message should not fail&quot;</span>);
-        <span class="macro">assert_eq!</span>(<span class="ident">expected</span>, <span class="ident">single_signature</span>);
+        <span class="kw">let </span>runner = init_runner(<span class="prelude-val">Some</span>(services), <span class="prelude-val">None</span>);
+        <span class="kw">let </span>single_signature = runner
+            .compute_single_signature(current_beacon.epoch, <span class="kw-2">&amp;</span>message, <span class="kw-2">&amp;</span>signers)
+            .<span class="kw">await
+            </span>.expect(<span class="string">&quot;compute_message should not fail&quot;</span>);
+        <span class="macro">assert_eq!</span>(expected, single_signature);
     }
 
-    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_send_single_signature</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">services</span> <span class="op">=</span> <span class="ident">init_services</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">certificate_handler</span> <span class="op">=</span> <span class="ident">MockCertificateHandler::new</span>();
-        <span class="ident">certificate_handler</span>
-            .<span class="ident">expect_register_signatures</span>()
-            .<span class="ident">once</span>()
-            .<span class="ident">returning</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Ok</span>(()));
-        <span class="ident">services</span>.<span class="ident">certificate_handler</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">certificate_handler</span>);
-        <span class="kw">let</span> <span class="ident">runner</span> <span class="op">=</span> <span class="ident">init_runner</span>(<span class="prelude-val">Some</span>(<span class="ident">services</span>), <span class="prelude-val">None</span>);
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>test_send_single_signature() {
+        <span class="kw">let </span><span class="kw-2">mut </span>services = init_services();
+        <span class="kw">let </span><span class="kw-2">mut </span>certificate_handler = MockCertificateHandler::new();
+        certificate_handler
+            .expect_register_signatures()
+            .once()
+            .returning(|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(()));
+        services.certificate_handler = Arc::new(certificate_handler);
+        <span class="kw">let </span>runner = init_runner(<span class="prelude-val">Some</span>(services), <span class="prelude-val">None</span>);
 
-        <span class="ident">runner</span>
-            .<span class="ident">send_single_signature</span>(<span class="prelude-val">Some</span>(<span class="ident">fake_data::single_signatures</span>(<span class="macro">vec!</span>[<span class="number">2</span>, <span class="number">5</span>, <span class="number">12</span>])))
-            .<span class="kw">await</span>
-            .<span class="ident">expect</span>(<span class="string">&quot;send_single_signature should not fail&quot;</span>);
+        runner
+            .send_single_signature(<span class="prelude-val">Some</span>(fake_data::single_signatures(<span class="macro">vec!</span>[<span class="number">2</span>, <span class="number">5</span>, <span class="number">12</span>])))
+            .<span class="kw">await
+            </span>.expect(<span class="string">&quot;send_single_signature should not fail&quot;</span>);
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="mithril_signer" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.64.0 (a55dd71d5 2022-09-19)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="mithril_signer" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0 (897e37553 2022-11-02)" ></div></body></html>

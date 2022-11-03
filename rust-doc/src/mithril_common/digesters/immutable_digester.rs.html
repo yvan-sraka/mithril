@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `mithril-common/src/digesters/immutable_digester.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>immutable_digester.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../mithril_common/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../mithril_common/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../mithril_common/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `mithril-common/src/digesters/immutable_digester.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>immutable_digester.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../mithril_common/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../mithril_common/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../mithril_common/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -107,114 +107,114 @@
 <span id="107">107</span>
 <span id="108">108</span>
 <span id="109">109</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::digesters::ImmutableFileListingError</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::entities</span>::{<span class="ident">Beacon</span>, <span class="ident">ImmutableFileNumber</span>};
-<span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
-<span class="kw">use</span> <span class="ident">std::io</span>;
-<span class="kw">use</span> <span class="ident">thiserror::Error</span>;
-<span class="kw">use</span> <span class="ident">tokio::sync::RwLock</span>;
+</pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::digesters::ImmutableFileListingError;
+<span class="kw">use </span><span class="kw">crate</span>::entities::{Beacon, ImmutableFileNumber};
+<span class="kw">use </span>async_trait::async_trait;
+<span class="kw">use </span>std::io;
+<span class="kw">use </span>thiserror::Error;
+<span class="kw">use </span>tokio::sync::RwLock;
 
-<span class="doccomment">/// A digester than can compute the digest used for mithril signatures</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// If you want to mock it using mockall:</span>
-<span class="doccomment">/// ```</span>
-<span class="doccomment">/// mod test {</span>
-<span class="doccomment">///     use async_trait::async_trait;</span>
-<span class="doccomment">///     use mithril_common::digesters::{ImmutableDigester, ImmutableDigesterError};</span>
-<span class="doccomment">///     use mithril_common::entities::Beacon;</span>
-<span class="doccomment">///     use mockall::mock;</span>
-<span class="doccomment">///</span>
-<span class="doccomment">///     mock! {</span>
-<span class="doccomment">///         pub ImmutableDigesterImpl { }</span>
-<span class="doccomment">///</span>
-<span class="doccomment">///         #[async_trait]</span>
-<span class="doccomment">///         impl ImmutableDigester for ImmutableDigesterImpl {</span>
-<span class="doccomment">///             async fn compute_digest(</span>
-<span class="doccomment">///               &amp;self,</span>
-<span class="doccomment">///               beacon: &amp;Beacon,</span>
-<span class="doccomment">///             ) -&gt; Result&lt;String, ImmutableDigesterError&gt;;</span>
-<span class="doccomment">///         }</span>
-<span class="doccomment">///     }</span>
-<span class="doccomment">///</span>
-<span class="doccomment">///     #[test]</span>
-<span class="doccomment">///     fn test_mock() {</span>
-<span class="doccomment">///         let mut mock = MockDigesterImpl::new();</span>
-<span class="doccomment">///         mock.expect_compute_digest().return_once(|_| {</span>
-<span class="doccomment">///             Err(ImmutableDigesterError::NotEnoughImmutable {</span>
-<span class="doccomment">///                 expected_number: 3,</span>
-<span class="doccomment">///                 found_number: None,</span>
-<span class="doccomment">///             })</span>
-<span class="doccomment">///         });</span>
-<span class="doccomment">///     }</span>
-<span class="doccomment">/// }</span>
-<span class="doccomment">/// ```</span>
-<span class="attribute">#[<span class="ident">async_trait</span>]</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">ImmutableDigester</span>: <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span> {
-    <span class="doccomment">/// Compute the digest</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">compute_digest</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">beacon</span>: <span class="kw-2">&amp;</span><span class="ident">Beacon</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">ImmutableDigesterError</span><span class="op">&gt;</span>;
+<span class="doccomment">/// A digester than can compute the digest used for mithril signatures
+///
+/// If you want to mock it using mockall:
+/// ```
+/// mod test {
+///     use async_trait::async_trait;
+///     use mithril_common::digesters::{ImmutableDigester, ImmutableDigesterError};
+///     use mithril_common::entities::Beacon;
+///     use mockall::mock;
+///
+///     mock! {
+///         pub ImmutableDigesterImpl { }
+///
+///         #[async_trait]
+///         impl ImmutableDigester for ImmutableDigesterImpl {
+///             async fn compute_digest(
+///               &amp;self,
+///               beacon: &amp;Beacon,
+///             ) -&gt; Result&lt;String, ImmutableDigesterError&gt;;
+///         }
+///     }
+///
+///     #[test]
+///     fn test_mock() {
+///         let mut mock = MockDigesterImpl::new();
+///         mock.expect_compute_digest().return_once(|_| {
+///             Err(ImmutableDigesterError::NotEnoughImmutable {
+///                 expected_number: 3,
+///                 found_number: None,
+///             })
+///         });
+///     }
+/// }
+/// ```
+</span><span class="attribute">#[async_trait]
+</span><span class="kw">pub trait </span>ImmutableDigester: Sync + Send {
+    <span class="doccomment">/// Compute the digest
+    </span><span class="kw">async fn </span>compute_digest(<span class="kw-2">&amp;</span><span class="self">self</span>, beacon: <span class="kw-2">&amp;</span>Beacon) -&gt; <span class="prelude-ty">Result</span>&lt;String, ImmutableDigesterError&gt;;
 }
 
-<span class="doccomment">/// [ImmutableDigester] related Errors.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Error</span>, <span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">ImmutableDigesterError</span> {
-    <span class="doccomment">/// Error raised when the files listing failed.</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Immutable files listing failed: {0}&quot;</span>)]</span>
-    <span class="ident">ListImmutablesError</span>(<span class="attribute">#[<span class="ident">from</span>]</span> <span class="ident">ImmutableFileListingError</span>),
+<span class="doccomment">/// [ImmutableDigester] related Errors.
+</span><span class="attribute">#[derive(Error, Debug)]
+</span><span class="kw">pub enum </span>ImmutableDigesterError {
+    <span class="doccomment">/// Error raised when the files listing failed.
+    </span><span class="attribute">#[error(<span class="string">&quot;Immutable files listing failed: {0}&quot;</span>)]
+    </span>ListImmutablesError(<span class="attribute">#[from] </span>ImmutableFileListingError),
 
-    <span class="doccomment">/// Error raised when there&#39;s less than the required number of completed immutables in</span>
-    <span class="doccomment">/// the cardano database or even no immutable at all.</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;At least two immutables chunk should exists&quot;</span>)]</span>
-    <span class="ident">NotEnoughImmutable</span> {
-        <span class="doccomment">/// Expected last [ImmutableFileNumber].</span>
-        <span class="ident">expected_number</span>: <span class="ident">ImmutableFileNumber</span>,
-        <span class="doccomment">/// Last [ImmutableFileNumber] found when listing [ImmutableFiles][crate::digesters::ImmutableFile].</span>
-        <span class="ident">found_number</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ImmutableFileNumber</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// Error raised when there&#39;s less than the required number of completed immutables in
+    /// the cardano database or even no immutable at all.
+    </span><span class="attribute">#[error(<span class="string">&quot;At least two immutables chunk should exists&quot;</span>)]
+    </span>NotEnoughImmutable {
+        <span class="doccomment">/// Expected last [ImmutableFileNumber].
+        </span>expected_number: ImmutableFileNumber,
+        <span class="doccomment">/// Last [ImmutableFileNumber] found when listing [ImmutableFiles][crate::digesters::ImmutableFile].
+        </span>found_number: <span class="prelude-ty">Option</span>&lt;ImmutableFileNumber&gt;,
     },
 
-    <span class="doccomment">/// Error raised when the digest computation failed.</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Digest computation failed: {0}&quot;</span>)]</span>
-    <span class="ident">DigestComputationError</span>(<span class="attribute">#[<span class="ident">from</span>]</span> <span class="ident">io::Error</span>),
+    <span class="doccomment">/// Error raised when the digest computation failed.
+    </span><span class="attribute">#[error(<span class="string">&quot;Digest computation failed: {0}&quot;</span>)]
+    </span>DigestComputationError(<span class="attribute">#[from] </span>io::Error),
 }
 
-<span class="doccomment">/// A [ImmutableDigester] returning configurable result for testing purpose.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">DumbImmutableDigester</span> {
-    <span class="ident">digest</span>: <span class="ident">RwLock</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
-    <span class="ident">is_success</span>: <span class="ident">bool</span>,
+<span class="doccomment">/// A [ImmutableDigester] returning configurable result for testing purpose.
+</span><span class="kw">pub struct </span>DumbImmutableDigester {
+    digest: RwLock&lt;String&gt;,
+    is_success: bool,
 }
 
-<span class="kw">impl</span> <span class="ident">DumbImmutableDigester</span> {
-    <span class="doccomment">/// DumbDigester factory</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">digest</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">is_success</span>: <span class="ident">bool</span>) -&gt; <span class="self">Self</span> {
-        <span class="kw">let</span> <span class="ident">digest</span> <span class="op">=</span> <span class="ident">RwLock::new</span>(<span class="ident">String::from</span>(<span class="ident">digest</span>));
+<span class="kw">impl </span>DumbImmutableDigester {
+    <span class="doccomment">/// DumbDigester factory
+    </span><span class="kw">pub fn </span>new(digest: <span class="kw-2">&amp;</span>str, is_success: bool) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span>digest = RwLock::new(String::from(digest));
 
-        <span class="self">Self</span> { <span class="ident">digest</span>, <span class="ident">is_success</span> }
+        <span class="self">Self </span>{ digest, is_success }
     }
 
-    <span class="doccomment">/// Update digest returned by [compute_digest][DumbImmutableDigester::compute_digest]</span>
-    <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">update_digest</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">new_digest</span>: <span class="ident">String</span>) {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">digest</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">digest</span>.<span class="ident">write</span>().<span class="kw">await</span>;
-        <span class="kw-2">*</span><span class="ident">digest</span> <span class="op">=</span> <span class="ident">new_digest</span>;
-    }
-}
-
-<span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">DumbImmutableDigester</span> {
-    <span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> {
-        <span class="ident"><span class="self">Self</span>::new</span>(<span class="string">&quot;1234&quot;</span>, <span class="bool-val">true</span>)
+    <span class="doccomment">/// Update digest returned by [compute_digest][DumbImmutableDigester::compute_digest]
+    </span><span class="kw">pub async fn </span>update_digest(<span class="kw-2">&amp;</span><span class="self">self</span>, new_digest: String) {
+        <span class="kw">let </span><span class="kw-2">mut </span>digest = <span class="self">self</span>.digest.write().<span class="kw">await</span>;
+        <span class="kw-2">*</span>digest = new_digest;
     }
 }
 
-<span class="attribute">#[<span class="ident">async_trait</span>]</span>
-<span class="kw">impl</span> <span class="ident">ImmutableDigester</span> <span class="kw">for</span> <span class="ident">DumbImmutableDigester</span> {
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">compute_digest</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">beacon</span>: <span class="kw-2">&amp;</span><span class="ident">Beacon</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">ImmutableDigesterError</span><span class="op">&gt;</span> {
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">is_success</span> {
-            <span class="prelude-val">Ok</span>(<span class="self">self</span>.<span class="ident">digest</span>.<span class="ident">read</span>().<span class="kw">await</span>.<span class="ident">clone</span>())
-        } <span class="kw">else</span> {
-            <span class="prelude-val">Err</span>(<span class="ident">ImmutableDigesterError::NotEnoughImmutable</span> {
-                <span class="ident">expected_number</span>: <span class="ident">beacon</span>.<span class="ident">immutable_file_number</span>,
-                <span class="ident">found_number</span>: <span class="prelude-val">None</span>,
+<span class="kw">impl </span>Default <span class="kw">for </span>DumbImmutableDigester {
+    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::new(<span class="string">&quot;1234&quot;</span>, <span class="bool-val">true</span>)
+    }
+}
+
+<span class="attribute">#[async_trait]
+</span><span class="kw">impl </span>ImmutableDigester <span class="kw">for </span>DumbImmutableDigester {
+    <span class="kw">async fn </span>compute_digest(<span class="kw-2">&amp;</span><span class="self">self</span>, beacon: <span class="kw-2">&amp;</span>Beacon) -&gt; <span class="prelude-ty">Result</span>&lt;String, ImmutableDigesterError&gt; {
+        <span class="kw">if </span><span class="self">self</span>.is_success {
+            <span class="prelude-val">Ok</span>(<span class="self">self</span>.digest.read().<span class="kw">await</span>.clone())
+        } <span class="kw">else </span>{
+            <span class="prelude-val">Err</span>(ImmutableDigesterError::NotEnoughImmutable {
+                expected_number: beacon.immutable_file_number,
+                found_number: <span class="prelude-val">None</span>,
             })
         }
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="mithril_common" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.64.0 (a55dd71d5 2022-09-19)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="mithril_common" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0 (897e37553 2022-11-02)" ></div></body></html>

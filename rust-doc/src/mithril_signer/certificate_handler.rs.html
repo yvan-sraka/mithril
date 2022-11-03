@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `mithril-signer/src/certificate_handler.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>certificate_handler.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../mithril_signer/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../mithril_signer/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../mithril_signer/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `mithril-signer/src/certificate_handler.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>certificate_handler.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../mithril_signer/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../mithril_signer/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../mithril_signer/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -506,513 +506,513 @@
 <span id="506">506</span>
 <span id="507">507</span>
 <span id="508">508</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
-<span class="kw">use</span> <span class="ident">reqwest</span>::{<span class="self">self</span>, <span class="ident">StatusCode</span>};
-<span class="kw">use</span> <span class="ident">slog_scope::debug</span>;
-<span class="kw">use</span> <span class="ident">std::io</span>;
-<span class="kw">use</span> <span class="ident">thiserror::Error</span>;
-<span class="kw">use</span> <span class="ident">tokio::sync::RwLock</span>;
+</pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
+<span class="kw">use </span>reqwest::{<span class="self">self</span>, StatusCode};
+<span class="kw">use </span>slog_scope::debug;
+<span class="kw">use </span>std::io;
+<span class="kw">use </span>thiserror::Error;
+<span class="kw">use </span>tokio::sync::RwLock;
 
-<span class="kw">use</span> <span class="ident">mithril_common</span>::{
-    <span class="ident">entities</span>::{<span class="ident">CertificatePending</span>, <span class="ident">EpochSettings</span>, <span class="ident">Signer</span>, <span class="ident">SingleSignatures</span>},
-    <span class="ident">fake_data</span>,
+<span class="kw">use </span>mithril_common::{
+    entities::{CertificatePending, EpochSettings, Signer, SingleSignatures},
+    fake_data,
 };
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">use</span> <span class="ident">mockall::automock</span>;
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">use </span>mockall::automock;
 
-<span class="doccomment">/// Error structure for the Certificate Handler.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Error</span>, <span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">CertificateHandlerError</span> {
-    <span class="doccomment">/// The aggregator host has returned a technical error.</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;remote server technical error: &#39;{0}&#39;&quot;</span>)]</span>
-    <span class="ident">RemoteServerTechnical</span>(<span class="ident">String</span>),
+<span class="doccomment">/// Error structure for the Certificate Handler.
+</span><span class="attribute">#[derive(Error, Debug)]
+</span><span class="kw">pub enum </span>CertificateHandlerError {
+    <span class="doccomment">/// The aggregator host has returned a technical error.
+    </span><span class="attribute">#[error(<span class="string">&quot;remote server technical error: &#39;{0}&#39;&quot;</span>)]
+    </span>RemoteServerTechnical(String),
 
-    <span class="doccomment">/// The aggregator host responded it cannot fulfill our request.</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;remote server logical error: &#39;{0}&#39;&quot;</span>)]</span>
-    <span class="ident">RemoteServerLogical</span>(<span class="ident">String</span>),
+    <span class="doccomment">/// The aggregator host responded it cannot fulfill our request.
+    </span><span class="attribute">#[error(<span class="string">&quot;remote server logical error: &#39;{0}&#39;&quot;</span>)]
+    </span>RemoteServerLogical(String),
 
-    <span class="doccomment">/// Could not reach aggregator.</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;remote server unreachable: &#39;{0}&#39;&quot;</span>)]</span>
-    <span class="ident">RemoteServerUnreachable</span>(<span class="ident">String</span>),
+    <span class="doccomment">/// Could not reach aggregator.
+    </span><span class="attribute">#[error(<span class="string">&quot;remote server unreachable: &#39;{0}&#39;&quot;</span>)]
+    </span>RemoteServerUnreachable(String),
 
-    <span class="doccomment">/// Could not parse response.</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;json parsing failed: &#39;{0}&#39;&quot;</span>)]</span>
-    <span class="ident">JsonParseFailed</span>(<span class="ident">String</span>),
+    <span class="doccomment">/// Could not parse response.
+    </span><span class="attribute">#[error(<span class="string">&quot;json parsing failed: &#39;{0}&#39;&quot;</span>)]
+    </span>JsonParseFailed(String),
 
-    <span class="doccomment">/// Mostly network errors.</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;io error: {0}&quot;</span>)]</span>
-    <span class="ident">IOError</span>(<span class="attribute">#[<span class="ident">from</span>]</span> <span class="ident">io::Error</span>),
+    <span class="doccomment">/// Mostly network errors.
+    </span><span class="attribute">#[error(<span class="string">&quot;io error: {0}&quot;</span>)]
+    </span>IOError(<span class="attribute">#[from] </span>io::Error),
 }
 
-<span class="doccomment">/// Trait for mocking and testing a `CertificateHandler`</span>
-<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">test</span>, <span class="ident">automock</span>)]</span>
-<span class="attribute">#[<span class="ident">async_trait</span>]</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">CertificateHandler</span>: <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span> {
-    <span class="doccomment">/// Retrieves epoch settings from the aggregator</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">retrieve_epoch_settings</span>(
+<span class="doccomment">/// Trait for mocking and testing a `CertificateHandler`
+</span><span class="attribute">#[cfg_attr(test, automock)]
+#[async_trait]
+</span><span class="kw">pub trait </span>CertificateHandler: Sync + Send {
+    <span class="doccomment">/// Retrieves epoch settings from the aggregator
+    </span><span class="kw">async fn </span>retrieve_epoch_settings(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">EpochSettings</span><span class="op">&gt;</span>, <span class="ident">CertificateHandlerError</span><span class="op">&gt;</span>;
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;EpochSettings&gt;, CertificateHandlerError&gt;;
 
-    <span class="doccomment">/// Retrieves a pending certificate from the aggregator</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">retrieve_pending_certificate</span>(
+    <span class="doccomment">/// Retrieves a pending certificate from the aggregator
+    </span><span class="kw">async fn </span>retrieve_pending_certificate(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">CertificatePending</span><span class="op">&gt;</span>, <span class="ident">CertificateHandlerError</span><span class="op">&gt;</span>;
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;CertificatePending&gt;, CertificateHandlerError&gt;;
 
-    <span class="doccomment">/// Registers signer with the aggregator.</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">register_signer</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">signer</span>: <span class="kw-2">&amp;</span><span class="ident">Signer</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">CertificateHandlerError</span><span class="op">&gt;</span>;
+    <span class="doccomment">/// Registers signer with the aggregator.
+    </span><span class="kw">async fn </span>register_signer(<span class="kw-2">&amp;</span><span class="self">self</span>, signer: <span class="kw-2">&amp;</span>Signer) -&gt; <span class="prelude-ty">Result</span>&lt;(), CertificateHandlerError&gt;;
 
-    <span class="doccomment">/// Registers single signatures with the aggregator.</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">register_signatures</span>(
+    <span class="doccomment">/// Registers single signatures with the aggregator.
+    </span><span class="kw">async fn </span>register_signatures(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">signatures</span>: <span class="kw-2">&amp;</span><span class="ident">SingleSignatures</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">CertificateHandlerError</span><span class="op">&gt;</span>;
+        signatures: <span class="kw-2">&amp;</span>SingleSignatures,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), CertificateHandlerError&gt;;
 }
 
-<span class="doccomment">/// CertificateHandlerHTTPClient is a http client for an aggregator</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">CertificateHandlerHTTPClient</span> {
-    <span class="ident">aggregator_endpoint</span>: <span class="ident">String</span>,
+<span class="doccomment">/// CertificateHandlerHTTPClient is a http client for an aggregator
+</span><span class="kw">pub struct </span>CertificateHandlerHTTPClient {
+    aggregator_endpoint: String,
 }
 
-<span class="kw">impl</span> <span class="ident">CertificateHandlerHTTPClient</span> {
-    <span class="doccomment">/// CertificateHandlerHTTPClient factory</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">aggregator_endpoint</span>: <span class="ident">String</span>) -&gt; <span class="self">Self</span> {
+<span class="kw">impl </span>CertificateHandlerHTTPClient {
+    <span class="doccomment">/// CertificateHandlerHTTPClient factory
+    </span><span class="kw">pub fn </span>new(aggregator_endpoint: String) -&gt; <span class="self">Self </span>{
         <span class="macro">debug!</span>(<span class="string">&quot;New CertificateHandlerHTTPClient created&quot;</span>);
-        <span class="self">Self</span> {
-            <span class="ident">aggregator_endpoint</span>,
+        <span class="self">Self </span>{
+            aggregator_endpoint,
         }
     }
 }
 
-<span class="attribute">#[<span class="ident">async_trait</span>]</span>
-<span class="kw">impl</span> <span class="ident">CertificateHandler</span> <span class="kw">for</span> <span class="ident">CertificateHandlerHTTPClient</span> {
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">retrieve_epoch_settings</span>(
+<span class="attribute">#[async_trait]
+</span><span class="kw">impl </span>CertificateHandler <span class="kw">for </span>CertificateHandlerHTTPClient {
+    <span class="kw">async fn </span>retrieve_epoch_settings(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">EpochSettings</span><span class="op">&gt;</span>, <span class="ident">CertificateHandlerError</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;EpochSettings&gt;, CertificateHandlerError&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;Retrieve epoch settings&quot;</span>);
-        <span class="kw">let</span> <span class="ident">url</span> <span class="op">=</span> <span class="macro">format!</span>(<span class="string">&quot;{}/epoch-settings&quot;</span>, <span class="self">self</span>.<span class="ident">aggregator_endpoint</span>);
-        <span class="kw">let</span> <span class="ident">response</span> <span class="op">=</span> <span class="ident">reqwest::get</span>(<span class="ident">url</span>.<span class="ident">clone</span>()).<span class="kw">await</span>;
-        <span class="kw">match</span> <span class="ident">response</span> {
-            <span class="prelude-val">Ok</span>(<span class="ident">response</span>) =&gt; <span class="kw">match</span> <span class="ident">response</span>.<span class="ident">status</span>() {
-                <span class="ident">StatusCode::OK</span> =&gt; <span class="kw">match</span> <span class="ident">response</span>.<span class="ident">json</span>::<span class="op">&lt;</span><span class="ident">EpochSettings</span><span class="op">&gt;</span>().<span class="kw">await</span> {
-                    <span class="prelude-val">Ok</span>(<span class="ident">epoch_settings</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">epoch_settings</span>)),
-                    <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">CertificateHandlerError::JsonParseFailed</span>(<span class="ident">err</span>.<span class="ident">to_string</span>())),
+        <span class="kw">let </span>url = <span class="macro">format!</span>(<span class="string">&quot;{}/epoch-settings&quot;</span>, <span class="self">self</span>.aggregator_endpoint);
+        <span class="kw">let </span>response = reqwest::get(url.clone()).<span class="kw">await</span>;
+        <span class="kw">match </span>response {
+            <span class="prelude-val">Ok</span>(response) =&gt; <span class="kw">match </span>response.status() {
+                StatusCode::OK =&gt; <span class="kw">match </span>response.json::&lt;EpochSettings&gt;().<span class="kw">await </span>{
+                    <span class="prelude-val">Ok</span>(epoch_settings) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(epoch_settings)),
+                    <span class="prelude-val">Err</span>(err) =&gt; <span class="prelude-val">Err</span>(CertificateHandlerError::JsonParseFailed(err.to_string())),
                 },
-                <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">CertificateHandlerError::RemoteServerTechnical</span>(
-                    <span class="ident">response</span>.<span class="ident">text</span>().<span class="kw">await</span>.<span class="ident">unwrap_or_default</span>(),
+                <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(CertificateHandlerError::RemoteServerTechnical(
+                    response.text().<span class="kw">await</span>.unwrap_or_default(),
                 )),
             },
-            <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">CertificateHandlerError::RemoteServerUnreachable</span>(
-                <span class="ident">err</span>.<span class="ident">to_string</span>(),
+            <span class="prelude-val">Err</span>(err) =&gt; <span class="prelude-val">Err</span>(CertificateHandlerError::RemoteServerUnreachable(
+                err.to_string(),
             )),
         }
     }
 
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">retrieve_pending_certificate</span>(
+    <span class="kw">async fn </span>retrieve_pending_certificate(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">CertificatePending</span><span class="op">&gt;</span>, <span class="ident">CertificateHandlerError</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;CertificatePending&gt;, CertificateHandlerError&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;Retrieve pending certificate&quot;</span>);
-        <span class="kw">let</span> <span class="ident">url</span> <span class="op">=</span> <span class="macro">format!</span>(<span class="string">&quot;{}/certificate-pending&quot;</span>, <span class="self">self</span>.<span class="ident">aggregator_endpoint</span>);
-        <span class="kw">let</span> <span class="ident">response</span> <span class="op">=</span> <span class="ident">reqwest::get</span>(<span class="ident">url</span>.<span class="ident">clone</span>()).<span class="kw">await</span>;
-        <span class="kw">match</span> <span class="ident">response</span> {
-            <span class="prelude-val">Ok</span>(<span class="ident">response</span>) =&gt; <span class="kw">match</span> <span class="ident">response</span>.<span class="ident">status</span>() {
-                <span class="ident">StatusCode::OK</span> =&gt; <span class="kw">match</span> <span class="ident">response</span>.<span class="ident">json</span>::<span class="op">&lt;</span><span class="ident">CertificatePending</span><span class="op">&gt;</span>().<span class="kw">await</span> {
-                    <span class="prelude-val">Ok</span>(<span class="ident">pending_certificate</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">pending_certificate</span>)),
-                    <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">CertificateHandlerError::JsonParseFailed</span>(<span class="ident">err</span>.<span class="ident">to_string</span>())),
+        <span class="kw">let </span>url = <span class="macro">format!</span>(<span class="string">&quot;{}/certificate-pending&quot;</span>, <span class="self">self</span>.aggregator_endpoint);
+        <span class="kw">let </span>response = reqwest::get(url.clone()).<span class="kw">await</span>;
+        <span class="kw">match </span>response {
+            <span class="prelude-val">Ok</span>(response) =&gt; <span class="kw">match </span>response.status() {
+                StatusCode::OK =&gt; <span class="kw">match </span>response.json::&lt;CertificatePending&gt;().<span class="kw">await </span>{
+                    <span class="prelude-val">Ok</span>(pending_certificate) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(pending_certificate)),
+                    <span class="prelude-val">Err</span>(err) =&gt; <span class="prelude-val">Err</span>(CertificateHandlerError::JsonParseFailed(err.to_string())),
                 },
-                <span class="ident">StatusCode::NO_CONTENT</span> =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
-                <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">CertificateHandlerError::RemoteServerTechnical</span>(
-                    <span class="ident">response</span>.<span class="ident">text</span>().<span class="kw">await</span>.<span class="ident">unwrap_or_default</span>(),
+                StatusCode::NO_CONTENT =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
+                <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(CertificateHandlerError::RemoteServerTechnical(
+                    response.text().<span class="kw">await</span>.unwrap_or_default(),
                 )),
             },
-            <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">CertificateHandlerError::RemoteServerUnreachable</span>(
-                <span class="ident">err</span>.<span class="ident">to_string</span>(),
+            <span class="prelude-val">Err</span>(err) =&gt; <span class="prelude-val">Err</span>(CertificateHandlerError::RemoteServerUnreachable(
+                err.to_string(),
             )),
         }
     }
 
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">register_signer</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">signer</span>: <span class="kw-2">&amp;</span><span class="ident">Signer</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">CertificateHandlerError</span><span class="op">&gt;</span> {
+    <span class="kw">async fn </span>register_signer(<span class="kw-2">&amp;</span><span class="self">self</span>, signer: <span class="kw-2">&amp;</span>Signer) -&gt; <span class="prelude-ty">Result</span>&lt;(), CertificateHandlerError&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;Register signer&quot;</span>);
-        <span class="kw">let</span> <span class="ident">url</span> <span class="op">=</span> <span class="macro">format!</span>(<span class="string">&quot;{}/register-signer&quot;</span>, <span class="self">self</span>.<span class="ident">aggregator_endpoint</span>);
-        <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> <span class="ident">reqwest::Client::new</span>();
-        <span class="kw">let</span> <span class="ident">response</span> <span class="op">=</span> <span class="ident">client</span>.<span class="ident">post</span>(<span class="ident">url</span>.<span class="ident">clone</span>()).<span class="ident">json</span>(<span class="ident">signer</span>).<span class="ident">send</span>().<span class="kw">await</span>;
-        <span class="kw">match</span> <span class="ident">response</span> {
-            <span class="prelude-val">Ok</span>(<span class="ident">response</span>) =&gt; <span class="kw">match</span> <span class="ident">response</span>.<span class="ident">status</span>() {
-                <span class="ident">StatusCode::CREATED</span> =&gt; <span class="prelude-val">Ok</span>(()),
-                <span class="ident">StatusCode::BAD_REQUEST</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">CertificateHandlerError::RemoteServerLogical</span>(
-                    <span class="macro">format!</span>(<span class="string">&quot;bad request: {}&quot;</span>, <span class="ident">response</span>.<span class="ident">text</span>().<span class="kw">await</span>.<span class="ident">unwrap_or_default</span>()),
+        <span class="kw">let </span>url = <span class="macro">format!</span>(<span class="string">&quot;{}/register-signer&quot;</span>, <span class="self">self</span>.aggregator_endpoint);
+        <span class="kw">let </span>client = reqwest::Client::new();
+        <span class="kw">let </span>response = client.post(url.clone()).json(signer).send().<span class="kw">await</span>;
+        <span class="kw">match </span>response {
+            <span class="prelude-val">Ok</span>(response) =&gt; <span class="kw">match </span>response.status() {
+                StatusCode::CREATED =&gt; <span class="prelude-val">Ok</span>(()),
+                StatusCode::BAD_REQUEST =&gt; <span class="prelude-val">Err</span>(CertificateHandlerError::RemoteServerLogical(
+                    <span class="macro">format!</span>(<span class="string">&quot;bad request: {}&quot;</span>, response.text().<span class="kw">await</span>.unwrap_or_default()),
                 )),
-                <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">CertificateHandlerError::RemoteServerTechnical</span>(
-                    <span class="ident">response</span>.<span class="ident">text</span>().<span class="kw">await</span>.<span class="ident">unwrap_or_default</span>(),
+                <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(CertificateHandlerError::RemoteServerTechnical(
+                    response.text().<span class="kw">await</span>.unwrap_or_default(),
                 )),
             },
-            <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">CertificateHandlerError::RemoteServerUnreachable</span>(
-                <span class="ident">err</span>.<span class="ident">to_string</span>(),
+            <span class="prelude-val">Err</span>(err) =&gt; <span class="prelude-val">Err</span>(CertificateHandlerError::RemoteServerUnreachable(
+                err.to_string(),
             )),
         }
     }
 
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">register_signatures</span>(
+    <span class="kw">async fn </span>register_signatures(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">signatures</span>: <span class="kw-2">&amp;</span><span class="ident">SingleSignatures</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">CertificateHandlerError</span><span class="op">&gt;</span> {
+        signatures: <span class="kw-2">&amp;</span>SingleSignatures,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), CertificateHandlerError&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;Register signatures&quot;</span>);
-        <span class="kw">let</span> <span class="ident">url</span> <span class="op">=</span> <span class="macro">format!</span>(<span class="string">&quot;{}/register-signatures&quot;</span>, <span class="self">self</span>.<span class="ident">aggregator_endpoint</span>);
-        <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> <span class="ident">reqwest::Client::new</span>();
-        <span class="kw">let</span> <span class="ident">response</span> <span class="op">=</span> <span class="ident">client</span>.<span class="ident">post</span>(<span class="ident">url</span>.<span class="ident">clone</span>()).<span class="ident">json</span>(<span class="ident">signatures</span>).<span class="ident">send</span>().<span class="kw">await</span>;
-        <span class="kw">match</span> <span class="ident">response</span> {
-            <span class="prelude-val">Ok</span>(<span class="ident">response</span>) =&gt; <span class="kw">match</span> <span class="ident">response</span>.<span class="ident">status</span>() {
-                <span class="ident">StatusCode::CREATED</span> =&gt; <span class="prelude-val">Ok</span>(()),
-                <span class="ident">StatusCode::BAD_REQUEST</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">CertificateHandlerError::RemoteServerLogical</span>(
-                    <span class="macro">format!</span>(<span class="string">&quot;bad request: {}&quot;</span>, <span class="ident">response</span>.<span class="ident">text</span>().<span class="kw">await</span>.<span class="ident">unwrap_or_default</span>()),
+        <span class="kw">let </span>url = <span class="macro">format!</span>(<span class="string">&quot;{}/register-signatures&quot;</span>, <span class="self">self</span>.aggregator_endpoint);
+        <span class="kw">let </span>client = reqwest::Client::new();
+        <span class="kw">let </span>response = client.post(url.clone()).json(signatures).send().<span class="kw">await</span>;
+        <span class="kw">match </span>response {
+            <span class="prelude-val">Ok</span>(response) =&gt; <span class="kw">match </span>response.status() {
+                StatusCode::CREATED =&gt; <span class="prelude-val">Ok</span>(()),
+                StatusCode::BAD_REQUEST =&gt; <span class="prelude-val">Err</span>(CertificateHandlerError::RemoteServerLogical(
+                    <span class="macro">format!</span>(<span class="string">&quot;bad request: {}&quot;</span>, response.text().<span class="kw">await</span>.unwrap_or_default()),
                 )),
-                <span class="ident">StatusCode::CONFLICT</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">CertificateHandlerError::RemoteServerLogical</span>(
-                    <span class="string">&quot;already registered single signatures&quot;</span>.<span class="ident">to_string</span>(),
+                StatusCode::CONFLICT =&gt; <span class="prelude-val">Err</span>(CertificateHandlerError::RemoteServerLogical(
+                    <span class="string">&quot;already registered single signatures&quot;</span>.to_string(),
                 )),
-                <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">CertificateHandlerError::RemoteServerTechnical</span>(
-                    <span class="ident">response</span>.<span class="ident">text</span>().<span class="kw">await</span>.<span class="ident">unwrap_or_default</span>(),
+                <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(CertificateHandlerError::RemoteServerTechnical(
+                    response.text().<span class="kw">await</span>.unwrap_or_default(),
                 )),
             },
-            <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">CertificateHandlerError::RemoteServerUnreachable</span>(
-                <span class="ident">err</span>.<span class="ident">to_string</span>(),
+            <span class="prelude-val">Err</span>(err) =&gt; <span class="prelude-val">Err</span>(CertificateHandlerError::RemoteServerUnreachable(
+                err.to_string(),
             )),
         }
     }
 }
 
-<span class="doccomment">/// This certificate handler is intended to be used by test services.</span>
-<span class="doccomment">/// It actually does not communicate with an aggregator host but mimics this behavior.</span>
-<span class="doccomment">/// It is driven by a Tester that controls the CertificatePending it can return and it can return its internal state for testing.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">DumbCertificateHandler</span> {
-    <span class="ident">epoch_settings</span>: <span class="ident">RwLock</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">EpochSettings</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">certificate_pending</span>: <span class="ident">RwLock</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">CertificatePending</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">last_registered_signer</span>: <span class="ident">RwLock</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Signer</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+<span class="doccomment">/// This certificate handler is intended to be used by test services.
+/// It actually does not communicate with an aggregator host but mimics this behavior.
+/// It is driven by a Tester that controls the CertificatePending it can return and it can return its internal state for testing.
+</span><span class="kw">pub struct </span>DumbCertificateHandler {
+    epoch_settings: RwLock&lt;<span class="prelude-ty">Option</span>&lt;EpochSettings&gt;&gt;,
+    certificate_pending: RwLock&lt;<span class="prelude-ty">Option</span>&lt;CertificatePending&gt;&gt;,
+    last_registered_signer: RwLock&lt;<span class="prelude-ty">Option</span>&lt;Signer&gt;&gt;,
 }
 
-<span class="kw">impl</span> <span class="ident">DumbCertificateHandler</span> {
-    <span class="doccomment">/// Instanciate a new DumbCertificateHandler.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> {
-            <span class="ident">epoch_settings</span>: <span class="ident">RwLock::new</span>(<span class="prelude-val">None</span>),
-            <span class="ident">certificate_pending</span>: <span class="ident">RwLock::new</span>(<span class="prelude-val">None</span>),
-            <span class="ident">last_registered_signer</span>: <span class="ident">RwLock::new</span>(<span class="prelude-val">None</span>),
+<span class="kw">impl </span>DumbCertificateHandler {
+    <span class="doccomment">/// Instanciate a new DumbCertificateHandler.
+    </span><span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            epoch_settings: RwLock::new(<span class="prelude-val">None</span>),
+            certificate_pending: RwLock::new(<span class="prelude-val">None</span>),
+            last_registered_signer: RwLock::new(<span class="prelude-val">None</span>),
         }
     }
 
-    <span class="doccomment">/// this method pilots the epoch settings handler</span>
-    <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">set_epoch_settings</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">epoch_settings</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">EpochSettings</span><span class="op">&gt;</span>) {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">epoch_settings_writer</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">epoch_settings</span>.<span class="ident">write</span>().<span class="kw">await</span>;
-        <span class="kw-2">*</span><span class="ident">epoch_settings_writer</span> <span class="op">=</span> <span class="ident">epoch_settings</span>;
+    <span class="doccomment">/// this method pilots the epoch settings handler
+    </span><span class="kw">pub async fn </span>set_epoch_settings(<span class="kw-2">&amp;</span><span class="self">self</span>, epoch_settings: <span class="prelude-ty">Option</span>&lt;EpochSettings&gt;) {
+        <span class="kw">let </span><span class="kw-2">mut </span>epoch_settings_writer = <span class="self">self</span>.epoch_settings.write().<span class="kw">await</span>;
+        <span class="kw-2">*</span>epoch_settings_writer = epoch_settings;
     }
 
-    <span class="doccomment">/// this method pilots the certificate pending handler</span>
-    <span class="doccomment">/// calling this method unsets the last registered signer</span>
-    <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">set_certificate_pending</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">certificate_pending</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">CertificatePending</span><span class="op">&gt;</span>) {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cert</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">certificate_pending</span>.<span class="ident">write</span>().<span class="kw">await</span>;
-        <span class="kw-2">*</span><span class="ident">cert</span> <span class="op">=</span> <span class="ident">certificate_pending</span>;
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">signer</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">last_registered_signer</span>.<span class="ident">write</span>().<span class="kw">await</span>;
-        <span class="kw-2">*</span><span class="ident">signer</span> <span class="op">=</span> <span class="prelude-val">None</span>;
+    <span class="doccomment">/// this method pilots the certificate pending handler
+    /// calling this method unsets the last registered signer
+    </span><span class="kw">pub async fn </span>set_certificate_pending(<span class="kw-2">&amp;</span><span class="self">self</span>, certificate_pending: <span class="prelude-ty">Option</span>&lt;CertificatePending&gt;) {
+        <span class="kw">let </span><span class="kw-2">mut </span>cert = <span class="self">self</span>.certificate_pending.write().<span class="kw">await</span>;
+        <span class="kw-2">*</span>cert = certificate_pending;
+        <span class="kw">let </span><span class="kw-2">mut </span>signer = <span class="self">self</span>.last_registered_signer.write().<span class="kw">await</span>;
+        <span class="kw-2">*</span>signer = <span class="prelude-val">None</span>;
     }
 
-    <span class="doccomment">/// Return the last signer that called with the `register` method.</span>
-    <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_last_registered_signer</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Signer</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">last_registered_signer</span>.<span class="ident">read</span>().<span class="kw">await</span>.<span class="ident">clone</span>()
+    <span class="doccomment">/// Return the last signer that called with the `register` method.
+    </span><span class="kw">pub async fn </span>get_last_registered_signer(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Signer&gt; {
+        <span class="self">self</span>.last_registered_signer.read().<span class="kw">await</span>.clone()
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">DumbCertificateHandler</span> {
-    <span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> {
-            <span class="ident">epoch_settings</span>: <span class="ident">RwLock::new</span>(<span class="prelude-val">Some</span>(<span class="ident">fake_data::epoch_settings</span>())),
-            <span class="ident">certificate_pending</span>: <span class="ident">RwLock::new</span>(<span class="prelude-val">Some</span>(<span class="ident">fake_data::certificate_pending</span>())),
-            <span class="ident">last_registered_signer</span>: <span class="ident">RwLock::new</span>(<span class="prelude-val">None</span>),
+<span class="kw">impl </span>Default <span class="kw">for </span>DumbCertificateHandler {
+    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            epoch_settings: RwLock::new(<span class="prelude-val">Some</span>(fake_data::epoch_settings())),
+            certificate_pending: RwLock::new(<span class="prelude-val">Some</span>(fake_data::certificate_pending())),
+            last_registered_signer: RwLock::new(<span class="prelude-val">None</span>),
         }
     }
 }
 
-<span class="attribute">#[<span class="ident">async_trait</span>]</span>
-<span class="kw">impl</span> <span class="ident">CertificateHandler</span> <span class="kw">for</span> <span class="ident">DumbCertificateHandler</span> {
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">retrieve_epoch_settings</span>(
+<span class="attribute">#[async_trait]
+</span><span class="kw">impl </span>CertificateHandler <span class="kw">for </span>DumbCertificateHandler {
+    <span class="kw">async fn </span>retrieve_epoch_settings(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">EpochSettings</span><span class="op">&gt;</span>, <span class="ident">CertificateHandlerError</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">epoch_settings</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">epoch_settings</span>.<span class="ident">read</span>().<span class="kw">await</span>.<span class="ident">clone</span>();
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;EpochSettings&gt;, CertificateHandlerError&gt; {
+        <span class="kw">let </span>epoch_settings = <span class="self">self</span>.epoch_settings.read().<span class="kw">await</span>.clone();
 
-        <span class="prelude-val">Ok</span>(<span class="ident">epoch_settings</span>)
+        <span class="prelude-val">Ok</span>(epoch_settings)
     }
 
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">retrieve_pending_certificate</span>(
+    <span class="kw">async fn </span>retrieve_pending_certificate(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">CertificatePending</span><span class="op">&gt;</span>, <span class="ident">CertificateHandlerError</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">cert</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">certificate_pending</span>.<span class="ident">read</span>().<span class="kw">await</span>.<span class="ident">clone</span>();
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;CertificatePending&gt;, CertificateHandlerError&gt; {
+        <span class="kw">let </span>cert = <span class="self">self</span>.certificate_pending.read().<span class="kw">await</span>.clone();
 
-        <span class="prelude-val">Ok</span>(<span class="ident">cert</span>)
+        <span class="prelude-val">Ok</span>(cert)
     }
 
-    <span class="doccomment">/// Registers signer with the aggregator</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">register_signer</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">signer</span>: <span class="kw-2">&amp;</span><span class="ident">Signer</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">CertificateHandlerError</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">last_registered_signer</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">last_registered_signer</span>.<span class="ident">write</span>().<span class="kw">await</span>;
-        <span class="kw">let</span> <span class="ident">signer</span> <span class="op">=</span> <span class="ident">signer</span>.<span class="ident">clone</span>();
-        <span class="kw-2">*</span><span class="ident">last_registered_signer</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">signer</span>);
+    <span class="doccomment">/// Registers signer with the aggregator
+    </span><span class="kw">async fn </span>register_signer(<span class="kw-2">&amp;</span><span class="self">self</span>, signer: <span class="kw-2">&amp;</span>Signer) -&gt; <span class="prelude-ty">Result</span>&lt;(), CertificateHandlerError&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>last_registered_signer = <span class="self">self</span>.last_registered_signer.write().<span class="kw">await</span>;
+        <span class="kw">let </span>signer = signer.clone();
+        <span class="kw-2">*</span>last_registered_signer = <span class="prelude-val">Some</span>(signer);
 
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="doccomment">/// Registers single signatures with the aggregator</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">register_signatures</span>(
+    <span class="doccomment">/// Registers single signatures with the aggregator
+    </span><span class="kw">async fn </span>register_signatures(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">_signatures</span>: <span class="kw-2">&amp;</span><span class="ident">SingleSignatures</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">CertificateHandlerError</span><span class="op">&gt;</span> {
+        _signatures: <span class="kw-2">&amp;</span>SingleSignatures,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), CertificateHandlerError&gt; {
         <span class="prelude-val">Ok</span>(())
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
-    <span class="kw">use</span> <span class="ident">httpmock::prelude</span>::<span class="kw-2">*</span>;
-    <span class="kw">use</span> <span class="ident">mithril_common::entities::ClientError</span>;
-    <span class="kw">use</span> <span class="ident">serde_json::json</span>;
-    <span class="kw">use</span> <span class="ident">std::path</span>::{<span class="ident">Path</span>, <span class="ident">PathBuf</span>};
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use </span>httpmock::prelude::<span class="kw-2">*</span>;
+    <span class="kw">use </span>mithril_common::entities::ClientError;
+    <span class="kw">use </span>serde_json::json;
+    <span class="kw">use </span>std::path::{Path, PathBuf};
 
-    <span class="kw">use</span> <span class="ident">mithril_common::fake_data</span>;
+    <span class="kw">use </span>mithril_common::fake_data;
 
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::entities::Config</span>;
+    <span class="kw">use </span><span class="kw">crate</span>::entities::Config;
 
-    <span class="kw">fn</span> <span class="ident">setup_test</span>() -&gt; (<span class="ident">MockServer</span>, <span class="ident">Config</span>) {
-        <span class="kw">let</span> <span class="ident">server</span> <span class="op">=</span> <span class="ident">MockServer::start</span>();
-        <span class="kw">let</span> <span class="ident">config</span> <span class="op">=</span> <span class="ident">Config</span> {
-            <span class="ident">cardano_cli_path</span>: <span class="ident">PathBuf::new</span>().<span class="ident">join</span>(<span class="string">&quot;cardano-cli&quot;</span>),
-            <span class="ident">cardano_node_socket_path</span>: <span class="ident">PathBuf::new</span>().<span class="ident">join</span>(<span class="string">&quot;whatever&quot;</span>),
-            <span class="ident">network_magic</span>: <span class="prelude-val">Some</span>(<span class="number">42</span>),
-            <span class="ident">network</span>: <span class="string">&quot;testnet&quot;</span>.<span class="ident">to_string</span>(),
-            <span class="ident">aggregator_endpoint</span>: <span class="ident">server</span>.<span class="ident">url</span>(<span class="string">&quot;&quot;</span>),
-            <span class="ident">party_id</span>: <span class="prelude-val">Some</span>(<span class="string">&quot;0&quot;</span>.<span class="ident">to_string</span>()),
-            <span class="ident">run_interval</span>: <span class="number">100</span>,
-            <span class="ident">db_directory</span>: <span class="ident">Path::new</span>(<span class="string">&quot;./db&quot;</span>).<span class="ident">to_path_buf</span>(),
-            <span class="ident">data_stores_directory</span>: <span class="ident">Path::new</span>(<span class="string">&quot;./stores&quot;</span>).<span class="ident">to_path_buf</span>(),
-            <span class="ident">store_retention_limit</span>: <span class="prelude-val">None</span>,
-            <span class="ident">kes_secret_key_path</span>: <span class="prelude-val">None</span>,
-            <span class="ident">operational_certificate_path</span>: <span class="prelude-val">None</span>,
+    <span class="kw">fn </span>setup_test() -&gt; (MockServer, Config) {
+        <span class="kw">let </span>server = MockServer::start();
+        <span class="kw">let </span>config = Config {
+            cardano_cli_path: PathBuf::new().join(<span class="string">&quot;cardano-cli&quot;</span>),
+            cardano_node_socket_path: PathBuf::new().join(<span class="string">&quot;whatever&quot;</span>),
+            network_magic: <span class="prelude-val">Some</span>(<span class="number">42</span>),
+            network: <span class="string">&quot;testnet&quot;</span>.to_string(),
+            aggregator_endpoint: server.url(<span class="string">&quot;&quot;</span>),
+            party_id: <span class="prelude-val">Some</span>(<span class="string">&quot;0&quot;</span>.to_string()),
+            run_interval: <span class="number">100</span>,
+            db_directory: Path::new(<span class="string">&quot;./db&quot;</span>).to_path_buf(),
+            data_stores_directory: Path::new(<span class="string">&quot;./stores&quot;</span>).to_path_buf(),
+            store_retention_limit: <span class="prelude-val">None</span>,
+            kes_secret_key_path: <span class="prelude-val">None</span>,
+            operational_certificate_path: <span class="prelude-val">None</span>,
         };
-        (<span class="ident">server</span>, <span class="ident">config</span>)
+        (server, config)
     }
 
-    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_epoch_settings_ok_200</span>() {
-        <span class="kw">let</span> (<span class="ident">server</span>, <span class="ident">config</span>) <span class="op">=</span> <span class="ident">setup_test</span>();
-        <span class="kw">let</span> <span class="ident">epoch_settings_expected</span> <span class="op">=</span> <span class="ident">fake_data::epoch_settings</span>();
-        <span class="kw">let</span> <span class="ident">_snapshots_mock</span> <span class="op">=</span> <span class="ident">server</span>.<span class="ident">mock</span>(<span class="op">|</span><span class="ident">when</span>, <span class="ident">then</span><span class="op">|</span> {
-            <span class="ident">when</span>.<span class="ident">path</span>(<span class="string">&quot;/epoch-settings&quot;</span>);
-            <span class="ident">then</span>.<span class="ident">status</span>(<span class="number">200</span>)
-                .<span class="ident">body</span>(<span class="macro">json!</span>(<span class="ident">epoch_settings_expected</span>).<span class="ident">to_string</span>());
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>test_epoch_settings_ok_200() {
+        <span class="kw">let </span>(server, config) = setup_test();
+        <span class="kw">let </span>epoch_settings_expected = fake_data::epoch_settings();
+        <span class="kw">let </span>_snapshots_mock = server.mock(|when, then| {
+            when.path(<span class="string">&quot;/epoch-settings&quot;</span>);
+            then.status(<span class="number">200</span>)
+                .body(<span class="macro">json!</span>(epoch_settings_expected).to_string());
         });
-        <span class="kw">let</span> <span class="ident">certificate_handler</span> <span class="op">=</span> <span class="ident">CertificateHandlerHTTPClient::new</span>(<span class="ident">config</span>.<span class="ident">aggregator_endpoint</span>);
-        <span class="kw">let</span> <span class="ident">epoch_settings</span> <span class="op">=</span> <span class="ident">certificate_handler</span>.<span class="ident">retrieve_epoch_settings</span>().<span class="kw">await</span>;
-        <span class="ident">epoch_settings</span>.<span class="ident">as_ref</span>().<span class="ident">expect</span>(<span class="string">&quot;unexpected error&quot;</span>);
-        <span class="macro">assert_eq!</span>(<span class="ident">epoch_settings_expected</span>, <span class="ident">epoch_settings</span>.<span class="ident">unwrap</span>().<span class="ident">unwrap</span>());
+        <span class="kw">let </span>certificate_handler = CertificateHandlerHTTPClient::new(config.aggregator_endpoint);
+        <span class="kw">let </span>epoch_settings = certificate_handler.retrieve_epoch_settings().<span class="kw">await</span>;
+        epoch_settings.as_ref().expect(<span class="string">&quot;unexpected error&quot;</span>);
+        <span class="macro">assert_eq!</span>(epoch_settings_expected, epoch_settings.unwrap().unwrap());
     }
 
-    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_epoch_settings_ko_500</span>() {
-        <span class="kw">let</span> (<span class="ident">server</span>, <span class="ident">config</span>) <span class="op">=</span> <span class="ident">setup_test</span>();
-        <span class="kw">let</span> <span class="ident">_snapshots_mock</span> <span class="op">=</span> <span class="ident">server</span>.<span class="ident">mock</span>(<span class="op">|</span><span class="ident">when</span>, <span class="ident">then</span><span class="op">|</span> {
-            <span class="ident">when</span>.<span class="ident">path</span>(<span class="string">&quot;/epoch-settings&quot;</span>);
-            <span class="ident">then</span>.<span class="ident">status</span>(<span class="number">500</span>).<span class="ident">body</span>(<span class="string">&quot;an error occurred&quot;</span>);
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>test_epoch_settings_ko_500() {
+        <span class="kw">let </span>(server, config) = setup_test();
+        <span class="kw">let </span>_snapshots_mock = server.mock(|when, then| {
+            when.path(<span class="string">&quot;/epoch-settings&quot;</span>);
+            then.status(<span class="number">500</span>).body(<span class="string">&quot;an error occurred&quot;</span>);
         });
-        <span class="kw">let</span> <span class="ident">certificate_handler</span> <span class="op">=</span> <span class="ident">CertificateHandlerHTTPClient::new</span>(<span class="ident">config</span>.<span class="ident">aggregator_endpoint</span>);
-        <span class="kw">let</span> <span class="ident">epoch_settings</span> <span class="op">=</span> <span class="ident">certificate_handler</span>.<span class="ident">retrieve_epoch_settings</span>().<span class="kw">await</span>;
+        <span class="kw">let </span>certificate_handler = CertificateHandlerHTTPClient::new(config.aggregator_endpoint);
+        <span class="kw">let </span>epoch_settings = certificate_handler.retrieve_epoch_settings().<span class="kw">await</span>;
         <span class="macro">assert_eq!</span>(
-            <span class="ident">CertificateHandlerError::RemoteServerTechnical</span>(<span class="string">&quot;an error occurred&quot;</span>.<span class="ident">to_string</span>())
-                .<span class="ident">to_string</span>(),
-            <span class="ident">epoch_settings</span>.<span class="ident">unwrap_err</span>().<span class="ident">to_string</span>()
+            CertificateHandlerError::RemoteServerTechnical(<span class="string">&quot;an error occurred&quot;</span>.to_string())
+                .to_string(),
+            epoch_settings.unwrap_err().to_string()
         );
     }
 
-    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_certificate_pending_ok_200</span>() {
-        <span class="kw">let</span> (<span class="ident">server</span>, <span class="ident">config</span>) <span class="op">=</span> <span class="ident">setup_test</span>();
-        <span class="kw">let</span> <span class="ident">pending_certificate_expected</span> <span class="op">=</span> <span class="ident">fake_data::certificate_pending</span>();
-        <span class="kw">let</span> <span class="ident">_snapshots_mock</span> <span class="op">=</span> <span class="ident">server</span>.<span class="ident">mock</span>(<span class="op">|</span><span class="ident">when</span>, <span class="ident">then</span><span class="op">|</span> {
-            <span class="ident">when</span>.<span class="ident">path</span>(<span class="string">&quot;/certificate-pending&quot;</span>);
-            <span class="ident">then</span>.<span class="ident">status</span>(<span class="number">200</span>)
-                .<span class="ident">body</span>(<span class="macro">json!</span>(<span class="ident">pending_certificate_expected</span>).<span class="ident">to_string</span>());
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>test_certificate_pending_ok_200() {
+        <span class="kw">let </span>(server, config) = setup_test();
+        <span class="kw">let </span>pending_certificate_expected = fake_data::certificate_pending();
+        <span class="kw">let </span>_snapshots_mock = server.mock(|when, then| {
+            when.path(<span class="string">&quot;/certificate-pending&quot;</span>);
+            then.status(<span class="number">200</span>)
+                .body(<span class="macro">json!</span>(pending_certificate_expected).to_string());
         });
-        <span class="kw">let</span> <span class="ident">certificate_handler</span> <span class="op">=</span> <span class="ident">CertificateHandlerHTTPClient::new</span>(<span class="ident">config</span>.<span class="ident">aggregator_endpoint</span>);
-        <span class="kw">let</span> <span class="ident">pending_certificate</span> <span class="op">=</span> <span class="ident">certificate_handler</span>.<span class="ident">retrieve_pending_certificate</span>().<span class="kw">await</span>;
-        <span class="ident">pending_certificate</span>.<span class="ident">as_ref</span>().<span class="ident">expect</span>(<span class="string">&quot;unexpected error&quot;</span>);
+        <span class="kw">let </span>certificate_handler = CertificateHandlerHTTPClient::new(config.aggregator_endpoint);
+        <span class="kw">let </span>pending_certificate = certificate_handler.retrieve_pending_certificate().<span class="kw">await</span>;
+        pending_certificate.as_ref().expect(<span class="string">&quot;unexpected error&quot;</span>);
         <span class="macro">assert_eq!</span>(
-            <span class="ident">pending_certificate_expected</span>,
-            <span class="ident">pending_certificate</span>.<span class="ident">unwrap</span>().<span class="ident">unwrap</span>()
+            pending_certificate_expected,
+            pending_certificate.unwrap().unwrap()
         );
     }
 
-    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_certificate_pending_ok_204</span>() {
-        <span class="kw">let</span> (<span class="ident">server</span>, <span class="ident">config</span>) <span class="op">=</span> <span class="ident">setup_test</span>();
-        <span class="kw">let</span> <span class="ident">_snapshots_mock</span> <span class="op">=</span> <span class="ident">server</span>.<span class="ident">mock</span>(<span class="op">|</span><span class="ident">when</span>, <span class="ident">then</span><span class="op">|</span> {
-            <span class="ident">when</span>.<span class="ident">path</span>(<span class="string">&quot;/certificate-pending&quot;</span>);
-            <span class="ident">then</span>.<span class="ident">status</span>(<span class="number">204</span>);
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>test_certificate_pending_ok_204() {
+        <span class="kw">let </span>(server, config) = setup_test();
+        <span class="kw">let </span>_snapshots_mock = server.mock(|when, then| {
+            when.path(<span class="string">&quot;/certificate-pending&quot;</span>);
+            then.status(<span class="number">204</span>);
         });
-        <span class="kw">let</span> <span class="ident">certificate_handler</span> <span class="op">=</span> <span class="ident">CertificateHandlerHTTPClient::new</span>(<span class="ident">config</span>.<span class="ident">aggregator_endpoint</span>);
-        <span class="kw">let</span> <span class="ident">pending_certificate</span> <span class="op">=</span> <span class="ident">certificate_handler</span>.<span class="ident">retrieve_pending_certificate</span>().<span class="kw">await</span>;
-        <span class="macro">assert!</span>(<span class="ident">pending_certificate</span>.<span class="ident">expect</span>(<span class="string">&quot;unexpected error&quot;</span>).<span class="ident">is_none</span>());
+        <span class="kw">let </span>certificate_handler = CertificateHandlerHTTPClient::new(config.aggregator_endpoint);
+        <span class="kw">let </span>pending_certificate = certificate_handler.retrieve_pending_certificate().<span class="kw">await</span>;
+        <span class="macro">assert!</span>(pending_certificate.expect(<span class="string">&quot;unexpected error&quot;</span>).is_none());
     }
 
-    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_certificate_pending_ko_500</span>() {
-        <span class="kw">let</span> (<span class="ident">server</span>, <span class="ident">config</span>) <span class="op">=</span> <span class="ident">setup_test</span>();
-        <span class="kw">let</span> <span class="ident">_snapshots_mock</span> <span class="op">=</span> <span class="ident">server</span>.<span class="ident">mock</span>(<span class="op">|</span><span class="ident">when</span>, <span class="ident">then</span><span class="op">|</span> {
-            <span class="ident">when</span>.<span class="ident">path</span>(<span class="string">&quot;/certificate-pending&quot;</span>);
-            <span class="ident">then</span>.<span class="ident">status</span>(<span class="number">500</span>).<span class="ident">body</span>(<span class="string">&quot;an error occurred&quot;</span>);
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>test_certificate_pending_ko_500() {
+        <span class="kw">let </span>(server, config) = setup_test();
+        <span class="kw">let </span>_snapshots_mock = server.mock(|when, then| {
+            when.path(<span class="string">&quot;/certificate-pending&quot;</span>);
+            then.status(<span class="number">500</span>).body(<span class="string">&quot;an error occurred&quot;</span>);
         });
-        <span class="kw">let</span> <span class="ident">certificate_handler</span> <span class="op">=</span> <span class="ident">CertificateHandlerHTTPClient::new</span>(<span class="ident">config</span>.<span class="ident">aggregator_endpoint</span>);
-        <span class="kw">let</span> <span class="ident">pending_certificate</span> <span class="op">=</span> <span class="ident">certificate_handler</span>.<span class="ident">retrieve_pending_certificate</span>().<span class="kw">await</span>;
+        <span class="kw">let </span>certificate_handler = CertificateHandlerHTTPClient::new(config.aggregator_endpoint);
+        <span class="kw">let </span>pending_certificate = certificate_handler.retrieve_pending_certificate().<span class="kw">await</span>;
         <span class="macro">assert_eq!</span>(
-            <span class="ident">CertificateHandlerError::RemoteServerTechnical</span>(<span class="string">&quot;an error occurred&quot;</span>.<span class="ident">to_string</span>())
-                .<span class="ident">to_string</span>(),
-            <span class="ident">pending_certificate</span>.<span class="ident">unwrap_err</span>().<span class="ident">to_string</span>()
+            CertificateHandlerError::RemoteServerTechnical(<span class="string">&quot;an error occurred&quot;</span>.to_string())
+                .to_string(),
+            pending_certificate.unwrap_err().to_string()
         );
     }
 
-    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_register_signer_ok_201</span>() {
-        <span class="kw">let</span> <span class="ident">single_signers</span> <span class="op">=</span> <span class="ident">fake_data::signers</span>(<span class="number">1</span>);
-        <span class="kw">let</span> <span class="ident">single_signer</span> <span class="op">=</span> <span class="ident">single_signers</span>.<span class="ident">first</span>().<span class="ident">unwrap</span>();
-        <span class="kw">let</span> (<span class="ident">server</span>, <span class="ident">config</span>) <span class="op">=</span> <span class="ident">setup_test</span>();
-        <span class="kw">let</span> <span class="ident">_snapshots_mock</span> <span class="op">=</span> <span class="ident">server</span>.<span class="ident">mock</span>(<span class="op">|</span><span class="ident">when</span>, <span class="ident">then</span><span class="op">|</span> {
-            <span class="ident">when</span>.<span class="ident">method</span>(<span class="ident">POST</span>).<span class="ident">path</span>(<span class="string">&quot;/register-signer&quot;</span>);
-            <span class="ident">then</span>.<span class="ident">status</span>(<span class="number">201</span>);
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>test_register_signer_ok_201() {
+        <span class="kw">let </span>single_signers = fake_data::signers(<span class="number">1</span>);
+        <span class="kw">let </span>single_signer = single_signers.first().unwrap();
+        <span class="kw">let </span>(server, config) = setup_test();
+        <span class="kw">let </span>_snapshots_mock = server.mock(|when, then| {
+            when.method(POST).path(<span class="string">&quot;/register-signer&quot;</span>);
+            then.status(<span class="number">201</span>);
         });
-        <span class="kw">let</span> <span class="ident">certificate_handler</span> <span class="op">=</span> <span class="ident">CertificateHandlerHTTPClient::new</span>(<span class="ident">config</span>.<span class="ident">aggregator_endpoint</span>);
-        <span class="kw">let</span> <span class="ident">register_signer</span> <span class="op">=</span> <span class="ident">certificate_handler</span>.<span class="ident">register_signer</span>(<span class="ident">single_signer</span>).<span class="kw">await</span>;
-        <span class="ident">register_signer</span>.<span class="ident">expect</span>(<span class="string">&quot;unexpected error&quot;</span>);
+        <span class="kw">let </span>certificate_handler = CertificateHandlerHTTPClient::new(config.aggregator_endpoint);
+        <span class="kw">let </span>register_signer = certificate_handler.register_signer(single_signer).<span class="kw">await</span>;
+        register_signer.expect(<span class="string">&quot;unexpected error&quot;</span>);
     }
 
-    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_register_signer_ok_400</span>() {
-        <span class="kw">let</span> <span class="ident">single_signers</span> <span class="op">=</span> <span class="ident">fake_data::signers</span>(<span class="number">1</span>);
-        <span class="kw">let</span> <span class="ident">single_signer</span> <span class="op">=</span> <span class="ident">single_signers</span>.<span class="ident">first</span>().<span class="ident">unwrap</span>();
-        <span class="kw">let</span> (<span class="ident">server</span>, <span class="ident">config</span>) <span class="op">=</span> <span class="ident">setup_test</span>();
-        <span class="kw">let</span> <span class="ident">_snapshots_mock</span> <span class="op">=</span> <span class="ident">server</span>.<span class="ident">mock</span>(<span class="op">|</span><span class="ident">when</span>, <span class="ident">then</span><span class="op">|</span> {
-            <span class="ident">when</span>.<span class="ident">method</span>(<span class="ident">POST</span>).<span class="ident">path</span>(<span class="string">&quot;/register-signer&quot;</span>);
-            <span class="ident">then</span>.<span class="ident">status</span>(<span class="number">400</span>).<span class="ident">body</span>(
-                <span class="ident">serde_json::to_vec</span>(<span class="kw-2">&amp;</span><span class="ident">ClientError::new</span>(
-                    <span class="string">&quot;error&quot;</span>.<span class="ident">to_string</span>(),
-                    <span class="string">&quot;an error&quot;</span>.<span class="ident">to_string</span>(),
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>test_register_signer_ok_400() {
+        <span class="kw">let </span>single_signers = fake_data::signers(<span class="number">1</span>);
+        <span class="kw">let </span>single_signer = single_signers.first().unwrap();
+        <span class="kw">let </span>(server, config) = setup_test();
+        <span class="kw">let </span>_snapshots_mock = server.mock(|when, then| {
+            when.method(POST).path(<span class="string">&quot;/register-signer&quot;</span>);
+            then.status(<span class="number">400</span>).body(
+                serde_json::to_vec(<span class="kw-2">&amp;</span>ClientError::new(
+                    <span class="string">&quot;error&quot;</span>.to_string(),
+                    <span class="string">&quot;an error&quot;</span>.to_string(),
                 ))
-                .<span class="ident">unwrap</span>(),
+                .unwrap(),
             );
         });
-        <span class="kw">let</span> <span class="ident">certificate_handler</span> <span class="op">=</span> <span class="ident">CertificateHandlerHTTPClient::new</span>(<span class="ident">config</span>.<span class="ident">aggregator_endpoint</span>);
-        <span class="kw">let</span> <span class="ident">register_signer</span> <span class="op">=</span> <span class="ident">certificate_handler</span>.<span class="ident">register_signer</span>(<span class="ident">single_signer</span>).<span class="kw">await</span>;
+        <span class="kw">let </span>certificate_handler = CertificateHandlerHTTPClient::new(config.aggregator_endpoint);
+        <span class="kw">let </span>register_signer = certificate_handler.register_signer(single_signer).<span class="kw">await</span>;
         <span class="macro">assert_eq!</span>(
-            <span class="ident">CertificateHandlerError::RemoteServerLogical</span>(
-                <span class="string">&quot;bad request: {\&quot;label\&quot;:\&quot;error\&quot;,\&quot;message\&quot;:\&quot;an error\&quot;}&quot;</span>.<span class="ident">to_string</span>()
+            CertificateHandlerError::RemoteServerLogical(
+                <span class="string">&quot;bad request: {\&quot;label\&quot;:\&quot;error\&quot;,\&quot;message\&quot;:\&quot;an error\&quot;}&quot;</span>.to_string()
             )
-            .<span class="ident">to_string</span>(),
-            <span class="ident">register_signer</span>.<span class="ident">unwrap_err</span>().<span class="ident">to_string</span>()
+            .to_string(),
+            register_signer.unwrap_err().to_string()
         );
     }
 
-    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_register_signer_ok_500</span>() {
-        <span class="kw">let</span> <span class="ident">single_signers</span> <span class="op">=</span> <span class="ident">fake_data::signers</span>(<span class="number">1</span>);
-        <span class="kw">let</span> <span class="ident">single_signer</span> <span class="op">=</span> <span class="ident">single_signers</span>.<span class="ident">first</span>().<span class="ident">unwrap</span>();
-        <span class="kw">let</span> (<span class="ident">server</span>, <span class="ident">config</span>) <span class="op">=</span> <span class="ident">setup_test</span>();
-        <span class="kw">let</span> <span class="ident">_snapshots_mock</span> <span class="op">=</span> <span class="ident">server</span>.<span class="ident">mock</span>(<span class="op">|</span><span class="ident">when</span>, <span class="ident">then</span><span class="op">|</span> {
-            <span class="ident">when</span>.<span class="ident">method</span>(<span class="ident">POST</span>).<span class="ident">path</span>(<span class="string">&quot;/register-signer&quot;</span>);
-            <span class="ident">then</span>.<span class="ident">status</span>(<span class="number">500</span>).<span class="ident">body</span>(<span class="string">&quot;an error occurred&quot;</span>);
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>test_register_signer_ok_500() {
+        <span class="kw">let </span>single_signers = fake_data::signers(<span class="number">1</span>);
+        <span class="kw">let </span>single_signer = single_signers.first().unwrap();
+        <span class="kw">let </span>(server, config) = setup_test();
+        <span class="kw">let </span>_snapshots_mock = server.mock(|when, then| {
+            when.method(POST).path(<span class="string">&quot;/register-signer&quot;</span>);
+            then.status(<span class="number">500</span>).body(<span class="string">&quot;an error occurred&quot;</span>);
         });
-        <span class="kw">let</span> <span class="ident">certificate_handler</span> <span class="op">=</span> <span class="ident">CertificateHandlerHTTPClient::new</span>(<span class="ident">config</span>.<span class="ident">aggregator_endpoint</span>);
-        <span class="kw">let</span> <span class="ident">register_signer</span> <span class="op">=</span> <span class="ident">certificate_handler</span>.<span class="ident">register_signer</span>(<span class="ident">single_signer</span>).<span class="kw">await</span>;
+        <span class="kw">let </span>certificate_handler = CertificateHandlerHTTPClient::new(config.aggregator_endpoint);
+        <span class="kw">let </span>register_signer = certificate_handler.register_signer(single_signer).<span class="kw">await</span>;
         <span class="macro">assert_eq!</span>(
-            <span class="ident">CertificateHandlerError::RemoteServerTechnical</span>(<span class="string">&quot;an error occurred&quot;</span>.<span class="ident">to_string</span>())
-                .<span class="ident">to_string</span>(),
-            <span class="ident">register_signer</span>.<span class="ident">unwrap_err</span>().<span class="ident">to_string</span>()
+            CertificateHandlerError::RemoteServerTechnical(<span class="string">&quot;an error occurred&quot;</span>.to_string())
+                .to_string(),
+            register_signer.unwrap_err().to_string()
         );
     }
 
-    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_register_signatures_ok_201</span>() {
-        <span class="kw">let</span> <span class="ident">single_signatures</span> <span class="op">=</span> <span class="ident">fake_data::single_signatures</span>((<span class="number">1</span>..<span class="number">5</span>).<span class="ident">collect</span>());
-        <span class="kw">let</span> (<span class="ident">server</span>, <span class="ident">config</span>) <span class="op">=</span> <span class="ident">setup_test</span>();
-        <span class="kw">let</span> <span class="ident">_snapshots_mock</span> <span class="op">=</span> <span class="ident">server</span>.<span class="ident">mock</span>(<span class="op">|</span><span class="ident">when</span>, <span class="ident">then</span><span class="op">|</span> {
-            <span class="ident">when</span>.<span class="ident">method</span>(<span class="ident">POST</span>).<span class="ident">path</span>(<span class="string">&quot;/register-signatures&quot;</span>);
-            <span class="ident">then</span>.<span class="ident">status</span>(<span class="number">201</span>);
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>test_register_signatures_ok_201() {
+        <span class="kw">let </span>single_signatures = fake_data::single_signatures((<span class="number">1</span>..<span class="number">5</span>).collect());
+        <span class="kw">let </span>(server, config) = setup_test();
+        <span class="kw">let </span>_snapshots_mock = server.mock(|when, then| {
+            when.method(POST).path(<span class="string">&quot;/register-signatures&quot;</span>);
+            then.status(<span class="number">201</span>);
         });
-        <span class="kw">let</span> <span class="ident">certificate_handler</span> <span class="op">=</span> <span class="ident">CertificateHandlerHTTPClient::new</span>(<span class="ident">config</span>.<span class="ident">aggregator_endpoint</span>);
-        <span class="kw">let</span> <span class="ident">register_signatures</span> <span class="op">=</span> <span class="ident">certificate_handler</span>
-            .<span class="ident">register_signatures</span>(<span class="kw-2">&amp;</span><span class="ident">single_signatures</span>)
+        <span class="kw">let </span>certificate_handler = CertificateHandlerHTTPClient::new(config.aggregator_endpoint);
+        <span class="kw">let </span>register_signatures = certificate_handler
+            .register_signatures(<span class="kw-2">&amp;</span>single_signatures)
             .<span class="kw">await</span>;
-        <span class="ident">register_signatures</span>.<span class="ident">expect</span>(<span class="string">&quot;unexpected error&quot;</span>);
+        register_signatures.expect(<span class="string">&quot;unexpected error&quot;</span>);
     }
 
-    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_register_signatures_ko_400</span>() {
-        <span class="kw">let</span> <span class="ident">single_signatures</span> <span class="op">=</span> <span class="ident">fake_data::single_signatures</span>((<span class="number">1</span>..<span class="number">5</span>).<span class="ident">collect</span>());
-        <span class="kw">let</span> (<span class="ident">server</span>, <span class="ident">config</span>) <span class="op">=</span> <span class="ident">setup_test</span>();
-        <span class="kw">let</span> <span class="ident">_snapshots_mock</span> <span class="op">=</span> <span class="ident">server</span>.<span class="ident">mock</span>(<span class="op">|</span><span class="ident">when</span>, <span class="ident">then</span><span class="op">|</span> {
-            <span class="ident">when</span>.<span class="ident">method</span>(<span class="ident">POST</span>).<span class="ident">path</span>(<span class="string">&quot;/register-signatures&quot;</span>);
-            <span class="ident">then</span>.<span class="ident">status</span>(<span class="number">400</span>).<span class="ident">body</span>(
-                <span class="ident">serde_json::to_vec</span>(<span class="kw-2">&amp;</span><span class="ident">ClientError::new</span>(
-                    <span class="string">&quot;error&quot;</span>.<span class="ident">to_string</span>(),
-                    <span class="string">&quot;an error&quot;</span>.<span class="ident">to_string</span>(),
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>test_register_signatures_ko_400() {
+        <span class="kw">let </span>single_signatures = fake_data::single_signatures((<span class="number">1</span>..<span class="number">5</span>).collect());
+        <span class="kw">let </span>(server, config) = setup_test();
+        <span class="kw">let </span>_snapshots_mock = server.mock(|when, then| {
+            when.method(POST).path(<span class="string">&quot;/register-signatures&quot;</span>);
+            then.status(<span class="number">400</span>).body(
+                serde_json::to_vec(<span class="kw-2">&amp;</span>ClientError::new(
+                    <span class="string">&quot;error&quot;</span>.to_string(),
+                    <span class="string">&quot;an error&quot;</span>.to_string(),
                 ))
-                .<span class="ident">unwrap</span>(),
+                .unwrap(),
             );
         });
-        <span class="kw">let</span> <span class="ident">certificate_handler</span> <span class="op">=</span> <span class="ident">CertificateHandlerHTTPClient::new</span>(<span class="ident">config</span>.<span class="ident">aggregator_endpoint</span>);
-        <span class="kw">let</span> <span class="ident">register_signatures</span> <span class="op">=</span> <span class="ident">certificate_handler</span>
-            .<span class="ident">register_signatures</span>(<span class="kw-2">&amp;</span><span class="ident">single_signatures</span>)
+        <span class="kw">let </span>certificate_handler = CertificateHandlerHTTPClient::new(config.aggregator_endpoint);
+        <span class="kw">let </span>register_signatures = certificate_handler
+            .register_signatures(<span class="kw-2">&amp;</span>single_signatures)
             .<span class="kw">await</span>;
         <span class="macro">assert_eq!</span>(
-            <span class="ident">CertificateHandlerError::RemoteServerLogical</span>(
-                <span class="string">&quot;bad request: {\&quot;label\&quot;:\&quot;error\&quot;,\&quot;message\&quot;:\&quot;an error\&quot;}&quot;</span>.<span class="ident">to_string</span>()
+            CertificateHandlerError::RemoteServerLogical(
+                <span class="string">&quot;bad request: {\&quot;label\&quot;:\&quot;error\&quot;,\&quot;message\&quot;:\&quot;an error\&quot;}&quot;</span>.to_string()
             )
-            .<span class="ident">to_string</span>(),
-            <span class="ident">register_signatures</span>.<span class="ident">unwrap_err</span>().<span class="ident">to_string</span>()
+            .to_string(),
+            register_signatures.unwrap_err().to_string()
         );
     }
 
-    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_register_signatures_ko_409</span>() {
-        <span class="kw">let</span> <span class="ident">single_signatures</span> <span class="op">=</span> <span class="ident">fake_data::single_signatures</span>((<span class="number">1</span>..<span class="number">5</span>).<span class="ident">collect</span>());
-        <span class="kw">let</span> (<span class="ident">server</span>, <span class="ident">config</span>) <span class="op">=</span> <span class="ident">setup_test</span>();
-        <span class="kw">let</span> <span class="ident">_snapshots_mock</span> <span class="op">=</span> <span class="ident">server</span>.<span class="ident">mock</span>(<span class="op">|</span><span class="ident">when</span>, <span class="ident">then</span><span class="op">|</span> {
-            <span class="ident">when</span>.<span class="ident">method</span>(<span class="ident">POST</span>).<span class="ident">path</span>(<span class="string">&quot;/register-signatures&quot;</span>);
-            <span class="ident">then</span>.<span class="ident">status</span>(<span class="number">409</span>);
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>test_register_signatures_ko_409() {
+        <span class="kw">let </span>single_signatures = fake_data::single_signatures((<span class="number">1</span>..<span class="number">5</span>).collect());
+        <span class="kw">let </span>(server, config) = setup_test();
+        <span class="kw">let </span>_snapshots_mock = server.mock(|when, then| {
+            when.method(POST).path(<span class="string">&quot;/register-signatures&quot;</span>);
+            then.status(<span class="number">409</span>);
         });
-        <span class="kw">let</span> <span class="ident">certificate_handler</span> <span class="op">=</span> <span class="ident">CertificateHandlerHTTPClient::new</span>(<span class="ident">config</span>.<span class="ident">aggregator_endpoint</span>);
-        <span class="kw">let</span> <span class="ident">register_signatures</span> <span class="op">=</span> <span class="ident">certificate_handler</span>
-            .<span class="ident">register_signatures</span>(<span class="kw-2">&amp;</span><span class="ident">single_signatures</span>)
+        <span class="kw">let </span>certificate_handler = CertificateHandlerHTTPClient::new(config.aggregator_endpoint);
+        <span class="kw">let </span>register_signatures = certificate_handler
+            .register_signatures(<span class="kw-2">&amp;</span>single_signatures)
             .<span class="kw">await</span>;
         <span class="macro">assert_eq!</span>(
-            <span class="ident">CertificateHandlerError::RemoteServerLogical</span>(
-                <span class="string">&quot;already registered single signatures&quot;</span>.<span class="ident">to_string</span>()
+            CertificateHandlerError::RemoteServerLogical(
+                <span class="string">&quot;already registered single signatures&quot;</span>.to_string()
             )
-            .<span class="ident">to_string</span>(),
-            <span class="ident">register_signatures</span>.<span class="ident">unwrap_err</span>().<span class="ident">to_string</span>()
+            .to_string(),
+            register_signatures.unwrap_err().to_string()
         );
     }
 
-    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_register_signatures_ko_500</span>() {
-        <span class="kw">let</span> <span class="ident">single_signatures</span> <span class="op">=</span> <span class="ident">fake_data::single_signatures</span>((<span class="number">1</span>..<span class="number">5</span>).<span class="ident">collect</span>());
-        <span class="kw">let</span> (<span class="ident">server</span>, <span class="ident">config</span>) <span class="op">=</span> <span class="ident">setup_test</span>();
-        <span class="kw">let</span> <span class="ident">_snapshots_mock</span> <span class="op">=</span> <span class="ident">server</span>.<span class="ident">mock</span>(<span class="op">|</span><span class="ident">when</span>, <span class="ident">then</span><span class="op">|</span> {
-            <span class="ident">when</span>.<span class="ident">method</span>(<span class="ident">POST</span>).<span class="ident">path</span>(<span class="string">&quot;/register-signatures&quot;</span>);
-            <span class="ident">then</span>.<span class="ident">status</span>(<span class="number">500</span>).<span class="ident">body</span>(<span class="string">&quot;an error occurred&quot;</span>);
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>test_register_signatures_ko_500() {
+        <span class="kw">let </span>single_signatures = fake_data::single_signatures((<span class="number">1</span>..<span class="number">5</span>).collect());
+        <span class="kw">let </span>(server, config) = setup_test();
+        <span class="kw">let </span>_snapshots_mock = server.mock(|when, then| {
+            when.method(POST).path(<span class="string">&quot;/register-signatures&quot;</span>);
+            then.status(<span class="number">500</span>).body(<span class="string">&quot;an error occurred&quot;</span>);
         });
-        <span class="kw">let</span> <span class="ident">certificate_handler</span> <span class="op">=</span> <span class="ident">CertificateHandlerHTTPClient::new</span>(<span class="ident">config</span>.<span class="ident">aggregator_endpoint</span>);
-        <span class="kw">let</span> <span class="ident">register_signatures</span> <span class="op">=</span> <span class="ident">certificate_handler</span>
-            .<span class="ident">register_signatures</span>(<span class="kw-2">&amp;</span><span class="ident">single_signatures</span>)
+        <span class="kw">let </span>certificate_handler = CertificateHandlerHTTPClient::new(config.aggregator_endpoint);
+        <span class="kw">let </span>register_signatures = certificate_handler
+            .register_signatures(<span class="kw-2">&amp;</span>single_signatures)
             .<span class="kw">await</span>;
         <span class="macro">assert_eq!</span>(
-            <span class="ident">CertificateHandlerError::RemoteServerTechnical</span>(<span class="string">&quot;an error occurred&quot;</span>.<span class="ident">to_string</span>())
-                .<span class="ident">to_string</span>(),
-            <span class="ident">register_signatures</span>.<span class="ident">unwrap_err</span>().<span class="ident">to_string</span>()
+            CertificateHandlerError::RemoteServerTechnical(<span class="string">&quot;an error occurred&quot;</span>.to_string())
+                .to_string(),
+            register_signatures.unwrap_err().to_string()
         );
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="mithril_signer" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.64.0 (a55dd71d5 2022-09-19)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="mithril_signer" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0 (897e37553 2022-11-02)" ></div></body></html>

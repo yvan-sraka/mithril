@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `mithril-common/src/crypto_helper/cardano/key_certification.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>key_certification.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../../storage.js"></script><script defer src="../../../../source-script.js"></script><script defer src="../../../../source-files.js"></script><script defer src="../../../../main.js"></script><noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../../mithril_common/index.html"><div class="logo-container"><img class="rust-logo" src="../../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../../mithril_common/index.html"><div class="logo-container"><img class="rust-logo" src="../../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../../mithril_common/index.html"><img class="rust-logo" src="../../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `mithril-common/src/crypto_helper/cardano/key_certification.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>key_certification.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../../normalize.css"><link rel="stylesheet" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../../ayu.css" disabled><link rel="stylesheet" href="../../../../dark.css" disabled><link rel="stylesheet" href="../../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../../storage.js"></script><script defer src="../../../../source-script.js"></script><script defer src="../../../../source-files.js"></script><script defer src="../../../../main.js"></script><noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../../mithril_common/index.html"><div class="logo-container"><img class="rust-logo" src="../../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../../mithril_common/index.html"><div class="logo-container"><img class="rust-logo" src="../../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../../mithril_common/index.html"><img class="rust-logo" src="../../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -357,364 +357,364 @@
 <span id="357">357</span>
 <span id="358">358</span>
 <span id="359">359</span>
-</pre><pre class="rust"><code><span class="doccomment">//! API for mithril key certification.</span>
-<span class="doccomment">//! Includes the wrappers for StmInitializer and KeyReg, and ProtocolRegistrationErrorWrapper.</span>
-<span class="doccomment">//! These wrappers allows keeping mithril-core agnostic to Cardano, while providing some</span>
-<span class="doccomment">//! guarantees that mithril-core will not be misused in the context of Cardano.  </span>
+</pre><pre class="rust"><code><span class="doccomment">//! API for mithril key certification.
+//! Includes the wrappers for StmInitializer and KeyReg, and ProtocolRegistrationErrorWrapper.
+//! These wrappers allows keeping mithril-core agnostic to Cardano, while providing some
+//! guarantees that mithril-core will not be misused in the context of Cardano.  
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::crypto_helper::cardano</span>::{<span class="ident">OpCert</span>, <span class="ident">ParseError</span>, <span class="ident">SerDeShelleyFileFormat</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::crypto_helper::types</span>::{
-    <span class="ident">ProtocolPartyId</span>, <span class="ident">ProtocolSignerVerificationKey</span>, <span class="ident">ProtocolSignerVerificationKeySignature</span>,
-    <span class="ident">ProtocolStakeDistribution</span>,
+</span><span class="kw">use </span><span class="kw">crate</span>::crypto_helper::cardano::{OpCert, ParseError, SerDeShelleyFileFormat};
+<span class="kw">use </span><span class="kw">crate</span>::crypto_helper::types::{
+    ProtocolPartyId, ProtocolSignerVerificationKey, ProtocolSignerVerificationKeySignature,
+    ProtocolStakeDistribution,
 };
 
-<span class="kw">use</span> <span class="ident">mithril::key_reg</span>::{<span class="ident">ClosedKeyReg</span>, <span class="ident">KeyReg</span>};
-<span class="kw">use</span> <span class="ident">mithril::stm</span>::{<span class="ident">Stake</span>, <span class="ident">StmInitializer</span>, <span class="ident">StmParameters</span>, <span class="ident">StmSigner</span>, <span class="ident">StmVerificationKeyPoP</span>};
-<span class="kw">use</span> <span class="ident">mithril::RegisterError</span>;
+<span class="kw">use </span>mithril::key_reg::{ClosedKeyReg, KeyReg};
+<span class="kw">use </span>mithril::stm::{Stake, StmInitializer, StmParameters, StmSigner, StmVerificationKeyPoP};
+<span class="kw">use </span>mithril::RegisterError;
 
-<span class="kw">use</span> <span class="ident">blake2</span>::{
-    <span class="ident">digest</span>::{<span class="ident">consts::U32</span>, <span class="ident">FixedOutput</span>},
-    <span class="ident">Blake2b</span>, <span class="ident">Digest</span>,
+<span class="kw">use </span>blake2::{
+    digest::{consts::U32, FixedOutput},
+    Blake2b, Digest,
 };
-<span class="kw">use</span> <span class="ident">kes_summed_ed25519::kes</span>::{<span class="ident">Sum6Kes</span>, <span class="ident">Sum6KesSig</span>};
-<span class="kw">use</span> <span class="ident">kes_summed_ed25519::traits</span>::{<span class="ident">KesSig</span>, <span class="ident">KesSk</span>};
-<span class="kw">use</span> <span class="ident">rand_core</span>::{<span class="ident">CryptoRng</span>, <span class="ident">RngCore</span>};
-<span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
-<span class="kw">use</span> <span class="ident">std::collections::HashMap</span>;
-<span class="kw">use</span> <span class="ident">std::path::Path</span>;
-<span class="kw">use</span> <span class="ident">thiserror::Error</span>;
+<span class="kw">use </span>kes_summed_ed25519::kes::{Sum6Kes, Sum6KesSig};
+<span class="kw">use </span>kes_summed_ed25519::traits::{KesSig, KesSk};
+<span class="kw">use </span>rand_core::{CryptoRng, RngCore};
+<span class="kw">use </span>serde::{Deserialize, Serialize};
+<span class="kw">use </span>std::collections::HashMap;
+<span class="kw">use </span>std::path::Path;
+<span class="kw">use </span>thiserror::Error;
 
-<span class="comment">// Protocol types alias</span>
-<span class="kw">type</span> <span class="ident">D</span> <span class="op">=</span> <span class="ident">Blake2b</span><span class="op">&lt;</span><span class="ident">U32</span><span class="op">&gt;</span>;
+<span class="comment">// Protocol types alias
+</span><span class="kw">type </span>D = Blake2b&lt;U32&gt;;
 
-<span class="doccomment">/// The KES period that is used to check if the KES keys is expired</span>
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">KESPeriod</span> <span class="op">=</span> <span class="ident">usize</span>;
+<span class="doccomment">/// The KES period that is used to check if the KES keys is expired
+</span><span class="kw">pub type </span>KESPeriod = usize;
 
-<span class="doccomment">/// New registration error</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Error</span>, <span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">ProtocolRegistrationErrorWrapper</span> {
-    <span class="doccomment">/// Error raised when a party id is needed but not provided</span>
-    <span class="comment">// TODO: Should be removed once the signer certification is fully deployed</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;missing party id&quot;</span>)]</span>
-    <span class="ident">PartyIdMissing</span>,
+<span class="doccomment">/// New registration error
+</span><span class="attribute">#[derive(Error, Debug, PartialEq, Eq)]
+</span><span class="kw">pub enum </span>ProtocolRegistrationErrorWrapper {
+    <span class="doccomment">/// Error raised when a party id is needed but not provided
+    </span><span class="comment">// TODO: Should be removed once the signer certification is fully deployed
+    </span><span class="attribute">#[error(<span class="string">&quot;missing party id&quot;</span>)]
+    </span>PartyIdMissing,
 
-    <span class="doccomment">/// Error raised when a party id is not available in the Cardano_stake distribution</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;party id does not exist in the stake distribution&quot;</span>)]</span>
-    <span class="ident">PartyIdNonExisting</span>,
+    <span class="doccomment">/// Error raised when a party id is not available in the Cardano_stake distribution
+    </span><span class="attribute">#[error(<span class="string">&quot;party id does not exist in the stake distribution&quot;</span>)]
+    </span>PartyIdNonExisting,
 
-    <span class="doccomment">/// Error raised when an operational certificate is invalid</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;invalid operational certificate&quot;</span>)]</span>
-    <span class="ident">OpCertInvalid</span>,
+    <span class="doccomment">/// Error raised when an operational certificate is invalid
+    </span><span class="attribute">#[error(<span class="string">&quot;invalid operational certificate&quot;</span>)]
+    </span>OpCertInvalid,
 
-    <span class="doccomment">/// Error raised when a KES Signature verification fails</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;KES signature verification error&quot;</span>)]</span>
-    <span class="ident">KesSignatureInvalid</span>,
+    <span class="doccomment">/// Error raised when a KES Signature verification fails
+    </span><span class="attribute">#[error(<span class="string">&quot;KES signature verification error&quot;</span>)]
+    </span>KesSignatureInvalid,
 
-    <span class="doccomment">/// Error raised when a KES Signature is needed but not provided</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;missing KES signature&quot;</span>)]</span>
-    <span class="ident">KesSignatureMissing</span>,
+    <span class="doccomment">/// Error raised when a KES Signature is needed but not provided
+    </span><span class="attribute">#[error(<span class="string">&quot;missing KES signature&quot;</span>)]
+    </span>KesSignatureMissing,
 
-    <span class="doccomment">/// Error raised when a KES Period is needed but not provided</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;missing KES period&quot;</span>)]</span>
-    <span class="ident">KesPeriodMissing</span>,
+    <span class="doccomment">/// Error raised when a KES Period is needed but not provided
+    </span><span class="attribute">#[error(<span class="string">&quot;missing KES period&quot;</span>)]
+    </span>KesPeriodMissing,
 
-    <span class="doccomment">/// Error raised when a pool address encoding fails</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;pool address encoding error&quot;</span>)]</span>
-    <span class="ident">PoolAddressEncoding</span>,
+    <span class="doccomment">/// Error raised when a pool address encoding fails
+    </span><span class="attribute">#[error(<span class="string">&quot;pool address encoding error&quot;</span>)]
+    </span>PoolAddressEncoding,
 
-    <span class="doccomment">/// Error raised when a core registration error occurs</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;core registration error: &#39;{0}&#39;&quot;</span>)]</span>
-    <span class="ident">CoreRegister</span>(<span class="attribute">#[<span class="ident">from</span>]</span> <span class="ident">RegisterError</span>),
+    <span class="doccomment">/// Error raised when a core registration error occurs
+    </span><span class="attribute">#[error(<span class="string">&quot;core registration error: &#39;{0}&#39;&quot;</span>)]
+    </span>CoreRegister(<span class="attribute">#[from] </span>RegisterError),
 }
 
-<span class="doccomment">/// New initializer error</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Error</span>, <span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">ProtocolInitializerErrorWrapper</span> {
-    <span class="doccomment">/// Error raised when a codec parse error occurs</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;codec parse error: &#39;{0}&#39;&quot;</span>)]</span>
-    <span class="ident">Codec</span>(<span class="attribute">#[<span class="ident">from</span>]</span> <span class="ident">ParseError</span>),
+<span class="doccomment">/// New initializer error
+</span><span class="attribute">#[derive(Error, Debug)]
+</span><span class="kw">pub enum </span>ProtocolInitializerErrorWrapper {
+    <span class="doccomment">/// Error raised when a codec parse error occurs
+    </span><span class="attribute">#[error(<span class="string">&quot;codec parse error: &#39;{0}&#39;&quot;</span>)]
+    </span>Codec(<span class="attribute">#[from] </span>ParseError),
 
-    <span class="doccomment">/// Error raised when a KES update error occurs</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;KES key cannot be updated for period {0}&quot;</span>)]</span>
-    <span class="ident">KesUpdate</span>(<span class="ident">KESPeriod</span>),
+    <span class="doccomment">/// Error raised when a KES update error occurs
+    </span><span class="attribute">#[error(<span class="string">&quot;KES key cannot be updated for period {0}&quot;</span>)]
+    </span>KesUpdate(KESPeriod),
 }
-<span class="doccomment">/// Wrapper structure for [MithrilCore:StmInitializer](mithril::stm::StmInitializer).</span>
-<span class="doccomment">/// It now obtains a KES signature over the Mithril key. This allows the signers prove</span>
-<span class="doccomment">/// their correct identity with respect to a Cardano PoolID.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">StmInitializerWrapper</span> {
-    <span class="ident">stm_initializer</span>: <span class="ident">StmInitializer</span>,
-    <span class="ident">kes_signature</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ProtocolSignerVerificationKeySignature</span><span class="op">&gt;</span>, <span class="comment">// todo: The option is ONLY for a smooth transition. We have to remove this.</span>
+<span class="doccomment">/// Wrapper structure for [MithrilCore:StmInitializer](mithril::stm::StmInitializer).
+/// It now obtains a KES signature over the Mithril key. This allows the signers prove
+/// their correct identity with respect to a Cardano PoolID.
+</span><span class="attribute">#[derive(Debug, Clone, Serialize, Deserialize)]
+</span><span class="kw">pub struct </span>StmInitializerWrapper {
+    stm_initializer: StmInitializer,
+    kes_signature: <span class="prelude-ty">Option</span>&lt;ProtocolSignerVerificationKeySignature&gt;, <span class="comment">// todo: The option is ONLY for a smooth transition. We have to remove this.
+</span>}
+
+<span class="doccomment">/// Wrapper structure for [MithrilCore:KeyReg](mithril::key_reg::KeyReg).
+/// The wrapper not only contains a map between `Mithril vkey &lt;-&gt; Stake`, but also
+/// a map `PoolID &lt;-&gt; Stake`. This information is recovered from the node state, and
+/// is used to verify the identity of a Mithril signer. Furthermore, the `register` function
+/// of the wrapper forces the registrar to check that the KES signature over the Mithril key
+/// is valid with respect to the PoolID.
+</span><span class="attribute">#[derive(Debug, Clone)]
+</span><span class="kw">pub struct </span>KeyRegWrapper {
+    stm_key_reg: KeyReg,
+    stake_distribution: HashMap&lt;ProtocolPartyId, Stake&gt;,
 }
 
-<span class="doccomment">/// Wrapper structure for [MithrilCore:KeyReg](mithril::key_reg::KeyReg).</span>
-<span class="doccomment">/// The wrapper not only contains a map between `Mithril vkey &lt;-&gt; Stake`, but also</span>
-<span class="doccomment">/// a map `PoolID &lt;-&gt; Stake`. This information is recovered from the node state, and</span>
-<span class="doccomment">/// is used to verify the identity of a Mithril signer. Furthermore, the `register` function</span>
-<span class="doccomment">/// of the wrapper forces the registrar to check that the KES signature over the Mithril key</span>
-<span class="doccomment">/// is valid with respect to the PoolID.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">KeyRegWrapper</span> {
-    <span class="ident">stm_key_reg</span>: <span class="ident">KeyReg</span>,
-    <span class="ident">stake_distribution</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">ProtocolPartyId</span>, <span class="ident">Stake</span><span class="op">&gt;</span>,
-}
+<span class="kw">impl </span>StmInitializerWrapper {
+    <span class="doccomment">/// Builds an `StmInitializer` that is ready to register with the key registration service.
+    /// This function generates the signing and verification key with a PoP, signs the verification
+    /// key with a provided KES signing key, and initializes the structure.
+    </span><span class="kw">pub fn </span>setup&lt;R: RngCore + CryptoRng, P: AsRef&lt;Path&gt;&gt;(
+        params: StmParameters,
+        kes_sk_path: <span class="prelude-ty">Option</span>&lt;P&gt;,
+        kes_period: <span class="prelude-ty">Option</span>&lt;KESPeriod&gt;,
+        stake: Stake,
+        rng: <span class="kw-2">&amp;mut </span>R,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, ProtocolInitializerErrorWrapper&gt; {
+        <span class="kw">let </span>stm_initializer = StmInitializer::setup(params, stake, rng);
+        <span class="kw">let </span>kes_signature = <span class="kw">if let </span><span class="prelude-val">Some</span>(kes_sk_path) = kes_sk_path {
+            <span class="kw">let </span><span class="kw-2">mut </span>kes_sk: Sum6Kes = Sum6Kes::from_file(kes_sk_path)<span class="question-mark">?</span>;
 
-<span class="kw">impl</span> <span class="ident">StmInitializerWrapper</span> {
-    <span class="doccomment">/// Builds an `StmInitializer` that is ready to register with the key registration service.</span>
-    <span class="doccomment">/// This function generates the signing and verification key with a PoP, signs the verification</span>
-    <span class="doccomment">/// key with a provided KES signing key, and initializes the structure.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">setup</span><span class="op">&lt;</span><span class="ident">R</span>: <span class="ident">RngCore</span> <span class="op">+</span> <span class="ident">CryptoRng</span>, <span class="ident">P</span>: <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">Path</span><span class="op">&gt;</span><span class="op">&gt;</span>(
-        <span class="ident">params</span>: <span class="ident">StmParameters</span>,
-        <span class="ident">kes_sk_path</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>,
-        <span class="ident">kes_period</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">KESPeriod</span><span class="op">&gt;</span>,
-        <span class="ident">stake</span>: <span class="ident">Stake</span>,
-        <span class="ident">rng</span>: <span class="kw-2">&amp;mut</span> <span class="ident">R</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">ProtocolInitializerErrorWrapper</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">stm_initializer</span> <span class="op">=</span> <span class="ident">StmInitializer::setup</span>(<span class="ident">params</span>, <span class="ident">stake</span>, <span class="ident">rng</span>);
-        <span class="kw">let</span> <span class="ident">kes_signature</span> <span class="op">=</span> <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">kes_sk_path</span>) <span class="op">=</span> <span class="ident">kes_sk_path</span> {
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">kes_sk</span>: <span class="ident">Sum6Kes</span> <span class="op">=</span> <span class="ident">Sum6Kes::from_file</span>(<span class="ident">kes_sk_path</span>)<span class="question-mark">?</span>;
-
-            <span class="comment">// We need to perform the evolutions, as the key is stored in evolution 0 in `kes.skey`</span>
-            <span class="kw">for</span> <span class="ident">period</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">kes_period</span>.<span class="ident">unwrap_or_default</span>() {
-                <span class="ident">kes_sk</span>
-                    .<span class="ident">update</span>(<span class="ident">period</span>)
-                    .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">ProtocolInitializerErrorWrapper::KesUpdate</span>(<span class="ident">period</span>))<span class="question-mark">?</span>;
+            <span class="comment">// We need to perform the evolutions, as the key is stored in evolution 0 in `kes.skey`
+            </span><span class="kw">for </span>period <span class="kw">in </span><span class="number">0</span>..kes_period.unwrap_or_default() {
+                kes_sk
+                    .update(period)
+                    .map_err(|<span class="kw">_</span>| ProtocolInitializerErrorWrapper::KesUpdate(period))<span class="question-mark">?</span>;
             }
 
-            <span class="prelude-val">Some</span>(<span class="ident">kes_sk</span>.<span class="ident">sign</span>(
-                <span class="ident">kes_period</span>.<span class="ident">unwrap_or_default</span>(),
-                <span class="kw-2">&amp;</span><span class="ident">stm_initializer</span>.<span class="ident">verification_key</span>().<span class="ident">to_bytes</span>(),
+            <span class="prelude-val">Some</span>(kes_sk.sign(
+                kes_period.unwrap_or_default(),
+                <span class="kw-2">&amp;</span>stm_initializer.verification_key().to_bytes(),
             ))
-        } <span class="kw">else</span> {
-            <span class="prelude-val">None</span>
-        };
+        } <span class="kw">else </span>{
+            <span class="prelude-val">None
+        </span>};
 
-        <span class="prelude-val">Ok</span>(<span class="self">Self</span> {
-            <span class="ident">stm_initializer</span>,
-            <span class="ident">kes_signature</span>,
+        <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
+            stm_initializer,
+            kes_signature,
         })
     }
 
-    <span class="doccomment">/// Extract the verification key.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verification_key</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">StmVerificationKeyPoP</span> {
-        <span class="self">self</span>.<span class="ident">stm_initializer</span>.<span class="ident">verification_key</span>()
+    <span class="doccomment">/// Extract the verification key.
+    </span><span class="kw">pub fn </span>verification_key(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StmVerificationKeyPoP {
+        <span class="self">self</span>.stm_initializer.verification_key()
     }
 
-    <span class="doccomment">/// Extract the verification key signature.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">verification_key_signature</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ProtocolSignerVerificationKeySignature</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">kes_signature</span>.<span class="ident">clone</span>()
+    <span class="doccomment">/// Extract the verification key signature.
+    </span><span class="kw">pub fn </span>verification_key_signature(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;ProtocolSignerVerificationKeySignature&gt; {
+        <span class="self">self</span>.kes_signature.clone()
     }
 
-    <span class="doccomment">/// Extract the stake of the party</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_stake</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Stake</span> {
-        <span class="self">self</span>.<span class="ident">stm_initializer</span>.<span class="ident">stake</span>
+    <span class="doccomment">/// Extract the stake of the party
+    </span><span class="kw">pub fn </span>get_stake(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Stake {
+        <span class="self">self</span>.stm_initializer.stake
     }
 
-    <span class="doccomment">/// Build the `avk` for the given list of parties.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Note that if this StmInitializer was modified *between* the last call to `register`,</span>
-    <span class="doccomment">/// then the resulting `StmSigner` may not be able to produce valid signatures.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Returns a `StmSignerWrapper` specialized to</span>
-    <span class="doccomment">/// * this `StmSignerWrapper`&#39;s ID and current stake</span>
-    <span class="doccomment">/// * this `StmSignerWrapper`&#39;s parameter valuation</span>
-    <span class="doccomment">/// * the `avk` as built from the current registered parties (according to the registration service)</span>
-    <span class="doccomment">/// * the current total stake (according to the registration service)</span>
-    <span class="doccomment">/// # Error</span>
-    <span class="doccomment">/// This function fails if the initializer is not registered.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_signer</span>(
+    <span class="doccomment">/// Build the `avk` for the given list of parties.
+    ///
+    /// Note that if this StmInitializer was modified *between* the last call to `register`,
+    /// then the resulting `StmSigner` may not be able to produce valid signatures.
+    ///
+    /// Returns a `StmSignerWrapper` specialized to
+    /// * this `StmSignerWrapper`&#39;s ID and current stake
+    /// * this `StmSignerWrapper`&#39;s parameter valuation
+    /// * the `avk` as built from the current registered parties (according to the registration service)
+    /// * the current total stake (according to the registration service)
+    /// # Error
+    /// This function fails if the initializer is not registered.
+    </span><span class="kw">pub fn </span>new_signer(
         <span class="self">self</span>,
-        <span class="ident">closed_reg</span>: <span class="ident">ClosedKeyReg</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">StmSigner</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>, <span class="ident">ProtocolRegistrationErrorWrapper</span><span class="op">&gt;</span> {
-        <span class="prelude-val">Ok</span>(<span class="self">self</span>.<span class="ident">stm_initializer</span>.<span class="ident">new_signer</span>(<span class="ident">closed_reg</span>)<span class="question-mark">?</span>)
+        closed_reg: ClosedKeyReg&lt;D&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;StmSigner&lt;D&gt;, ProtocolRegistrationErrorWrapper&gt; {
+        <span class="prelude-val">Ok</span>(<span class="self">self</span>.stm_initializer.new_signer(closed_reg)<span class="question-mark">?</span>)
     }
 
-    <span class="doccomment">/// Convert to bytes</span>
-    <span class="doccomment">/// # Layout</span>
-    <span class="doccomment">/// * StmInitialiser</span>
-    <span class="doccomment">/// * KesSignature</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_bytes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; [<span class="ident">u8</span>; <span class="number">704</span>] {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">out</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="number">704</span>];
-        <span class="ident">out</span>[..<span class="number">256</span>].<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">stm_initializer</span>.<span class="ident">to_bytes</span>());
-        <span class="comment">// out[256..].copy_from_slice(&amp;self.kes_signature.to_bytes()); todo: repair</span>
-        <span class="ident">out</span>
+    <span class="doccomment">/// Convert to bytes
+    /// # Layout
+    /// * StmInitialiser
+    /// * KesSignature
+    </span><span class="kw">pub fn </span>to_bytes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; [u8; <span class="number">704</span>] {
+        <span class="kw">let </span><span class="kw-2">mut </span>out = [<span class="number">0u8</span>; <span class="number">704</span>];
+        out[..<span class="number">256</span>].copy_from_slice(<span class="kw-2">&amp;</span><span class="self">self</span>.stm_initializer.to_bytes());
+        <span class="comment">// out[256..].copy_from_slice(&amp;self.kes_signature.to_bytes()); todo: repair
+        </span>out
     }
 
-    <span class="doccomment">/// Convert a slice of bytes to an `StmInitializerWrapper`</span>
-    <span class="doccomment">/// # Error</span>
-    <span class="doccomment">/// The function fails if the given string of bytes is not of required size.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_bytes</span>(<span class="ident">bytes</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">RegisterError</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">stm_initializer</span> <span class="op">=</span> <span class="ident">StmInitializer::from_bytes</span>(<span class="ident">bytes</span>)<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">kes_signature</span> <span class="op">=</span>
-            <span class="ident">Sum6KesSig::from_bytes</span>(<span class="kw-2">&amp;</span><span class="ident">bytes</span>[<span class="number">256</span>..]).<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">RegisterError::SerializationError</span>)<span class="question-mark">?</span>;
+    <span class="doccomment">/// Convert a slice of bytes to an `StmInitializerWrapper`
+    /// # Error
+    /// The function fails if the given string of bytes is not of required size.
+    </span><span class="kw">pub fn </span>from_bytes(bytes: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, RegisterError&gt; {
+        <span class="kw">let </span>stm_initializer = StmInitializer::from_bytes(bytes)<span class="question-mark">?</span>;
+        <span class="kw">let </span>kes_signature =
+            Sum6KesSig::from_bytes(<span class="kw-2">&amp;</span>bytes[<span class="number">256</span>..]).map_err(|<span class="kw">_</span>| RegisterError::SerializationError)<span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(<span class="self">Self</span> {
-            <span class="ident">stm_initializer</span>,
-            <span class="ident">kes_signature</span>: <span class="prelude-val">Some</span>(<span class="ident">kes_signature</span>),
+        <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
+            stm_initializer,
+            kes_signature: <span class="prelude-val">Some</span>(kes_signature),
         })
     }
 }
 
-<span class="kw">impl</span> <span class="ident">KeyRegWrapper</span> {
-    <span class="doccomment">/// New Initialisation function. We temporarily keep the other init function,</span>
-    <span class="doccomment">/// but we should eventually transition to only use this one.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">init</span>(<span class="ident">stake_dist</span>: <span class="kw-2">&amp;</span><span class="ident">ProtocolStakeDistribution</span>) -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> {
-            <span class="ident">stm_key_reg</span>: <span class="ident">KeyReg::init</span>(),
-            <span class="ident">stake_distribution</span>: <span class="ident">HashMap::from_iter</span>(<span class="ident">stake_dist</span>.<span class="ident">to_vec</span>()),
+<span class="kw">impl </span>KeyRegWrapper {
+    <span class="doccomment">/// New Initialisation function. We temporarily keep the other init function,
+    /// but we should eventually transition to only use this one.
+    </span><span class="kw">pub fn </span>init(stake_dist: <span class="kw-2">&amp;</span>ProtocolStakeDistribution) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            stm_key_reg: KeyReg::init(),
+            stake_distribution: HashMap::from_iter(stake_dist.to_vec()),
         }
     }
 
-    <span class="doccomment">/// Register a new party. For a successful registration, the registrar needs to</span>
-    <span class="doccomment">/// provide the OpCert (in cbor form), the cold VK, a KES signature, and a</span>
-    <span class="doccomment">/// Mithril key (with its corresponding Proof of Possession).</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">register</span>(
-        <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-        <span class="ident">party_id</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ProtocolPartyId</span><span class="op">&gt;</span>, <span class="comment">// TODO: Parameter should be removed once the signer certification is fully deployed</span>
-        <span class="ident">opcert</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">OpCert</span><span class="op">&gt;</span>, <span class="comment">// TODO: Option should be removed once the signer certification is fully deployed</span>
-        <span class="ident">kes_sig</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ProtocolSignerVerificationKeySignature</span><span class="op">&gt;</span>, <span class="comment">// TODO: Option should be removed once the signer certification is fully deployed</span>
-        <span class="ident">kes_period</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">KESPeriod</span><span class="op">&gt;</span>,
-        <span class="ident">pk</span>: <span class="ident">ProtocolSignerVerificationKey</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ProtocolPartyId</span>, <span class="ident">ProtocolRegistrationErrorWrapper</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">pool_id_bech32</span>: <span class="ident">ProtocolPartyId</span> <span class="op">=</span> <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">opcert</span>) <span class="op">=</span> <span class="ident">opcert</span> {
-            <span class="ident">opcert</span>
-                .<span class="ident">validate</span>()
-                .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">ProtocolRegistrationErrorWrapper::OpCertInvalid</span>)<span class="question-mark">?</span>;
-            <span class="comment">// TODO: List of eligible indices to be defined by CurrentKesPeriod and StartKesPeriod</span>
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pool_id</span> <span class="op">=</span> <span class="prelude-val">None</span>;
-            <span class="kw">let</span> <span class="ident">sig</span> <span class="op">=</span> <span class="ident">kes_sig</span>.<span class="ident">ok_or</span>(<span class="ident">ProtocolRegistrationErrorWrapper::KesSignatureMissing</span>)<span class="question-mark">?</span>;
-            <span class="kw">for</span> <span class="ident">kes_period_try</span> <span class="kw">in</span> <span class="number">0</span>..<span class="number">64</span> {
-                <span class="kw">if</span> <span class="ident">sig</span>
-                    .<span class="ident">verify</span>(<span class="ident">kes_period_try</span>, <span class="kw-2">&amp;</span><span class="ident">opcert</span>.<span class="ident">kes_vk</span>, <span class="kw-2">&amp;</span><span class="ident">pk</span>.<span class="ident">to_bytes</span>())
-                    .<span class="ident">is_ok</span>()
+    <span class="doccomment">/// Register a new party. For a successful registration, the registrar needs to
+    /// provide the OpCert (in cbor form), the cold VK, a KES signature, and a
+    /// Mithril key (with its corresponding Proof of Possession).
+    </span><span class="kw">pub fn </span>register(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        party_id: <span class="prelude-ty">Option</span>&lt;ProtocolPartyId&gt;, <span class="comment">// TODO: Parameter should be removed once the signer certification is fully deployed
+        </span>opcert: <span class="prelude-ty">Option</span>&lt;OpCert&gt;, <span class="comment">// TODO: Option should be removed once the signer certification is fully deployed
+        </span>kes_sig: <span class="prelude-ty">Option</span>&lt;ProtocolSignerVerificationKeySignature&gt;, <span class="comment">// TODO: Option should be removed once the signer certification is fully deployed
+        </span>kes_period: <span class="prelude-ty">Option</span>&lt;KESPeriod&gt;,
+        pk: ProtocolSignerVerificationKey,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;ProtocolPartyId, ProtocolRegistrationErrorWrapper&gt; {
+        <span class="kw">let </span>pool_id_bech32: ProtocolPartyId = <span class="kw">if let </span><span class="prelude-val">Some</span>(opcert) = opcert {
+            opcert
+                .validate()
+                .map_err(|<span class="kw">_</span>| ProtocolRegistrationErrorWrapper::OpCertInvalid)<span class="question-mark">?</span>;
+            <span class="comment">// TODO: List of eligible indices to be defined by CurrentKesPeriod and StartKesPeriod
+            </span><span class="kw">let </span><span class="kw-2">mut </span>pool_id = <span class="prelude-val">None</span>;
+            <span class="kw">let </span>sig = kes_sig.ok_or(ProtocolRegistrationErrorWrapper::KesSignatureMissing)<span class="question-mark">?</span>;
+            <span class="kw">for </span>kes_period_try <span class="kw">in </span><span class="number">0</span>..<span class="number">64 </span>{
+                <span class="kw">if </span>sig
+                    .verify(kes_period_try, <span class="kw-2">&amp;</span>opcert.kes_vk, <span class="kw-2">&amp;</span>pk.to_bytes())
+                    .is_ok()
                 {
                     <span class="macro">println!</span>(
                         <span class="string">&quot;WARNING: KES Signature verified for TryKesPeriod={}, CurrentKesPeriod={:?}, and StartKesPeriod={}&quot;</span>,
-                        <span class="ident">kes_period_try</span>, <span class="ident">kes_period</span>, <span class="kw-2">&amp;</span><span class="ident">opcert</span>.<span class="ident">start_kes_period</span>
+                        kes_period_try, kes_period, <span class="kw-2">&amp;</span>opcert.start_kes_period
                     );
-                    <span class="ident">pool_id</span> <span class="op">=</span> <span class="prelude-val">Some</span>(
-                        <span class="ident">opcert</span>
-                            .<span class="ident">compute_protocol_party_id</span>()
-                            .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">ProtocolRegistrationErrorWrapper::PoolAddressEncoding</span>)<span class="question-mark">?</span>,
+                    pool_id = <span class="prelude-val">Some</span>(
+                        opcert
+                            .compute_protocol_party_id()
+                            .map_err(|<span class="kw">_</span>| ProtocolRegistrationErrorWrapper::PoolAddressEncoding)<span class="question-mark">?</span>,
                     );
                     <span class="kw">break</span>;
                 }
             }
-            <span class="ident">pool_id</span>.<span class="ident">ok_or</span>(<span class="ident">ProtocolRegistrationErrorWrapper::KesSignatureInvalid</span>)<span class="question-mark">?</span>
-        } <span class="kw">else</span> {
-            <span class="macro">println!</span>(<span class="string">&quot;WARNING: Signer certification is skipped! {:?}&quot;</span>, <span class="ident">party_id</span>);
-            <span class="ident">party_id</span>.<span class="ident">ok_or</span>(<span class="ident">ProtocolRegistrationErrorWrapper::PartyIdMissing</span>)<span class="question-mark">?</span>
-        };
+            pool_id.ok_or(ProtocolRegistrationErrorWrapper::KesSignatureInvalid)<span class="question-mark">?
+        </span>} <span class="kw">else </span>{
+            <span class="macro">println!</span>(<span class="string">&quot;WARNING: Signer certification is skipped! {:?}&quot;</span>, party_id);
+            party_id.ok_or(ProtocolRegistrationErrorWrapper::PartyIdMissing)<span class="question-mark">?
+        </span>};
 
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="ident">stake</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">stake_distribution</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">pool_id_bech32</span>) {
-            <span class="self">self</span>.<span class="ident">stm_key_reg</span>
-                .<span class="ident">register</span>(<span class="ident">stake</span>, <span class="ident">pk</span>)
-                .<span class="ident">map_err</span>(<span class="ident">ProtocolRegistrationErrorWrapper::CoreRegister</span>)<span class="question-mark">?</span>;
-            <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">pool_id_bech32</span>);
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>stake) = <span class="self">self</span>.stake_distribution.get(<span class="kw-2">&amp;</span>pool_id_bech32) {
+            <span class="self">self</span>.stm_key_reg
+                .register(stake, pk)
+                .map_err(ProtocolRegistrationErrorWrapper::CoreRegister)<span class="question-mark">?</span>;
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(pool_id_bech32);
         }
-        <span class="prelude-val">Err</span>(<span class="ident">ProtocolRegistrationErrorWrapper::PartyIdNonExisting</span>)
+        <span class="prelude-val">Err</span>(ProtocolRegistrationErrorWrapper::PartyIdNonExisting)
     }
 
-    <span class="doccomment">/// Finalize the key registration.</span>
-    <span class="doccomment">/// This function disables `KeyReg::register`, consumes the instance of `self`, and returns a `ClosedKeyReg`.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">close</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">Digest</span> <span class="op">+</span> <span class="ident">FixedOutput</span><span class="op">&gt;</span>(<span class="self">self</span>) -&gt; <span class="ident">ClosedKeyReg</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">stm_key_reg</span>.<span class="ident">close</span>()
+    <span class="doccomment">/// Finalize the key registration.
+    /// This function disables `KeyReg::register`, consumes the instance of `self`, and returns a `ClosedKeyReg`.
+    </span><span class="kw">pub fn </span>close&lt;D: Digest + FixedOutput&gt;(<span class="self">self</span>) -&gt; ClosedKeyReg&lt;D&gt; {
+        <span class="self">self</span>.stm_key_reg.close()
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">test</span>))]</span>
-<span class="kw">mod</span> <span class="ident">test</span> {
+<span class="attribute">#[cfg(all(test))]
+</span><span class="kw">mod </span>test {
 
-    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
-    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::crypto_helper::cardano::ColdKeyGenerator</span>;
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use </span><span class="kw">crate</span>::crypto_helper::cardano::ColdKeyGenerator;
 
-    <span class="kw">use</span> <span class="ident">rand_chacha::ChaCha20Rng</span>;
-    <span class="kw">use</span> <span class="ident">rand_core::SeedableRng</span>;
-    <span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">fs</span>, <span class="ident">path::PathBuf</span>};
+    <span class="kw">use </span>rand_chacha::ChaCha20Rng;
+    <span class="kw">use </span>rand_core::SeedableRng;
+    <span class="kw">use </span>std::{fs, path::PathBuf};
 
-    <span class="kw">fn</span> <span class="ident">setup_temp_directory</span>() -&gt; <span class="ident">PathBuf</span> {
-        <span class="kw">let</span> <span class="ident">temp_dir</span> <span class="op">=</span> <span class="ident">std::env::temp_dir</span>().<span class="ident">join</span>(<span class="string">&quot;mithril_cardano_key_certification&quot;</span>);
-        <span class="ident">fs::create_dir_all</span>(<span class="kw-2">&amp;</span><span class="ident">temp_dir</span>).<span class="ident">expect</span>(<span class="string">&quot;temp dir creation should not fail&quot;</span>);
-        <span class="ident">temp_dir</span>
+    <span class="kw">fn </span>setup_temp_directory() -&gt; PathBuf {
+        <span class="kw">let </span>temp_dir = std::env::temp_dir().join(<span class="string">&quot;mithril_cardano_key_certification&quot;</span>);
+        fs::create_dir_all(<span class="kw-2">&amp;</span>temp_dir).expect(<span class="string">&quot;temp dir creation should not fail&quot;</span>);
+        temp_dir
     }
 
-    <span class="kw">fn</span> <span class="ident">create_cryptographic_material</span>(<span class="ident">party_idx</span>: <span class="ident">u64</span>) -&gt; (<span class="ident">ProtocolPartyId</span>, <span class="ident">PathBuf</span>, <span class="ident">PathBuf</span>) {
-        <span class="kw">let</span> <span class="ident">temp_dir</span> <span class="op">=</span> <span class="ident">setup_temp_directory</span>();
-        <span class="kw">let</span> <span class="ident">keypair</span> <span class="op">=</span> <span class="ident">ColdKeyGenerator::create_deterministic_keypair</span>([<span class="ident">party_idx</span> <span class="kw">as</span> <span class="ident">u8</span>; <span class="number">32</span>]);
-        <span class="kw">let</span> (<span class="ident">kes_secret_key</span>, <span class="ident">kes_verification_key</span>) <span class="op">=</span> <span class="ident">Sum6Kes::keygen</span>(<span class="kw-2">&amp;mut</span> [<span class="ident">party_idx</span> <span class="kw">as</span> <span class="ident">u8</span>; <span class="number">32</span>]);
-        <span class="kw">let</span> <span class="ident">operational_certificate</span> <span class="op">=</span> <span class="ident">OpCert::new</span>(<span class="ident">kes_verification_key</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="ident">keypair</span>);
-        <span class="kw">let</span> <span class="ident">kes_secret_key_file</span> <span class="op">=</span> <span class="ident">temp_dir</span>.<span class="ident">join</span>(<span class="macro">format!</span>(<span class="string">&quot;kes{}.skey&quot;</span>, <span class="ident">party_idx</span>));
-        <span class="ident">kes_secret_key</span>
-            .<span class="ident">to_file</span>(<span class="kw-2">&amp;</span><span class="ident">kes_secret_key_file</span>)
-            .<span class="ident">expect</span>(<span class="string">&quot;KES secret key file export should not fail&quot;</span>);
-        <span class="kw">let</span> <span class="ident">operational_certificate_file</span> <span class="op">=</span> <span class="ident">temp_dir</span>.<span class="ident">join</span>(<span class="macro">format!</span>(<span class="string">&quot;pool{}.cert&quot;</span>, <span class="ident">party_idx</span>));
-        <span class="ident">operational_certificate</span>
-            .<span class="ident">to_file</span>(<span class="kw-2">&amp;</span><span class="ident">operational_certificate_file</span>)
-            .<span class="ident">expect</span>(<span class="string">&quot;operational certificate file export should not fail&quot;</span>);
-        <span class="kw">let</span> <span class="ident">party_id</span> <span class="op">=</span> <span class="ident">operational_certificate</span>
-            .<span class="ident">compute_protocol_party_id</span>()
-            .<span class="ident">expect</span>(<span class="string">&quot;compute protocol party id should not fail&quot;</span>);
-        (<span class="ident">party_id</span>, <span class="ident">operational_certificate_file</span>, <span class="ident">kes_secret_key_file</span>)
+    <span class="kw">fn </span>create_cryptographic_material(party_idx: u64) -&gt; (ProtocolPartyId, PathBuf, PathBuf) {
+        <span class="kw">let </span>temp_dir = setup_temp_directory();
+        <span class="kw">let </span>keypair = ColdKeyGenerator::create_deterministic_keypair([party_idx <span class="kw">as </span>u8; <span class="number">32</span>]);
+        <span class="kw">let </span>(kes_secret_key, kes_verification_key) = Sum6Kes::keygen(<span class="kw-2">&amp;mut </span>[party_idx <span class="kw">as </span>u8; <span class="number">32</span>]);
+        <span class="kw">let </span>operational_certificate = OpCert::new(kes_verification_key, <span class="number">0</span>, <span class="number">0</span>, keypair);
+        <span class="kw">let </span>kes_secret_key_file = temp_dir.join(<span class="macro">format!</span>(<span class="string">&quot;kes{}.skey&quot;</span>, party_idx));
+        kes_secret_key
+            .to_file(<span class="kw-2">&amp;</span>kes_secret_key_file)
+            .expect(<span class="string">&quot;KES secret key file export should not fail&quot;</span>);
+        <span class="kw">let </span>operational_certificate_file = temp_dir.join(<span class="macro">format!</span>(<span class="string">&quot;pool{}.cert&quot;</span>, party_idx));
+        operational_certificate
+            .to_file(<span class="kw-2">&amp;</span>operational_certificate_file)
+            .expect(<span class="string">&quot;operational certificate file export should not fail&quot;</span>);
+        <span class="kw">let </span>party_id = operational_certificate
+            .compute_protocol_party_id()
+            .expect(<span class="string">&quot;compute protocol party id should not fail&quot;</span>);
+        (party_id, operational_certificate_file, kes_secret_key_file)
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">test_vector_key_reg</span>() {
-        <span class="kw">let</span> <span class="ident">params</span> <span class="op">=</span> <span class="ident">StmParameters</span> {
-            <span class="ident">m</span>: <span class="number">5</span>,
-            <span class="ident">k</span>: <span class="number">5</span>,
-            <span class="ident">phi_f</span>: <span class="number">1.0</span>,
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>test_vector_key_reg() {
+        <span class="kw">let </span>params = StmParameters {
+            m: <span class="number">5</span>,
+            k: <span class="number">5</span>,
+            phi_f: <span class="number">1.0</span>,
         };
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">rng</span> <span class="op">=</span> <span class="ident">ChaCha20Rng::from_seed</span>([<span class="number">0u8</span>; <span class="number">32</span>]);
+        <span class="kw">let </span><span class="kw-2">mut </span>rng = ChaCha20Rng::from_seed([<span class="number">0u8</span>; <span class="number">32</span>]);
 
-        <span class="kw">let</span> (<span class="ident">party_id_1</span>, <span class="ident">operational_certificate_file_1</span>, <span class="ident">kes_secret_key_file_1</span>) <span class="op">=</span>
-            <span class="ident">create_cryptographic_material</span>(<span class="number">1</span>);
-        <span class="kw">let</span> (<span class="ident">party_id_2</span>, <span class="ident">operational_certificate_file_2</span>, <span class="ident">kes_secret_key_file_2</span>) <span class="op">=</span>
-            <span class="ident">create_cryptographic_material</span>(<span class="number">2</span>);
+        <span class="kw">let </span>(party_id_1, operational_certificate_file_1, kes_secret_key_file_1) =
+            create_cryptographic_material(<span class="number">1</span>);
+        <span class="kw">let </span>(party_id_2, operational_certificate_file_2, kes_secret_key_file_2) =
+            create_cryptographic_material(<span class="number">2</span>);
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">key_reg</span> <span class="op">=</span> <span class="ident">KeyRegWrapper::init</span>(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[(<span class="ident">party_id_1</span>, <span class="number">10</span>), (<span class="ident">party_id_2</span>, <span class="number">3</span>)]);
+        <span class="kw">let </span><span class="kw-2">mut </span>key_reg = KeyRegWrapper::init(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[(party_id_1, <span class="number">10</span>), (party_id_2, <span class="number">3</span>)]);
 
-        <span class="kw">let</span> <span class="ident">initializer_1</span> <span class="op">=</span> <span class="ident">StmInitializerWrapper::setup</span>(
-            <span class="ident">params</span>,
-            <span class="prelude-val">Some</span>(<span class="ident">kes_secret_key_file_1</span>),
+        <span class="kw">let </span>initializer_1 = StmInitializerWrapper::setup(
+            params,
+            <span class="prelude-val">Some</span>(kes_secret_key_file_1),
             <span class="prelude-val">Some</span>(<span class="number">0</span>),
             <span class="number">10</span>,
-            <span class="kw-2">&amp;mut</span> <span class="ident">rng</span>,
+            <span class="kw-2">&amp;mut </span>rng,
         )
-        .<span class="ident">unwrap</span>();
+        .unwrap();
 
-        <span class="kw">let</span> <span class="ident">opcert1</span>: <span class="ident">OpCert</span> <span class="op">=</span> <span class="ident">OpCert::from_file</span>(<span class="ident">operational_certificate_file_1</span>)
-            .<span class="ident">expect</span>(<span class="string">&quot;opcert deserialization should not fail&quot;</span>);
+        <span class="kw">let </span>opcert1: OpCert = OpCert::from_file(operational_certificate_file_1)
+            .expect(<span class="string">&quot;opcert deserialization should not fail&quot;</span>);
 
-        <span class="kw">let</span> <span class="ident">key_registration_1</span> <span class="op">=</span> <span class="ident">key_reg</span>.<span class="ident">register</span>(
+        <span class="kw">let </span>key_registration_1 = key_reg.register(
             <span class="prelude-val">None</span>,
-            <span class="prelude-val">Some</span>(<span class="ident">opcert1</span>),
-            <span class="ident">initializer_1</span>.<span class="ident">kes_signature</span>,
+            <span class="prelude-val">Some</span>(opcert1),
+            initializer_1.kes_signature,
             <span class="prelude-val">Some</span>(<span class="number">0</span>),
-            <span class="ident">initializer_1</span>.<span class="ident">stm_initializer</span>.<span class="ident">verification_key</span>(),
+            initializer_1.stm_initializer.verification_key(),
         );
-        <span class="macro">assert!</span>(<span class="ident">key_registration_1</span>.<span class="ident">is_ok</span>());
+        <span class="macro">assert!</span>(key_registration_1.is_ok());
 
-        <span class="kw">let</span> <span class="ident">initializer_2</span> <span class="op">=</span> <span class="ident">StmInitializerWrapper::setup</span>(
-            <span class="ident">params</span>,
-            <span class="prelude-val">Some</span>(<span class="ident">kes_secret_key_file_2</span>),
+        <span class="kw">let </span>initializer_2 = StmInitializerWrapper::setup(
+            params,
+            <span class="prelude-val">Some</span>(kes_secret_key_file_2),
             <span class="prelude-val">Some</span>(<span class="number">0</span>),
             <span class="number">10</span>,
-            <span class="kw-2">&amp;mut</span> <span class="ident">rng</span>,
+            <span class="kw-2">&amp;mut </span>rng,
         )
-        .<span class="ident">unwrap</span>();
+        .unwrap();
 
-        <span class="kw">let</span> <span class="ident">opcert2</span>: <span class="ident">OpCert</span> <span class="op">=</span> <span class="ident">OpCert::from_file</span>(<span class="ident">operational_certificate_file_2</span>)
-            .<span class="ident">expect</span>(<span class="string">&quot;opcert deserialization should not fail&quot;</span>);
+        <span class="kw">let </span>opcert2: OpCert = OpCert::from_file(operational_certificate_file_2)
+            .expect(<span class="string">&quot;opcert deserialization should not fail&quot;</span>);
 
-        <span class="kw">let</span> <span class="ident">key_registration_2</span> <span class="op">=</span> <span class="ident">key_reg</span>.<span class="ident">register</span>(
+        <span class="kw">let </span>key_registration_2 = key_reg.register(
             <span class="prelude-val">None</span>,
-            <span class="prelude-val">Some</span>(<span class="ident">opcert2</span>),
-            <span class="ident">initializer_2</span>.<span class="ident">kes_signature</span>,
+            <span class="prelude-val">Some</span>(opcert2),
+            initializer_2.kes_signature,
             <span class="prelude-val">Some</span>(<span class="number">0</span>),
-            <span class="ident">initializer_2</span>.<span class="ident">stm_initializer</span>.<span class="ident">verification_key</span>(),
+            initializer_2.stm_initializer.verification_key(),
         );
-        <span class="macro">assert!</span>(<span class="ident">key_registration_2</span>.<span class="ident">is_ok</span>())
+        <span class="macro">assert!</span>(key_registration_2.is_ok())
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../../" data-current-crate="mithril_common" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.64.0 (a55dd71d5 2022-09-19)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../../" data-current-crate="mithril_common" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0 (897e37553 2022-11-02)" ></div></body></html>

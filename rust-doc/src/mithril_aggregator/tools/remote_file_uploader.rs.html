@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `mithril-aggregator/src/tools/remote_file_uploader.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>remote_file_uploader.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../mithril_aggregator/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../mithril_aggregator/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../mithril_aggregator/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `mithril-aggregator/src/tools/remote_file_uploader.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>remote_file_uploader.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../mithril_aggregator/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../mithril_aggregator/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../mithril_aggregator/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -85,92 +85,92 @@
 <span id="85">85</span>
 <span id="86">86</span>
 <span id="87">87</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
-<span class="kw">use</span> <span class="ident">cloud_storage::bucket::Entity</span>;
-<span class="kw">use</span> <span class="ident">cloud_storage::bucket_access_control::Role</span>;
-<span class="kw">use</span> <span class="ident">cloud_storage::object_access_control::NewObjectAccessControl</span>;
-<span class="kw">use</span> <span class="ident">cloud_storage::Client</span>;
-<span class="kw">use</span> <span class="ident">slog_scope::info</span>;
-<span class="kw">use</span> <span class="ident">std::env</span>;
-<span class="kw">use</span> <span class="ident">std::path::Path</span>;
-<span class="kw">use</span> <span class="ident">tokio_util::codec::BytesCodec</span>;
-<span class="kw">use</span> <span class="ident">tokio_util::codec::FramedRead</span>;
+</pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
+<span class="kw">use </span>cloud_storage::bucket::Entity;
+<span class="kw">use </span>cloud_storage::bucket_access_control::Role;
+<span class="kw">use </span>cloud_storage::object_access_control::NewObjectAccessControl;
+<span class="kw">use </span>cloud_storage::Client;
+<span class="kw">use </span>slog_scope::info;
+<span class="kw">use </span>std::env;
+<span class="kw">use </span>std::path::Path;
+<span class="kw">use </span>tokio_util::codec::BytesCodec;
+<span class="kw">use </span>tokio_util::codec::FramedRead;
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">use</span> <span class="ident">mockall::automock</span>;
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">use </span>mockall::automock;
 
-<span class="doccomment">/// RemoteFileUploader represents a remote file uploader interactor</span>
-<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">test</span>, <span class="ident">automock</span>)]</span>
-<span class="attribute">#[<span class="ident">async_trait</span>]</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">RemoteFileUploader</span>: <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span> {
-    <span class="doccomment">/// Upload a snapshot</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">upload_file</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">filepath</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">String</span><span class="op">&gt;</span>;
+<span class="doccomment">/// RemoteFileUploader represents a remote file uploader interactor
+</span><span class="attribute">#[cfg_attr(test, automock)]
+#[async_trait]
+</span><span class="kw">pub trait </span>RemoteFileUploader: Sync + Send {
+    <span class="doccomment">/// Upload a snapshot
+    </span><span class="kw">async fn </span>upload_file(<span class="kw-2">&amp;</span><span class="self">self</span>, filepath: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt;;
 }
 
-<span class="doccomment">/// GcpFileUploader represents a Google Cloud Platform file uploader interactor</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">GcpFileUploader</span> {
-    <span class="ident">bucket</span>: <span class="ident">String</span>,
+<span class="doccomment">/// GcpFileUploader represents a Google Cloud Platform file uploader interactor
+</span><span class="kw">pub struct </span>GcpFileUploader {
+    bucket: String,
 }
 
-<span class="kw">impl</span> <span class="ident">GcpFileUploader</span> {
-    <span class="doccomment">/// GcpFileUploader factory</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">bucket</span>: <span class="ident">String</span>) -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> { <span class="ident">bucket</span> }
+<span class="kw">impl </span>GcpFileUploader {
+    <span class="doccomment">/// GcpFileUploader factory
+    </span><span class="kw">pub fn </span>new(bucket: String) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{ bucket }
     }
 }
 
-<span class="attribute">#[<span class="ident">async_trait</span>]</span>
-<span class="kw">impl</span> <span class="ident">RemoteFileUploader</span> <span class="kw">for</span> <span class="ident">GcpFileUploader</span> {
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">upload_file</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">filepath</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">String</span><span class="op">&gt;</span> {
-        <span class="kw">if</span> <span class="ident">env::var</span>(<span class="string">&quot;GOOGLE_APPLICATION_CREDENTIALS_JSON&quot;</span>).<span class="ident">is_err</span>() {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(
-                <span class="string">&quot;Missing GOOGLE_APPLICATION_CREDENTIALS_JSON environment variable&quot;</span>.<span class="ident">to_string</span>(),
+<span class="attribute">#[async_trait]
+</span><span class="kw">impl </span>RemoteFileUploader <span class="kw">for </span>GcpFileUploader {
+    <span class="kw">async fn </span>upload_file(<span class="kw-2">&amp;</span><span class="self">self</span>, filepath: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
+        <span class="kw">if </span>env::var(<span class="string">&quot;GOOGLE_APPLICATION_CREDENTIALS_JSON&quot;</span>).is_err() {
+            <span class="kw">return </span><span class="prelude-val">Err</span>(
+                <span class="string">&quot;Missing GOOGLE_APPLICATION_CREDENTIALS_JSON environment variable&quot;</span>.to_string(),
             );
         };
 
-        <span class="kw">let</span> <span class="ident">filename</span> <span class="op">=</span> <span class="ident">filepath</span>.<span class="ident">file_name</span>().<span class="ident">unwrap</span>().<span class="ident">to_str</span>().<span class="ident">unwrap</span>();
+        <span class="kw">let </span>filename = filepath.file_name().unwrap().to_str().unwrap();
 
-        <span class="macro">info!</span>(<span class="string">&quot;uploading {}&quot;</span>, <span class="ident">filename</span>);
-        <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> <span class="ident">Client::default</span>();
-        <span class="kw">let</span> <span class="ident">file</span> <span class="op">=</span> <span class="ident">tokio::fs::File::open</span>(<span class="ident">filepath</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>();
-        <span class="kw">let</span> <span class="ident">stream</span> <span class="op">=</span> <span class="ident">FramedRead::new</span>(<span class="ident">file</span>, <span class="ident">BytesCodec::new</span>());
-        <span class="ident">client</span>
-            .<span class="ident">object</span>()
-            .<span class="ident">create_streamed</span>(
-                <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">bucket</span>,
-                <span class="ident">stream</span>,
+        <span class="macro">info!</span>(<span class="string">&quot;uploading {}&quot;</span>, filename);
+        <span class="kw">let </span>client = Client::default();
+        <span class="kw">let </span>file = tokio::fs::File::open(filepath).<span class="kw">await</span>.unwrap();
+        <span class="kw">let </span>stream = FramedRead::new(file, BytesCodec::new());
+        client
+            .object()
+            .create_streamed(
+                <span class="kw-2">&amp;</span><span class="self">self</span>.bucket,
+                stream,
                 <span class="prelude-val">None</span>,
-                <span class="ident">filename</span>,
+                filename,
                 <span class="string">&quot;application/octet-stream&quot;</span>,
             )
-            .<span class="kw">await</span>
-            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">e</span>.<span class="ident">to_string</span>())<span class="question-mark">?</span>;
+            .<span class="kw">await
+            </span>.map_err(|e| e.to_string())<span class="question-mark">?</span>;
 
-        <span class="macro">info!</span>(<span class="string">&quot;uploaded {}&quot;</span>, <span class="ident">filename</span>);
+        <span class="macro">info!</span>(<span class="string">&quot;uploaded {}&quot;</span>, filename);
 
-        <span class="comment">// ensure the uploaded file as public read access</span>
-        <span class="comment">// when a file is uploaded to gcloud storage its permissions are overwritten so</span>
-        <span class="comment">// we need to put them back</span>
-        <span class="kw">let</span> <span class="ident">new_bucket_access_control</span> <span class="op">=</span> <span class="ident">NewObjectAccessControl</span> {
-            <span class="ident">entity</span>: <span class="ident">Entity::AllUsers</span>,
-            <span class="ident">role</span>: <span class="ident">Role::Reader</span>,
+        <span class="comment">// ensure the uploaded file as public read access
+        // when a file is uploaded to gcloud storage its permissions are overwritten so
+        // we need to put them back
+        </span><span class="kw">let </span>new_bucket_access_control = NewObjectAccessControl {
+            entity: Entity::AllUsers,
+            role: Role::Reader,
         };
 
         <span class="macro">info!</span>(
             <span class="string">&quot;updating acl for {}: {:?}&quot;</span>,
-            <span class="ident">filename</span>, <span class="ident">new_bucket_access_control</span>
+            filename, new_bucket_access_control
         );
 
-        <span class="ident">client</span>
-            .<span class="ident">object_access_control</span>()
-            .<span class="ident">create</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">bucket</span>, <span class="ident">filename</span>, <span class="kw-2">&amp;</span><span class="ident">new_bucket_access_control</span>)
-            .<span class="kw">await</span>
-            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">e</span>.<span class="ident">to_string</span>())<span class="question-mark">?</span>;
+        client
+            .object_access_control()
+            .create(<span class="kw-2">&amp;</span><span class="self">self</span>.bucket, filename, <span class="kw-2">&amp;</span>new_bucket_access_control)
+            .<span class="kw">await
+            </span>.map_err(|e| e.to_string())<span class="question-mark">?</span>;
 
-        <span class="macro">info!</span>(<span class="string">&quot;updated acl for {} &quot;</span>, <span class="ident">filename</span>);
+        <span class="macro">info!</span>(<span class="string">&quot;updated acl for {} &quot;</span>, filename);
 
         <span class="prelude-val">Ok</span>(())
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="mithril_aggregator" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.64.0 (a55dd71d5 2022-09-19)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="mithril_aggregator" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0 (897e37553 2022-11-02)" ></div></body></html>

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `mithril-aggregator/src/snapshotter.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>snapshotter.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../mithril_aggregator/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../mithril_aggregator/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../mithril_aggregator/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `mithril-aggregator/src/snapshotter.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>snapshotter.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../mithril_aggregator/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../mithril_aggregator/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../mithril_aggregator/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -175,182 +175,182 @@
 <span id="175">175</span>
 <span id="176">176</span>
 <span id="177">177</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">flate2::write::GzEncoder</span>;
-<span class="kw">use</span> <span class="ident">flate2::Compression</span>;
-<span class="kw">use</span> <span class="ident">slog_scope::info</span>;
-<span class="kw">use</span> <span class="ident">std::error::Error</span> <span class="kw">as</span> <span class="ident">StdError</span>;
-<span class="kw">use</span> <span class="ident">std::fs::File</span>;
-<span class="kw">use</span> <span class="ident">std::io</span>;
-<span class="kw">use</span> <span class="ident">std::path</span>::{<span class="ident">Path</span>, <span class="ident">PathBuf</span>};
-<span class="kw">use</span> <span class="ident">std::sync::RwLock</span>;
-<span class="kw">use</span> <span class="ident">thiserror::Error</span>;
+</pre><pre class="rust"><code><span class="kw">use </span>flate2::write::GzEncoder;
+<span class="kw">use </span>flate2::Compression;
+<span class="kw">use </span>slog_scope::info;
+<span class="kw">use </span>std::error::Error <span class="kw">as </span>StdError;
+<span class="kw">use </span>std::fs::File;
+<span class="kw">use </span>std::io;
+<span class="kw">use </span>std::path::{Path, PathBuf};
+<span class="kw">use </span>std::sync::RwLock;
+<span class="kw">use </span>thiserror::Error;
 
-<span class="doccomment">/// Define the ability to create snapshots.</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Snapshotter</span>: <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span> {
-    <span class="doccomment">/// Create a new snapshot with the given archive name.</span>
-    <span class="kw">fn</span> <span class="ident">snapshot</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">archive_name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">OngoingSnapshot</span>, <span class="ident">SnapshotError</span><span class="op">&gt;</span>;
+<span class="doccomment">/// Define the ability to create snapshots.
+</span><span class="kw">pub trait </span>Snapshotter: Sync + Send {
+    <span class="doccomment">/// Create a new snapshot with the given archive name.
+    </span><span class="kw">fn </span>snapshot(<span class="kw-2">&amp;</span><span class="self">self</span>, archive_name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;OngoingSnapshot, SnapshotError&gt;;
 }
 
-<span class="doccomment">/// Gzip Snapshotter create a compressed file.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">GzipSnapshotter</span> {
-    <span class="doccomment">/// DB directory to snapshot</span>
-    <span class="ident">db_directory</span>: <span class="ident">PathBuf</span>,
+<span class="doccomment">/// Gzip Snapshotter create a compressed file.
+</span><span class="kw">pub struct </span>GzipSnapshotter {
+    <span class="doccomment">/// DB directory to snapshot
+    </span>db_directory: PathBuf,
 
-    <span class="doccomment">/// Directory to store ongoing snapshot</span>
-    <span class="ident">ongoing_snapshot_directory</span>: <span class="ident">PathBuf</span>,
+    <span class="doccomment">/// Directory to store ongoing snapshot
+    </span>ongoing_snapshot_directory: PathBuf,
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">OngoingSnapshot</span> {
-    <span class="ident">filepath</span>: <span class="ident">PathBuf</span>,
-    <span class="ident">filesize</span>: <span class="ident">u64</span>,
+<span class="attribute">#[derive(Debug, Clone, PartialEq, Eq)]
+</span><span class="kw">pub struct </span>OngoingSnapshot {
+    filepath: PathBuf,
+    filesize: u64,
 }
 
-<span class="kw">impl</span> <span class="ident">OngoingSnapshot</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">filepath</span>: <span class="ident">PathBuf</span>, <span class="ident">filesize</span>: <span class="ident">u64</span>) -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> { <span class="ident">filepath</span>, <span class="ident">filesize</span> }
+<span class="kw">impl </span>OngoingSnapshot {
+    <span class="kw">pub fn </span>new(filepath: PathBuf, filesize: u64) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{ filepath, filesize }
     }
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_file_path</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">PathBuf</span> {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">filepath</span>
+    <span class="kw">pub fn </span>get_file_path(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>PathBuf {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.filepath
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_file_size</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">u64</span> {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">filesize</span>
-    }
-}
-
-<span class="doccomment">/// Snapshotter error type.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Error</span>, <span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">SnapshotError</span> {
-    <span class="doccomment">/// Set when the snapshotter fails at creating a snapshot.</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Create archive error: {0}&quot;</span>)]</span>
-    <span class="ident">CreateArchiveError</span>(<span class="attribute">#[<span class="ident">from</span>]</span> <span class="ident">io::Error</span>),
-
-    <span class="doccomment">/// Set when the snapshotter fails at uploading the snapshot.</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Upload file error: `{0}`&quot;</span>)]</span>
-    <span class="ident">UploadFileError</span>(<span class="ident">String</span>),
-
-    <span class="doccomment">/// General error.</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Snapshot General Error: `{0}`&quot;</span>)]</span>
-    <span class="ident">GeneralError</span>(<span class="ident">String</span>),
-}
-
-<span class="kw">impl</span> <span class="ident">Snapshotter</span> <span class="kw">for</span> <span class="ident">GzipSnapshotter</span> {
-    <span class="kw">fn</span> <span class="ident">snapshot</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">archive_name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">OngoingSnapshot</span>, <span class="ident">SnapshotError</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">filepath</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">create_archive</span>(<span class="ident">archive_name</span>)<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">filesize</span> <span class="op">=</span> <span class="ident">std::fs::metadata</span>(<span class="kw-2">&amp;</span><span class="ident">filepath</span>)
-            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">SnapshotError::GeneralError</span>(<span class="ident">e</span>.<span class="ident">to_string</span>()))<span class="question-mark">?</span>
-            .<span class="ident">len</span>();
-
-        <span class="prelude-val">Ok</span>(<span class="ident">OngoingSnapshot</span> { <span class="ident">filepath</span>, <span class="ident">filesize</span> })
+    <span class="kw">pub fn </span>get_file_size(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>u64 {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.filesize
     }
 }
 
-<span class="kw">impl</span> <span class="ident">GzipSnapshotter</span> {
-    <span class="doccomment">/// Snapshotter factory</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">db_directory</span>: <span class="ident">PathBuf</span>, <span class="ident">ongoing_snapshot_directory</span>: <span class="ident">PathBuf</span>) -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> {
-            <span class="ident">db_directory</span>,
-            <span class="ident">ongoing_snapshot_directory</span>,
+<span class="doccomment">/// Snapshotter error type.
+</span><span class="attribute">#[derive(Error, Debug)]
+</span><span class="kw">pub enum </span>SnapshotError {
+    <span class="doccomment">/// Set when the snapshotter fails at creating a snapshot.
+    </span><span class="attribute">#[error(<span class="string">&quot;Create archive error: {0}&quot;</span>)]
+    </span>CreateArchiveError(<span class="attribute">#[from] </span>io::Error),
+
+    <span class="doccomment">/// Set when the snapshotter fails at uploading the snapshot.
+    </span><span class="attribute">#[error(<span class="string">&quot;Upload file error: `{0}`&quot;</span>)]
+    </span>UploadFileError(String),
+
+    <span class="doccomment">/// General error.
+    </span><span class="attribute">#[error(<span class="string">&quot;Snapshot General Error: `{0}`&quot;</span>)]
+    </span>GeneralError(String),
+}
+
+<span class="kw">impl </span>Snapshotter <span class="kw">for </span>GzipSnapshotter {
+    <span class="kw">fn </span>snapshot(<span class="kw-2">&amp;</span><span class="self">self</span>, archive_name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;OngoingSnapshot, SnapshotError&gt; {
+        <span class="kw">let </span>filepath = <span class="self">self</span>.create_archive(archive_name)<span class="question-mark">?</span>;
+        <span class="kw">let </span>filesize = std::fs::metadata(<span class="kw-2">&amp;</span>filepath)
+            .map_err(|e| SnapshotError::GeneralError(e.to_string()))<span class="question-mark">?
+            </span>.len();
+
+        <span class="prelude-val">Ok</span>(OngoingSnapshot { filepath, filesize })
+    }
+}
+
+<span class="kw">impl </span>GzipSnapshotter {
+    <span class="doccomment">/// Snapshotter factory
+    </span><span class="kw">pub fn </span>new(db_directory: PathBuf, ongoing_snapshot_directory: PathBuf) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            db_directory,
+            ongoing_snapshot_directory,
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">create_archive</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">archive_name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">PathBuf</span>, <span class="ident">SnapshotError</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">path</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">ongoing_snapshot_directory</span>.<span class="ident">join</span>(<span class="ident">archive_name</span>);
+    <span class="kw">fn </span>create_archive(<span class="kw-2">&amp;</span><span class="self">self</span>, archive_name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;PathBuf, SnapshotError&gt; {
+        <span class="kw">let </span>path = <span class="self">self</span>.ongoing_snapshot_directory.join(archive_name);
         <span class="macro">info!</span>(
             <span class="string">&quot;compressing {} into {}&quot;</span>,
-            <span class="self">self</span>.<span class="ident">db_directory</span>.<span class="ident">display</span>(),
-            <span class="ident">path</span>.<span class="ident">display</span>()
+            <span class="self">self</span>.db_directory.display(),
+            path.display()
         );
 
-        <span class="kw">let</span> <span class="ident">tar_gz</span> <span class="op">=</span> <span class="ident">File::create</span>(<span class="kw-2">&amp;</span><span class="ident">path</span>).<span class="ident">map_err</span>(<span class="ident">SnapshotError::CreateArchiveError</span>)<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">enc</span> <span class="op">=</span> <span class="ident">GzEncoder::new</span>(<span class="ident">tar_gz</span>, <span class="ident">Compression::default</span>());
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">tar</span> <span class="op">=</span> <span class="ident">tar::Builder::new</span>(<span class="ident">enc</span>);
+        <span class="kw">let </span>tar_gz = File::create(<span class="kw-2">&amp;</span>path).map_err(SnapshotError::CreateArchiveError)<span class="question-mark">?</span>;
+        <span class="kw">let </span>enc = GzEncoder::new(tar_gz, Compression::default());
+        <span class="kw">let </span><span class="kw-2">mut </span>tar = tar::Builder::new(enc);
 
-        <span class="ident">tar</span>.<span class="ident">append_dir_all</span>(<span class="string">&quot;.&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">db_directory</span>)
-            .<span class="ident">map_err</span>(<span class="ident">SnapshotError::CreateArchiveError</span>)<span class="question-mark">?</span>;
+        tar.append_dir_all(<span class="string">&quot;.&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.db_directory)
+            .map_err(SnapshotError::CreateArchiveError)<span class="question-mark">?</span>;
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">gz</span> <span class="op">=</span> <span class="ident">tar</span>
-            .<span class="ident">into_inner</span>()
-            .<span class="ident">map_err</span>(<span class="ident">SnapshotError::CreateArchiveError</span>)<span class="question-mark">?</span>;
-        <span class="ident">gz</span>.<span class="ident">try_finish</span>().<span class="ident">map_err</span>(<span class="ident">SnapshotError::CreateArchiveError</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>gz = tar
+            .into_inner()
+            .map_err(SnapshotError::CreateArchiveError)<span class="question-mark">?</span>;
+        gz.try_finish().map_err(SnapshotError::CreateArchiveError)<span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(<span class="ident">path</span>)
+        <span class="prelude-val">Ok</span>(path)
     }
 }
 
-<span class="doccomment">/// Snapshotter that does nothing. It is mainly used for test purposes.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">DumbSnapshotter</span> {
-    <span class="ident">last_snapshot</span>: <span class="ident">RwLock</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">OngoingSnapshot</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+<span class="doccomment">/// Snapshotter that does nothing. It is mainly used for test purposes.
+</span><span class="kw">pub struct </span>DumbSnapshotter {
+    last_snapshot: RwLock&lt;<span class="prelude-ty">Option</span>&lt;OngoingSnapshot&gt;&gt;,
 }
 
-<span class="kw">impl</span> <span class="ident">DumbSnapshotter</span> {
-    <span class="doccomment">/// Create a new instance of DumbSnapshotter.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> {
-            <span class="ident">last_snapshot</span>: <span class="ident">RwLock::new</span>(<span class="prelude-val">None</span>),
+<span class="kw">impl </span>DumbSnapshotter {
+    <span class="doccomment">/// Create a new instance of DumbSnapshotter.
+    </span><span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            last_snapshot: RwLock::new(<span class="prelude-val">None</span>),
         }
     }
 
-    <span class="doccomment">/// Return the last fake snapshot produced.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_last_snapshot</span>(
+    <span class="doccomment">/// Return the last fake snapshot produced.
+    </span><span class="kw">pub fn </span>get_last_snapshot(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">OngoingSnapshot</span><span class="op">&gt;</span>, <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">StdError</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">value</span> <span class="op">=</span> <span class="self">self</span>
-            .<span class="ident">last_snapshot</span>
-            .<span class="ident">read</span>()
-            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">SnapshotError::UploadFileError</span>(<span class="ident">e</span>.<span class="ident">to_string</span>()))<span class="question-mark">?</span>
-            .<span class="ident">as_ref</span>()
-            .<span class="ident">cloned</span>();
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;OngoingSnapshot&gt;, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
+        <span class="kw">let </span>value = <span class="self">self
+            </span>.last_snapshot
+            .read()
+            .map_err(|e| SnapshotError::UploadFileError(e.to_string()))<span class="question-mark">?
+            </span>.as_ref()
+            .cloned();
 
-        <span class="prelude-val">Ok</span>(<span class="ident">value</span>)
+        <span class="prelude-val">Ok</span>(value)
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">DumbSnapshotter</span> {
-    <span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> {
-        <span class="ident"><span class="self">Self</span>::new</span>()
+<span class="kw">impl </span>Default <span class="kw">for </span>DumbSnapshotter {
+    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::new()
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Snapshotter</span> <span class="kw">for</span> <span class="ident">DumbSnapshotter</span> {
-    <span class="kw">fn</span> <span class="ident">snapshot</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">archive_name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">OngoingSnapshot</span>, <span class="ident">SnapshotError</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">value</span> <span class="op">=</span> <span class="self">self</span>
-            .<span class="ident">last_snapshot</span>
-            .<span class="ident">write</span>()
-            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">SnapshotError::UploadFileError</span>(<span class="ident">e</span>.<span class="ident">to_string</span>()))<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">snapshot</span> <span class="op">=</span> <span class="ident">OngoingSnapshot</span> {
-            <span class="ident">filepath</span>: <span class="ident">Path::new</span>(<span class="ident">archive_name</span>).<span class="ident">to_path_buf</span>(),
-            <span class="ident">filesize</span>: <span class="number">0</span>,
+<span class="kw">impl </span>Snapshotter <span class="kw">for </span>DumbSnapshotter {
+    <span class="kw">fn </span>snapshot(<span class="kw-2">&amp;</span><span class="self">self</span>, archive_name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;OngoingSnapshot, SnapshotError&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>value = <span class="self">self
+            </span>.last_snapshot
+            .write()
+            .map_err(|e| SnapshotError::UploadFileError(e.to_string()))<span class="question-mark">?</span>;
+        <span class="kw">let </span>snapshot = OngoingSnapshot {
+            filepath: Path::new(archive_name).to_path_buf(),
+            filesize: <span class="number">0</span>,
         };
-        <span class="kw-2">*</span><span class="ident">value</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">snapshot</span>.<span class="ident">clone</span>());
+        <span class="kw-2">*</span>value = <span class="prelude-val">Some</span>(snapshot.clone());
 
-        <span class="prelude-val">Ok</span>(<span class="ident">snapshot</span>)
+        <span class="prelude-val">Ok</span>(snapshot)
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">test_dumb_snapshotter</span>() {
-        <span class="kw">let</span> <span class="ident">snapshotter</span> <span class="op">=</span> <span class="ident">DumbSnapshotter::new</span>();
-        <span class="macro">assert!</span>(<span class="ident">snapshotter</span>
-            .<span class="ident">get_last_snapshot</span>()
-            .<span class="ident">expect</span>(<span class="string">&quot;Dumb snapshotter::get_last_snapshot should not fail when no last snapshot.&quot;</span>)
-            .<span class="ident">is_none</span>());
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>test_dumb_snapshotter() {
+        <span class="kw">let </span>snapshotter = DumbSnapshotter::new();
+        <span class="macro">assert!</span>(snapshotter
+            .get_last_snapshot()
+            .expect(<span class="string">&quot;Dumb snapshotter::get_last_snapshot should not fail when no last snapshot.&quot;</span>)
+            .is_none());
 
-        <span class="kw">let</span> <span class="ident">snapshot</span> <span class="op">=</span> <span class="ident">snapshotter</span>
-            .<span class="ident">snapshot</span>(<span class="string">&quot;whatever&quot;</span>)
-            .<span class="ident">expect</span>(<span class="string">&quot;Dumb snapshotter::snapshot should not fail.&quot;</span>);
+        <span class="kw">let </span>snapshot = snapshotter
+            .snapshot(<span class="string">&quot;whatever&quot;</span>)
+            .expect(<span class="string">&quot;Dumb snapshotter::snapshot should not fail.&quot;</span>);
         <span class="macro">assert_eq!</span>(
-            <span class="prelude-val">Some</span>(<span class="ident">snapshot</span>),
-            <span class="ident">snapshotter</span>.<span class="ident">get_last_snapshot</span>().<span class="ident">expect</span>(
-                <span class="string">&quot;Dumb snapshotter::get_last_snapshot should not fail when some last snapshot.&quot;</span>
-            )
+            <span class="prelude-val">Some</span>(snapshot),
+            snapshotter.get_last_snapshot().expect(
+                <span class="string">&quot;Dumb snapshotter::get_last_snapshot should not fail when some last snapshot.&quot;
+            </span>)
         );
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="mithril_aggregator" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.64.0 (a55dd71d5 2022-09-19)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="mithril_aggregator" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0 (897e37553 2022-11-02)" ></div></body></html>

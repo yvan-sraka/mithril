@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `mithril-common/src/store/adapter/memory_adapter.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>memory_adapter.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../../storage.js"></script><script defer src="../../../../source-script.js"></script><script defer src="../../../../source-files.js"></script><script defer src="../../../../main.js"></script><noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../../mithril_common/index.html"><div class="logo-container"><img class="rust-logo" src="../../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../../mithril_common/index.html"><div class="logo-container"><img class="rust-logo" src="../../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../../mithril_common/index.html"><img class="rust-logo" src="../../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `mithril-common/src/store/adapter/memory_adapter.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>memory_adapter.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../../normalize.css"><link rel="stylesheet" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../../ayu.css" disabled><link rel="stylesheet" href="../../../../dark.css" disabled><link rel="stylesheet" href="../../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../../storage.js"></script><script defer src="../../../../source-script.js"></script><script defer src="../../../../source-files.js"></script><script defer src="../../../../main.js"></script><noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../../mithril_common/index.html"><div class="logo-container"><img class="rust-logo" src="../../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../../mithril_common/index.html"><div class="logo-container"><img class="rust-logo" src="../../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../../mithril_common/index.html"><img class="rust-logo" src="../../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -242,249 +242,249 @@
 <span id="242">242</span>
 <span id="243">243</span>
 <span id="244">244</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
-<span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">collections::HashMap</span>, <span class="ident">hash::Hash</span>};
+</pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
+<span class="kw">use </span>std::{collections::HashMap, hash::Hash};
 
-<span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">AdapterError</span>, <span class="ident">StoreAdapter</span>};
+<span class="kw">use super</span>::{AdapterError, StoreAdapter};
 
-<span class="doccomment">/// A [StoreAdapter] that store data in memory.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MemoryAdapter</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span> {
-    <span class="ident">index</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">K</span><span class="op">&gt;</span>,
-    <span class="ident">values</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span>,
+<span class="doccomment">/// A [StoreAdapter] that store data in memory.
+</span><span class="kw">pub struct </span>MemoryAdapter&lt;K, V&gt; {
+    index: Vec&lt;K&gt;,
+    values: HashMap&lt;K, V&gt;,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span> <span class="ident">MemoryAdapter</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">K</span>: <span class="ident">Hash</span> <span class="op">+</span> <span class="ident">Eq</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Clone</span>,
-    <span class="ident">V</span>: <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Clone</span>,
+<span class="kw">impl</span>&lt;K, V&gt; MemoryAdapter&lt;K, V&gt;
+<span class="kw">where
+    </span>K: Hash + Eq + Send + Sync + Clone,
+    V: Send + Sync + Clone,
 {
-    <span class="doccomment">/// MemoryAdapter factory</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">data</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">K</span>, <span class="ident">V</span>)<span class="op">&gt;</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">AdapterError</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">data</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">data</span> {
-            <span class="prelude-val">None</span> =&gt; <span class="ident">Vec::new</span>(),
-            <span class="prelude-val">Some</span>(<span class="ident">v</span>) =&gt; <span class="ident">v</span>,
+    <span class="doccomment">/// MemoryAdapter factory
+    </span><span class="kw">pub fn </span>new(data: <span class="prelude-ty">Option</span>&lt;Vec&lt;(K, V)&gt;&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, AdapterError&gt; {
+        <span class="kw">let </span>data = <span class="kw">match </span>data {
+            <span class="prelude-val">None </span>=&gt; Vec::new(),
+            <span class="prelude-val">Some</span>(v) =&gt; v,
         };
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">values</span> <span class="op">=</span> <span class="ident">HashMap::new</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">index</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
+        <span class="kw">let </span><span class="kw-2">mut </span>values = HashMap::new();
+        <span class="kw">let </span><span class="kw-2">mut </span>index = Vec::new();
 
-        <span class="kw">for</span> (<span class="ident">idx</span>, <span class="ident">elt</span>) <span class="kw">in</span> <span class="ident">data</span>.<span class="ident">into_iter</span>() {
-            <span class="kw">if</span> <span class="ident">values</span>.<span class="ident">insert</span>(<span class="ident">idx</span>.<span class="ident">clone</span>(), <span class="ident">elt</span>).<span class="ident">is_some</span>() {
-                <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">AdapterError::InitializationError</span>(
-                    <span class="string">&quot;duplicate key found&quot;</span>.<span class="ident">into</span>(),
+        <span class="kw">for </span>(idx, elt) <span class="kw">in </span>data.into_iter() {
+            <span class="kw">if </span>values.insert(idx.clone(), elt).is_some() {
+                <span class="kw">return </span><span class="prelude-val">Err</span>(AdapterError::InitializationError(
+                    <span class="string">&quot;duplicate key found&quot;</span>.into(),
                 ));
             }
-            <span class="ident">index</span>.<span class="ident">push</span>(<span class="ident">idx</span>);
+            index.push(idx);
         }
 
-        <span class="prelude-val">Ok</span>(<span class="self">Self</span> { <span class="ident">index</span>, <span class="ident">values</span> })
+        <span class="prelude-val">Ok</span>(<span class="self">Self </span>{ index, values })
     }
 }
 
-<span class="attribute">#[<span class="ident">async_trait</span>]</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span> <span class="ident">StoreAdapter</span> <span class="kw">for</span> <span class="ident">MemoryAdapter</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">K</span>: <span class="ident">Hash</span> <span class="op">+</span> <span class="ident">Eq</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Clone</span>,
-    <span class="ident">V</span>: <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Clone</span>,
+<span class="attribute">#[async_trait]
+</span><span class="kw">impl</span>&lt;K, V&gt; StoreAdapter <span class="kw">for </span>MemoryAdapter&lt;K, V&gt;
+<span class="kw">where
+    </span>K: Hash + Eq + Send + Sync + Clone,
+    V: Send + Sync + Clone,
 {
-    <span class="kw">type</span> <span class="ident">Key</span> <span class="op">=</span> <span class="ident">K</span>;
-    <span class="kw">type</span> <span class="ident">Record</span> <span class="op">=</span> <span class="ident">V</span>;
+    <span class="kw">type </span>Key = K;
+    <span class="kw">type </span>Record = V;
 
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">store_record</span>(
-        <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-        <span class="ident">key</span>: <span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::Key</span>,
-        <span class="ident">record</span>: <span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::Record</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">AdapterError</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">key</span> <span class="op">=</span> (<span class="kw-2">*</span><span class="ident">key</span>).<span class="ident">clone</span>();
-        <span class="kw">let</span> <span class="ident">record</span> <span class="op">=</span> (<span class="kw-2">*</span><span class="ident">record</span>).<span class="ident">clone</span>();
+    <span class="kw">async fn </span>store_record(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        key: <span class="kw-2">&amp;</span><span class="self">Self</span>::Key,
+        record: <span class="kw-2">&amp;</span><span class="self">Self</span>::Record,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), AdapterError&gt; {
+        <span class="kw">let </span>key = (<span class="kw-2">*</span>key).clone();
+        <span class="kw">let </span>record = (<span class="kw-2">*</span>record).clone();
 
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">values</span>.<span class="ident">insert</span>(<span class="ident">key</span>.<span class="ident">clone</span>(), <span class="ident">record</span>).<span class="ident">is_none</span>() {
-            <span class="self">self</span>.<span class="ident">index</span>.<span class="ident">push</span>(<span class="ident">key</span>);
+        <span class="kw">if </span><span class="self">self</span>.values.insert(key.clone(), record).is_none() {
+            <span class="self">self</span>.index.push(key);
         }
 
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_record</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">key</span>: <span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::Key</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Record</span><span class="op">&gt;</span>, <span class="ident">AdapterError</span><span class="op">&gt;</span> {
-        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">values</span>.<span class="ident">get</span>(<span class="ident">key</span>) {
-            <span class="prelude-val">Some</span>(<span class="ident">val</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">val</span>.<span class="ident">clone</span>())),
-            <span class="prelude-val">None</span> =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
+    <span class="kw">async fn </span>get_record(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span><span class="self">Self</span>::Key) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Record&gt;, AdapterError&gt; {
+        <span class="kw">match </span><span class="self">self</span>.values.get(key) {
+            <span class="prelude-val">Some</span>(val) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(val.clone())),
+            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
         }
     }
 
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">record_exists</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">key</span>: <span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::Key</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident">AdapterError</span><span class="op">&gt;</span> {
-        <span class="prelude-val">Ok</span>(<span class="self">self</span>.<span class="ident">values</span>.<span class="ident">contains_key</span>(<span class="ident">key</span>))
+    <span class="kw">async fn </span>record_exists(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span><span class="self">Self</span>::Key) -&gt; <span class="prelude-ty">Result</span>&lt;bool, AdapterError&gt; {
+        <span class="prelude-val">Ok</span>(<span class="self">self</span>.values.contains_key(key))
     }
 
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_last_n_records</span>(
+    <span class="kw">async fn </span>get_last_n_records(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">how_many</span>: <span class="ident">usize</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident"><span class="self">Self</span>::Key</span>, <span class="ident"><span class="self">Self</span>::Record</span>)<span class="op">&gt;</span>, <span class="ident">AdapterError</span><span class="op">&gt;</span> {
-        <span class="prelude-val">Ok</span>(<span class="self">self</span>
-            .<span class="ident">index</span>
-            .<span class="ident">iter</span>()
-            .<span class="ident">rev</span>()
-            .<span class="ident">take</span>(<span class="ident">how_many</span>)
-            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">k</span><span class="op">|</span> (<span class="ident">k</span>.<span class="ident">clone</span>(), <span class="self">self</span>.<span class="ident">values</span>.<span class="ident">get</span>(<span class="ident">k</span>).<span class="ident">unwrap</span>().<span class="ident">clone</span>()))
-            .<span class="ident">collect</span>())
+        how_many: usize,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;(<span class="self">Self</span>::Key, <span class="self">Self</span>::Record)&gt;, AdapterError&gt; {
+        <span class="prelude-val">Ok</span>(<span class="self">self
+            </span>.index
+            .iter()
+            .rev()
+            .take(how_many)
+            .map(|k| (k.clone(), <span class="self">self</span>.values.get(k).unwrap().clone()))
+            .collect())
     }
 
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">remove</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">key</span>: <span class="kw-2">&amp;</span><span class="ident"><span class="self">Self</span>::Key</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Record</span><span class="op">&gt;</span>, <span class="ident">AdapterError</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">index</span>.<span class="ident">retain</span>(<span class="op">|</span><span class="ident">k</span><span class="op">|</span> <span class="kw-2">*</span><span class="ident">k</span> <span class="op">!</span><span class="op">=</span> <span class="kw-2">*</span><span class="ident">key</span>);
+    <span class="kw">async fn </span>remove(<span class="kw-2">&amp;mut </span><span class="self">self</span>, key: <span class="kw-2">&amp;</span><span class="self">Self</span>::Key) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Record&gt;, AdapterError&gt; {
+        <span class="self">self</span>.index.retain(|k| <span class="kw-2">*</span>k != <span class="kw-2">*</span>key);
 
-        <span class="prelude-val">Ok</span>(<span class="self">self</span>.<span class="ident">values</span>.<span class="ident">remove</span>(<span class="ident">key</span>))
+        <span class="prelude-val">Ok</span>(<span class="self">self</span>.values.remove(key))
     }
 
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_iter</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Iterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident"><span class="self">Self</span>::Record</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;_</span><span class="op">&gt;</span>, <span class="ident">AdapterError</span><span class="op">&gt;</span> {
-        <span class="prelude-val">Ok</span>(<span class="ident">Box::new</span>(
-            <span class="self">self</span>.<span class="ident">index</span>
-                .<span class="ident">iter</span>()
-                .<span class="ident">rev</span>()
-                .<span class="ident">map</span>(<span class="op">|</span><span class="ident">k</span><span class="op">|</span> <span class="self">self</span>.<span class="ident">values</span>.<span class="ident">get</span>(<span class="ident">k</span>).<span class="ident">unwrap</span>().<span class="ident">clone</span>()),
+    <span class="kw">async fn </span>get_iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Box&lt;<span class="kw">dyn </span>Iterator&lt;Item = <span class="self">Self</span>::Record&gt; + <span class="lifetime">&#39;_</span>&gt;, AdapterError&gt; {
+        <span class="prelude-val">Ok</span>(Box::new(
+            <span class="self">self</span>.index
+                .iter()
+                .rev()
+                .map(|k| <span class="self">self</span>.values.get(k).unwrap().clone()),
         ))
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="ident">std::borrow::Borrow</span>;
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use </span>std::borrow::Borrow;
 
-    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
-    <span class="kw">fn</span> <span class="ident">init_adapter</span>(<span class="ident">nb</span>: <span class="ident">u64</span>) -&gt; <span class="ident">MemoryAdapter</span><span class="op">&lt;</span><span class="ident">u64</span>, <span class="ident">String</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">values</span>: <span class="ident">Vec</span><span class="op">&lt;</span>(<span class="ident">u64</span>, <span class="ident">String</span>)<span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
-        <span class="kw">if</span> <span class="ident">nb</span> <span class="op">&gt;</span> <span class="number">0</span> {
-            <span class="kw">for</span> <span class="ident">ix</span> <span class="kw">in</span> <span class="number">1</span>..<span class="op">=</span><span class="ident">nb</span> {
-                <span class="ident">values</span>.<span class="ident">push</span>((<span class="ident">ix</span>, <span class="macro">format!</span>(<span class="string">&quot;value {}&quot;</span>, <span class="ident">ix</span>)));
+    <span class="kw">fn </span>init_adapter(nb: u64) -&gt; MemoryAdapter&lt;u64, String&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>values: Vec&lt;(u64, String)&gt; = Vec::new();
+        <span class="kw">if </span>nb &gt; <span class="number">0 </span>{
+            <span class="kw">for </span>ix <span class="kw">in </span><span class="number">1</span>..=nb {
+                values.push((ix, <span class="macro">format!</span>(<span class="string">&quot;value {}&quot;</span>, ix)));
             }
 
-            <span class="ident">MemoryAdapter::new</span>(<span class="prelude-val">Some</span>(<span class="ident">values</span>)).<span class="ident">unwrap</span>()
-        } <span class="kw">else</span> {
-            <span class="ident">MemoryAdapter::new</span>(<span class="prelude-val">None</span>).<span class="ident">unwrap</span>()
+            MemoryAdapter::new(<span class="prelude-val">Some</span>(values)).unwrap()
+        } <span class="kw">else </span>{
+            MemoryAdapter::new(<span class="prelude-val">None</span>).unwrap()
         }
     }
 
-    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">record_exists_existing_key</span>() {
-        <span class="kw">let</span> <span class="ident">adapter</span> <span class="op">=</span> <span class="ident">init_adapter</span>(<span class="number">2</span>);
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>record_exists_existing_key() {
+        <span class="kw">let </span>adapter = init_adapter(<span class="number">2</span>);
 
-        <span class="macro">assert!</span>(<span class="ident">adapter</span>.<span class="ident">record_exists</span>(<span class="kw-2">&amp;</span><span class="number">1</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>());
+        <span class="macro">assert!</span>(adapter.record_exists(<span class="kw-2">&amp;</span><span class="number">1</span>).<span class="kw">await</span>.unwrap());
     }
-    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">record_exists_non_existing_key</span>() {
-        <span class="kw">let</span> <span class="ident">adapter</span> <span class="op">=</span> <span class="ident">init_adapter</span>(<span class="number">2</span>);
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>record_exists_non_existing_key() {
+        <span class="kw">let </span>adapter = init_adapter(<span class="number">2</span>);
 
-        <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">adapter</span>.<span class="ident">record_exists</span>(<span class="kw-2">&amp;</span><span class="number">0</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>());
-    }
-
-    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">read_existing_record</span>() {
-        <span class="kw">let</span> <span class="ident">adapter</span> <span class="op">=</span> <span class="ident">init_adapter</span>(<span class="number">2</span>);
-        <span class="kw">let</span> <span class="ident">val</span> <span class="op">=</span> <span class="ident">adapter</span>.<span class="ident">get_record</span>(<span class="kw-2">&amp;</span><span class="number">2</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>();
-
-        <span class="macro">assert!</span>(<span class="ident">val</span>.<span class="ident">is_some</span>());
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;value 2&quot;</span>.<span class="ident">to_string</span>(), <span class="ident">val</span>.<span class="ident">unwrap</span>());
+        <span class="macro">assert!</span>(!adapter.record_exists(<span class="kw-2">&amp;</span><span class="number">0</span>).<span class="kw">await</span>.unwrap());
     }
 
-    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">read_unexisting_record</span>() {
-        <span class="kw">let</span> <span class="ident">adapter</span> <span class="op">=</span> <span class="ident">init_adapter</span>(<span class="number">2</span>);
-        <span class="kw">let</span> <span class="ident">val</span> <span class="op">=</span> <span class="ident">adapter</span>.<span class="ident">get_record</span>(<span class="kw-2">&amp;</span><span class="number">0</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>();
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>read_existing_record() {
+        <span class="kw">let </span>adapter = init_adapter(<span class="number">2</span>);
+        <span class="kw">let </span>val = adapter.get_record(<span class="kw-2">&amp;</span><span class="number">2</span>).<span class="kw">await</span>.unwrap();
 
-        <span class="macro">assert!</span>(<span class="ident">val</span>.<span class="ident">is_none</span>());
+        <span class="macro">assert!</span>(val.is_some());
+        <span class="macro">assert_eq!</span>(<span class="string">&quot;value 2&quot;</span>.to_string(), val.unwrap());
     }
 
-    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_last_n_values</span>() {
-        <span class="kw">let</span> <span class="ident">adapter</span> <span class="op">=</span> <span class="ident">init_adapter</span>(<span class="number">2</span>);
-        <span class="kw">let</span> <span class="ident">vals</span> <span class="op">=</span> <span class="ident">adapter</span>.<span class="ident">get_last_n_records</span>(<span class="number">5</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>();
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>read_unexisting_record() {
+        <span class="kw">let </span>adapter = init_adapter(<span class="number">2</span>);
+        <span class="kw">let </span>val = adapter.get_record(<span class="kw-2">&amp;</span><span class="number">0</span>).<span class="kw">await</span>.unwrap();
 
-        <span class="macro">assert_eq!</span>(<span class="number">2</span>, <span class="ident">vals</span>.<span class="ident">len</span>());
-        <span class="macro">assert_eq!</span>((<span class="number">2</span>, <span class="string">&quot;value 2&quot;</span>.<span class="ident">to_string</span>()), <span class="ident">vals</span>[<span class="number">0</span>]);
+        <span class="macro">assert!</span>(val.is_none());
     }
 
-    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_last_n_existing_values</span>() {
-        <span class="kw">let</span> <span class="ident">adapter</span> <span class="op">=</span> <span class="ident">init_adapter</span>(<span class="number">5</span>);
-        <span class="kw">let</span> <span class="ident">vals</span> <span class="op">=</span> <span class="ident">adapter</span>.<span class="ident">get_last_n_records</span>(<span class="number">2</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>();
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>get_last_n_values() {
+        <span class="kw">let </span>adapter = init_adapter(<span class="number">2</span>);
+        <span class="kw">let </span>vals = adapter.get_last_n_records(<span class="number">5</span>).<span class="kw">await</span>.unwrap();
 
-        <span class="macro">assert_eq!</span>(<span class="number">2</span>, <span class="ident">vals</span>.<span class="ident">len</span>());
-        <span class="macro">assert_eq!</span>((<span class="number">5</span>, <span class="string">&quot;value 5&quot;</span>.<span class="ident">to_string</span>()), <span class="ident">vals</span>[<span class="number">0</span>]);
+        <span class="macro">assert_eq!</span>(<span class="number">2</span>, vals.len());
+        <span class="macro">assert_eq!</span>((<span class="number">2</span>, <span class="string">&quot;value 2&quot;</span>.to_string()), vals[<span class="number">0</span>]);
     }
 
-    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">save_new_values</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">adapter</span> <span class="op">=</span> <span class="ident">init_adapter</span>(<span class="number">2</span>);
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>get_last_n_existing_values() {
+        <span class="kw">let </span>adapter = init_adapter(<span class="number">5</span>);
+        <span class="kw">let </span>vals = adapter.get_last_n_records(<span class="number">2</span>).<span class="kw">await</span>.unwrap();
 
-        <span class="macro">assert!</span>(<span class="ident">adapter</span>.<span class="ident">store_record</span>(<span class="kw-2">&amp;</span><span class="number">10</span>, <span class="kw-2">&amp;</span><span class="string">&quot;ten&quot;</span>.<span class="ident">to_string</span>()).<span class="kw">await</span>.<span class="ident">is_ok</span>());
-        <span class="kw">let</span> <span class="ident">vals</span> <span class="op">=</span> <span class="ident">adapter</span>.<span class="ident">get_last_n_records</span>(<span class="number">1</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>();
-
-        <span class="macro">assert_eq!</span>((<span class="number">10</span>, <span class="string">&quot;ten&quot;</span>.<span class="ident">to_string</span>()), <span class="ident">vals</span>[<span class="number">0</span>]);
+        <span class="macro">assert_eq!</span>(<span class="number">2</span>, vals.len());
+        <span class="macro">assert_eq!</span>((<span class="number">5</span>, <span class="string">&quot;value 5&quot;</span>.to_string()), vals[<span class="number">0</span>]);
     }
 
-    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">update_value</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">adapter</span> <span class="op">=</span> <span class="ident">init_adapter</span>(<span class="number">2</span>);
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>save_new_values() {
+        <span class="kw">let </span><span class="kw-2">mut </span>adapter = init_adapter(<span class="number">2</span>);
 
-        <span class="macro">assert!</span>(<span class="ident">adapter</span>.<span class="ident">store_record</span>(<span class="kw-2">&amp;</span><span class="number">1</span>, <span class="kw-2">&amp;</span><span class="string">&quot;one&quot;</span>.<span class="ident">to_string</span>()).<span class="kw">await</span>.<span class="ident">is_ok</span>());
-        <span class="kw">let</span> <span class="ident">vals</span> <span class="op">=</span> <span class="ident">adapter</span>.<span class="ident">get_last_n_records</span>(<span class="number">2</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>();
+        <span class="macro">assert!</span>(adapter.store_record(<span class="kw-2">&amp;</span><span class="number">10</span>, <span class="kw-2">&amp;</span><span class="string">&quot;ten&quot;</span>.to_string()).<span class="kw">await</span>.is_ok());
+        <span class="kw">let </span>vals = adapter.get_last_n_records(<span class="number">1</span>).<span class="kw">await</span>.unwrap();
+
+        <span class="macro">assert_eq!</span>((<span class="number">10</span>, <span class="string">&quot;ten&quot;</span>.to_string()), vals[<span class="number">0</span>]);
+    }
+
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>update_value() {
+        <span class="kw">let </span><span class="kw-2">mut </span>adapter = init_adapter(<span class="number">2</span>);
+
+        <span class="macro">assert!</span>(adapter.store_record(<span class="kw-2">&amp;</span><span class="number">1</span>, <span class="kw-2">&amp;</span><span class="string">&quot;one&quot;</span>.to_string()).<span class="kw">await</span>.is_ok());
+        <span class="kw">let </span>vals = adapter.get_last_n_records(<span class="number">2</span>).<span class="kw">await</span>.unwrap();
 
         <span class="macro">assert_eq!</span>(
-            <span class="macro">vec!</span>[(<span class="number">2</span>, <span class="string">&quot;value 2&quot;</span>.<span class="ident">to_string</span>()), (<span class="number">1</span>, <span class="string">&quot;one&quot;</span>.<span class="ident">to_string</span>())],
-            <span class="ident">vals</span>
+            <span class="macro">vec!</span>[(<span class="number">2</span>, <span class="string">&quot;value 2&quot;</span>.to_string()), (<span class="number">1</span>, <span class="string">&quot;one&quot;</span>.to_string())],
+            vals
         );
     }
 
-    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">remove_existing_value</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">adapter</span> <span class="op">=</span> <span class="ident">init_adapter</span>(<span class="number">2</span>);
-        <span class="kw">let</span> <span class="ident">record</span> <span class="op">=</span> <span class="ident">adapter</span>.<span class="ident">remove</span>(<span class="kw-2">&amp;</span><span class="number">1</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>().<span class="ident">unwrap</span>();
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>remove_existing_value() {
+        <span class="kw">let </span><span class="kw-2">mut </span>adapter = init_adapter(<span class="number">2</span>);
+        <span class="kw">let </span>record = adapter.remove(<span class="kw-2">&amp;</span><span class="number">1</span>).<span class="kw">await</span>.unwrap().unwrap();
 
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;value 1&quot;</span>.<span class="ident">to_string</span>(), <span class="ident">record</span>);
-        <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">adapter</span>.<span class="ident">record_exists</span>(<span class="kw-2">&amp;</span><span class="number">1</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>());
-        <span class="macro">assert_eq!</span>(<span class="number">1</span>, <span class="ident">adapter</span>.<span class="ident">index</span>.<span class="ident">len</span>())
+        <span class="macro">assert_eq!</span>(<span class="string">&quot;value 1&quot;</span>.to_string(), record);
+        <span class="macro">assert!</span>(!adapter.record_exists(<span class="kw-2">&amp;</span><span class="number">1</span>).<span class="kw">await</span>.unwrap());
+        <span class="macro">assert_eq!</span>(<span class="number">1</span>, adapter.index.len())
     }
 
-    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">remove_non_existing_value</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">adapter</span> <span class="op">=</span> <span class="ident">init_adapter</span>(<span class="number">2</span>);
-        <span class="kw">let</span> <span class="ident">maybe_record</span> <span class="op">=</span> <span class="ident">adapter</span>.<span class="ident">remove</span>(<span class="kw-2">&amp;</span><span class="number">0</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>();
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>remove_non_existing_value() {
+        <span class="kw">let </span><span class="kw-2">mut </span>adapter = init_adapter(<span class="number">2</span>);
+        <span class="kw">let </span>maybe_record = adapter.remove(<span class="kw-2">&amp;</span><span class="number">0</span>).<span class="kw">await</span>.unwrap();
 
-        <span class="macro">assert!</span>(<span class="ident">maybe_record</span>.<span class="ident">is_none</span>());
-        <span class="macro">assert_eq!</span>(<span class="number">2</span>, <span class="ident">adapter</span>.<span class="ident">index</span>.<span class="ident">len</span>())
+        <span class="macro">assert!</span>(maybe_record.is_none());
+        <span class="macro">assert_eq!</span>(<span class="number">2</span>, adapter.index.len())
     }
 
-    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_iter_record</span>() {
-        <span class="kw">let</span> <span class="ident">adapter</span> <span class="op">=</span> <span class="ident">init_adapter</span>(<span class="number">5</span>);
-        <span class="kw">let</span> <span class="ident">records</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">adapter</span>.<span class="ident">get_iter</span>().<span class="kw">await</span>.<span class="ident">unwrap</span>().<span class="ident">collect</span>();
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>test_iter_record() {
+        <span class="kw">let </span>adapter = init_adapter(<span class="number">5</span>);
+        <span class="kw">let </span>records: Vec&lt;String&gt; = adapter.get_iter().<span class="kw">await</span>.unwrap().collect();
 
         <span class="macro">assert_eq!</span>(
             <span class="macro">vec!</span>[<span class="string">&quot;value 5&quot;</span>, <span class="string">&quot;value 4&quot;</span>, <span class="string">&quot;value 3&quot;</span>, <span class="string">&quot;value 2&quot;</span>, <span class="string">&quot;value 1&quot;</span>],
-            <span class="ident">records</span>
+            records
         );
     }
 
-    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">test_iter_without_record</span>() {
-        <span class="kw">let</span> <span class="ident">adapter</span> <span class="op">=</span> <span class="ident">init_adapter</span>(<span class="number">0</span>);
-        <span class="kw">let</span> <span class="ident">records</span> <span class="op">=</span> <span class="ident">adapter</span>.<span class="ident">get_iter</span>().<span class="kw">await</span>.<span class="ident">unwrap</span>();
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>test_iter_without_record() {
+        <span class="kw">let </span>adapter = init_adapter(<span class="number">0</span>);
+        <span class="kw">let </span>records = adapter.get_iter().<span class="kw">await</span>.unwrap();
 
-        <span class="macro">assert_eq!</span>(<span class="number">0</span>, <span class="ident">records</span>.<span class="ident">count</span>());
+        <span class="macro">assert_eq!</span>(<span class="number">0</span>, records.count());
     }
 
-    <span class="attribute">#[<span class="ident">tokio::test</span>]</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">check_get_last_n_modified_records</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">adapter</span> <span class="op">=</span> <span class="ident">init_adapter</span>(<span class="number">3</span>);
-        <span class="ident">adapter</span>
-            .<span class="ident">store_record</span>(<span class="kw-2">&amp;</span><span class="number">1</span>, <span class="string">&quot;updated record&quot;</span>.<span class="ident">to_string</span>().<span class="ident">borrow</span>())
-            .<span class="kw">await</span>
-            .<span class="ident">unwrap</span>();
-        <span class="kw">let</span> <span class="ident">values</span> <span class="op">=</span> <span class="ident">adapter</span>.<span class="ident">get_last_n_records</span>(<span class="number">2</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>();
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>check_get_last_n_modified_records() {
+        <span class="kw">let </span><span class="kw-2">mut </span>adapter = init_adapter(<span class="number">3</span>);
+        adapter
+            .store_record(<span class="kw-2">&amp;</span><span class="number">1</span>, <span class="string">&quot;updated record&quot;</span>.to_string().borrow())
+            .<span class="kw">await
+            </span>.unwrap();
+        <span class="kw">let </span>values = adapter.get_last_n_records(<span class="number">2</span>).<span class="kw">await</span>.unwrap();
         <span class="macro">assert_eq!</span>(
-            <span class="macro">vec!</span>[(<span class="number">3</span>, <span class="string">&quot;value 3&quot;</span>.<span class="ident">to_string</span>()), (<span class="number">2</span>, <span class="string">&quot;value 2&quot;</span>.<span class="ident">to_string</span>())],
-            <span class="ident">values</span>
+            <span class="macro">vec!</span>[(<span class="number">3</span>, <span class="string">&quot;value 3&quot;</span>.to_string()), (<span class="number">2</span>, <span class="string">&quot;value 2&quot;</span>.to_string())],
+            values
         );
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../../" data-current-crate="mithril_common" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.64.0 (a55dd71d5 2022-09-19)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../../" data-current-crate="mithril_common" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0 (897e37553 2022-11-02)" ></div></body></html>

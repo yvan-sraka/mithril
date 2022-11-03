@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `mithril-common/src/digesters/immutable_file_observer.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>immutable_file_observer.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../mithril_common/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../mithril_common/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../mithril_common/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `mithril-common/src/digesters/immutable_file_observer.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>immutable_file_observer.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../mithril_common/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../mithril_common/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../mithril_common/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -113,120 +113,120 @@
 <span id="113">113</span>
 <span id="114">114</span>
 <span id="115">115</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::digesters</span>::{<span class="ident">ImmutableFile</span>, <span class="ident">ImmutableFileListingError</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::entities::ImmutableFileNumber</span>;
-<span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
-<span class="kw">use</span> <span class="ident">std::error::Error</span>;
-<span class="kw">use</span> <span class="ident">std::ops::Add</span>;
-<span class="kw">use</span> <span class="ident">std::path::PathBuf</span>;
-<span class="kw">use</span> <span class="ident">thiserror::Error</span>;
-<span class="kw">use</span> <span class="ident">tokio::sync::RwLock</span>;
+</pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::digesters::{ImmutableFile, ImmutableFileListingError};
+<span class="kw">use </span><span class="kw">crate</span>::entities::ImmutableFileNumber;
+<span class="kw">use </span>async_trait::async_trait;
+<span class="kw">use </span>std::error::Error;
+<span class="kw">use </span>std::ops::Add;
+<span class="kw">use </span>std::path::PathBuf;
+<span class="kw">use </span>thiserror::Error;
+<span class="kw">use </span>tokio::sync::RwLock;
 
-<span class="doccomment">/// Retrieve data on [ImmutableFile] from a cardano database.</span>
-<span class="attribute">#[<span class="ident">async_trait</span>]</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">ImmutableFileObserver</span>
-<span class="kw">where</span>
-    <span class="self">Self</span>: <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span>,
+<span class="doccomment">/// Retrieve data on [ImmutableFile] from a cardano database.
+</span><span class="attribute">#[async_trait]
+</span><span class="kw">pub trait </span>ImmutableFileObserver
+<span class="kw">where
+    </span><span class="self">Self</span>: Sync + Send,
 {
-    <span class="doccomment">/// Get the [ImmutableFileNumber] of the last immutable file in the cardano database.</span>
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_last_immutable_number</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">u64</span>, <span class="ident">ImmutableFileObserverError</span><span class="op">&gt;</span>;
+    <span class="doccomment">/// Get the [ImmutableFileNumber] of the last immutable file in the cardano database.
+    </span><span class="kw">async fn </span>get_last_immutable_number(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;u64, ImmutableFileObserverError&gt;;
 }
 
-<span class="doccomment">/// [ImmutableFileObserver] related errors.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Error</span>, <span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">ImmutableFileObserverError</span> {
-    <span class="doccomment">/// Raised when the no immutables files were available.</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;no immutable file was returned&quot;</span>)]</span>
-    <span class="ident">Missing</span>(),
+<span class="doccomment">/// [ImmutableFileObserver] related errors.
+</span><span class="attribute">#[derive(Error, Debug)]
+</span><span class="kw">pub enum </span>ImmutableFileObserverError {
+    <span class="doccomment">/// Raised when the no immutables files were available.
+    </span><span class="attribute">#[error(<span class="string">&quot;no immutable file was returned&quot;</span>)]
+    </span>Missing(),
 
-    <span class="doccomment">/// Raised when [immutable file listing][ImmutableFile::list_completed_in_dir] fails.</span>
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;immutable file creation error: {0}&quot;</span>)]</span>
-    <span class="ident">ImmutableFileListing</span>(<span class="attribute">#[<span class="ident">from</span>]</span> <span class="ident">ImmutableFileListingError</span>),
+    <span class="doccomment">/// Raised when [immutable file listing][ImmutableFile::list_completed_in_dir] fails.
+    </span><span class="attribute">#[error(<span class="string">&quot;immutable file creation error: {0}&quot;</span>)]
+    </span>ImmutableFileListing(<span class="attribute">#[from] </span>ImmutableFileListingError),
 }
 
-<span class="doccomment">/// An [ImmutableFileObserver] using the filesystem.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ImmutableFileSystemObserver</span> {
-    <span class="ident">db_path</span>: <span class="ident">PathBuf</span>,
+<span class="doccomment">/// An [ImmutableFileObserver] using the filesystem.
+</span><span class="kw">pub struct </span>ImmutableFileSystemObserver {
+    db_path: PathBuf,
 }
 
-<span class="kw">impl</span> <span class="ident">ImmutableFileSystemObserver</span> {
-    <span class="doccomment">/// [ImmutableFileSystemObserver] factory.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">db_path</span>: <span class="kw-2">&amp;</span><span class="ident">PathBuf</span>) -&gt; <span class="self">Self</span> {
-        <span class="kw">let</span> <span class="ident">db_path</span> <span class="op">=</span> <span class="ident">db_path</span>.<span class="ident">to_owned</span>();
+<span class="kw">impl </span>ImmutableFileSystemObserver {
+    <span class="doccomment">/// [ImmutableFileSystemObserver] factory.
+    </span><span class="kw">pub fn </span>new(db_path: <span class="kw-2">&amp;</span>PathBuf) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span>db_path = db_path.to_owned();
 
-        <span class="self">Self</span> { <span class="ident">db_path</span> }
+        <span class="self">Self </span>{ db_path }
     }
 }
 
-<span class="attribute">#[<span class="ident">async_trait</span>]</span>
-<span class="kw">impl</span> <span class="ident">ImmutableFileObserver</span> <span class="kw">for</span> <span class="ident">ImmutableFileSystemObserver</span> {
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_last_immutable_number</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">u64</span>, <span class="ident">ImmutableFileObserverError</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">immutable_file_number</span> <span class="op">=</span> <span class="ident">ImmutableFile::list_completed_in_dir</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">db_path</span>)<span class="question-mark">?</span>
-            .<span class="ident">into_iter</span>()
-            .<span class="ident">last</span>()
-            .<span class="ident">ok_or</span>(<span class="ident">ImmutableFileObserverError::Missing</span>())<span class="question-mark">?</span>
-            .<span class="ident">number</span>;
+<span class="attribute">#[async_trait]
+</span><span class="kw">impl </span>ImmutableFileObserver <span class="kw">for </span>ImmutableFileSystemObserver {
+    <span class="kw">async fn </span>get_last_immutable_number(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;u64, ImmutableFileObserverError&gt; {
+        <span class="kw">let </span>immutable_file_number = ImmutableFile::list_completed_in_dir(<span class="kw-2">&amp;</span><span class="self">self</span>.db_path)<span class="question-mark">?
+            </span>.into_iter()
+            .last()
+            .ok_or(ImmutableFileObserverError::Missing())<span class="question-mark">?
+            </span>.number;
 
-        <span class="prelude-val">Ok</span>(<span class="ident">immutable_file_number</span>)
+        <span class="prelude-val">Ok</span>(immutable_file_number)
     }
 }
 
-<span class="doccomment">/// An [ImmutableFileObserver] yielding fixed results for tests purpose.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">DumbImmutableFileObserver</span> {
-    <span class="doccomment">/// The [ImmutableFileNumber] that shall be returned by</span>
-    <span class="doccomment">/// [get_last_immutable_number][ImmutableFileObserver::get_last_immutable_number]</span>
-    <span class="kw">pub</span> <span class="ident">shall_return</span>: <span class="ident">RwLock</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ImmutableFileNumber</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+<span class="doccomment">/// An [ImmutableFileObserver] yielding fixed results for tests purpose.
+</span><span class="kw">pub struct </span>DumbImmutableFileObserver {
+    <span class="doccomment">/// The [ImmutableFileNumber] that shall be returned by
+    /// [get_last_immutable_number][ImmutableFileObserver::get_last_immutable_number]
+    </span><span class="kw">pub </span>shall_return: RwLock&lt;<span class="prelude-ty">Option</span>&lt;ImmutableFileNumber&gt;&gt;,
 }
 
-<span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">DumbImmutableFileObserver</span> {
-    <span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">observer</span> <span class="op">=</span> <span class="ident"><span class="self">Self</span>::new</span>();
-        <span class="ident">observer</span>.<span class="ident">shall_return</span> <span class="op">=</span> <span class="ident">RwLock::new</span>(<span class="prelude-val">Some</span>(<span class="number">500</span>));
+<span class="kw">impl </span>Default <span class="kw">for </span>DumbImmutableFileObserver {
+    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>observer = <span class="self">Self</span>::new();
+        observer.shall_return = RwLock::new(<span class="prelude-val">Some</span>(<span class="number">500</span>));
 
-        <span class="ident">observer</span>
+        observer
     }
 }
 
-<span class="kw">impl</span> <span class="ident">DumbImmutableFileObserver</span> {
-    <span class="doccomment">/// [DumbImmutableFileObserver] factory.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="self">Self</span> {
-        <span class="self">Self</span> {
-            <span class="ident">shall_return</span>: <span class="ident">RwLock::new</span>(<span class="prelude-val">None</span>),
+<span class="kw">impl </span>DumbImmutableFileObserver {
+    <span class="doccomment">/// [DumbImmutableFileObserver] factory.
+    </span><span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            shall_return: RwLock::new(<span class="prelude-val">None</span>),
         }
     }
 
-    <span class="doccomment">/// Update the stored [immutable file number][DumbImmutableFileObserver::shall_return].</span>
-    <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">shall_return</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">what</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>) -&gt; <span class="kw-2">&amp;</span><span class="self">Self</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">shall_return</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">shall_return</span>.<span class="ident">write</span>().<span class="kw">await</span>;
-        <span class="kw-2">*</span><span class="ident">shall_return</span> <span class="op">=</span> <span class="ident">what</span>;
-        <span class="self">self</span>
-    }
+    <span class="doccomment">/// Update the stored [immutable file number][DumbImmutableFileObserver::shall_return].
+    </span><span class="kw">pub async fn </span>shall_return(<span class="kw-2">&amp;</span><span class="self">self</span>, what: <span class="prelude-ty">Option</span>&lt;u64&gt;) -&gt; <span class="kw-2">&amp;</span><span class="self">Self </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>shall_return = <span class="self">self</span>.shall_return.write().<span class="kw">await</span>;
+        <span class="kw-2">*</span>shall_return = what;
+        <span class="self">self
+    </span>}
 
-    <span class="doccomment">/// Increase by one the stored [immutable file number][DumbImmutableFileObserver::shall_return].</span>
-    <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">increase</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">u64</span>, <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Error</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">new_number</span> <span class="op">=</span> <span class="self">self</span>
-            .<span class="ident">shall_return</span>
-            .<span class="ident">read</span>()
-            .<span class="kw">await</span>
-            .<span class="ident">unwrap</span>() <span class="comment">// I do not understand why ok_or_else does not work here, TODO: fix this</span>
-            .<span class="ident">add</span>(<span class="number">1</span>);
-        <span class="self">self</span>.<span class="ident">shall_return</span>(<span class="prelude-val">Some</span>(<span class="ident">new_number</span>)).<span class="kw">await</span>;
+    <span class="doccomment">/// Increase by one the stored [immutable file number][DumbImmutableFileObserver::shall_return].
+    </span><span class="kw">pub async fn </span>increase(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;u64, Box&lt;<span class="kw">dyn </span>Error + Sync + Send&gt;&gt; {
+        <span class="kw">let </span>new_number = <span class="self">self
+            </span>.shall_return
+            .read()
+            .<span class="kw">await
+            </span>.unwrap() <span class="comment">// I do not understand why ok_or_else does not work here, TODO: fix this
+            </span>.add(<span class="number">1</span>);
+        <span class="self">self</span>.shall_return(<span class="prelude-val">Some</span>(new_number)).<span class="kw">await</span>;
 
-        <span class="prelude-val">Ok</span>(<span class="ident">new_number</span>)
-    }
-}
-
-<span class="attribute">#[<span class="ident">async_trait</span>]</span>
-<span class="kw">impl</span> <span class="ident">ImmutableFileObserver</span> <span class="kw">for</span> <span class="ident">DumbImmutableFileObserver</span> {
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_last_immutable_number</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">u64</span>, <span class="ident">ImmutableFileObserverError</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">shall_return</span>
-            .<span class="ident">read</span>()
-            .<span class="kw">await</span>
-            .<span class="ident">ok_or_else</span>(<span class="ident">ImmutableFileObserverError::Missing</span>)
+        <span class="prelude-val">Ok</span>(new_number)
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {}
+<span class="attribute">#[async_trait]
+</span><span class="kw">impl </span>ImmutableFileObserver <span class="kw">for </span>DumbImmutableFileObserver {
+    <span class="kw">async fn </span>get_last_immutable_number(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;u64, ImmutableFileObserverError&gt; {
+        <span class="self">self</span>.shall_return
+            .read()
+            .<span class="kw">await
+            </span>.ok_or_else(ImmutableFileObserverError::Missing)
+    }
+}
+
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {}
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="mithril_common" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.64.0 (a55dd71d5 2022-09-19)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="mithril_common" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0 (897e37553 2022-11-02)" ></div></body></html>
