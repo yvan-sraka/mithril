@@ -717,7 +717,7 @@
             <span class="prelude-val">Ok</span>(response) =&gt; <span class="kw">match </span>response.status() {
                 StatusCode::OK =&gt; {
                     <span class="kw">let </span>local_path = archive_file_path(digest, <span class="kw-2">&amp;</span><span class="self">self</span>.network)<span class="question-mark">?</span>;
-                    fs::create_dir_all(<span class="kw-2">&amp;</span>local_path.parent().unwrap())<span class="question-mark">?</span>;
+                    fs::create_dir_all(local_path.parent().unwrap())<span class="question-mark">?</span>;
                     <span class="kw">let </span><span class="kw-2">mut </span>local_file = fs::File::create(<span class="kw-2">&amp;</span>local_path)<span class="question-mark">?</span>;
                     <span class="kw">let </span>bytes_total = response.content_length().ok_or_else(|| {
                         AggregatorHandlerError::RemoteServerTechnical(
@@ -841,14 +841,14 @@
             .unwrap()
             .join(path::Path::new(source_directory_name))
             .join(path::Path::new(data_file_name));
-        fs::create_dir_all(<span class="kw-2">&amp;</span>source_file_path.parent().unwrap()).unwrap();
+        fs::create_dir_all(source_file_path.parent().unwrap()).unwrap();
         <span class="kw">let </span><span class="kw-2">mut </span>source_file = fs::File::create(<span class="kw-2">&amp;</span>source_file_path).unwrap();
         <span class="macro">write!</span>(source_file, <span class="string">&quot;{}&quot;</span>, data_expected).unwrap();
         <span class="kw">let </span>archive_file = fs::File::create(<span class="kw-2">&amp;</span>archive_file_path).unwrap();
         <span class="kw">let </span>archive_encoder = GzEncoder::new(<span class="kw-2">&amp;</span>archive_file, Compression::default());
         <span class="kw">let </span><span class="kw-2">mut </span>archive_builder = tar::Builder::new(archive_encoder);
         archive_builder
-            .append_dir_all(<span class="string">&quot;.&quot;</span>, <span class="kw-2">&amp;</span>source_file_path.parent().unwrap())
+            .append_dir_all(<span class="string">&quot;.&quot;</span>, source_file_path.parent().unwrap())
             .unwrap();
         archive_builder.into_inner().unwrap().finish().unwrap();
     }

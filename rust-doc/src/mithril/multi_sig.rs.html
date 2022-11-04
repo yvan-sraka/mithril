@@ -1012,8 +1012,8 @@
         <span class="kw">let </span>hasher = Blake2b512::new()
             .chain_update(<span class="string">b&quot;map&quot;</span>)
             .chain_update(msg)
-            .chain_update(<span class="kw-2">&amp;</span>index.to_le_bytes())
-            .chain_update(<span class="kw-2">&amp;</span><span class="self">self</span>.to_bytes())
+            .chain_update(index.to_le_bytes())
+            .chain_update(<span class="self">self</span>.to_bytes())
             .finalize();
 
         <span class="kw">let </span><span class="kw-2">mut </span>output = [<span class="number">0u8</span>; <span class="number">64</span>];
@@ -1065,7 +1065,7 @@
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), MultiSignatureError&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>hashed_sigs = Blake2b::&lt;U16&gt;::new();
         <span class="kw">for </span>sig <span class="kw">in </span>sigs {
-            hashed_sigs.update(<span class="kw-2">&amp;</span>sig.to_bytes());
+            hashed_sigs.update(sig.to_bytes());
         }
 
         <span class="comment">// First we generate the scalars
@@ -1075,7 +1075,7 @@
         <span class="kw">let </span><span class="kw-2">mut </span>signatures = Vec::with_capacity(vks.len());
         <span class="kw">for </span>(index, sig) <span class="kw">in </span>sigs.iter().enumerate() {
             <span class="kw">let </span><span class="kw-2">mut </span>hasher = hashed_sigs.clone();
-            hasher.update(<span class="kw-2">&amp;</span>index.to_be_bytes());
+            hasher.update(index.to_be_bytes());
             signatures.push(<span class="kw-2">&amp;</span>sig.<span class="number">0</span>);
             scalar_bytes[..<span class="number">16</span>].copy_from_slice(hasher.finalize().as_slice());
             scalars.push(blst_scalar { b: scalar_bytes });

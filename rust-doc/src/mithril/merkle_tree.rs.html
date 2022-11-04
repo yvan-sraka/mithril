@@ -984,7 +984,7 @@
     </span><span class="kw">pub fn </span>check(<span class="kw-2">&amp;</span><span class="self">self</span>, val: <span class="kw-2">&amp;</span>MTLeaf, proof: <span class="kw-2">&amp;</span>Path&lt;D&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), MerkleTreeError&lt;D&gt;&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>idx = proof.index;
 
-        <span class="kw">let </span><span class="kw-2">mut </span>h = D::digest(<span class="kw-2">&amp;</span>val.to_bytes()).to_vec();
+        <span class="kw">let </span><span class="kw-2">mut </span>h = D::digest(val.to_bytes()).to_vec();
         <span class="kw">for </span>p <span class="kw">in </span><span class="kw-2">&amp;</span>proof.values {
             <span class="kw">if </span>(idx &amp; <span class="number">0b1</span>) == <span class="number">0 </span>{
                 h = D::new().chain_update(h).chain_update(p).finalize().to_vec();
@@ -1080,7 +1080,7 @@
                 <span class="kw">if </span>ordered_indices[i] &amp; <span class="number">1 </span>== <span class="number">0 </span>{
                     new_hashes.push(
                         D::new()
-                            .chain(<span class="kw-2">&amp;</span>values.get(<span class="number">0</span>).ok_or(MerkleTreeError::SerializationError)<span class="question-mark">?</span>)
+                            .chain(values.get(<span class="number">0</span>).ok_or(MerkleTreeError::SerializationError)<span class="question-mark">?</span>)
                             .chain(<span class="kw-2">&amp;</span>leaves[i])
                             .finalize()
                             .to_vec(),
@@ -1101,7 +1101,7 @@
                         new_hashes.push(
                             D::new()
                                 .chain(<span class="kw-2">&amp;</span>leaves[i])
-                                .chain(<span class="kw-2">&amp;</span>values.get(<span class="number">0</span>).ok_or(MerkleTreeError::SerializationError)<span class="question-mark">?</span>)
+                                .chain(values.get(<span class="number">0</span>).ok_or(MerkleTreeError::SerializationError)<span class="question-mark">?</span>)
                                 .finalize()
                                 .to_vec(),
                         );
@@ -1110,7 +1110,7 @@
                         new_hashes.push(
                             D::new()
                                 .chain(<span class="kw-2">&amp;</span>leaves[i])
-                                .chain(<span class="kw-2">&amp;</span>D::digest(<span class="kw-2">&amp;</span>[<span class="number">0u8</span>]))
+                                .chain(<span class="kw-2">&amp;</span>D::digest([<span class="number">0u8</span>]))
                                 .finalize()
                                 .to_vec(),
                         );
@@ -1141,11 +1141,11 @@
         <span class="kw">let </span><span class="kw-2">mut </span>nodes = <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0u8</span>]; num_nodes];
 
         <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..leaves.len() {
-            nodes[num_nodes - n + i] = D::digest(<span class="kw-2">&amp;</span>leaves[i].to_bytes()).to_vec();
+            nodes[num_nodes - n + i] = D::digest(leaves[i].to_bytes()).to_vec();
         }
 
         <span class="kw">for </span>i <span class="kw">in </span>(<span class="number">0</span>..num_nodes - n).rev() {
-            <span class="kw">let </span>z = D::digest(<span class="kw-2">&amp;</span>[<span class="number">0u8</span>]).to_vec();
+            <span class="kw">let </span>z = D::digest([<span class="number">0u8</span>]).to_vec();
             <span class="kw">let </span>left = <span class="kw">if </span>left_child(i) &lt; num_nodes {
                 <span class="kw-2">&amp;</span>nodes[left_child(i)]
             } <span class="kw">else </span>{
@@ -1211,7 +1211,7 @@
             <span class="kw">let </span>h = <span class="kw">if </span>sibling(idx) &lt; <span class="self">self</span>.nodes.len() {
                 <span class="self">self</span>.nodes[sibling(idx)].clone()
             } <span class="kw">else </span>{
-                D::digest(<span class="kw-2">&amp;</span>[<span class="number">0u8</span>]).to_vec()
+                D::digest([<span class="number">0u8</span>]).to_vec()
             };
             proof.push(h.clone());
             idx = parent(idx);
