@@ -539,10 +539,36 @@
 <span id="539">539</span>
 <span id="540">540</span>
 <span id="541">541</span>
+<span id="542">542</span>
+<span id="543">543</span>
+<span id="544">544</span>
+<span id="545">545</span>
+<span id="546">546</span>
+<span id="547">547</span>
+<span id="548">548</span>
+<span id="549">549</span>
+<span id="550">550</span>
+<span id="551">551</span>
+<span id="552">552</span>
+<span id="553">553</span>
+<span id="554">554</span>
+<span id="555">555</span>
+<span id="556">556</span>
+<span id="557">557</span>
+<span id="558">558</span>
+<span id="559">559</span>
+<span id="560">560</span>
+<span id="561">561</span>
+<span id="562">562</span>
+<span id="563">563</span>
+<span id="564">564</span>
+<span id="565">565</span>
+<span id="566">566</span>
 </pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>flate2::read::GzDecoder;
 <span class="kw">use </span>futures::StreamExt;
 <span class="kw">use </span>reqwest::{<span class="self">self</span>, StatusCode};
+<span class="kw">use </span>reqwest::{Client, RequestBuilder};
 <span class="kw">use </span>slog_scope::debug;
 <span class="kw">use </span>std::env;
 <span class="kw">use </span>std::fs;
@@ -553,7 +579,10 @@
 <span class="kw">use </span>tar::Archive;
 <span class="kw">use </span>thiserror::Error;
 
-<span class="kw">use </span>mithril_common::entities::{Certificate, Snapshot};
+<span class="kw">use </span>mithril_common::{
+    entities::{Certificate, Snapshot},
+    MITHRIL_API_VERSION,
+};
 
 <span class="kw">use </span>mithril_common::certificate_chain::CertificateRetriever;
 <span class="kw">use </span>mithril_common::certificate_chain::CertificateRetrieverError;
@@ -627,6 +656,11 @@
         }
     }
 
+    <span class="doccomment">/// Forge a client request adding protocol version in the headers.
+    </span><span class="kw">pub fn </span>prepare_request_builder(<span class="kw-2">&amp;</span><span class="self">self</span>, request_builder: RequestBuilder) -&gt; RequestBuilder {
+        request_builder.header(<span class="string">&quot;API_VERSION&quot;</span>, MITHRIL_API_VERSION)
+    }
+
     <span class="doccomment">/// Download certificate details
     </span><span class="kw">async fn </span>download_certificate_details(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
@@ -637,7 +671,11 @@
             <span class="string">&quot;{}/certificate/{}&quot;</span>,
             <span class="self">self</span>.aggregator_endpoint, certificate_hash
         );
-        <span class="kw">let </span>response = reqwest::get(url.clone()).<span class="kw">await</span>;
+        <span class="kw">let </span>response = <span class="self">self
+            </span>.prepare_request_builder(Client::new().get(url.clone()))
+            .send()
+            .<span class="kw">await</span>;
+
         <span class="kw">match </span>response {
             <span class="prelude-val">Ok</span>(response) =&gt; <span class="kw">match </span>response.status() {
                 StatusCode::OK =&gt; <span class="kw">match </span>response.json::&lt;Certificate&gt;().<span class="kw">await </span>{
@@ -664,7 +702,11 @@
     </span><span class="kw">async fn </span>list_snapshots(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;Snapshot&gt;, AggregatorHandlerError&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;List snapshots&quot;</span>);
         <span class="kw">let </span>url = <span class="macro">format!</span>(<span class="string">&quot;{}/snapshots&quot;</span>, <span class="self">self</span>.aggregator_endpoint);
-        <span class="kw">let </span>response = reqwest::get(url.clone()).<span class="kw">await</span>;
+        <span class="kw">let </span>response = <span class="self">self
+            </span>.prepare_request_builder(Client::new().get(url.clone()))
+            .send()
+            .<span class="kw">await</span>;
+
         <span class="kw">match </span>response {
             <span class="prelude-val">Ok</span>(response) =&gt; <span class="kw">match </span>response.status() {
                 StatusCode::OK =&gt; <span class="kw">match </span>response.json::&lt;Vec&lt;Snapshot&gt;&gt;().<span class="kw">await </span>{
@@ -685,7 +727,11 @@
     </span><span class="kw">async fn </span>get_snapshot_details(<span class="kw-2">&amp;</span><span class="self">self</span>, digest: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;Snapshot, AggregatorHandlerError&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;Details snapshot {}&quot;</span>, digest);
         <span class="kw">let </span>url = <span class="macro">format!</span>(<span class="string">&quot;{}/snapshot/{}&quot;</span>, <span class="self">self</span>.aggregator_endpoint, digest);
-        <span class="kw">let </span>response = reqwest::get(url.clone()).<span class="kw">await</span>;
+        <span class="kw">let </span>response = <span class="self">self
+            </span>.prepare_request_builder(Client::new().get(url.clone()))
+            .send()
+            .<span class="kw">await</span>;
+
         <span class="kw">match </span>response {
             <span class="prelude-val">Ok</span>(response) =&gt; <span class="kw">match </span>response.status() {
                 StatusCode::OK =&gt; <span class="kw">match </span>response.json::&lt;Snapshot&gt;().<span class="kw">await </span>{
@@ -712,7 +758,11 @@
         location: <span class="kw-2">&amp;</span>str,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;String, AggregatorHandlerError&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;Download snapshot {} from {}&quot;</span>, digest, location);
-        <span class="kw">let </span>response = reqwest::get(location).<span class="kw">await</span>;
+        <span class="kw">let </span>response = <span class="self">self
+            </span>.prepare_request_builder(Client::new().get(location.to_owned()))
+            .send()
+            .<span class="kw">await</span>;
+
         <span class="kw">match </span>response {
             <span class="prelude-val">Ok</span>(response) =&gt; <span class="kw">match </span>response.status() {
                 StatusCode::OK =&gt; {
