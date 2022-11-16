@@ -54,11 +54,27 @@
 <span id="54">54</span>
 <span id="55">55</span>
 <span id="56">56</span>
+<span id="57">57</span>
+<span id="58">58</span>
+<span id="59">59</span>
+<span id="60">60</span>
+<span id="61">61</span>
+<span id="62">62</span>
+<span id="63">63</span>
+<span id="64">64</span>
+<span id="65">65</span>
+<span id="66">66</span>
+<span id="67">67</span>
+<span id="68">68</span>
+<span id="69">69</span>
+<span id="70">70</span>
 </pre><pre class="rust"><code><span class="kw">use </span>config::ConfigError;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>std::path::PathBuf;
 
 <span class="kw">use </span>mithril_common::{entities::PartyId, CardanoNetwork};
+
+<span class="kw">const </span>SQLITE_FILE: <span class="kw-2">&amp;</span>str = <span class="string">&quot;signer.sqlite3&quot;</span>;
 
 <span class="doccomment">/// Client configuration
 </span><span class="attribute">#[derive(Debug, Clone, Serialize, Deserialize)]
@@ -108,6 +124,18 @@
     </span><span class="kw">pub fn </span>get_network(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;CardanoNetwork, ConfigError&gt; {
         CardanoNetwork::from_code(<span class="self">self</span>.network.clone(), <span class="self">self</span>.network_magic)
             .map_err(|e| ConfigError::Message(e.to_string()))
+    }
+
+    <span class="doccomment">/// Create the SQL store directory if not exist and return the path of the
+    /// SQLite3 file.
+    </span><span class="kw">pub fn </span>get_sqlite_file(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; PathBuf {
+        <span class="kw">let </span>store_dir = <span class="kw-2">&amp;</span><span class="self">self</span>.data_stores_directory;
+
+        <span class="kw">if </span>!store_dir.exists() {
+            std::fs::create_dir_all(store_dir).unwrap();
+        }
+
+        <span class="self">self</span>.data_stores_directory.join(SQLITE_FILE)
     }
 }
 </code></pre></div>
