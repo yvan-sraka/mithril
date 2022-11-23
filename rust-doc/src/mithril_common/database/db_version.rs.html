@@ -394,13 +394,11 @@
 <span id="394">394</span>
 <span id="395">395</span>
 <span id="396">396</span>
-<span id="397">397</span>
-<span id="398">398</span>
 </pre><pre class="rust"><code><span class="kw">use </span>std::{cmp::Ordering, collections::HashMap, error::Error, fmt::Display, path::PathBuf};
 
 <span class="kw">use </span>chrono::{Local, NaiveDateTime};
 <span class="kw">use </span>semver::Version;
-<span class="kw">use </span>slog::{debug, error, warn, Logger};
+<span class="kw">use </span>slog::{debug, warn, Logger};
 <span class="kw">use </span>sqlite::{Connection, Row, Value};
 
 <span class="kw">use </span><span class="kw">crate</span>::sqlite::{HydrationError, Projection, ProjectionField, Provider, SqLiteEntity};
@@ -696,14 +694,12 @@ returning {projection}
                     <span class="macro">debug!</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.logger, <span class="string">&quot;database updated&quot;</span>);
                 }
                 Ordering::Less =&gt; {
-                    <span class="macro">error!</span>(
+                    <span class="macro">warn!</span>(
                         <span class="kw-2">&amp;</span><span class="self">self</span>.logger,
                         <span class="string">&quot;Software version &#39;{}&#39; is older than database structure version &#39;{}&#39;.&quot;</span>,
                         current_version.semver,
                         version.semver
                     );
-
-                    <span class="prelude-val">Err</span>(<span class="string">&quot;This software version is older than the database structure. Aborting launch to prevent possible data corruption.&quot;</span>)<span class="question-mark">?</span>;
                 }
                 Ordering::Equal =&gt; {
                     <span class="macro">debug!</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.logger, <span class="string">&quot;database up to date&quot;</span>);
@@ -791,7 +787,7 @@ returning app_version.semver as semver, app_version.application_type as applicat
         check_database_version(<span class="kw-2">&amp;</span>filepath, <span class="string">&quot;1.0.0&quot;</span>);
         app_checker.check(<span class="string">&quot;1.1.0&quot;</span>).unwrap();
         check_database_version(<span class="kw-2">&amp;</span>filepath, <span class="string">&quot;1.1.0&quot;</span>);
-        app_checker.check(<span class="string">&quot;1.0.1&quot;</span>).unwrap_err();
+        app_checker.check(<span class="string">&quot;1.0.1&quot;</span>).unwrap();
     }
 }
 </code></pre></div>
