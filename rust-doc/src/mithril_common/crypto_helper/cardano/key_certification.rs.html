@@ -357,6 +357,8 @@
 <span id="357">357</span>
 <span id="358">358</span>
 <span id="359">359</span>
+<span id="360">360</span>
+<span id="361">361</span>
 </pre><pre class="rust"><code><span class="doccomment">//! API for mithril key certification.
 //! Includes the wrappers for StmInitializer and KeyReg, and ProtocolRegistrationErrorWrapper.
 //! These wrappers allows keeping mithril-stm agnostic to Cardano, while providing some
@@ -407,8 +409,8 @@
     </span>OpCertInvalid,
 
     <span class="doccomment">/// Error raised when a KES Signature verification fails
-    </span><span class="attribute">#[error(<span class="string">&quot;KES signature verification error&quot;</span>)]
-    </span>KesSignatureInvalid,
+    </span><span class="attribute">#[error(<span class="string">&quot;KES signature verification error: CurrentKesPeriod={0}, StartKesPeriod={1}&quot;</span>)]
+    </span>KesSignatureInvalid(usize, u64),
 
     <span class="doccomment">/// Error raised when a KES Signature is needed but not provided
     </span><span class="attribute">#[error(<span class="string">&quot;missing KES signature&quot;</span>)]
@@ -580,18 +582,17 @@
             opcert
                 .validate()
                 .map_err(|<span class="kw">_</span>| ProtocolRegistrationErrorWrapper::OpCertInvalid)<span class="question-mark">?</span>;
-            <span class="comment">// TODO: List of eligible indices to be defined by CurrentKesPeriod and StartKesPeriod
-            </span><span class="kw">let </span><span class="kw-2">mut </span>pool_id = <span class="prelude-val">None</span>;
+            <span class="kw">let </span><span class="kw-2">mut </span>pool_id = <span class="prelude-val">None</span>;
             <span class="kw">let </span>sig = kes_sig.ok_or(ProtocolRegistrationErrorWrapper::KesSignatureMissing)<span class="question-mark">?</span>;
-            <span class="kw">for </span>kes_period_try <span class="kw">in </span><span class="number">0</span>..<span class="number">64 </span>{
+            <span class="kw">let </span>kes_period =
+                kes_period.ok_or(ProtocolRegistrationErrorWrapper::KesPeriodMissing)<span class="question-mark">?</span>;
+            <span class="kw">let </span>kes_period_try_min = std::cmp::max(<span class="number">0</span>, kes_period.saturating_sub(<span class="number">1</span>));
+            <span class="kw">let </span>kes_period_try_max = std::cmp::min(<span class="number">64</span>, kes_period.saturating_add(<span class="number">1</span>));
+            <span class="kw">for </span>kes_period_try <span class="kw">in </span>kes_period_try_min..kes_period_try_max {
                 <span class="kw">if </span>sig
                     .verify(kes_period_try, <span class="kw-2">&amp;</span>opcert.kes_vk, <span class="kw-2">&amp;</span>pk.to_bytes())
                     .is_ok()
                 {
-                    <span class="macro">println!</span>(
-                        <span class="string">&quot;WARNING: KES Signature verified for TryKesPeriod={}, CurrentKesPeriod={:?}, and StartKesPeriod={}&quot;</span>,
-                        kes_period_try, kes_period, <span class="kw-2">&amp;</span>opcert.start_kes_period
-                    );
                     pool_id = <span class="prelude-val">Some</span>(
                         opcert
                             .compute_protocol_party_id()
@@ -600,7 +601,10 @@
                     <span class="kw">break</span>;
                 }
             }
-            pool_id.ok_or(ProtocolRegistrationErrorWrapper::KesSignatureInvalid)<span class="question-mark">?
+            pool_id.ok_or(ProtocolRegistrationErrorWrapper::KesSignatureInvalid(
+                kes_period,
+                opcert.start_kes_period,
+            ))<span class="question-mark">?
         </span>} <span class="kw">else </span>{
             <span class="macro">println!</span>(<span class="string">&quot;WARNING: Signer certification is skipped! {:?}&quot;</span>, party_id);
             party_id.ok_or(ProtocolRegistrationErrorWrapper::PartyIdMissing)<span class="question-mark">?
