@@ -359,6 +359,13 @@
 <span id="359">359</span>
 <span id="360">360</span>
 <span id="361">361</span>
+<span id="362">362</span>
+<span id="363">363</span>
+<span id="364">364</span>
+<span id="365">365</span>
+<span id="366">366</span>
+<span id="367">367</span>
+<span id="368">368</span>
 </pre><pre class="rust"><code><span class="doccomment">//! API for mithril key certification.
 //! Includes the wrappers for StmInitializer and KeyReg, and ProtocolRegistrationErrorWrapper.
 //! These wrappers allows keeping mithril-stm agnostic to Cardano, while providing some
@@ -403,6 +410,10 @@
     <span class="doccomment">/// Error raised when a party id is not available in the Cardano_stake distribution
     </span><span class="attribute">#[error(<span class="string">&quot;party id does not exist in the stake distribution&quot;</span>)]
     </span>PartyIdNonExisting,
+
+    <span class="doccomment">/// Error raised when the operational certificate is missing
+    </span><span class="attribute">#[error(<span class="string">&quot;missing operational certificate&quot;</span>)]
+    </span>OpCertMissing,
 
     <span class="doccomment">/// Error raised when an operational certificate is invalid
     </span><span class="attribute">#[error(<span class="string">&quot;invalid operational certificate&quot;</span>)]
@@ -606,7 +617,10 @@
                 opcert.start_kes_period,
             ))<span class="question-mark">?
         </span>} <span class="kw">else </span>{
-            <span class="macro">println!</span>(<span class="string">&quot;WARNING: Signer certification is skipped! {:?}&quot;</span>, party_id);
+            <span class="kw">if </span><span class="macro">cfg!</span>(not(feature = <span class="string">&quot;allow_skip_signer_certification&quot;</span>)) {
+                <span class="prelude-val">Err</span>(ProtocolRegistrationErrorWrapper::OpCertMissing)<span class="question-mark">?
+            </span>}
+            <span class="macro">println!</span>(<span class="string">&quot;WARNING: Uncertified signer regsitration by providing a Pool Id is deprecated and will be removed soon! (Pool Id: {:?})&quot;</span>, party_id);
             party_id.ok_or(ProtocolRegistrationErrorWrapper::PartyIdMissing)<span class="question-mark">?
         </span>};
 
