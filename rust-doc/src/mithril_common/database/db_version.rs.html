@@ -298,110 +298,19 @@
 <span id="298">298</span>
 <span id="299">299</span>
 <span id="300">300</span>
-<span id="301">301</span>
-<span id="302">302</span>
-<span id="303">303</span>
-<span id="304">304</span>
-<span id="305">305</span>
-<span id="306">306</span>
-<span id="307">307</span>
-<span id="308">308</span>
-<span id="309">309</span>
-<span id="310">310</span>
-<span id="311">311</span>
-<span id="312">312</span>
-<span id="313">313</span>
-<span id="314">314</span>
-<span id="315">315</span>
-<span id="316">316</span>
-<span id="317">317</span>
-<span id="318">318</span>
-<span id="319">319</span>
-<span id="320">320</span>
-<span id="321">321</span>
-<span id="322">322</span>
-<span id="323">323</span>
-<span id="324">324</span>
-<span id="325">325</span>
-<span id="326">326</span>
-<span id="327">327</span>
-<span id="328">328</span>
-<span id="329">329</span>
-<span id="330">330</span>
-<span id="331">331</span>
-<span id="332">332</span>
-<span id="333">333</span>
-<span id="334">334</span>
-<span id="335">335</span>
-<span id="336">336</span>
-<span id="337">337</span>
-<span id="338">338</span>
-<span id="339">339</span>
-<span id="340">340</span>
-<span id="341">341</span>
-<span id="342">342</span>
-<span id="343">343</span>
-<span id="344">344</span>
-<span id="345">345</span>
-<span id="346">346</span>
-<span id="347">347</span>
-<span id="348">348</span>
-<span id="349">349</span>
-<span id="350">350</span>
-<span id="351">351</span>
-<span id="352">352</span>
-<span id="353">353</span>
-<span id="354">354</span>
-<span id="355">355</span>
-<span id="356">356</span>
-<span id="357">357</span>
-<span id="358">358</span>
-<span id="359">359</span>
-<span id="360">360</span>
-<span id="361">361</span>
-<span id="362">362</span>
-<span id="363">363</span>
-<span id="364">364</span>
-<span id="365">365</span>
-<span id="366">366</span>
-<span id="367">367</span>
-<span id="368">368</span>
-<span id="369">369</span>
-<span id="370">370</span>
-<span id="371">371</span>
-<span id="372">372</span>
-<span id="373">373</span>
-<span id="374">374</span>
-<span id="375">375</span>
-<span id="376">376</span>
-<span id="377">377</span>
-<span id="378">378</span>
-<span id="379">379</span>
-<span id="380">380</span>
-<span id="381">381</span>
-<span id="382">382</span>
-<span id="383">383</span>
-<span id="384">384</span>
-<span id="385">385</span>
-<span id="386">386</span>
-<span id="387">387</span>
-<span id="388">388</span>
-<span id="389">389</span>
-<span id="390">390</span>
-<span id="391">391</span>
-<span id="392">392</span>
-<span id="393">393</span>
-<span id="394">394</span>
-<span id="395">395</span>
-<span id="396">396</span>
-</pre><pre class="rust"><code><span class="kw">use </span>std::{cmp::Ordering, collections::HashMap, error::Error, fmt::Display, path::PathBuf};
+</pre><pre class="rust"><code><span class="kw">use </span>std::{
+    cmp::Ordering,
+    collections::HashMap,
+    error::Error,
+    fmt::{Debug, Display},
+};
 
-<span class="kw">use </span>chrono::{Local, NaiveDateTime};
-<span class="kw">use </span>semver::Version;
-<span class="kw">use </span>slog::{debug, warn, Logger};
+<span class="kw">use </span>chrono::NaiveDateTime;
 <span class="kw">use </span>sqlite::{Connection, Row, Value};
 
 <span class="kw">use </span><span class="kw">crate</span>::sqlite::{HydrationError, Projection, ProjectionField, Provider, SqLiteEntity};
+
+<span class="kw">use </span><span class="kw">super</span>::DbVersion;
 
 <span class="doccomment">/// Application using a database
 </span><span class="attribute">#[derive(Debug, Clone, PartialEq, Eq)]
@@ -433,11 +342,11 @@
     }
 }
 
-<span class="doccomment">/// Entity related to the `app_version` database table.
+<span class="doccomment">/// Entity related to the `db_version` database table.
 </span><span class="attribute">#[derive(Debug, PartialEq, Eq, Clone)]
-</span><span class="kw">pub struct </span>ApplicationVersion {
-    <span class="doccomment">/// Semver of the database structure.
-    </span><span class="kw">pub </span>semver: Version,
+</span><span class="kw">pub struct </span>DatabaseVersion {
+    <span class="doccomment">/// Version of the database structure.
+    </span><span class="kw">pub </span>version: DbVersion,
 
     <span class="doccomment">/// Name of the application.
     </span><span class="kw">pub </span>application_type: ApplicationNodeType,
@@ -447,11 +356,10 @@
     </span><span class="kw">pub </span>updated_at: NaiveDateTime,
 }
 
-<span class="kw">impl </span>SqLiteEntity <span class="kw">for </span>ApplicationVersion {
+<span class="kw">impl </span>SqLiteEntity <span class="kw">for </span>DatabaseVersion {
     <span class="kw">fn </span>hydrate(row: Row) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, HydrationError&gt; {
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
-            semver: Version::parse(<span class="kw-2">&amp;</span>row.get::&lt;String, <span class="kw">_</span>&gt;(<span class="number">0</span>))
-                .map_err(|e| HydrationError::InvalidData(<span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, e)))<span class="question-mark">?</span>,
+            version: row.get::&lt;i64, <span class="kw">_</span>&gt;(<span class="number">0</span>),
             application_type: ApplicationNodeType::new(<span class="kw-2">&amp;</span>row.get::&lt;String, <span class="kw">_</span>&gt;(<span class="number">1</span>))
                 .map_err(|e| HydrationError::InvalidData(<span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, e)))<span class="question-mark">?</span>,
             updated_at: NaiveDateTime::parse_from_str(
@@ -463,12 +371,22 @@
     }
 }
 
-<span class="doccomment">/// Projection dedicated to [ApplicationVersion] entities.
-</span><span class="kw">struct </span>ApplicationVersionProjection {
+<span class="kw">impl </span>PartialOrd <span class="kw">for </span>DatabaseVersion {
+    <span class="kw">fn </span>partial_cmp(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Ordering&gt; {
+        <span class="kw">if </span><span class="self">self</span>.application_type != other.application_type {
+            <span class="prelude-val">None
+        </span>} <span class="kw">else </span>{
+            <span class="self">self</span>.version.partial_cmp(<span class="kw-2">&amp;</span>other.version)
+        }
+    }
+}
+
+<span class="doccomment">/// Projection dedicated to [DatabaseVersion] entities.
+</span><span class="kw">struct </span>DatabaseVersionProjection {
     fields: Vec&lt;ProjectionField&gt;,
 }
 
-<span class="kw">impl </span>Projection <span class="kw">for </span>ApplicationVersionProjection {
+<span class="kw">impl </span>Projection <span class="kw">for </span>DatabaseVersionProjection {
     <span class="kw">fn </span>set_field(<span class="kw-2">&amp;mut </span><span class="self">self</span>, field: ProjectionField) {
         <span class="self">self</span>.fields.push(field);
     }
@@ -477,41 +395,44 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>.fields
     }
 }
-<span class="kw">impl </span>ApplicationVersionProjection {
+<span class="kw">impl </span>DatabaseVersionProjection {
     <span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
         <span class="kw">let </span><span class="kw-2">mut </span>projection = <span class="self">Self </span>{ fields: Vec::new() };
-        projection.add_field(<span class="string">&quot;semver&quot;</span>, <span class="string">&quot;{:app_version:}.semver&quot;</span>, <span class="string">&quot;text&quot;</span>);
+        projection.add_field(<span class="string">&quot;version&quot;</span>, <span class="string">&quot;{:db_version:}.version&quot;</span>, <span class="string">&quot;text&quot;</span>);
         projection.add_field(
             <span class="string">&quot;application_type&quot;</span>,
-            <span class="string">&quot;{:app_version:}.application_type&quot;</span>,
+            <span class="string">&quot;{:db_version:}.application_type&quot;</span>,
             <span class="string">&quot;text&quot;</span>,
         );
-        projection.add_field(<span class="string">&quot;updated_at&quot;</span>, <span class="string">&quot;{:app_version:}.updated_at&quot;</span>, <span class="string">&quot;timestamp&quot;</span>);
+        projection.add_field(<span class="string">&quot;updated_at&quot;</span>, <span class="string">&quot;{:db_version:}.updated_at&quot;</span>, <span class="string">&quot;timestamp&quot;</span>);
 
         projection
     }
 }
 
-<span class="doccomment">/// Provider for the [ApplicationVersion] entities using the `ApplicationVersionProjection`.
-</span><span class="kw">pub struct </span>VersionProvider&lt;<span class="lifetime">&#39;conn</span>&gt; {
+<span class="doccomment">/// Provider for the [DatabaseVersion] entities using the `DatabaseVersionProjection`.
+</span><span class="kw">pub struct </span>DatabaseVersionProvider&lt;<span class="lifetime">&#39;conn</span>&gt; {
     connection: <span class="kw-2">&amp;</span><span class="lifetime">&#39;conn </span>Connection,
-    projection: ApplicationVersionProjection,
+    projection: DatabaseVersionProjection,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;conn</span>&gt; VersionProvider&lt;<span class="lifetime">&#39;conn</span>&gt; {
-    <span class="doccomment">/// [VersionProvider] constructor.
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;conn</span>&gt; DatabaseVersionProvider&lt;<span class="lifetime">&#39;conn</span>&gt; {
+    <span class="doccomment">/// [DatabaseVersionProvider] constructor.
     </span><span class="kw">pub fn </span>new(connection: <span class="kw-2">&amp;</span><span class="lifetime">&#39;conn </span>Connection) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             connection,
-            projection: ApplicationVersionProjection::new(),
+            projection: DatabaseVersionProjection::new(),
         }
     }
 
     <span class="doccomment">/// Method to create the table at the beginning of the migration procedure.
     /// This code is temporary and should not last.
-    </span><span class="kw">pub fn </span>create_table_if_not_exists(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>Error&gt;&gt; {
+    </span><span class="kw">pub fn </span>create_table_if_not_exists(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        application_type: <span class="kw-2">&amp;</span>ApplicationNodeType,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>Error&gt;&gt; {
         <span class="kw">let </span>connection = <span class="self">self</span>.get_connection();
-        <span class="kw">let </span>sql = <span class="string">&quot;select exists(select name from sqlite_master where type=&#39;table&#39; and name=&#39;app_version&#39;) as table_exists&quot;</span>;
+        <span class="kw">let </span>sql = <span class="string">&quot;select exists(select name from sqlite_master where type=&#39;table&#39; and name=&#39;db_version&#39;) as table_exists&quot;</span>;
         <span class="kw">let </span>table_exists = connection
             .prepare(sql)<span class="question-mark">?
             </span>.into_cursor()
@@ -522,9 +443,10 @@
             == <span class="number">1</span>;
 
         <span class="kw">if </span>!table_exists {
-            <span class="kw">let </span>sql = <span class="string">r#&quot;
-create table app_version (application_type text not null primary key, semver text not null, updated_at timestamp not null default CURRENT_TIMESTAMP)
-&quot;#</span>;
+            <span class="kw">let </span>sql = <span class="macro">format!</span>(<span class="string">&quot;
+create table db_version (application_type text not null primary key, version integer not null, updated_at timestamp not null default CURRENT_TIMESTAMP);
+insert into db_version (application_type, version) values (&#39;{application_type}&#39;, 0);
+&quot;</span>);
             connection.execute(sql)<span class="question-mark">?</span>;
         }
 
@@ -535,7 +457,7 @@ create table app_version (application_type text not null primary key, semver tex
     </span><span class="kw">pub fn </span>get_application_version(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         application_type: <span class="kw-2">&amp;</span>ApplicationNodeType,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;ApplicationVersion&gt;, Box&lt;<span class="kw">dyn </span>Error&gt;&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;DatabaseVersion&gt;, Box&lt;<span class="kw">dyn </span>Error&gt;&gt; {
         <span class="kw">let </span>condition = <span class="string">&quot;application_type = ?&quot;</span>;
         <span class="kw">let </span>params = [Value::String(<span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, application_type))];
         <span class="kw">let </span>result = <span class="self">self</span>.find(<span class="prelude-val">Some</span>(condition), <span class="kw-2">&amp;</span>params)<span class="question-mark">?</span>.next();
@@ -544,8 +466,8 @@ create table app_version (application_type text not null primary key, semver tex
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;conn</span>&gt; Provider&lt;<span class="lifetime">&#39;conn</span>&gt; <span class="kw">for </span>VersionProvider&lt;<span class="lifetime">&#39;conn</span>&gt; {
-    <span class="kw">type </span>Entity = ApplicationVersion;
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;conn</span>&gt; Provider&lt;<span class="lifetime">&#39;conn</span>&gt; <span class="kw">for </span>DatabaseVersionProvider&lt;<span class="lifetime">&#39;conn</span>&gt; {
+    <span class="kw">type </span>Entity = DatabaseVersion;
 
     <span class="kw">fn </span>get_projection(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw">dyn </span>Projection {
         <span class="kw-2">&amp;</span><span class="self">self</span>.projection
@@ -558,40 +480,40 @@ create table app_version (application_type text not null primary key, semver tex
     <span class="kw">fn </span>get_definition(<span class="kw-2">&amp;</span><span class="self">self</span>, condition: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;) -&gt; String {
         <span class="kw">let </span>where_clause = condition.unwrap_or(<span class="string">&quot;true&quot;</span>);
         <span class="kw">let </span><span class="kw-2">mut </span>aliases = HashMap::new();
-        <span class="kw">let _ </span>= aliases.insert(<span class="string">&quot;{:app_version:}&quot;</span>.to_string(), <span class="string">&quot;app_version&quot;</span>.to_string());
+        <span class="kw">let _ </span>= aliases.insert(<span class="string">&quot;{:db_version:}&quot;</span>.to_string(), <span class="string">&quot;db_version&quot;</span>.to_string());
         <span class="kw">let </span>projection = <span class="self">self</span>.get_projection().expand(aliases);
 
         <span class="macro">format!</span>(
             <span class="string">r#&quot;
 select {projection}
-from app_version
+from db_version
 where {where_clause}
 &quot;#
         </span>)
     }
 }
 
-<span class="doccomment">/// Write [Provider] for the [ApplicationVersion] entities.
+<span class="doccomment">/// Write [Provider] for the [DatabaseVersion] entities.
 /// This will perform an UPSERT and return the updated entity.
-</span><span class="kw">pub struct </span>VersionUpdaterProvider&lt;<span class="lifetime">&#39;conn</span>&gt; {
+</span><span class="kw">pub struct </span>DatabaseVersionUpdater&lt;<span class="lifetime">&#39;conn</span>&gt; {
     connection: <span class="kw-2">&amp;</span><span class="lifetime">&#39;conn </span>Connection,
-    projection: ApplicationVersionProjection,
+    projection: DatabaseVersionProjection,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;conn</span>&gt; VersionUpdaterProvider&lt;<span class="lifetime">&#39;conn</span>&gt; {
-    <span class="doccomment">/// [VersionUpdaterProvider] constructor.
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;conn</span>&gt; DatabaseVersionUpdater&lt;<span class="lifetime">&#39;conn</span>&gt; {
+    <span class="doccomment">/// [DatabaseVersionUpdater] constructor.
     </span><span class="kw">pub fn </span>new(connection: <span class="kw-2">&amp;</span><span class="lifetime">&#39;conn </span>Connection) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             connection,
-            projection: ApplicationVersionProjection::new(),
+            projection: DatabaseVersionProjection::new(),
         }
     }
 
     <span class="doccomment">/// Persist the given entity and return the projection of the saved entity.
-    </span><span class="kw">pub fn </span>save(<span class="kw-2">&amp;</span><span class="self">self</span>, version: ApplicationVersion) -&gt; <span class="prelude-ty">Result</span>&lt;ApplicationVersion, Box&lt;<span class="kw">dyn </span>Error&gt;&gt; {
+    </span><span class="kw">pub fn </span>save(<span class="kw-2">&amp;</span><span class="self">self</span>, version: DatabaseVersion) -&gt; <span class="prelude-ty">Result</span>&lt;DatabaseVersion, Box&lt;<span class="kw">dyn </span>Error&gt;&gt; {
         <span class="kw">let </span>params = [
             Value::String(<span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, version.application_type)),
-            Value::String(version.semver.to_string()),
+            Value::Integer(version.version),
         ];
         <span class="kw">let </span>entity = <span class="self">self
             </span>.find(<span class="prelude-val">None</span>, <span class="kw-2">&amp;</span>params)<span class="question-mark">?
@@ -602,8 +524,8 @@ where {where_clause}
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;conn</span>&gt; Provider&lt;<span class="lifetime">&#39;conn</span>&gt; <span class="kw">for </span>VersionUpdaterProvider&lt;<span class="lifetime">&#39;conn</span>&gt; {
-    <span class="kw">type </span>Entity = ApplicationVersion;
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;conn</span>&gt; Provider&lt;<span class="lifetime">&#39;conn</span>&gt; <span class="kw">for </span>DatabaseVersionUpdater&lt;<span class="lifetime">&#39;conn</span>&gt; {
+    <span class="kw">type </span>Entity = DatabaseVersion;
 
     <span class="kw">fn </span>get_projection(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw">dyn </span>Projection {
         <span class="kw-2">&amp;</span><span class="self">self</span>.projection
@@ -616,98 +538,16 @@ where {where_clause}
     <span class="kw">fn </span>get_definition(<span class="kw-2">&amp;</span><span class="self">self</span>, condition: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;) -&gt; String {
         <span class="kw">let </span>_where_clause = condition.unwrap_or(<span class="string">&quot;true&quot;</span>);
         <span class="kw">let </span><span class="kw-2">mut </span>aliases = HashMap::new();
-        <span class="kw">let _ </span>= aliases.insert(<span class="string">&quot;{:app_version:}&quot;</span>.to_string(), <span class="string">&quot;app_version&quot;</span>.to_string());
+        <span class="kw">let _ </span>= aliases.insert(<span class="string">&quot;{:db_version:}&quot;</span>.to_string(), <span class="string">&quot;db_version&quot;</span>.to_string());
         <span class="kw">let </span>projection = <span class="self">self</span>.get_projection().expand(aliases);
 
         <span class="macro">format!</span>(
             <span class="string">r#&quot;
-insert into app_version (application_type, semver) values (?, ?)
-  on conflict (application_type) do update set semver = excluded.semver, updated_at = CURRENT_TIMESTAMP
+insert into db_version (application_type, version) values (?, ?)
+  on conflict (application_type) do update set version = excluded.version, updated_at = CURRENT_TIMESTAMP
 returning {projection}
 &quot;#
         </span>)
-    }
-}
-
-<span class="doccomment">/// Struct to perform application version check in the database.
-</span><span class="attribute">#[derive(Debug)]
-</span><span class="kw">pub struct </span>ApplicationVersionChecker {
-    <span class="doccomment">/// Pathbuf to the SQLite3 file.
-    </span>sqlite_file_path: PathBuf,
-
-    <span class="doccomment">/// Application type which vesion is verified.
-    </span>application_type: ApplicationNodeType,
-
-    <span class="doccomment">/// logger
-    </span>logger: Logger,
-}
-
-<span class="kw">impl </span>ApplicationVersionChecker {
-    <span class="doccomment">/// constructor
-    </span><span class="kw">pub fn </span>new(
-        logger: Logger,
-        application_type: ApplicationNodeType,
-        sqlite_file_path: PathBuf,
-    ) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{
-            sqlite_file_path,
-            application_type,
-            logger,
-        }
-    }
-
-    <span class="doccomment">/// Performs an actual version check in the database. This method creates a
-    /// connection to the SQLite3 file and drops it at the end.
-    </span><span class="kw">pub fn </span>check(<span class="kw-2">&amp;</span><span class="self">self</span>, current_semver: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>Error&gt;&gt; {
-        <span class="macro">debug!</span>(
-            <span class="kw-2">&amp;</span><span class="self">self</span>.logger,
-            <span class="string">&quot;check application version, database file = &#39;{}&#39;&quot;</span>,
-            <span class="self">self</span>.sqlite_file_path.display()
-        );
-        <span class="kw">let </span>connection = Connection::open(<span class="kw-2">&amp;</span><span class="self">self</span>.sqlite_file_path)<span class="question-mark">?</span>;
-        <span class="kw">let </span>provider = VersionProvider::new(<span class="kw-2">&amp;</span>connection);
-        provider.create_table_if_not_exists()<span class="question-mark">?</span>;
-        <span class="kw">let </span>updater = VersionUpdaterProvider::new(<span class="kw-2">&amp;</span>connection);
-        <span class="kw">let </span>maybe_option = provider.get_application_version(<span class="kw-2">&amp;</span><span class="self">self</span>.application_type)<span class="question-mark">?</span>;
-        <span class="kw">let </span>current_version = ApplicationVersion {
-            semver: Version::parse(current_semver)<span class="question-mark">?</span>,
-            application_type: <span class="self">self</span>.application_type.clone(),
-            updated_at: Local::now().naive_local(),
-        };
-
-        <span class="kw">match </span>maybe_option {
-            <span class="prelude-val">None </span>=&gt; {
-                <span class="kw">let </span>current_version = updater.save(current_version)<span class="question-mark">?</span>;
-                <span class="macro">debug!</span>(
-                    <span class="kw-2">&amp;</span><span class="self">self</span>.logger,
-                    <span class="string">&quot;Application version &#39;{}&#39; saved in database.&quot;</span>, current_version.semver
-                );
-            }
-            <span class="prelude-val">Some</span>(version) =&gt; <span class="kw">match </span>current_version.semver.cmp(<span class="kw-2">&amp;</span>version.semver) {
-                Ordering::Greater =&gt; {
-                    <span class="macro">warn!</span>(
-                            <span class="kw-2">&amp;</span><span class="self">self</span>.logger,
-                            <span class="string">&quot;Application version &#39;{}&#39; is out of date, new version is &#39;{}&#39;. Upgrading database…&quot;</span>,
-                            version.semver, current_version.semver
-                        );
-                    updater.save(current_version)<span class="question-mark">?</span>;
-                    <span class="macro">debug!</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.logger, <span class="string">&quot;database updated&quot;</span>);
-                }
-                Ordering::Less =&gt; {
-                    <span class="macro">warn!</span>(
-                        <span class="kw-2">&amp;</span><span class="self">self</span>.logger,
-                        <span class="string">&quot;Software version &#39;{}&#39; is older than database structure version &#39;{}&#39;.&quot;</span>,
-                        current_version.semver,
-                        version.semver
-                    );
-                }
-                Ordering::Equal =&gt; {
-                    <span class="macro">debug!</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.logger, <span class="string">&quot;database up to date&quot;</span>);
-                }
-            },
-        };
-
-        <span class="prelude-val">Ok</span>(())
     }
 }
 
@@ -717,12 +557,12 @@ returning {projection}
 
     <span class="attribute">#[test]
     </span><span class="kw">fn </span>test_projection() {
-        <span class="kw">let </span>projection = ApplicationVersionProjection::new();
+        <span class="kw">let </span>projection = DatabaseVersionProjection::new();
         <span class="kw">let </span><span class="kw-2">mut </span>aliases: HashMap&lt;String, String&gt; = HashMap::new();
-        <span class="kw">let _ </span>= aliases.insert(<span class="string">&quot;{:app_version:}&quot;</span>.to_string(), <span class="string">&quot;whatever&quot;</span>.to_string());
+        <span class="kw">let _ </span>= aliases.insert(<span class="string">&quot;{:db_version:}&quot;</span>.to_string(), <span class="string">&quot;whatever&quot;</span>.to_string());
 
         <span class="macro">assert_eq!</span>(
-            <span class="string">&quot;whatever.semver as semver, whatever.application_type as application_type, whatever.updated_at as updated_at&quot;
+            <span class="string">&quot;whatever.version as version, whatever.application_type as application_type, whatever.updated_at as updated_at&quot;
                 </span>.to_string(),
             projection.expand(aliases)
         );
@@ -731,12 +571,12 @@ returning {projection}
     <span class="attribute">#[test]
     </span><span class="kw">fn </span>test_definition() {
         <span class="kw">let </span>connection = Connection::open(<span class="string">&quot;:memory:&quot;</span>).unwrap();
-        <span class="kw">let </span>provider = VersionProvider::new(<span class="kw-2">&amp;</span>connection);
+        <span class="kw">let </span>provider = DatabaseVersionProvider::new(<span class="kw-2">&amp;</span>connection);
 
         <span class="macro">assert_eq!</span>(
             <span class="string">r#&quot;
-select app_version.semver as semver, app_version.application_type as application_type, app_version.updated_at as updated_at
-from app_version
+select db_version.version as version, db_version.application_type as application_type, db_version.updated_at as updated_at
+from db_version
 where true
 &quot;#</span>,
             provider.get_definition(<span class="prelude-val">None</span>)
@@ -746,48 +586,16 @@ where true
     <span class="attribute">#[test]
     </span><span class="kw">fn </span>test_updated_entity() {
         <span class="kw">let </span>connection = Connection::open(<span class="string">&quot;:memory:&quot;</span>).unwrap();
-        <span class="kw">let </span>provider = VersionUpdaterProvider::new(<span class="kw-2">&amp;</span>connection);
+        <span class="kw">let </span>provider = DatabaseVersionUpdater::new(<span class="kw-2">&amp;</span>connection);
 
         <span class="macro">assert_eq!</span>(
             <span class="string">r#&quot;
-insert into app_version (application_type, semver) values (?, ?)
-  on conflict (application_type) do update set semver = excluded.semver, updated_at = CURRENT_TIMESTAMP
-returning app_version.semver as semver, app_version.application_type as application_type, app_version.updated_at as updated_at
+insert into db_version (application_type, version) values (?, ?)
+  on conflict (application_type) do update set version = excluded.version, updated_at = CURRENT_TIMESTAMP
+returning db_version.version as version, db_version.application_type as application_type, db_version.updated_at as updated_at
 &quot;#</span>,
             provider.get_definition(<span class="prelude-val">None</span>)
         )
-    }
-
-    <span class="kw">fn </span>check_database_version(filepath: <span class="kw-2">&amp;</span>PathBuf, semver: <span class="kw-2">&amp;</span>str) {
-        <span class="kw">let </span>connection = Connection::open(filepath).unwrap();
-        <span class="kw">let </span>provider = VersionProvider::new(<span class="kw-2">&amp;</span>connection);
-        <span class="kw">let </span>version = provider
-            .get_application_version(<span class="kw-2">&amp;</span>ApplicationNodeType::Aggregator)
-            .unwrap()
-            .expect(<span class="string">&quot;there should be a version in the database&quot;</span>);
-
-        <span class="macro">assert_eq!</span>(semver, version.semver.to_string());
-    }
-
-    <span class="attribute">#[test]
-    </span><span class="kw">fn </span>test_application_version_checker() {
-        <span class="kw">let </span>filepath = std::env::temp_dir().join(<span class="string">&quot;test.sqlite3&quot;</span>);
-
-        <span class="kw">if </span>filepath.exists() {
-            std::fs::remove_file(filepath.as_path()).unwrap();
-        }
-        <span class="kw">let </span>app_checker = ApplicationVersionChecker::new(
-            slog_scope::logger(),
-            ApplicationNodeType::Aggregator,
-            filepath.clone(),
-        );
-        app_checker.check(<span class="string">&quot;1.0.0&quot;</span>).unwrap();
-        check_database_version(<span class="kw-2">&amp;</span>filepath, <span class="string">&quot;1.0.0&quot;</span>);
-        app_checker.check(<span class="string">&quot;1.0.0&quot;</span>).unwrap();
-        check_database_version(<span class="kw-2">&amp;</span>filepath, <span class="string">&quot;1.0.0&quot;</span>);
-        app_checker.check(<span class="string">&quot;1.1.0&quot;</span>).unwrap();
-        check_database_version(<span class="kw-2">&amp;</span>filepath, <span class="string">&quot;1.1.0&quot;</span>);
-        app_checker.check(<span class="string">&quot;1.0.1&quot;</span>).unwrap();
     }
 }
 </code></pre></div>
