@@ -282,22 +282,6 @@
 <span id="282">282</span>
 <span id="283">283</span>
 <span id="284">284</span>
-<span id="285">285</span>
-<span id="286">286</span>
-<span id="287">287</span>
-<span id="288">288</span>
-<span id="289">289</span>
-<span id="290">290</span>
-<span id="291">291</span>
-<span id="292">292</span>
-<span id="293">293</span>
-<span id="294">294</span>
-<span id="295">295</span>
-<span id="296">296</span>
-<span id="297">297</span>
-<span id="298">298</span>
-<span id="299">299</span>
-<span id="300">300</span>
 </pre><pre class="rust"><code><span class="kw">use </span>std::{
     cmp::Ordering,
     collections::HashMap,
@@ -308,7 +292,7 @@
 <span class="kw">use </span>chrono::NaiveDateTime;
 <span class="kw">use </span>sqlite::{Connection, Row, Value};
 
-<span class="kw">use </span><span class="kw">crate</span>::sqlite::{HydrationError, Projection, ProjectionField, Provider, SqLiteEntity};
+<span class="kw">use </span><span class="kw">crate</span>::sqlite::{HydrationError, Projection, Provider, SqLiteEntity};
 
 <span class="kw">use </span><span class="kw">super</span>::DbVersion;
 
@@ -369,35 +353,9 @@
             .map_err(|e| HydrationError::InvalidData(<span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, e)))<span class="question-mark">?</span>,
         })
     }
-}
 
-<span class="kw">impl </span>PartialOrd <span class="kw">for </span>DatabaseVersion {
-    <span class="kw">fn </span>partial_cmp(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Ordering&gt; {
-        <span class="kw">if </span><span class="self">self</span>.application_type != other.application_type {
-            <span class="prelude-val">None
-        </span>} <span class="kw">else </span>{
-            <span class="self">self</span>.version.partial_cmp(<span class="kw-2">&amp;</span>other.version)
-        }
-    }
-}
-
-<span class="doccomment">/// Projection dedicated to [DatabaseVersion] entities.
-</span><span class="kw">struct </span>DatabaseVersionProjection {
-    fields: Vec&lt;ProjectionField&gt;,
-}
-
-<span class="kw">impl </span>Projection <span class="kw">for </span>DatabaseVersionProjection {
-    <span class="kw">fn </span>set_field(<span class="kw-2">&amp;mut </span><span class="self">self</span>, field: ProjectionField) {
-        <span class="self">self</span>.fields.push(field);
-    }
-
-    <span class="kw">fn </span>get_fields(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Vec&lt;ProjectionField&gt; {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.fields
-    }
-}
-<span class="kw">impl </span>DatabaseVersionProjection {
-    <span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
-        <span class="kw">let </span><span class="kw-2">mut </span>projection = <span class="self">Self </span>{ fields: Vec::new() };
+    <span class="kw">fn </span>get_projection() -&gt; Projection {
+        <span class="kw">let </span><span class="kw-2">mut </span>projection = Projection::default();
         projection.add_field(<span class="string">&quot;version&quot;</span>, <span class="string">&quot;{:db_version:}.version&quot;</span>, <span class="string">&quot;text&quot;</span>);
         projection.add_field(
             <span class="string">&quot;application_type&quot;</span>,
@@ -410,10 +368,20 @@
     }
 }
 
+<span class="kw">impl </span>PartialOrd <span class="kw">for </span>DatabaseVersion {
+    <span class="kw">fn </span>partial_cmp(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Ordering&gt; {
+        <span class="kw">if </span><span class="self">self</span>.application_type != other.application_type {
+            <span class="prelude-val">None
+        </span>} <span class="kw">else </span>{
+            <span class="self">self</span>.version.partial_cmp(<span class="kw-2">&amp;</span>other.version)
+        }
+    }
+}
+
 <span class="doccomment">/// Provider for the [DatabaseVersion] entities using the `DatabaseVersionProjection`.
 </span><span class="kw">pub struct </span>DatabaseVersionProvider&lt;<span class="lifetime">&#39;conn</span>&gt; {
     connection: <span class="kw-2">&amp;</span><span class="lifetime">&#39;conn </span>Connection,
-    projection: DatabaseVersionProjection,
+    projection: Projection,
 }
 
 <span class="kw">impl</span>&lt;<span class="lifetime">&#39;conn</span>&gt; DatabaseVersionProvider&lt;<span class="lifetime">&#39;conn</span>&gt; {
@@ -421,7 +389,7 @@
     </span><span class="kw">pub fn </span>new(connection: <span class="kw-2">&amp;</span><span class="lifetime">&#39;conn </span>Connection) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             connection,
-            projection: DatabaseVersionProjection::new(),
+            projection: DatabaseVersion::get_projection(),
         }
     }
 
@@ -469,7 +437,7 @@ insert into db_version (application_type, version) values (&#39;{application_typ
 <span class="kw">impl</span>&lt;<span class="lifetime">&#39;conn</span>&gt; Provider&lt;<span class="lifetime">&#39;conn</span>&gt; <span class="kw">for </span>DatabaseVersionProvider&lt;<span class="lifetime">&#39;conn</span>&gt; {
     <span class="kw">type </span>Entity = DatabaseVersion;
 
-    <span class="kw">fn </span>get_projection(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw">dyn </span>Projection {
+    <span class="kw">fn </span>get_projection(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Projection {
         <span class="kw-2">&amp;</span><span class="self">self</span>.projection
     }
 
@@ -497,7 +465,7 @@ where {where_clause}
 /// This will perform an UPSERT and return the updated entity.
 </span><span class="kw">pub struct </span>DatabaseVersionUpdater&lt;<span class="lifetime">&#39;conn</span>&gt; {
     connection: <span class="kw-2">&amp;</span><span class="lifetime">&#39;conn </span>Connection,
-    projection: DatabaseVersionProjection,
+    projection: Projection,
 }
 
 <span class="kw">impl</span>&lt;<span class="lifetime">&#39;conn</span>&gt; DatabaseVersionUpdater&lt;<span class="lifetime">&#39;conn</span>&gt; {
@@ -505,7 +473,7 @@ where {where_clause}
     </span><span class="kw">pub fn </span>new(connection: <span class="kw-2">&amp;</span><span class="lifetime">&#39;conn </span>Connection) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             connection,
-            projection: DatabaseVersionProjection::new(),
+            projection: DatabaseVersion::get_projection(),
         }
     }
 
@@ -527,7 +495,7 @@ where {where_clause}
 <span class="kw">impl</span>&lt;<span class="lifetime">&#39;conn</span>&gt; Provider&lt;<span class="lifetime">&#39;conn</span>&gt; <span class="kw">for </span>DatabaseVersionUpdater&lt;<span class="lifetime">&#39;conn</span>&gt; {
     <span class="kw">type </span>Entity = DatabaseVersion;
 
-    <span class="kw">fn </span>get_projection(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw">dyn </span>Projection {
+    <span class="kw">fn </span>get_projection(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Projection {
         <span class="kw-2">&amp;</span><span class="self">self</span>.projection
     }
 
@@ -557,7 +525,7 @@ returning {projection}
 
     <span class="attribute">#[test]
     </span><span class="kw">fn </span>test_projection() {
-        <span class="kw">let </span>projection = DatabaseVersionProjection::new();
+        <span class="kw">let </span>projection = DatabaseVersion::get_projection();
         <span class="kw">let </span><span class="kw-2">mut </span>aliases: HashMap&lt;String, String&gt; = HashMap::new();
         <span class="kw">let _ </span>= aliases.insert(<span class="string">&quot;{:db_version:}&quot;</span>.to_string(), <span class="string">&quot;whatever&quot;</span>.to_string());
 

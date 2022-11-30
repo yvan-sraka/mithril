@@ -271,22 +271,6 @@
 <span id="271">271</span>
 <span id="272">272</span>
 <span id="273">273</span>
-<span id="274">274</span>
-<span id="275">275</span>
-<span id="276">276</span>
-<span id="277">277</span>
-<span id="278">278</span>
-<span id="279">279</span>
-<span id="280">280</span>
-<span id="281">281</span>
-<span id="282">282</span>
-<span id="283">283</span>
-<span id="284">284</span>
-<span id="285">285</span>
-<span id="286">286</span>
-<span id="287">287</span>
-<span id="288">288</span>
-<span id="289">289</span>
 </pre><pre class="rust"><code><span class="kw">use </span>std::error::Error;
 
 <span class="kw">use </span>sqlite::{Connection, Value};
@@ -303,7 +287,7 @@
     </span><span class="kw">fn </span>get_connection(<span class="kw-2">&amp;</span><span class="lifetime">&#39;conn </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;conn </span>Connection;
 
     <span class="doccomment">/// Share the projection.
-    </span><span class="kw">fn </span>get_projection(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw">dyn </span>Projection;
+    </span><span class="kw">fn </span>get_projection(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Projection;
 
     <span class="doccomment">/// Perform the parametrized definition query.
     </span><span class="kw">fn </span>find(
@@ -330,7 +314,7 @@
 
 <span class="attribute">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
-    <span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::{entity::HydrationError, ProjectionField, SqLiteEntity};
+    <span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::{entity::HydrationError, SqLiteEntity};
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
     <span class="attribute">#[derive(Debug, PartialEq)]
@@ -350,25 +334,9 @@
                 maybe_null: row.get::&lt;<span class="prelude-ty">Option</span>&lt;i64&gt;, <span class="kw">_</span>&gt;(<span class="number">3</span>),
             })
         }
-    }
 
-    <span class="kw">pub struct </span>TestProjection {
-        fields: Vec&lt;ProjectionField&gt;,
-    }
-
-    <span class="kw">impl </span>Projection <span class="kw">for </span>TestProjection {
-        <span class="kw">fn </span>get_fields(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Vec&lt;ProjectionField&gt; {
-            <span class="kw-2">&amp;</span><span class="self">self</span>.fields
-        }
-
-        <span class="kw">fn </span>set_field(<span class="kw-2">&amp;mut </span><span class="self">self</span>, field: ProjectionField) {
-            <span class="self">self</span>.fields.push(field);
-        }
-    }
-
-    <span class="kw">impl </span>TestProjection {
-        <span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
-            <span class="kw">let </span><span class="kw-2">mut </span>projection = <span class="self">Self </span>{ fields: Vec::new() };
+        <span class="kw">fn </span>get_projection() -&gt; Projection {
+            <span class="kw">let </span><span class="kw-2">mut </span>projection = Projection::default();
 
             projection.add_field(<span class="string">&quot;text_data&quot;</span>, <span class="string">&quot;{:test:}.text_data&quot;</span>, <span class="string">&quot;text&quot;</span>);
             projection.add_field(<span class="string">&quot;real_data&quot;</span>, <span class="string">&quot;{:test:}.real_data&quot;</span>, <span class="string">&quot;real&quot;</span>);
@@ -381,14 +349,14 @@
 
     <span class="kw">struct </span>TestEntityProvider {
         connection: Connection,
-        projection: TestProjection,
+        projection: Projection,
     }
 
     <span class="kw">impl </span>TestEntityProvider {
         <span class="kw">pub fn </span>new(connection: Connection) -&gt; <span class="self">Self </span>{
             <span class="self">Self </span>{
                 connection,
-                projection: TestProjection::new(),
+                projection: TestEntity::get_projection(),
             }
         }
     }
@@ -400,7 +368,7 @@
             <span class="kw-2">&amp;</span><span class="self">self</span>.connection
         }
 
-        <span class="kw">fn </span>get_projection(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw">dyn </span>Projection {
+        <span class="kw">fn </span>get_projection(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Projection {
             <span class="kw-2">&amp;</span><span class="self">self</span>.projection
         }
 
@@ -417,14 +385,14 @@
 
     <span class="kw">struct </span>TestEntityUpdateProvider {
         connection: Connection,
-        projection: TestProjection,
+        projection: Projection,
     }
 
     <span class="kw">impl </span>TestEntityUpdateProvider {
         <span class="kw">pub fn </span>new(connection: Connection) -&gt; <span class="self">Self </span>{
             <span class="self">Self </span>{
                 connection,
-                projection: TestProjection::new(),
+                projection: TestEntity::get_projection(),
             }
         }
     }
@@ -436,7 +404,7 @@
             <span class="kw-2">&amp;</span><span class="self">self</span>.connection
         }
 
-        <span class="kw">fn </span>get_projection(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw">dyn </span>Projection {
+        <span class="kw">fn </span>get_projection(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Projection {
             <span class="kw-2">&amp;</span><span class="self">self</span>.projection
         }
 
