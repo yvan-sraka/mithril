@@ -627,9 +627,17 @@
 <span id="627">627</span>
 <span id="628">628</span>
 <span id="629">629</span>
-</pre><pre class="rust"><code><span class="kw">use super</span>::{AggregatorRunnerTrait, RuntimeError};
+<span id="630">630</span>
+<span id="631">631</span>
+<span id="632">632</span>
+<span id="633">633</span>
+<span id="634">634</span>
+<span id="635">635</span>
+<span id="636">636</span>
+<span id="637">637</span>
+</pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::runtime::{AggregatorRunnerTrait, RuntimeError, WorkingCertificate};
 
-<span class="kw">use </span>mithril_common::entities::{Beacon, CertificatePending};
+<span class="kw">use </span>mithril_common::entities::Beacon;
 <span class="kw">use </span>slog_scope::{error, info, trace, warn};
 <span class="kw">use </span>std::fmt::Display;
 <span class="kw">use </span>std::sync::Arc;
@@ -648,7 +656,7 @@
 <span class="attribute">#[derive(Clone, Debug, PartialEq)]
 </span><span class="kw">pub struct </span>SigningState {
     current_beacon: Beacon,
-    certificate_pending: CertificatePending,
+    working_certificate: WorkingCertificate,
 }
 
 <span class="attribute">#[derive(Clone, Debug, PartialEq)]
@@ -881,7 +889,7 @@
             .<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let </span>certificate = <span class="self">self
             </span>.runner
-            .create_and_save_certificate(<span class="kw-2">&amp;</span>state.current_beacon)
+            .create_and_save_certificate(<span class="kw-2">&amp;</span>state.working_certificate)
             .<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let _ </span>= <span class="self">self
             </span>.runner
@@ -927,9 +935,13 @@
         <span class="self">self</span>.runner
             .save_pending_certificate(certificate_pending.clone())
             .<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>working_certificate = <span class="self">self
+            </span>.runner
+            .create_new_working_certificate(<span class="kw-2">&amp;</span>certificate_pending)
+            .<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let </span>state = SigningState {
             current_beacon: new_beacon,
-            certificate_pending,
+            working_certificate,
         };
 
         <span class="prelude-val">Ok</span>(state)
@@ -1143,6 +1155,10 @@
             .once()
             .returning(|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(fake_data::certificate_pending()));
         runner
+            .expect_create_new_working_certificate()
+            .once()
+            .returning(|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(WorkingCertificate::fake()));
+        runner
             .expect_save_pending_certificate()
             .once()
             .returning(|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(()));
@@ -1180,7 +1196,7 @@
 
                 beacon
             },
-            certificate_pending: fake_data::certificate_pending(),
+            working_certificate: WorkingCertificate::fake(),
         };
         <span class="kw">let </span><span class="kw-2">mut </span>runtime = init_runtime(<span class="prelude-val">Some</span>(AggregatorState::Signing(state)), runner).<span class="kw">await</span>;
         runtime.cycle().<span class="kw">await</span>.unwrap();
@@ -1201,7 +1217,7 @@
             .returning(|| <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>));
         <span class="kw">let </span>state = SigningState {
             current_beacon: fake_data::beacon(),
-            certificate_pending: fake_data::certificate_pending(),
+            working_certificate: WorkingCertificate::fake(),
         };
         <span class="kw">let </span><span class="kw-2">mut </span>runtime = init_runtime(<span class="prelude-val">Some</span>(AggregatorState::Signing(state)), runner).<span class="kw">await</span>;
         runtime.cycle().<span class="kw">await</span>.unwrap();
@@ -1248,7 +1264,7 @@
 
         <span class="kw">let </span>state = SigningState {
             current_beacon: fake_data::beacon(),
-            certificate_pending: fake_data::certificate_pending(),
+            working_certificate: WorkingCertificate::fake(),
         };
         <span class="kw">let </span><span class="kw-2">mut </span>runtime = init_runtime(<span class="prelude-val">Some</span>(AggregatorState::Signing(state)), runner).<span class="kw">await</span>;
         runtime.cycle().<span class="kw">await</span>.unwrap();
