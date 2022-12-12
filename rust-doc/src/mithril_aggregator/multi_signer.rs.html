@@ -1161,6 +1161,25 @@
 <span id="1161">1161</span>
 <span id="1162">1162</span>
 <span id="1163">1163</span>
+<span id="1164">1164</span>
+<span id="1165">1165</span>
+<span id="1166">1166</span>
+<span id="1167">1167</span>
+<span id="1168">1168</span>
+<span id="1169">1169</span>
+<span id="1170">1170</span>
+<span id="1171">1171</span>
+<span id="1172">1172</span>
+<span id="1173">1173</span>
+<span id="1174">1174</span>
+<span id="1175">1175</span>
+<span id="1176">1176</span>
+<span id="1177">1177</span>
+<span id="1178">1178</span>
+<span id="1179">1179</span>
+<span id="1180">1180</span>
+<span id="1181">1181</span>
+<span id="1182">1182</span>
 </pre><pre class="rust"><code><span class="kw">use </span>std::collections::HashMap;
 <span class="kw">use </span>std::sync::Arc;
 
@@ -1198,6 +1217,10 @@
     <span class="doccomment">/// Signer is already registered.
     </span><span class="attribute">#[error(<span class="string">&quot;signer already registered&quot;</span>)]
     </span>ExistingSigner(),
+
+    <span class="doccomment">/// Signer was not registered.
+    </span><span class="attribute">#[error(<span class="string">&quot;signer did not register&quot;</span>)]
+    </span>UnregisteredParty(),
 
     <span class="doccomment">/// Signer registration failed.
     </span><span class="attribute">#[error(<span class="string">&quot;signer registration failed&quot;</span>)]
@@ -1859,16 +1882,31 @@
             </span>.get_protocol_parameters()
             .<span class="kw">await</span><span class="question-mark">?
             </span>.ok_or_else(ProtocolError::UnavailableProtocolParameters)<span class="question-mark">?</span>;
-        <span class="kw">let </span>avk = <span class="kw-2">&amp;</span><span class="self">self
+
+        <span class="kw">let </span>clerk = <span class="self">self
             </span>.clerk
             .as_ref()
-            .ok_or_else(ProtocolError::UnavailableClerk)<span class="question-mark">?
-            </span>.compute_avk();
+            .ok_or_else(ProtocolError::UnavailableClerk)<span class="question-mark">?</span>;
 
-        signatures
+        <span class="kw">let </span>signature = signatures
             .to_protocol_signature()
-            .map_err(ProtocolError::Codec)<span class="question-mark">?
-            </span>.verify(<span class="kw-2">&amp;</span>protocol_parameters, avk, message.compute_hash().as_bytes())
+            .map_err(ProtocolError::Codec)<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>avk = clerk.compute_avk();
+
+        <span class="comment">// If there is no reg_party, then we simply received a signature from a non-registered
+        // party, and we can ignore the request.
+        </span><span class="kw">let </span>(vk, stake) = clerk
+            .get_reg_party(<span class="kw-2">&amp;</span>signature.signer_index)
+            .ok_or_else(ProtocolError::UnregisteredParty)<span class="question-mark">?</span>;
+        signature
+            .verify(
+                <span class="kw-2">&amp;</span>protocol_parameters,
+                <span class="kw-2">&amp;</span>vk,
+                <span class="kw-2">&amp;</span>stake,
+                <span class="kw-2">&amp;</span>avk,
+                message.compute_hash().as_bytes(),
+            )
             .map_err(|e| ProtocolError::Core(e.to_string()))<span class="question-mark">?</span>;
 
         <span class="comment">// Register single signature
@@ -1877,7 +1915,7 @@
             .as_ref()
             .ok_or_else(ProtocolError::UnavailableBeacon)<span class="question-mark">?</span>;
 
-        <span class="kw">match </span><span class="self">self
+        <span class="kw">return match </span><span class="self">self
             </span>.single_signature_store
             .save_single_signatures(beacon, signatures)
             .<span class="kw">await</span><span class="question-mark">?
@@ -1886,7 +1924,7 @@
                 signatures.party_id.clone(),
             )),
             <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Ok</span>(()),
-        }
+        };
     }
 
     <span class="doccomment">/// Retrieves a multi signature from a message

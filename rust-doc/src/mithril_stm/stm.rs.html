@@ -1189,6 +1189,29 @@
 <span id="1189">1189</span>
 <span id="1190">1190</span>
 <span id="1191">1191</span>
+<span id="1192">1192</span>
+<span id="1193">1193</span>
+<span id="1194">1194</span>
+<span id="1195">1195</span>
+<span id="1196">1196</span>
+<span id="1197">1197</span>
+<span id="1198">1198</span>
+<span id="1199">1199</span>
+<span id="1200">1200</span>
+<span id="1201">1201</span>
+<span id="1202">1202</span>
+<span id="1203">1203</span>
+<span id="1204">1204</span>
+<span id="1205">1205</span>
+<span id="1206">1206</span>
+<span id="1207">1207</span>
+<span id="1208">1208</span>
+<span id="1209">1209</span>
+<span id="1210">1210</span>
+<span id="1211">1211</span>
+<span id="1212">1212</span>
+<span id="1213">1213</span>
+<span id="1214">1214</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Top-level API for Mithril Stake-based Threshold Multisignature scheme.
 //! See figure 6 of [the paper](https://eprint.iacr.org/2021/916) for most of the
 //! protocol.
@@ -1301,7 +1324,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::error::{
     AggregationError, RegisterError, StmAggregateSignatureError, StmSignatureError,
 };
-<span class="kw">use </span><span class="kw">crate</span>::key_reg::ClosedKeyReg;
+<span class="kw">use </span><span class="kw">crate</span>::key_reg::{ClosedKeyReg, RegParty};
 <span class="kw">use </span><span class="kw">crate</span>::merkle_tree::{BatchPath, MTLeaf, MerkleTreeCommitmentBatchCompat};
 <span class="kw">use </span><span class="kw">crate</span>::multi_sig::{Signature, SigningKey, VerificationKey, VerificationKeyPoP};
 <span class="kw">use </span>blake2::digest::{Digest, FixedOutput};
@@ -1384,10 +1407,6 @@
 </span><span class="kw">pub struct </span>StmSig {
     <span class="doccomment">/// The signature from the underlying MSP scheme.
     </span><span class="kw">pub </span>sigma: Signature,
-    <span class="doccomment">/// The Stm verification Key.
-    </span><span class="kw">pub </span>pk: StmVerificationKey,
-    <span class="doccomment">/// The stake of the party that made this signature.
-    </span><span class="kw">pub </span>stake: Stake,
     <span class="doccomment">/// The index(es) for which the signature is valid
     </span><span class="kw">pub </span>indexes: Vec&lt;Index&gt;,
     <span class="doccomment">/// Merkle tree index of the signer.
@@ -1415,7 +1434,7 @@
     deserialize = <span class="string">&quot;BatchPath&lt;D&gt;: Deserialize&lt;&#39;de&gt;&quot;
 </span>))]
 </span><span class="kw">pub struct </span>StmAggrSig&lt;D: Clone + Digest + FixedOutput&gt; {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) signatures: Vec&lt;StmSig&gt;,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) signatures: Vec&lt;(StmSig, RegParty)&gt;,
     <span class="doccomment">/// The list of unique merkle tree nodes that covers path for all signatures.
     </span><span class="kw">pub </span>batch_proof: BatchPath&lt;D&gt;,
 }
@@ -1575,8 +1594,6 @@
         <span class="kw">if </span>!indexes.is_empty() {
             <span class="prelude-val">Some</span>(StmSig {
                 sigma,
-                pk: <span class="self">self</span>.vk,
-                stake: <span class="self">self</span>.stake,
                 indexes,
                 signer_index: <span class="self">self</span>.mt_index,
             })
@@ -1594,6 +1611,16 @@
     <span class="doccomment">/// Return the closed registration instance
     </span><span class="kw">pub fn </span>get_closed_reg(<span class="self">self</span>) -&gt; ClosedKeyReg&lt;D&gt; {
         <span class="self">self</span>.closed_reg
+    }
+
+    <span class="doccomment">/// Extract the verification key.
+    </span><span class="kw">pub fn </span>verification_key(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StmVerificationKey {
+        <span class="self">self</span>.vk
+    }
+
+    <span class="doccomment">/// Extract stake from the signer.
+    </span><span class="kw">pub fn </span>get_stake(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Stake {
+        <span class="self">self</span>.stake
     }
 }
 
@@ -1627,8 +1654,17 @@
     ) -&gt; <span class="prelude-ty">Result</span>&lt;StmAggrSig&lt;D&gt;, AggregationError&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>unique_sigs = <span class="self">self</span>.dedup_sigs_for_indices(msg, sigs)<span class="question-mark">?</span>;
         unique_sigs.sort_unstable();
+        <span class="kw">let </span>signatures = unique_sigs
+            .iter()
+            .map(|sig| {
+                (
+                    sig.clone(),
+                    <span class="self">self</span>.closed_reg.reg_parties[sig.signer_index <span class="kw">as </span>usize],
+                )
+            })
+            .collect(); <span class="comment">// todo: look into this conversion
 
-        <span class="kw">let </span>mt_index_list = unique_sigs
+        </span><span class="kw">let </span>mt_index_list = unique_sigs
             .iter()
             .map(|sig| sig.signer_index <span class="kw">as </span>usize)
             .collect::&lt;Vec&lt;usize&gt;&gt;();
@@ -1636,7 +1672,7 @@
         <span class="kw">let </span>batch_proof = <span class="self">self</span>.closed_reg.merkle_tree.get_batched_path(mt_index_list);
 
         <span class="prelude-val">Ok</span>(StmAggrSig {
-            signatures: unique_sigs,
+            signatures,
             batch_proof,
         })
     }
@@ -1657,9 +1693,16 @@
         <span class="kw">let </span>avk = StmAggrVerificationKey::from(<span class="kw-2">&amp;</span><span class="self">self</span>.closed_reg);
         <span class="kw">let </span><span class="kw-2">mut </span>sig_by_index: BTreeMap&lt;Index, <span class="kw-2">&amp;</span>StmSig&gt; = BTreeMap::new();
         <span class="kw">let </span><span class="kw-2">mut </span>removal_idx_by_vk: HashMap&lt;<span class="kw-2">&amp;</span>StmSig, Vec&lt;Index&gt;&gt; = HashMap::new();
+        <span class="kw">let </span>reg_parties = sigs
+            .iter()
+            .map(|sig| <span class="self">self</span>.closed_reg.reg_parties[sig.signer_index <span class="kw">as </span>usize])
+            .collect::&lt;Vec&lt;RegParty&gt;&gt;(); <span class="comment">// todo: look into this
 
-        <span class="kw">for </span>sig <span class="kw">in </span>sigs.iter() {
-            <span class="kw">if </span>sig.verify(<span class="kw-2">&amp;</span><span class="self">self</span>.params, <span class="kw-2">&amp;</span>avk, msg).is_err() {
+        </span><span class="kw">for </span>(sig, reg_party) <span class="kw">in </span>sigs.iter().zip(reg_parties.iter()) {
+            <span class="kw">if </span>sig
+                .verify(<span class="kw-2">&amp;</span><span class="self">self</span>.params, <span class="kw-2">&amp;</span>reg_party.<span class="number">0</span>, <span class="kw-2">&amp;</span>reg_party.<span class="number">1</span>, <span class="kw-2">&amp;</span>avk, msg)
+                .is_err()
+            {
                 <span class="kw">continue</span>;
             }
 
@@ -1726,6 +1769,14 @@
     </span><span class="kw">pub fn </span>compute_avk(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StmAggrVerificationKey&lt;D&gt; {
         StmAggrVerificationKey::from(<span class="kw-2">&amp;</span><span class="self">self</span>.closed_reg)
     }
+
+    <span class="doccomment">/// Get the (VK, stake) of a party given its index.
+    </span><span class="kw">pub fn </span>get_reg_party(<span class="kw-2">&amp;</span><span class="self">self</span>, party_index: <span class="kw-2">&amp;</span>Index) -&gt; <span class="prelude-ty">Option</span>&lt;(StmVerificationKey, Stake)&gt; {
+        <span class="self">self</span>.closed_reg
+            .reg_parties
+            .get(<span class="kw-2">*</span>party_index <span class="kw">as </span>usize)
+            .map(|<span class="kw-2">&amp;</span>r| r.into())
+    }
 }
 
 <span class="kw">impl </span>StmSig {
@@ -1734,12 +1785,14 @@
     </span><span class="kw">pub fn </span>verify&lt;D: Clone + Digest + FixedOutput&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         params: <span class="kw-2">&amp;</span>StmParameters,
+        pk: <span class="kw-2">&amp;</span>StmVerificationKey,
+        stake: <span class="kw-2">&amp;</span>Stake,
         avk: <span class="kw-2">&amp;</span>StmAggrVerificationKey&lt;D&gt;,
         msg: <span class="kw-2">&amp;</span>[u8],
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), StmSignatureError&gt; {
         <span class="kw">let </span>msgp = avk.mt_commitment.concat_with_msg(msg);
-        <span class="self">self</span>.sigma.verify(<span class="kw-2">&amp;</span>msgp, <span class="kw-2">&amp;</span><span class="self">self</span>.pk)<span class="question-mark">?</span>;
-        <span class="self">self</span>.check_indices(params, <span class="kw-2">&amp;</span>msgp, avk)<span class="question-mark">?</span>;
+        <span class="self">self</span>.sigma.verify(<span class="kw-2">&amp;</span>msgp, pk)<span class="question-mark">?</span>;
+        <span class="self">self</span>.check_indices(params, stake, <span class="kw-2">&amp;</span>msgp, avk)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(())
     }
@@ -1748,6 +1801,7 @@
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>check_indices&lt;D: Clone + Digest + FixedOutput&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         params: <span class="kw-2">&amp;</span>StmParameters,
+        stake: <span class="kw-2">&amp;</span>Stake,
         msgp: <span class="kw-2">&amp;</span>[u8],
         avk: <span class="kw-2">&amp;</span>StmAggrVerificationKey&lt;D&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), StmSignatureError&gt; {
@@ -1758,7 +1812,7 @@
 
             <span class="kw">let </span>ev = <span class="self">self</span>.sigma.eval(msgp, index);
 
-            <span class="kw">if </span>!ev_lt_phi(params.phi_f, ev, <span class="self">self</span>.stake, avk.total_stake) {
+            <span class="kw">if </span>!ev_lt_phi(params.phi_f, ev, <span class="kw-2">*</span>stake, avk.total_stake) {
                 <span class="kw">return </span><span class="prelude-val">Err</span>(StmSignatureError::LotteryLost);
             }
         }
@@ -1777,14 +1831,12 @@
     /// * Merkle index of the signer.
     </span><span class="kw">pub fn </span>to_bytes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;u8&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>output = Vec::new();
-        output.extend_from_slice(<span class="kw-2">&amp;</span><span class="self">self</span>.stake.to_be_bytes());
         output.extend_from_slice(<span class="kw-2">&amp;</span>(<span class="self">self</span>.indexes.len() <span class="kw">as </span>u64).to_be_bytes());
 
         <span class="kw">for </span>index <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.indexes {
             output.extend_from_slice(<span class="kw-2">&amp;</span>index.to_be_bytes());
         }
 
-        output.extend_from_slice(<span class="kw-2">&amp;</span><span class="self">self</span>.pk.to_bytes());
         output.extend_from_slice(<span class="kw-2">&amp;</span><span class="self">self</span>.sigma.to_bytes());
 
         output.extend_from_slice(<span class="kw-2">&amp;</span><span class="self">self</span>.signer_index.to_be_bytes());
@@ -1797,29 +1849,23 @@
     ) -&gt; <span class="prelude-ty">Result</span>&lt;StmSig, StmSignatureError&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>u64_bytes = [<span class="number">0u8</span>; <span class="number">8</span>];
 
-        u64_bytes.copy_from_slice(<span class="kw-2">&amp;</span>bytes[..<span class="number">8</span>]);
-        <span class="kw">let </span>stake = u64::from_be_bytes(u64_bytes);
-
-        u64_bytes.copy_from_slice(<span class="kw-2">&amp;</span>bytes[<span class="number">8</span>..<span class="number">16</span>]);
+        u64_bytes.copy_from_slice(<span class="kw-2">&amp;</span>bytes[<span class="number">0</span>..<span class="number">8</span>]);
         <span class="kw">let </span>nr_indexes = u64::from_be_bytes(u64_bytes) <span class="kw">as </span>usize;
 
         <span class="kw">let </span><span class="kw-2">mut </span>indexes = Vec::new();
         <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..nr_indexes {
-            u64_bytes.copy_from_slice(<span class="kw-2">&amp;</span>bytes[<span class="number">16 </span>+ i * <span class="number">8</span>..<span class="number">24 </span>+ i * <span class="number">8</span>]);
+            u64_bytes.copy_from_slice(<span class="kw-2">&amp;</span>bytes[<span class="number">8 </span>+ i * <span class="number">8</span>..<span class="number">16 </span>+ i * <span class="number">8</span>]);
             indexes.push(u64::from_be_bytes(u64_bytes));
         }
 
-        <span class="kw">let </span>offset = <span class="number">16 </span>+ nr_indexes * <span class="number">8</span>;
-        <span class="kw">let </span>pk = StmVerificationKey::from_bytes(<span class="kw-2">&amp;</span>bytes[offset..offset + <span class="number">96</span>])<span class="question-mark">?</span>;
-        <span class="kw">let </span>sigma = Signature::from_bytes(<span class="kw-2">&amp;</span>bytes[offset + <span class="number">96</span>..offset + <span class="number">144</span>])<span class="question-mark">?</span>;
+        <span class="kw">let </span>offset = <span class="number">8 </span>+ nr_indexes * <span class="number">8</span>;
+        <span class="kw">let </span>sigma = Signature::from_bytes(<span class="kw-2">&amp;</span>bytes[offset..offset + <span class="number">48</span>])<span class="question-mark">?</span>;
 
-        u64_bytes.copy_from_slice(<span class="kw-2">&amp;</span>bytes[offset + <span class="number">144</span>..offset + <span class="number">152</span>]);
+        u64_bytes.copy_from_slice(<span class="kw-2">&amp;</span>bytes[offset + <span class="number">48</span>..offset + <span class="number">56</span>]);
         <span class="kw">let </span>signer_index = u64::from_be_bytes(u64_bytes);
 
         <span class="prelude-val">Ok</span>(StmSig {
             sigma,
-            pk,
-            stake,
             indexes,
             signer_index,
         })
@@ -1883,17 +1929,16 @@
         <span class="kw">let </span><span class="kw-2">mut </span>unique_indices = HashSet::new();
         <span class="kw">let </span><span class="kw-2">mut </span>leaves = Vec::new();
 
-        <span class="kw">for </span>sig <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.signatures {
+        <span class="kw">for </span>(sig, reg_party) <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.signatures {
             <span class="kw">let </span>msgp = avk.mt_commitment.concat_with_msg(msg);
-            sig.check_indices(parameters, <span class="kw-2">&amp;</span>msgp, avk)<span class="question-mark">?</span>;
+            sig.check_indices(parameters, <span class="kw-2">&amp;</span>reg_party.<span class="number">1</span>, <span class="kw-2">&amp;</span>msgp, avk)<span class="question-mark">?</span>;
 
             <span class="kw">for </span><span class="kw-2">&amp;</span>index <span class="kw">in </span><span class="kw-2">&amp;</span>sig.indexes {
                 unique_indices.insert(index);
                 nr_indices += <span class="number">1</span>;
             }
 
-            <span class="kw">let </span>mt_leaf = MTLeaf(sig.pk, sig.stake);
-            leaves.push(mt_leaf);
+            leaves.push(<span class="kw-2">*</span>reg_party);
         }
 
         <span class="kw">if </span>nr_indices != unique_indices.len() {
@@ -1911,12 +1956,12 @@
         <span class="kw">let </span>signatures = <span class="self">self
             </span>.signatures
             .iter()
-            .map(|sig| sig.sigma)
+            .map(|(sig, <span class="kw">_</span>)| sig.sigma)
             .collect::&lt;Vec&lt;Signature&gt;&gt;();
         <span class="kw">let </span>vks = <span class="self">self
             </span>.signatures
             .iter()
-            .map(|sig| sig.pk)
+            .map(|(<span class="kw">_</span>, reg_party)| reg_party.<span class="number">0</span>)
             .collect::&lt;Vec&lt;VerificationKey&gt;&gt;();
 
         Signature::verify_aggregate(msg.as_slice(), <span class="kw-2">&amp;</span>vks, <span class="kw-2">&amp;</span>signatures)<span class="question-mark">?</span>;
@@ -1927,18 +1972,19 @@
     /// # Layout
     /// * Number of signatures (as u64)
     /// * Size of a signature
-    /// * Signatures
+    /// * Pairs of Signatures and Registered Parties
     /// * Batch proof
     </span><span class="kw">pub fn </span>to_bytes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;u8&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>out = Vec::new();
         out.extend_from_slice(<span class="kw-2">&amp;</span>u64::try_from(<span class="self">self</span>.signatures.len()).unwrap().to_be_bytes());
         out.extend_from_slice(
-            <span class="kw-2">&amp;</span>u64::try_from(<span class="self">self</span>.signatures[<span class="number">0</span>].to_bytes().len())
+            <span class="kw-2">&amp;</span>u64::try_from(<span class="self">self</span>.signatures[<span class="number">0</span>].<span class="number">0</span>.to_bytes().len())
                 .unwrap()
                 .to_be_bytes(),
         );
-        <span class="kw">for </span>sig <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.signatures {
-            out.extend_from_slice(<span class="kw-2">&amp;</span>sig.to_bytes())
+        <span class="kw">for </span>(sig, reg_party) <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.signatures {
+            out.extend_from_slice(<span class="kw-2">&amp;</span>sig.to_bytes());
+            out.extend_from_slice(<span class="kw-2">&amp;</span>reg_party.to_bytes());
         }
         <span class="kw">let </span>proof = <span class="kw-2">&amp;</span><span class="self">self</span>.batch_proof;
         out.extend_from_slice(<span class="kw-2">&amp;</span>proof.to_bytes());
@@ -1960,12 +2006,18 @@
 
         <span class="kw">let </span><span class="kw-2">mut </span>signatures = Vec::with_capacity(size);
         <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..size {
-            signatures.push(StmSig::from_bytes::&lt;D&gt;(
-                <span class="kw-2">&amp;</span>bytes[<span class="number">16 </span>+ i * sig_size..<span class="number">16 </span>+ (i + <span class="number">1</span>) * sig_size],
-            )<span class="question-mark">?</span>);
+            signatures.push((
+                StmSig::from_bytes::&lt;D&gt;(
+                    <span class="kw-2">&amp;</span>bytes[<span class="number">16 </span>+ i * (sig_size + <span class="number">104</span>)..<span class="number">16 </span>+ sig_size + i * (sig_size + <span class="number">104</span>)],
+                )<span class="question-mark">?</span>,
+                MTLeaf::from_bytes(
+                    <span class="kw-2">&amp;</span>bytes[<span class="number">16 </span>+ sig_size + i * (sig_size + <span class="number">104</span>)..<span class="number">16 </span>+ (i + <span class="number">1</span>) * (sig_size + <span class="number">104</span>)],
+                )
+                .map_err(|<span class="kw">_</span>| StmAggregateSignatureError::SerializationError)<span class="question-mark">?</span>,
+            ));
         }
 
-        <span class="kw">let </span>offset = <span class="number">16 </span>+ sig_size * size;
+        <span class="kw">let </span>offset = <span class="number">16 </span>+ (sig_size + <span class="number">104</span>) * size;
         <span class="kw">let </span>batch_proof = BatchPath::from_bytes(<span class="kw-2">&amp;</span>bytes[offset..])<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(StmAggrSig {
@@ -2094,28 +2146,26 @@
         #[test]
         </span><span class="doccomment">/// Test that `dedup_sigs_for_indices` only takes valid signatures.
         </span><span class="kw">fn </span>test_dedup(msg <span class="kw">in </span>any::&lt;[u8; <span class="number">16</span>]&gt;()) {
-            <span class="kw">let </span>nparties = <span class="number">10usize</span>;
             <span class="kw">let </span>false_msg = [<span class="number">1u8</span>; <span class="number">20</span>];
-            <span class="kw">let </span>params = StmParameters { m: (nparties <span class="kw">as </span>u64), k: <span class="number">1</span>, phi_f: <span class="number">1.0 </span>};
-            <span class="kw">let </span>ps = setup_equal_parties(params, nparties);
-            <span class="kw">let </span>p = <span class="kw-2">&amp;</span>ps[<span class="number">0</span>];
-            <span class="kw">let </span>clerk = StmClerk::from_signer(p);
+            <span class="kw">let </span>params = StmParameters { m: <span class="number">1</span>, k: <span class="number">1</span>, phi_f: <span class="number">1.0 </span>};
+            <span class="kw">let </span>ps = setup_equal_parties(params, <span class="number">1</span>);
+            <span class="kw">let </span>clerk = StmClerk::from_signer(<span class="kw-2">&amp;</span>ps[<span class="number">0</span>]);
             <span class="kw">let </span>avk = clerk.compute_avk();
-            <span class="kw">let </span><span class="kw-2">mut </span>sigs = Vec::with_capacity(nparties);
+            <span class="kw">let </span><span class="kw-2">mut </span>sigs = Vec::with_capacity(<span class="number">2</span>);
 
 
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(sig) = p.sign(<span class="kw-2">&amp;</span>false_msg) {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(sig) = ps[<span class="number">0</span>].sign(<span class="kw-2">&amp;</span>false_msg) {
                 sigs.push(sig);
             }
 
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(sig) = p.sign(<span class="kw-2">&amp;</span>msg) {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(sig) = ps[<span class="number">0</span>].sign(<span class="kw-2">&amp;</span>msg) {
                 sigs.push(sig);
             }
 
             <span class="kw">let </span>dedup_result = clerk.dedup_sigs_for_indices(<span class="kw-2">&amp;</span>msg, <span class="kw-2">&amp;</span>sigs);
             <span class="macro">assert!</span>(dedup_result.is_ok(), <span class="string">&quot;dedup failure {:?}&quot;</span>, dedup_result);
             <span class="kw">for </span>passed_sigs <span class="kw">in </span>dedup_result.unwrap() {
-                <span class="kw">let </span>verify_result = passed_sigs.verify(<span class="kw-2">&amp;</span>params, <span class="kw-2">&amp;</span>avk, <span class="kw-2">&amp;</span>msg);
+                <span class="kw">let </span>verify_result = passed_sigs.verify(<span class="kw-2">&amp;</span>params, <span class="kw-2">&amp;</span>ps[<span class="number">0</span>].vk, <span class="kw-2">&amp;</span>ps[<span class="number">0</span>].stake, <span class="kw-2">&amp;</span>avk, <span class="kw-2">&amp;</span>msg);
                 <span class="macro">assert!</span>(verify_result.is_ok(), <span class="string">&quot;verify {:?}&quot;</span>, verify_result);
             }
         }
@@ -2125,15 +2175,13 @@
         <span class="attribute">#[test]
         </span><span class="doccomment">/// Test that when a party creates a signature it can be verified
         </span><span class="kw">fn </span>test_sig(msg <span class="kw">in </span>any::&lt;[u8;<span class="number">16</span>]&gt;()) {
-            <span class="kw">let </span>nparties = <span class="number">2</span>;
-            <span class="kw">let </span>params = StmParameters { m: (nparties <span class="kw">as </span>u64), k: <span class="number">1</span>, phi_f: <span class="number">0.2 </span>};
-            <span class="kw">let </span>ps = setup_equal_parties(params, nparties);
-            <span class="kw">let </span>p = <span class="kw-2">&amp;</span>ps[<span class="number">0</span>];
-            <span class="kw">let </span>clerk = StmClerk::from_signer(p);
+            <span class="kw">let </span>params = StmParameters { m: <span class="number">1</span>, k: <span class="number">1</span>, phi_f: <span class="number">0.2 </span>};
+            <span class="kw">let </span>ps = setup_equal_parties(params, <span class="number">1</span>);
+            <span class="kw">let </span>clerk = StmClerk::from_signer(<span class="kw-2">&amp;</span>ps[<span class="number">0</span>]);
             <span class="kw">let </span>avk = clerk.compute_avk();
 
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(sig) = p.sign(<span class="kw-2">&amp;</span>msg) {
-                <span class="macro">assert!</span>(sig.verify(<span class="kw-2">&amp;</span>params, <span class="kw-2">&amp;</span>avk, <span class="kw-2">&amp;</span>msg).is_ok());
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(sig) = ps[<span class="number">0</span>].sign(<span class="kw-2">&amp;</span>msg) {
+                <span class="macro">assert!</span>(sig.verify(<span class="kw-2">&amp;</span>params, <span class="kw-2">&amp;</span>ps[<span class="number">0</span>].vk, <span class="kw-2">&amp;</span>ps[<span class="number">0</span>].stake, <span class="kw-2">&amp;</span>avk, <span class="kw-2">&amp;</span>msg).is_ok());
             }
         }
     }
@@ -2196,21 +2244,19 @@
 
         <span class="attribute">#[test]
         </span><span class="kw">fn </span>test_sig_serialize_deserialize(msg <span class="kw">in </span>any::&lt;[u8;<span class="number">16</span>]&gt;()) {
-            <span class="kw">let </span>nparties = <span class="number">2</span>;
-            <span class="kw">let </span>params = StmParameters { m: (nparties <span class="kw">as </span>u64), k: <span class="number">1</span>, phi_f: <span class="number">0.2 </span>};
-            <span class="kw">let </span>ps = setup_equal_parties(params, nparties);
-            <span class="kw">let </span>p = <span class="kw-2">&amp;</span>ps[<span class="number">0</span>];
-            <span class="kw">let </span>clerk = StmClerk::from_signer(p);
+            <span class="kw">let </span>params = StmParameters { m: <span class="number">1</span>, k: <span class="number">1</span>, phi_f: <span class="number">0.2 </span>};
+            <span class="kw">let </span>ps = setup_equal_parties(params, <span class="number">1</span>);
+            <span class="kw">let </span>clerk = StmClerk::from_signer(<span class="kw-2">&amp;</span>ps[<span class="number">0</span>]);
             <span class="kw">let </span>avk = clerk.compute_avk();
 
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(sig) = p.sign(<span class="kw-2">&amp;</span>msg) {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(sig) = ps[<span class="number">0</span>].sign(<span class="kw-2">&amp;</span>msg) {
                 <span class="kw">let </span>bytes = sig.to_bytes();
                 <span class="kw">let </span>sig_deser = StmSig::from_bytes::&lt;D&gt;(<span class="kw-2">&amp;</span>bytes).unwrap();
-                <span class="macro">assert!</span>(sig_deser.verify(<span class="kw-2">&amp;</span>params, <span class="kw-2">&amp;</span>avk, <span class="kw-2">&amp;</span>msg).is_ok());
+                <span class="macro">assert!</span>(sig_deser.verify(<span class="kw-2">&amp;</span>params, <span class="kw-2">&amp;</span>ps[<span class="number">0</span>].vk, <span class="kw-2">&amp;</span>ps[<span class="number">0</span>].stake, <span class="kw-2">&amp;</span>avk, <span class="kw-2">&amp;</span>msg).is_ok());
 
                 <span class="kw">let </span>encoded = bincode::serialize(<span class="kw-2">&amp;</span>sig).unwrap();
                 <span class="kw">let </span>decoded: StmSig = bincode::deserialize(<span class="kw-2">&amp;</span>encoded).unwrap();
-                <span class="macro">assert!</span>(decoded.verify(<span class="kw-2">&amp;</span>params, <span class="kw-2">&amp;</span>avk, <span class="kw-2">&amp;</span>msg).is_ok());
+                <span class="macro">assert!</span>(decoded.verify(<span class="kw-2">&amp;</span>params, <span class="kw-2">&amp;</span>ps[<span class="number">0</span>].vk, <span class="kw-2">&amp;</span>ps[<span class="number">0</span>].stake, <span class="kw-2">&amp;</span>avk, <span class="kw-2">&amp;</span>msg).is_ok());
             }
         }
 
@@ -2355,7 +2401,7 @@
         </span><span class="kw">fn </span>test_invalid_proof_index_unique(tc <span class="kw">in </span>arb_proof_setup(<span class="number">10</span>)) {
             with_proof_mod(tc, |aggr, clerk, _msg| {
                 <span class="kw">for </span>sig <span class="kw">in </span>aggr.signatures.iter_mut() {
-                    <span class="kw">for </span>index <span class="kw">in </span>sig.indexes.iter_mut() {
+                    <span class="kw">for </span>index <span class="kw">in </span>sig.<span class="number">0</span>.indexes.iter_mut() {
                        <span class="kw-2">*</span>index %= clerk.params.k - <span class="number">1
                     </span>}
                 }
