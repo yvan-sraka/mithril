@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `mithril-aggregator/src/multi_signer.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>multi_signer.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../mithril_aggregator/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../mithril_aggregator/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../mithril_aggregator/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `mithril-aggregator/src/multi_signer.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>multi_signer.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../mithril_aggregator/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -1038,165 +1038,22 @@
 <span id="1038">1038</span>
 <span id="1039">1039</span>
 <span id="1040">1040</span>
-<span id="1041">1041</span>
-<span id="1042">1042</span>
-<span id="1043">1043</span>
-<span id="1044">1044</span>
-<span id="1045">1045</span>
-<span id="1046">1046</span>
-<span id="1047">1047</span>
-<span id="1048">1048</span>
-<span id="1049">1049</span>
-<span id="1050">1050</span>
-<span id="1051">1051</span>
-<span id="1052">1052</span>
-<span id="1053">1053</span>
-<span id="1054">1054</span>
-<span id="1055">1055</span>
-<span id="1056">1056</span>
-<span id="1057">1057</span>
-<span id="1058">1058</span>
-<span id="1059">1059</span>
-<span id="1060">1060</span>
-<span id="1061">1061</span>
-<span id="1062">1062</span>
-<span id="1063">1063</span>
-<span id="1064">1064</span>
-<span id="1065">1065</span>
-<span id="1066">1066</span>
-<span id="1067">1067</span>
-<span id="1068">1068</span>
-<span id="1069">1069</span>
-<span id="1070">1070</span>
-<span id="1071">1071</span>
-<span id="1072">1072</span>
-<span id="1073">1073</span>
-<span id="1074">1074</span>
-<span id="1075">1075</span>
-<span id="1076">1076</span>
-<span id="1077">1077</span>
-<span id="1078">1078</span>
-<span id="1079">1079</span>
-<span id="1080">1080</span>
-<span id="1081">1081</span>
-<span id="1082">1082</span>
-<span id="1083">1083</span>
-<span id="1084">1084</span>
-<span id="1085">1085</span>
-<span id="1086">1086</span>
-<span id="1087">1087</span>
-<span id="1088">1088</span>
-<span id="1089">1089</span>
-<span id="1090">1090</span>
-<span id="1091">1091</span>
-<span id="1092">1092</span>
-<span id="1093">1093</span>
-<span id="1094">1094</span>
-<span id="1095">1095</span>
-<span id="1096">1096</span>
-<span id="1097">1097</span>
-<span id="1098">1098</span>
-<span id="1099">1099</span>
-<span id="1100">1100</span>
-<span id="1101">1101</span>
-<span id="1102">1102</span>
-<span id="1103">1103</span>
-<span id="1104">1104</span>
-<span id="1105">1105</span>
-<span id="1106">1106</span>
-<span id="1107">1107</span>
-<span id="1108">1108</span>
-<span id="1109">1109</span>
-<span id="1110">1110</span>
-<span id="1111">1111</span>
-<span id="1112">1112</span>
-<span id="1113">1113</span>
-<span id="1114">1114</span>
-<span id="1115">1115</span>
-<span id="1116">1116</span>
-<span id="1117">1117</span>
-<span id="1118">1118</span>
-<span id="1119">1119</span>
-<span id="1120">1120</span>
-<span id="1121">1121</span>
-<span id="1122">1122</span>
-<span id="1123">1123</span>
-<span id="1124">1124</span>
-<span id="1125">1125</span>
-<span id="1126">1126</span>
-<span id="1127">1127</span>
-<span id="1128">1128</span>
-<span id="1129">1129</span>
-<span id="1130">1130</span>
-<span id="1131">1131</span>
-<span id="1132">1132</span>
-<span id="1133">1133</span>
-<span id="1134">1134</span>
-<span id="1135">1135</span>
-<span id="1136">1136</span>
-<span id="1137">1137</span>
-<span id="1138">1138</span>
-<span id="1139">1139</span>
-<span id="1140">1140</span>
-<span id="1141">1141</span>
-<span id="1142">1142</span>
-<span id="1143">1143</span>
-<span id="1144">1144</span>
-<span id="1145">1145</span>
-<span id="1146">1146</span>
-<span id="1147">1147</span>
-<span id="1148">1148</span>
-<span id="1149">1149</span>
-<span id="1150">1150</span>
-<span id="1151">1151</span>
-<span id="1152">1152</span>
-<span id="1153">1153</span>
-<span id="1154">1154</span>
-<span id="1155">1155</span>
-<span id="1156">1156</span>
-<span id="1157">1157</span>
-<span id="1158">1158</span>
-<span id="1159">1159</span>
-<span id="1160">1160</span>
-<span id="1161">1161</span>
-<span id="1162">1162</span>
-<span id="1163">1163</span>
-<span id="1164">1164</span>
-<span id="1165">1165</span>
-<span id="1166">1166</span>
-<span id="1167">1167</span>
-<span id="1168">1168</span>
-<span id="1169">1169</span>
-<span id="1170">1170</span>
-<span id="1171">1171</span>
-<span id="1172">1172</span>
-<span id="1173">1173</span>
-<span id="1174">1174</span>
-<span id="1175">1175</span>
-<span id="1176">1176</span>
-<span id="1177">1177</span>
-<span id="1178">1178</span>
-<span id="1179">1179</span>
-<span id="1180">1180</span>
-<span id="1181">1181</span>
-<span id="1182">1182</span>
 </pre><pre class="rust"><code><span class="kw">use </span>std::collections::HashMap;
 <span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>chrono::prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span>hex::ToHex;
-<span class="kw">use </span>mithril_common::chain_observer::ChainObserver;
 <span class="kw">use </span>slog_scope::{debug, trace, warn};
 <span class="kw">use </span>thiserror::Error;
 
 <span class="kw">use </span>mithril_common::crypto_helper::{
-    key_decode_hex, key_encode_hex, KESPeriod, ProtocolAggregateVerificationKey,
-    ProtocolAggregationError, ProtocolClerk, ProtocolKeyRegistration, ProtocolMultiSignature,
-    ProtocolParameters, ProtocolPartyId, ProtocolRegistrationError, ProtocolSignerVerificationKey,
+    key_decode_hex, key_encode_hex, ProtocolAggregateVerificationKey, ProtocolAggregationError,
+    ProtocolClerk, ProtocolKeyRegistration, ProtocolMultiSignature, ProtocolParameters,
+    ProtocolPartyId, ProtocolRegistrationError, ProtocolSignerVerificationKey,
     ProtocolSingleSignature, ProtocolStakeDistribution,
 };
-<span class="kw">use </span>mithril_common::entities::{<span class="self">self</span>, Signer, SignerWithStake};
+<span class="kw">use </span>mithril_common::entities::{<span class="self">self</span>, SignerWithStake};
 <span class="kw">use </span>mithril_common::store::{StakeStore, StakeStorer, StoreError};
 <span class="kw">use </span>mithril_common::{
     NEXT_SIGNER_EPOCH_RETRIEVAL_OFFSET, SIGNER_EPOCH_RECORDING_OFFSET,
@@ -1261,10 +1118,6 @@
     <span class="doccomment">/// Beacon error.
     </span><span class="attribute">#[error(<span class="string">&quot;beacon error: &#39;{0}&#39;&quot;</span>)]
     </span>Beacon(<span class="attribute">#[from] </span>entities::EpochError),
-
-    <span class="doccomment">/// Chain observer error.
-    </span><span class="attribute">#[error(<span class="string">&quot;chaim observer error: &#39;{0}&#39;&quot;</span>)]
-    </span>ChainObserver(String),
 }
 
 <span class="doccomment">/// MultiSigner is the cryptographic engine in charge of producing multi signatures from individual signatures
@@ -1360,9 +1213,6 @@
         }
     }
 
-    <span class="doccomment">/// Register a signer
-    </span><span class="kw">async fn </span>register_signer(<span class="kw-2">&amp;mut </span><span class="self">self</span>, signer: <span class="kw-2">&amp;</span>Signer) -&gt; <span class="prelude-ty">Result</span>&lt;(), ProtocolError&gt;;
-
     <span class="doccomment">/// Get signer
     </span><span class="kw">async fn </span>get_signer_verification_key(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
@@ -1435,9 +1285,6 @@
 
     <span class="doccomment">/// Protocol parameters store
     </span>protocol_parameters_store: Arc&lt;ProtocolParametersStore&gt;,
-
-    <span class="doccomment">/// Chain observer
-    </span>chain_observer: Arc&lt;<span class="kw">dyn </span>ChainObserver&gt;,
 }
 
 <span class="kw">impl </span>MultiSignerImpl {
@@ -1447,7 +1294,6 @@
         stake_store: Arc&lt;StakeStore&gt;,
         single_signature_store: Arc&lt;SingleSignatureStore&gt;,
         protocol_parameters_store: Arc&lt;ProtocolParametersStore&gt;,
-        chain_observer: Arc&lt;<span class="kw">dyn </span>ChainObserver&gt;,
     ) -&gt; <span class="self">Self </span>{
         <span class="macro">debug!</span>(<span class="string">&quot;New MultiSignerImpl created&quot;</span>);
         <span class="self">Self </span>{
@@ -1461,7 +1307,6 @@
             stake_store,
             single_signature_store,
             protocol_parameters_store,
-            chain_observer,
         }
     }
 
@@ -1707,70 +1552,6 @@
         }
     }
 
-    <span class="doccomment">/// Register a signer
-    </span><span class="kw">async fn </span>register_signer(<span class="kw-2">&amp;mut </span><span class="self">self</span>, signer: <span class="kw-2">&amp;</span>Signer) -&gt; <span class="prelude-ty">Result</span>&lt;(), ProtocolError&gt; {
-        <span class="macro">debug!</span>(<span class="string">&quot;Register signer {}&quot;</span>, signer.party_id);
-
-        <span class="kw">let </span>epoch = <span class="self">self
-            </span>.current_beacon
-            .as_ref()
-            .ok_or_else(ProtocolError::UnavailableBeacon)<span class="question-mark">?
-            </span>.epoch
-            .offset_by(SIGNER_EPOCH_RECORDING_OFFSET)<span class="question-mark">?</span>;
-
-        <span class="kw">let </span>stake_distribution = <span class="self">self
-            </span>.get_stake_distribution_with_epoch_offset(SIGNER_EPOCH_RECORDING_OFFSET)
-            .<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="kw">let </span><span class="kw-2">mut </span>key_registration = ProtocolKeyRegistration::init(<span class="kw-2">&amp;</span>stake_distribution);
-        <span class="kw">let </span>party_id_register = <span class="kw">match </span>signer.party_id.as_str() {
-            <span class="string">&quot;&quot; </span>=&gt; <span class="prelude-val">None</span>,
-            party_id =&gt; <span class="prelude-val">Some</span>(party_id.to_string()),
-        };
-        <span class="kw">let </span>verification_key =
-            key_decode_hex(<span class="kw-2">&amp;</span>signer.verification_key).map_err(ProtocolError::Codec)<span class="question-mark">?</span>;
-        <span class="kw">let </span>verification_key_signature = <span class="kw">match </span><span class="kw-2">&amp;</span>signer.verification_key_signature {
-            <span class="prelude-val">Some</span>(verification_key_signature) =&gt; {
-                <span class="prelude-val">Some</span>(key_decode_hex(verification_key_signature).map_err(ProtocolError::Codec)<span class="question-mark">?</span>)
-            }
-            <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
-        };
-        <span class="kw">let </span>operational_certificate = <span class="kw">match </span><span class="kw-2">&amp;</span>signer.operational_certificate {
-            <span class="prelude-val">Some</span>(operational_certificate) =&gt; {
-                <span class="prelude-val">Some</span>(key_decode_hex(operational_certificate).map_err(ProtocolError::Codec)<span class="question-mark">?</span>)
-            }
-            <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
-        };
-        <span class="kw">let </span>kes_period = <span class="kw">match </span><span class="kw-2">&amp;</span>operational_certificate {
-            <span class="prelude-val">Some</span>(operational_certificate) =&gt; <span class="prelude-val">Some</span>(
-                <span class="self">self</span>.chain_observer
-                    .get_current_kes_period(operational_certificate)
-                    .<span class="kw">await
-                    </span>.map_err(|e| ProtocolError::ChainObserver(e.to_string()))<span class="question-mark">?
-                    </span>.unwrap_or_default()
-                    - operational_certificate.start_kes_period <span class="kw">as </span>KESPeriod,
-            ),
-            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">None</span>,
-        };
-        <span class="kw">let </span>party_id_save = key_registration.register(
-            party_id_register.clone(),
-            operational_certificate,
-            verification_key_signature,
-            kes_period,
-            verification_key,
-        )<span class="question-mark">?</span>;
-        <span class="kw">let </span><span class="kw-2">mut </span>signer_save = signer.to_owned();
-        signer_save.party_id = party_id_save;
-
-        <span class="kw">match </span><span class="self">self
-            </span>.verification_key_store
-            .save_verification_key(epoch, signer_save)
-            .<span class="kw">await</span><span class="question-mark">?
-        </span>{
-            <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Err</span>(ProtocolError::ExistingSigner()),
-            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Ok</span>(()),
-        }
-    }
-
     <span class="doccomment">/// Get signer verification key
     </span><span class="kw">async fn </span>get_signer_verification_key(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
@@ -1986,7 +1767,6 @@
     <span class="kw">use </span><span class="kw">crate</span>::store::{SingleSignatureStore, VerificationKeyStore};
     <span class="kw">use </span><span class="kw">crate</span>::ProtocolParametersStore;
 
-    <span class="kw">use </span>mithril_common::chain_observer::FakeObserver;
     <span class="kw">use </span>mithril_common::crypto_helper::tests_setup::<span class="kw-2">*</span>;
     <span class="kw">use </span>mithril_common::fake_data;
     <span class="kw">use </span>mithril_common::store::adapter::MemoryAdapter;
@@ -2041,13 +1821,11 @@
             ),
             <span class="prelude-val">None</span>,
         );
-        <span class="kw">let </span>chain_observer = FakeObserver::default();
         <span class="kw">let </span><span class="kw-2">mut </span>multi_signer = MultiSignerImpl::new(
             Arc::new(verification_key_store),
             Arc::new(stake_store),
             Arc::new(single_signature_store),
             Arc::new(protocol_parameters_store),
-            Arc::new(chain_observer),
         );
 
         multi_signer
@@ -2175,75 +1953,10 @@
     }
 
     <span class="attribute">#[tokio::test]
-    </span><span class="kw">async fn </span>test_multi_signer_register_signer_ok() {
-        <span class="kw">let </span><span class="kw-2">mut </span>multi_signer = setup_multi_signer().<span class="kw">await</span>;
-
-        <span class="kw">let </span>protocol_parameters_expected = setup_protocol_parameters();
-        multi_signer
-            .update_protocol_parameters(<span class="kw-2">&amp;</span>protocol_parameters_expected)
-            .<span class="kw">await
-            </span>.expect(<span class="string">&quot;update protocol parameters failed&quot;</span>);
-
-        <span class="kw">let </span>signers = setup_signers(<span class="number">5</span>, <span class="kw-2">&amp;</span>protocol_parameters_expected);
-
-        <span class="kw">let </span>stake_distribution_expected: ProtocolStakeDistribution = signers
-            .iter()
-            .map(|(signer_with_stake, <span class="kw">_</span>, <span class="kw">_</span>)| {
-                (
-                    signer_with_stake.party_id.to_owned(),
-                    signer_with_stake.stake,
-                )
-            })
-            .collect::&lt;<span class="kw">_</span>&gt;();
-        multi_signer
-            .update_stake_distribution(<span class="kw-2">&amp;</span>stake_distribution_expected)
-            .<span class="kw">await
-            </span>.expect(<span class="string">&quot;update stake distribution failed&quot;</span>);
-
-        <span class="kw">for </span>(signer_with_stake, <span class="kw">_</span>, <span class="kw">_</span>) <span class="kw">in </span><span class="kw-2">&amp;</span>signers {
-            multi_signer
-                .register_signer(<span class="kw-2">&amp;</span>signer_with_stake.to_owned().into())
-                .<span class="kw">await
-                </span>.expect(<span class="string">&quot;register should have succeeded&quot;</span>)
-        }
-
-        offset_epoch(
-            <span class="kw-2">&amp;mut </span>multi_signer,
-            (SIGNER_EPOCH_RECORDING_OFFSET - SIGNER_EPOCH_RETRIEVAL_OFFSET) <span class="kw">as </span>i64,
-        )
-        .<span class="kw">await</span>;
-
-        <span class="kw">let </span><span class="kw-2">mut </span>signers_with_stake_all_expected = Vec::new();
-        <span class="kw">for </span>(signer_with_stake, <span class="kw">_</span>, <span class="kw">_</span>) <span class="kw">in </span><span class="kw-2">&amp;</span>signers {
-            signers_with_stake_all_expected.push(signer_with_stake.to_owned());
-        }
-        signers_with_stake_all_expected.sort_by_key(|signer| signer.party_id.to_owned());
-        <span class="kw">let </span>signers_all_expected = signers_with_stake_all_expected
-            .clone()
-            .into_iter()
-            .map(|signer| signer.into())
-            .collect::&lt;Vec&lt;entities::Signer&gt;&gt;();
-
-        <span class="kw">let </span><span class="kw-2">mut </span>signers_with_stake_all = multi_signer
-            .get_signers_with_stake()
-            .<span class="kw">await
-            </span>.expect(<span class="string">&quot;get signers with stake should have been succeeded&quot;</span>);
-        signers_with_stake_all.sort_by_key(|signer| signer.party_id.to_owned());
-
-        <span class="macro">assert_eq!</span>(signers_with_stake_all_expected, signers_with_stake_all);
-
-        <span class="kw">let </span><span class="kw-2">mut </span>signers_all = multi_signer
-            .get_signers()
-            .<span class="kw">await
-            </span>.expect(<span class="string">&quot;get signers should have been succeeded&quot;</span>);
-        signers_all.sort_by_key(|signer| signer.party_id.to_owned());
-
-        <span class="macro">assert_eq!</span>(signers_all_expected, signers_all);
-    }
-
-    <span class="attribute">#[tokio::test]
     </span><span class="kw">async fn </span>test_multi_signer_multi_signature_ok() {
         <span class="kw">let </span><span class="kw-2">mut </span>multi_signer = setup_multi_signer().<span class="kw">await</span>;
+        <span class="kw">let </span>verification_key_store = multi_signer.verification_key_store.clone();
+        <span class="kw">let </span>start_epoch = multi_signer.current_beacon.as_ref().unwrap().epoch;
 
         <span class="kw">let </span>message = setup_message();
         <span class="kw">let </span>protocol_parameters = setup_protocol_parameters();
@@ -2268,10 +1981,13 @@
             .<span class="kw">await
             </span>.expect(<span class="string">&quot;update stake distribution failed&quot;</span>);
         <span class="kw">for </span>(signer_with_stake, <span class="kw">_</span>, <span class="kw">_</span>) <span class="kw">in </span><span class="kw-2">&amp;</span>signers {
-            multi_signer
-                .register_signer(<span class="kw-2">&amp;</span>signer_with_stake.to_owned().into())
+            verification_key_store
+                .save_verification_key(
+                    start_epoch.offset_to_recording_epoch().unwrap(),
+                    signer_with_stake.to_owned().into(),
+                )
                 .<span class="kw">await
-                </span>.expect(<span class="string">&quot;register should have succeeded&quot;</span>)
+                </span>.expect(<span class="string">&quot;register should have succeeded&quot;</span>);
         }
 
         offset_epoch(
@@ -2363,4 +2079,4 @@
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="mithril_aggregator" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0 (897e37553 2022-11-02)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="mithril_aggregator" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.0 (69f9c33d7 2022-12-12)" ></div></body></html>
