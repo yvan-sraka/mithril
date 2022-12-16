@@ -434,7 +434,7 @@
 
 <span class="kw">pub fn </span>routes(
     dependency_manager: Arc&lt;DependencyManager&gt;,
-) -&gt; <span class="kw">impl </span>Filter&lt;Extract = <span class="kw">impl </span>warp::Reply, Error = warp::Rejection&gt; + Clone {
+) -&gt; <span class="kw">impl </span>Filter&lt;Extract = (<span class="kw">impl </span>warp::Reply,), Error = warp::Rejection&gt; + Clone {
     snapshots(dependency_manager.clone())
         .or(serve_snapshots_dir(dependency_manager.clone()))
         .or(snapshot_download(dependency_manager.clone()))
@@ -444,7 +444,7 @@
 <span class="doccomment">/// GET /snapshots
 </span><span class="kw">fn </span>snapshots(
     dependency_manager: Arc&lt;DependencyManager&gt;,
-) -&gt; <span class="kw">impl </span>Filter&lt;Extract = <span class="kw">impl </span>warp::Reply, Error = warp::Rejection&gt; + Clone {
+) -&gt; <span class="kw">impl </span>Filter&lt;Extract = (<span class="kw">impl </span>warp::Reply,), Error = warp::Rejection&gt; + Clone {
     <span class="macro">warp::path!</span>(<span class="string">&quot;snapshots&quot;</span>)
         .and(warp::get())
         .and(middlewares::with_snapshot_store(dependency_manager))
@@ -454,7 +454,7 @@
 <span class="doccomment">/// GET /snapshots/{digest}/download
 </span><span class="kw">fn </span>snapshot_download(
     dependency_manager: Arc&lt;DependencyManager&gt;,
-) -&gt; <span class="kw">impl </span>Filter&lt;Extract = <span class="kw">impl </span>warp::Reply, Error = warp::Rejection&gt; + Clone {
+) -&gt; <span class="kw">impl </span>Filter&lt;Extract = (<span class="kw">impl </span>warp::Reply,), Error = warp::Rejection&gt; + Clone {
     <span class="macro">warp::path!</span>(<span class="string">&quot;snapshot&quot; </span>/ String / <span class="string">&quot;download&quot;</span>)
         .and(warp::get())
         .and(middlewares::with_config(dependency_manager.clone()))
@@ -464,7 +464,7 @@
 
 <span class="kw">fn </span>serve_snapshots_dir(
     dependency_manager: Arc&lt;DependencyManager&gt;,
-) -&gt; <span class="kw">impl </span>Filter&lt;Extract = <span class="kw">impl </span>warp::Reply, Error = warp::Rejection&gt; + Clone {
+) -&gt; <span class="kw">impl </span>Filter&lt;Extract = (<span class="kw">impl </span>warp::Reply,), Error = warp::Rejection&gt; + Clone {
     <span class="kw">let </span>config = dependency_manager.config.clone();
 
     warp::path(<span class="string">&quot;snapshot_download&quot;</span>)
@@ -476,7 +476,7 @@
 <span class="doccomment">/// GET /snapshot/digest
 </span><span class="kw">fn </span>snapshot_digest(
     dependency_manager: Arc&lt;DependencyManager&gt;,
-) -&gt; <span class="kw">impl </span>Filter&lt;Extract = <span class="kw">impl </span>warp::Reply, Error = warp::Rejection&gt; + Clone {
+) -&gt; <span class="kw">impl </span>Filter&lt;Extract = (<span class="kw">impl </span>warp::Reply,), Error = warp::Rejection&gt; + Clone {
     <span class="macro">warp::path!</span>(<span class="string">&quot;snapshot&quot; </span>/ String)
         .and(warp::get())
         .and(middlewares::with_snapshot_store(dependency_manager))
@@ -611,7 +611,7 @@
 
     <span class="kw">fn </span>setup_router(
         dependency_manager: Arc&lt;DependencyManager&gt;,
-    ) -&gt; <span class="kw">impl </span>Filter&lt;Extract = <span class="kw">impl </span>warp::Reply, Error = warp::Rejection&gt; + Clone {
+    ) -&gt; <span class="kw">impl </span>Filter&lt;Extract = (<span class="kw">impl </span>warp::Reply,), Error = warp::Rejection&gt; + Clone {
         <span class="kw">let </span>cors = warp::cors()
             .allow_any_origin()
             .allow_headers(<span class="macro">vec!</span>[<span class="string">&quot;content-type&quot;</span>])
