@@ -1122,16 +1122,6 @@
 <span id="1122">1122</span>
 <span id="1123">1123</span>
 <span id="1124">1124</span>
-<span id="1125">1125</span>
-<span id="1126">1126</span>
-<span id="1127">1127</span>
-<span id="1128">1128</span>
-<span id="1129">1129</span>
-<span id="1130">1130</span>
-<span id="1131">1131</span>
-<span id="1132">1132</span>
-<span id="1133">1133</span>
-<span id="1134">1134</span>
 </pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>chrono::Utc;
 <span class="kw">use </span>mithril_common::entities::Epoch;
@@ -1431,9 +1421,7 @@
         new_beacon: <span class="kw-2">&amp;</span>Beacon,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), RuntimeError&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: open signer registration round&quot;</span>; <span class="string">&quot;beacon&quot; </span>=&gt; #<span class="question-mark">?</span>new_beacon);
-        <span class="kw">let </span>registration_epoch = new_beacon.epoch.offset_to_recording_epoch().map_err(|e| {
-            RuntimeError::General(<span class="macro">format!</span>(<span class="string">&quot;could not deduce recording epoch: {}&quot;</span>, e).into())
-        })<span class="question-mark">?</span>;
+        <span class="kw">let </span>registration_epoch = new_beacon.epoch.offset_to_recording_epoch();
 
         <span class="kw">let </span>stakes = <span class="self">self
             </span>.dependencies
@@ -1850,12 +1838,7 @@
 
         <span class="kw">let </span>saved_stake_distribution = deps
             .stake_store
-            .get_stakes(
-                beacon
-                    .epoch
-                    .offset_to_recording_epoch()
-                    .expect(<span class="string">&quot;offset_to_recording_epoch should not fail&quot;</span>),
-            )
+            .get_stakes(beacon.epoch.offset_to_recording_epoch())
             .<span class="kw">await
             </span>.unwrap()
             .unwrap_or_else(|| {
@@ -1887,7 +1870,7 @@
         <span class="kw">let </span>runner = AggregatorRunner::new(config, deps.clone());
 
         <span class="kw">let </span>beacon = fake_data::beacon();
-        <span class="kw">let </span>recording_epoch = beacon.epoch.offset_to_recording_epoch().unwrap();
+        <span class="kw">let </span>recording_epoch = beacon.epoch.offset_to_recording_epoch();
         <span class="kw">let </span>stake_distribution: StakeDistribution =
             HashMap::from([(<span class="string">&quot;a&quot;</span>.to_string(), <span class="number">5</span>), (<span class="string">&quot;b&quot;</span>.to_string(), <span class="number">10</span>)]);
 
@@ -2095,10 +2078,7 @@
         runner.update_beacon(<span class="kw-2">&amp;</span>beacon).<span class="kw">await</span>.unwrap();
         <span class="kw">for </span>epoch <span class="kw">in </span>[
             beacon.epoch.offset_to_signer_retrieval_epoch().unwrap(),
-            beacon
-                .epoch
-                .offset_to_next_signer_retrieval_epoch()
-                .unwrap(),
+            beacon.epoch.offset_to_next_signer_retrieval_epoch(),
         ] {
             deps.protocol_parameters_store
                 .save_protocol_parameters(epoch, fake_data::protocol_parameters())

@@ -802,18 +802,6 @@
 <span id="802">802</span>
 <span id="803">803</span>
 <span id="804">804</span>
-<span id="805">805</span>
-<span id="806">806</span>
-<span id="807">807</span>
-<span id="808">808</span>
-<span id="809">809</span>
-<span id="810">810</span>
-<span id="811">811</span>
-<span id="812">812</span>
-<span id="813">813</span>
-<span id="814">814</span>
-<span id="815">815</span>
-<span id="816">816</span>
 </pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>slog_scope::{debug, info, trace, warn};
 <span class="kw">use </span>std::error::Error <span class="kw">as </span>StdError;
@@ -981,7 +969,7 @@
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: register_signer_to_aggregator&quot;</span>);
 
-        <span class="kw">let </span>epoch_offset_to_recording_epoch = epoch.offset_to_recording_epoch()<span class="question-mark">?</span>;
+        <span class="kw">let </span>epoch_offset_to_recording_epoch = epoch.offset_to_recording_epoch();
         <span class="kw">let </span>stake_distribution = <span class="self">self
             </span>.services
             .stake_store
@@ -1044,7 +1032,7 @@
             .<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="self">self</span>.services
             .protocol_initializer_store
-            .save_protocol_initializer(epoch.offset_to_recording_epoch()<span class="question-mark">?</span>, protocol_initializer)
+            .save_protocol_initializer(epoch.offset_to_recording_epoch(), protocol_initializer)
             .<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(())
@@ -1064,7 +1052,7 @@
             </span>.ok_or_else(|| RuntimeError::NoValueError(<span class="string">&quot;current_stake_distribution&quot;</span>.to_string()))<span class="question-mark">?</span>;
         <span class="self">self</span>.services
             .stake_store
-            .save_stakes(epoch.offset_to_recording_epoch()<span class="question-mark">?</span>, stake_distribution)
+            .save_stakes(epoch.offset_to_recording_epoch(), stake_distribution)
             .<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(())
@@ -1169,7 +1157,7 @@
         message.set_message_part(ProtocolMessagePartKey::SnapshotDigest, digest);
 
         <span class="comment">// 2 set the next signers keys and stakes in the message
-        </span><span class="kw">let </span>next_signer_retrieval_epoch = beacon.epoch.offset_to_next_signer_retrieval_epoch()<span class="question-mark">?</span>;
+        </span><span class="kw">let </span>next_signer_retrieval_epoch = beacon.epoch.offset_to_next_signer_retrieval_epoch();
         <span class="kw">let </span>next_protocol_initializer = <span class="self">self
             </span>.services
             .protocol_initializer_store
@@ -1378,11 +1366,7 @@
             </span>.expect(<span class="string">&quot;update_stake_distribution should not fail.&quot;</span>);
 
         <span class="kw">let </span>stake_distribution = stake_store
-            .get_stakes(
-                current_epoch
-                    .offset_to_recording_epoch()
-                    .expect(<span class="string">&quot;offset_to_recording_epoch should not fail&quot;</span>),
-            )
+            .get_stakes(current_epoch.offset_to_recording_epoch())
             .<span class="kw">await
             </span>.expect(<span class="string">&quot;getting stakes from store should not fail&quot;</span>)
             .expect(<span class="string">&quot;there should be stakes for this epoch&quot;</span>);
@@ -1404,8 +1388,7 @@
             .<span class="kw">await
             </span>.unwrap()
             .epoch
-            .offset_to_recording_epoch()
-            .unwrap();
+            .offset_to_recording_epoch();
         <span class="kw">let </span>stakes = chain_observer
             .get_current_stake_distribution()
             .<span class="kw">await
@@ -1440,11 +1423,7 @@
             .<span class="kw">await
             </span>.is_some());
         <span class="kw">let </span>maybe_protocol_initializer = protocol_initializer_store
-            .get_protocol_initializer(
-                epoch
-                    .offset_to_recording_epoch()
-                    .expect(<span class="string">&quot;offset_to_recording_epoch should not fail&quot;</span>),
-            )
+            .get_protocol_initializer(epoch.offset_to_recording_epoch())
             .<span class="kw">await
             </span>.expect(<span class="string">&quot;get_protocol_initializer should not fail&quot;</span>);
         <span class="macro">assert!</span>(
@@ -1527,10 +1506,7 @@
         services
             .protocol_initializer_store
             .save_protocol_initializer(
-                current_beacon
-                    .epoch
-                    .offset_to_next_signer_retrieval_epoch()
-                    .expect(<span class="string">&quot;offset_to_signer_retrieval_epoch should not fail&quot;</span>),
+                current_beacon.epoch.offset_to_next_signer_retrieval_epoch(),
                 protocol_initializer.clone(),
             )
             .<span class="kw">await

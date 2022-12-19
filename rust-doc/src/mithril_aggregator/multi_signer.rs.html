@@ -1031,37 +1031,26 @@
 <span id="1031">1031</span>
 <span id="1032">1032</span>
 <span id="1033">1033</span>
-<span id="1034">1034</span>
-<span id="1035">1035</span>
-<span id="1036">1036</span>
-<span id="1037">1037</span>
-<span id="1038">1038</span>
-<span id="1039">1039</span>
-<span id="1040">1040</span>
-</pre><pre class="rust"><code><span class="kw">use </span>std::collections::HashMap;
-<span class="kw">use </span>std::sync::Arc;
-
-<span class="kw">use </span>async_trait::async_trait;
+</pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>chrono::prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span>hex::ToHex;
 <span class="kw">use </span>slog_scope::{debug, trace, warn};
+<span class="kw">use </span>std::{collections::HashMap, sync::Arc};
 <span class="kw">use </span>thiserror::Error;
 
-<span class="kw">use </span>mithril_common::crypto_helper::{
-    key_decode_hex, key_encode_hex, ProtocolAggregateVerificationKey, ProtocolAggregationError,
-    ProtocolClerk, ProtocolKeyRegistration, ProtocolMultiSignature, ProtocolParameters,
-    ProtocolPartyId, ProtocolRegistrationError, ProtocolSignerVerificationKey,
-    ProtocolSingleSignature, ProtocolStakeDistribution,
-};
-<span class="kw">use </span>mithril_common::entities::{<span class="self">self</span>, SignerWithStake};
-<span class="kw">use </span>mithril_common::store::{StakeStore, StakeStorer, StoreError};
 <span class="kw">use </span>mithril_common::{
-    NEXT_SIGNER_EPOCH_RETRIEVAL_OFFSET, SIGNER_EPOCH_RECORDING_OFFSET,
-    SIGNER_EPOCH_RETRIEVAL_OFFSET,
+    crypto_helper::{
+        key_decode_hex, key_encode_hex, ProtocolAggregateVerificationKey, ProtocolAggregationError,
+        ProtocolClerk, ProtocolKeyRegistration, ProtocolMultiSignature, ProtocolParameters,
+        ProtocolPartyId, ProtocolRegistrationError, ProtocolSignerVerificationKey,
+        ProtocolSingleSignature, ProtocolStakeDistribution,
+    },
+    entities::{<span class="self">self</span>, Epoch, SignerWithStake},
+    store::{StakeStore, StakeStorer, StoreError},
 };
 
-<span class="kw">use </span><span class="kw">crate</span>::store::{SingleSignatureStorer, VerificationKeyStorer};
 <span class="kw">use crate</span>::{
+    store::{SingleSignatureStorer, VerificationKeyStorer},
     ProtocolParametersStore, ProtocolParametersStorer, SingleSignatureStore, VerificationKeyStore,
 };
 
@@ -1231,13 +1220,10 @@
     }
 
     <span class="doccomment">/// Get signers with stake
-    </span><span class="kw">async fn </span>get_signers_with_stake(<span class="kw-2">&amp;</span><span class="self">self</span>)
-        -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;entities::SignerWithStake&gt;, ProtocolError&gt;;
+    </span><span class="kw">async fn </span>get_signers_with_stake(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;SignerWithStake&gt;, ProtocolError&gt;;
 
     <span class="doccomment">/// Get signers for the next epoch with their stake
-    </span><span class="kw">async fn </span>get_next_signers_with_stake(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;entities::SignerWithStake&gt;, ProtocolError&gt;;
+    </span><span class="kw">async fn </span>get_next_signers_with_stake(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;SignerWithStake&gt;, ProtocolError&gt;;
 
     <span class="doccomment">/// Registers a single signature
     </span><span class="kw">async fn </span>register_single_signature(
@@ -1362,18 +1348,12 @@
         }
     }
 
-    <span class="doccomment">/// Get stake distribution with epoch offset
-    </span><span class="kw">async fn </span>get_stake_distribution_with_epoch_offset(
+    <span class="doccomment">/// Get the [stake distribution][ProtocolStakeDistribution] for the given `epoch`
+    </span><span class="kw">async fn </span>get_stake_distribution_at_epoch(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        epoch_offset: i64,
+        epoch: Epoch,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;ProtocolStakeDistribution, ProtocolError&gt; {
-        <span class="macro">debug!</span>(<span class="string">&quot;Get stake distribution with epoch offset&quot;</span>; <span class="string">&quot;epoch_offset&quot;</span>=&gt;epoch_offset);
-        <span class="kw">let </span>epoch = <span class="self">self
-            </span>.current_beacon
-            .as_ref()
-            .ok_or_else(ProtocolError::UnavailableBeacon)<span class="question-mark">?
-            </span>.epoch
-            .offset_by(epoch_offset)<span class="question-mark">?</span>;
+        <span class="macro">debug!</span>(<span class="string">&quot;Get stake distribution at epoch&quot;</span>; <span class="string">&quot;epoch&quot;</span>=&gt; #<span class="question-mark">?</span>epoch);
 
         <span class="kw">let </span>stakes = <span class="self">self
             </span>.stake_store
@@ -1383,18 +1363,12 @@
         <span class="prelude-val">Ok</span>(stakes.into_iter().collect::&lt;ProtocolStakeDistribution&gt;())
     }
 
-    <span class="doccomment">/// Get protocol parameters with epoch offset
-    </span><span class="kw">async fn </span>get_protocol_parameters_with_epoch_offset(
+    <span class="doccomment">/// Get the [protocol parameters][ProtocolParameters] for the given `epoch`
+    </span><span class="kw">async fn </span>get_protocol_parameters_at_epoch(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        epoch_offset: i64,
+        epoch: Epoch,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;ProtocolParameters&gt;, ProtocolError&gt; {
-        <span class="macro">debug!</span>(<span class="string">&quot;Get protocol parameters with epoch offset&quot;</span>; <span class="string">&quot;epoch_offset&quot;</span>=&gt;epoch_offset);
-        <span class="kw">let </span>epoch = <span class="self">self
-            </span>.current_beacon
-            .as_ref()
-            .ok_or_else(ProtocolError::UnavailableBeacon)<span class="question-mark">?
-            </span>.epoch
-            .offset_by(epoch_offset)<span class="question-mark">?</span>;
+        <span class="macro">debug!</span>(<span class="string">&quot;Get protocol parameters at epoch&quot;</span>; <span class="string">&quot;epoch&quot;</span>=&gt; #<span class="question-mark">?</span>epoch);
 
         <span class="kw">match </span><span class="self">self
             </span>.protocol_parameters_store
@@ -1471,8 +1445,13 @@
     </span><span class="doccomment">/// Get protocol parameters
     </span><span class="kw">async fn </span>get_protocol_parameters(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;ProtocolParameters&gt;, ProtocolError&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;Get protocol parameters&quot;</span>);
-        <span class="self">self</span>.get_protocol_parameters_with_epoch_offset(SIGNER_EPOCH_RETRIEVAL_OFFSET)
-            .<span class="kw">await
+        <span class="kw">let </span>epoch = <span class="self">self
+            </span>.current_beacon
+            .as_ref()
+            .ok_or_else(ProtocolError::UnavailableBeacon)<span class="question-mark">?
+            </span>.epoch
+            .offset_to_signer_retrieval_epoch()<span class="question-mark">?</span>;
+        <span class="self">self</span>.get_protocol_parameters_at_epoch(epoch).<span class="kw">await
     </span>}
 
     <span class="doccomment">/// Update protocol parameters
@@ -1486,7 +1465,7 @@
             .as_ref()
             .ok_or_else(ProtocolError::UnavailableBeacon)<span class="question-mark">?
             </span>.epoch
-            .offset_by(SIGNER_EPOCH_RECORDING_OFFSET)<span class="question-mark">?</span>;
+            .offset_to_recording_epoch();
 
         <span class="self">self</span>.protocol_parameters_store
             .save_protocol_parameters(epoch, protocol_parameters.to_owned().into())
@@ -1499,15 +1478,25 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;ProtocolParameters&gt;, ProtocolError&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;Get next protocol parameters&quot;</span>);
-        <span class="self">self</span>.get_protocol_parameters_with_epoch_offset(NEXT_SIGNER_EPOCH_RETRIEVAL_OFFSET)
-            .<span class="kw">await
+        <span class="kw">let </span>epoch = <span class="self">self
+            </span>.current_beacon
+            .as_ref()
+            .ok_or_else(ProtocolError::UnavailableBeacon)<span class="question-mark">?
+            </span>.epoch
+            .offset_to_next_signer_retrieval_epoch();
+        <span class="self">self</span>.get_protocol_parameters_at_epoch(epoch).<span class="kw">await
     </span>}
 
     <span class="doccomment">/// Get stake distribution
     </span><span class="kw">async fn </span>get_stake_distribution(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;ProtocolStakeDistribution, ProtocolError&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;Get stake distribution&quot;</span>);
-        <span class="self">self</span>.get_stake_distribution_with_epoch_offset(SIGNER_EPOCH_RETRIEVAL_OFFSET)
-            .<span class="kw">await
+        <span class="kw">let </span>epoch = <span class="self">self
+            </span>.current_beacon
+            .as_ref()
+            .ok_or_else(ProtocolError::UnavailableBeacon)<span class="question-mark">?
+            </span>.epoch
+            .offset_to_signer_retrieval_epoch()<span class="question-mark">?</span>;
+        <span class="self">self</span>.get_stake_distribution_at_epoch(epoch).<span class="kw">await
     </span>}
 
     <span class="doccomment">/// Get next stake distribution
@@ -1515,8 +1504,13 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;ProtocolStakeDistribution, ProtocolError&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;Get next stake distribution&quot;</span>);
-        <span class="self">self</span>.get_stake_distribution_with_epoch_offset(NEXT_SIGNER_EPOCH_RETRIEVAL_OFFSET)
-            .<span class="kw">await
+        <span class="kw">let </span>epoch = <span class="self">self
+            </span>.current_beacon
+            .as_ref()
+            .ok_or_else(ProtocolError::UnavailableBeacon)<span class="question-mark">?
+            </span>.epoch
+            .offset_to_next_signer_retrieval_epoch();
+        <span class="self">self</span>.get_stake_distribution_at_epoch(epoch).<span class="kw">await
     </span>}
 
     <span class="doccomment">/// Update stake distribution
@@ -1530,7 +1524,7 @@
             .as_ref()
             .ok_or_else(ProtocolError::UnavailableBeacon)<span class="question-mark">?
             </span>.epoch
-            .offset_by(SIGNER_EPOCH_RECORDING_OFFSET)<span class="question-mark">?</span>;
+            .offset_to_recording_epoch();
         <span class="kw">let </span>stakes = HashMap::from_iter(stakes.iter().cloned());
         <span class="self">self</span>.stake_store.save_stakes(epoch, stakes).<span class="kw">await</span><span class="question-mark">?</span>;
 
@@ -1563,7 +1557,7 @@
             .as_ref()
             .ok_or_else(ProtocolError::UnavailableBeacon)<span class="question-mark">?
             </span>.epoch
-            .offset_by(SIGNER_EPOCH_RETRIEVAL_OFFSET)<span class="question-mark">?</span>;
+            .offset_to_signer_retrieval_epoch()<span class="question-mark">?</span>;
         <span class="kw">let </span>signers = <span class="self">self
             </span>.verification_key_store
             .get_verification_keys(epoch)
@@ -1577,16 +1571,14 @@
         }
     }
 
-    <span class="kw">async fn </span>get_signers_with_stake(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;entities::SignerWithStake&gt;, ProtocolError&gt; {
+    <span class="kw">async fn </span>get_signers_with_stake(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;SignerWithStake&gt;, ProtocolError&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;Get signers with stake&quot;</span>);
         <span class="kw">let </span>epoch = <span class="self">self
             </span>.current_beacon
             .as_ref()
             .ok_or_else(ProtocolError::UnavailableBeacon)<span class="question-mark">?
             </span>.epoch
-            .offset_by(SIGNER_EPOCH_RETRIEVAL_OFFSET)<span class="question-mark">?</span>;
+            .offset_to_signer_retrieval_epoch()<span class="question-mark">?</span>;
         <span class="kw">let </span>signers = <span class="self">self
             </span>.verification_key_store
             .get_verification_keys(epoch)
@@ -1598,7 +1590,7 @@
             </span>.iter()
             .filter_map(|(party_id, stake)| {
                 signers.get(party_id).map(|signer| {
-                    entities::SignerWithStake::new(
+                    SignerWithStake::new(
                         party_id.to_owned(),
                         signer.verification_key.to_owned(),
                         signer.verification_key_signature.to_owned(),
@@ -1611,16 +1603,14 @@
             .collect())
     }
 
-    <span class="kw">async fn </span>get_next_signers_with_stake(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;entities::SignerWithStake&gt;, ProtocolError&gt; {
+    <span class="kw">async fn </span>get_next_signers_with_stake(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;SignerWithStake&gt;, ProtocolError&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;Get next signers with stake&quot;</span>);
         <span class="kw">let </span>epoch = <span class="self">self
             </span>.current_beacon
             .as_ref()
             .ok_or_else(ProtocolError::UnavailableBeacon)<span class="question-mark">?
             </span>.epoch
-            .offset_by(NEXT_SIGNER_EPOCH_RETRIEVAL_OFFSET)<span class="question-mark">?</span>;
+            .offset_to_next_signer_retrieval_epoch();
         <span class="kw">let </span>signers = <span class="self">self
             </span>.verification_key_store
             .get_verification_keys(epoch)
@@ -1632,7 +1622,7 @@
             </span>.iter()
             .filter_map(|(party_id, stake)| {
                 signers.get(party_id).map(|signer| {
-                    entities::SignerWithStake::new(
+                    SignerWithStake::new(
                         party_id.to_owned(),
                         signer.verification_key.to_owned(),
                         signer.verification_key_signature.to_owned(),
@@ -1764,31 +1754,30 @@
 <span class="attribute">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
-    <span class="kw">use </span><span class="kw">crate</span>::store::{SingleSignatureStore, VerificationKeyStore};
-    <span class="kw">use </span><span class="kw">crate</span>::ProtocolParametersStore;
-
-    <span class="kw">use </span>mithril_common::crypto_helper::tests_setup::<span class="kw-2">*</span>;
-    <span class="kw">use </span>mithril_common::fake_data;
-    <span class="kw">use </span>mithril_common::store::adapter::MemoryAdapter;
-    <span class="kw">use </span>mithril_common::store::StakeStore;
-
-    <span class="kw">use </span>std::collections::HashMap;
-    <span class="kw">use </span>std::sync::Arc;
+    <span class="kw">use crate</span>::{
+        store::{SingleSignatureStore, VerificationKeyStore},
+        ProtocolParametersStore,
+    };
+    <span class="kw">use </span>mithril_common::{
+        crypto_helper::tests_setup::<span class="kw-2">*</span>,
+        fake_data,
+        store::{adapter::MemoryAdapter, StakeStore},
+    };
+    <span class="kw">use </span>std::{collections::HashMap, sync::Arc};
 
     <span class="kw">async fn </span>setup_multi_signer() -&gt; MultiSignerImpl {
         <span class="kw">let </span>beacon = fake_data::beacon();
-        <span class="kw">let </span>verification_key_store = VerificationKeyStore::new(Box::new(
-            MemoryAdapter::&lt;entities::Epoch, HashMap&lt;entities::PartyId, entities::Signer&gt;&gt;::new(
-                <span class="prelude-val">None</span>,
-            )
-            .unwrap(),
-        ), <span class="prelude-val">None</span>);
+        <span class="kw">let </span>verification_key_store = VerificationKeyStore::new(
+            Box::new(
+                MemoryAdapter::&lt;Epoch, HashMap&lt;entities::PartyId, entities::Signer&gt;&gt;::new(<span class="prelude-val">None</span>)
+                    .unwrap(),
+            ),
+            <span class="prelude-val">None</span>,
+        );
         <span class="kw">let </span>stake_store = StakeStore::new(
             Box::new(
-                MemoryAdapter::&lt;entities::Epoch, HashMap&lt;entities::PartyId, entities::Stake&gt;&gt;::new(
-                    <span class="prelude-val">None</span>,
-                )
-                .unwrap(),
+                MemoryAdapter::&lt;Epoch, HashMap&lt;entities::PartyId, entities::Stake&gt;&gt;::new(<span class="prelude-val">None</span>)
+                    .unwrap(),
             ),
             <span class="prelude-val">None</span>,
         );
@@ -1804,16 +1793,13 @@
         );
         <span class="kw">let </span>protocol_parameters_store = ProtocolParametersStore::new(
             Box::new(
-                MemoryAdapter::&lt;entities::Epoch, entities::ProtocolParameters&gt;::new(<span class="prelude-val">Some</span>(<span class="macro">vec!</span>[
+                MemoryAdapter::&lt;Epoch, entities::ProtocolParameters&gt;::new(<span class="prelude-val">Some</span>(<span class="macro">vec!</span>[
                     (
                         beacon.epoch.offset_to_signer_retrieval_epoch().unwrap(),
                         fake_data::protocol_parameters(),
                     ),
                     (
-                        beacon
-                            .epoch
-                            .offset_to_next_signer_retrieval_epoch()
-                            .unwrap(),
+                        beacon.epoch.offset_to_next_signer_retrieval_epoch(),
                         fake_data::protocol_parameters(),
                     ),
                 ]))
@@ -1891,7 +1877,7 @@
 
         offset_epoch(
             <span class="kw-2">&amp;mut </span>multi_signer,
-            SIGNER_EPOCH_RECORDING_OFFSET - SIGNER_EPOCH_RETRIEVAL_OFFSET,
+            Epoch::SIGNER_RECORDING_OFFSET <span class="kw">as </span>i64 - Epoch::SIGNER_RETRIEVAL_OFFSET,
         )
         .<span class="kw">await</span>;
 
@@ -1927,7 +1913,7 @@
 
         offset_epoch(
             <span class="kw-2">&amp;mut </span>multi_signer,
-            SIGNER_EPOCH_RECORDING_OFFSET - SIGNER_EPOCH_RETRIEVAL_OFFSET,
+            Epoch::SIGNER_RECORDING_OFFSET <span class="kw">as </span>i64 - Epoch::SIGNER_RETRIEVAL_OFFSET,
         )
         .<span class="kw">await</span>;
 
@@ -1983,7 +1969,7 @@
         <span class="kw">for </span>(signer_with_stake, <span class="kw">_</span>, <span class="kw">_</span>) <span class="kw">in </span><span class="kw-2">&amp;</span>signers {
             verification_key_store
                 .save_verification_key(
-                    start_epoch.offset_to_recording_epoch().unwrap(),
+                    start_epoch.offset_to_recording_epoch(),
                     signer_with_stake.to_owned().into(),
                 )
                 .<span class="kw">await
@@ -1992,7 +1978,7 @@
 
         offset_epoch(
             <span class="kw-2">&amp;mut </span>multi_signer,
-            SIGNER_EPOCH_RECORDING_OFFSET - SIGNER_EPOCH_RETRIEVAL_OFFSET,
+            Epoch::SIGNER_RECORDING_OFFSET <span class="kw">as </span>i64 - Epoch::SIGNER_RETRIEVAL_OFFSET,
         )
         .<span class="kw">await</span>;
         <span class="comment">// We have to update the current message AFTER we reached the epoch for
