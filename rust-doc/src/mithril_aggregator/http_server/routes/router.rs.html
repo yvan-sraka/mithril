@@ -35,6 +35,74 @@
 <span id="35">35</span>
 <span id="36">36</span>
 <span id="37">37</span>
+<span id="38">38</span>
+<span id="39">39</span>
+<span id="40">40</span>
+<span id="41">41</span>
+<span id="42">42</span>
+<span id="43">43</span>
+<span id="44">44</span>
+<span id="45">45</span>
+<span id="46">46</span>
+<span id="47">47</span>
+<span id="48">48</span>
+<span id="49">49</span>
+<span id="50">50</span>
+<span id="51">51</span>
+<span id="52">52</span>
+<span id="53">53</span>
+<span id="54">54</span>
+<span id="55">55</span>
+<span id="56">56</span>
+<span id="57">57</span>
+<span id="58">58</span>
+<span id="59">59</span>
+<span id="60">60</span>
+<span id="61">61</span>
+<span id="62">62</span>
+<span id="63">63</span>
+<span id="64">64</span>
+<span id="65">65</span>
+<span id="66">66</span>
+<span id="67">67</span>
+<span id="68">68</span>
+<span id="69">69</span>
+<span id="70">70</span>
+<span id="71">71</span>
+<span id="72">72</span>
+<span id="73">73</span>
+<span id="74">74</span>
+<span id="75">75</span>
+<span id="76">76</span>
+<span id="77">77</span>
+<span id="78">78</span>
+<span id="79">79</span>
+<span id="80">80</span>
+<span id="81">81</span>
+<span id="82">82</span>
+<span id="83">83</span>
+<span id="84">84</span>
+<span id="85">85</span>
+<span id="86">86</span>
+<span id="87">87</span>
+<span id="88">88</span>
+<span id="89">89</span>
+<span id="90">90</span>
+<span id="91">91</span>
+<span id="92">92</span>
+<span id="93">93</span>
+<span id="94">94</span>
+<span id="95">95</span>
+<span id="96">96</span>
+<span id="97">97</span>
+<span id="98">98</span>
+<span id="99">99</span>
+<span id="100">100</span>
+<span id="101">101</span>
+<span id="102">102</span>
+<span id="103">103</span>
+<span id="104">104</span>
+<span id="105">105</span>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::http_server::routes::{
     certificate_routes, epoch_routes, signatures_routes, signer_routes, snapshot_routes,
 };
@@ -44,9 +112,16 @@
 <span class="kw">use </span>mithril_common::MITHRIL_API_VERSION;
 
 <span class="kw">use </span>reqwest::header::{HeaderMap, HeaderValue};
+<span class="kw">use </span>reqwest::StatusCode;
 <span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>warp::http::Method;
-<span class="kw">use </span>warp::Filter;
+<span class="kw">use </span>warp::reject::Reject;
+<span class="kw">use </span>warp::{Filter, Rejection, Reply};
+
+<span class="attribute">#[derive(Debug)]
+</span><span class="kw">pub struct </span>VersionMismatchError;
+
+<span class="kw">impl </span>Reject <span class="kw">for </span>VersionMismatchError {}
 
 <span class="doccomment">/// Routes
 </span><span class="kw">pub fn </span>routes(
@@ -61,16 +136,77 @@
         <span class="string">&quot;mithril-api-version&quot;</span>,
         HeaderValue::from_static(MITHRIL_API_VERSION),
     );
+    warp::any()
+        .and(header_must_be())
+        .and(warp::path(SERVER_BASE_PATH))
+        .and(
+            certificate_routes::routes(dependency_manager.clone())
+                .or(snapshot_routes::routes(dependency_manager.clone()))
+                .or(signer_routes::routes(dependency_manager.clone()))
+                .or(signatures_routes::routes(dependency_manager.clone()))
+                .or(epoch_routes::routes(dependency_manager))
+                .with(cors),
+        )
+        .recover(handle_custom)
+        .with(warp::reply::with::headers(headers))
+}
 
-    warp::any().and(warp::path(SERVER_BASE_PATH)).and(
-        certificate_routes::routes(dependency_manager.clone())
-            .or(snapshot_routes::routes(dependency_manager.clone()))
-            .or(signer_routes::routes(dependency_manager.clone()))
-            .or(signatures_routes::routes(dependency_manager.clone()))
-            .or(epoch_routes::routes(dependency_manager))
-            .with(cors)
-            .with(warp::reply::with::headers(headers)),
-    )
+<span class="doccomment">/// API Version verification
+</span><span class="kw">fn </span>header_must_be() -&gt; <span class="kw">impl </span>Filter&lt;Extract = (), Error = Rejection&gt; + Copy {
+    warp::header::optional(<span class="string">&quot;mithril-api-version&quot;</span>)
+        .and_then(|maybe_header: <span class="prelude-ty">Option</span>&lt;String&gt;| <span class="kw">async move </span>{
+            <span class="kw">match </span>maybe_header {
+                <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Ok</span>(()),
+                <span class="prelude-val">Some</span>(version) <span class="kw">if </span>version == MITHRIL_API_VERSION =&gt; <span class="prelude-val">Ok</span>(()),
+                <span class="prelude-val">Some</span>(_version) =&gt; <span class="prelude-val">Err</span>(warp::reject::custom(VersionMismatchError)),
+            }
+        })
+        .untuple_one()
+}
+
+<span class="kw">pub async fn </span>handle_custom(reject: Rejection) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw">impl </span>Reply, Rejection&gt; {
+    <span class="kw">if </span>reject.find::&lt;VersionMismatchError&gt;().is_some() {
+        <span class="prelude-val">Ok</span>(StatusCode::PRECONDITION_FAILED)
+    } <span class="kw">else </span>{
+        <span class="prelude-val">Err</span>(reject)
+    }
+}
+
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>test_no_version() {
+        <span class="kw">let </span>filters = header_must_be();
+        warp::test::request()
+            .path(<span class="string">&quot;/aggregator/whatever&quot;</span>)
+            .filter(<span class="kw-2">&amp;</span>filters)
+            .<span class="kw">await
+            </span>.unwrap();
+    }
+
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>test_bad_version() {
+        <span class="kw">let </span>filters = header_must_be();
+        warp::test::request()
+            .header(<span class="string">&quot;mithril-api-version&quot;</span>, <span class="string">&quot;0.0.999&quot;</span>)
+            .path(<span class="string">&quot;/aggregator/whatever&quot;</span>)
+            .filter(<span class="kw-2">&amp;</span>filters)
+            .<span class="kw">await
+            </span>.unwrap_err();
+    }
+
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>test_good_version() {
+        <span class="kw">let </span>filters = header_must_be();
+        warp::test::request()
+            .header(<span class="string">&quot;mithril-api-version&quot;</span>, MITHRIL_API_VERSION)
+            .path(<span class="string">&quot;/aggregator/whatever&quot;</span>)
+            .filter(<span class="kw-2">&amp;</span>filters)
+            .<span class="kw">await
+            </span>.unwrap();
+    }
 }
 </code></pre></div>
 </section></div></main><div id="rustdoc-vars" data-root-path="../../../../" data-current-crate="mithril_aggregator" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.0 (69f9c33d7 2022-12-12)" ></div></body></html>

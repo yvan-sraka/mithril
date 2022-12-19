@@ -527,8 +527,107 @@
 <span id="527">527</span>
 <span id="528">528</span>
 <span id="529">529</span>
+<span id="530">530</span>
+<span id="531">531</span>
+<span id="532">532</span>
+<span id="533">533</span>
+<span id="534">534</span>
+<span id="535">535</span>
+<span id="536">536</span>
+<span id="537">537</span>
+<span id="538">538</span>
+<span id="539">539</span>
+<span id="540">540</span>
+<span id="541">541</span>
+<span id="542">542</span>
+<span id="543">543</span>
+<span id="544">544</span>
+<span id="545">545</span>
+<span id="546">546</span>
+<span id="547">547</span>
+<span id="548">548</span>
+<span id="549">549</span>
+<span id="550">550</span>
+<span id="551">551</span>
+<span id="552">552</span>
+<span id="553">553</span>
+<span id="554">554</span>
+<span id="555">555</span>
+<span id="556">556</span>
+<span id="557">557</span>
+<span id="558">558</span>
+<span id="559">559</span>
+<span id="560">560</span>
+<span id="561">561</span>
+<span id="562">562</span>
+<span id="563">563</span>
+<span id="564">564</span>
+<span id="565">565</span>
+<span id="566">566</span>
+<span id="567">567</span>
+<span id="568">568</span>
+<span id="569">569</span>
+<span id="570">570</span>
+<span id="571">571</span>
+<span id="572">572</span>
+<span id="573">573</span>
+<span id="574">574</span>
+<span id="575">575</span>
+<span id="576">576</span>
+<span id="577">577</span>
+<span id="578">578</span>
+<span id="579">579</span>
+<span id="580">580</span>
+<span id="581">581</span>
+<span id="582">582</span>
+<span id="583">583</span>
+<span id="584">584</span>
+<span id="585">585</span>
+<span id="586">586</span>
+<span id="587">587</span>
+<span id="588">588</span>
+<span id="589">589</span>
+<span id="590">590</span>
+<span id="591">591</span>
+<span id="592">592</span>
+<span id="593">593</span>
+<span id="594">594</span>
+<span id="595">595</span>
+<span id="596">596</span>
+<span id="597">597</span>
+<span id="598">598</span>
+<span id="599">599</span>
+<span id="600">600</span>
+<span id="601">601</span>
+<span id="602">602</span>
+<span id="603">603</span>
+<span id="604">604</span>
+<span id="605">605</span>
+<span id="606">606</span>
+<span id="607">607</span>
+<span id="608">608</span>
+<span id="609">609</span>
+<span id="610">610</span>
+<span id="611">611</span>
+<span id="612">612</span>
+<span id="613">613</span>
+<span id="614">614</span>
+<span id="615">615</span>
+<span id="616">616</span>
+<span id="617">617</span>
+<span id="618">618</span>
+<span id="619">619</span>
+<span id="620">620</span>
+<span id="621">621</span>
+<span id="622">622</span>
+<span id="623">623</span>
+<span id="624">624</span>
+<span id="625">625</span>
+<span id="626">626</span>
+<span id="627">627</span>
+<span id="628">628</span>
 </pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
-<span class="kw">use </span>reqwest::{<span class="self">self</span>, Client, RequestBuilder, StatusCode};
+<span class="kw">use </span>reqwest::{<span class="self">self</span>, Client, RequestBuilder, Response, StatusCode};
 <span class="kw">use </span>slog_scope::debug;
 <span class="kw">use </span>std::io;
 <span class="kw">use </span>thiserror::Error;
@@ -564,6 +663,18 @@
     <span class="doccomment">/// Mostly network errors.
     </span><span class="attribute">#[error(<span class="string">&quot;io error: {0}&quot;</span>)]
     </span>IOError(<span class="attribute">#[from] </span>io::Error),
+
+    <span class="doccomment">/// Incompatible API version error
+    </span><span class="attribute">#[error(<span class="string">&quot;HTTP API version mismatch: {0}&quot;</span>)]
+    </span>ApiVersionMismatch(String),
+}
+
+<span class="attribute">#[cfg(test)]
+</span><span class="doccomment">/// convenient methods to error enum
+</span><span class="kw">impl </span>CertificateHandlerError {
+    <span class="kw">pub fn </span>is_api_version_mismatch(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="macro">matches!</span>(<span class="self">self</span>, <span class="self">Self</span>::ApiVersionMismatch(<span class="kw">_</span>))
+    }
 }
 
 <span class="doccomment">/// Trait for mocking and testing a `CertificateHandler`
@@ -608,6 +719,22 @@
     </span><span class="kw">pub fn </span>prepare_request_builder(<span class="kw-2">&amp;</span><span class="self">self</span>, request_builder: RequestBuilder) -&gt; RequestBuilder {
         request_builder.header(<span class="string">&quot;API_VERSION&quot;</span>, MITHRIL_API_VERSION)
     }
+
+    <span class="doccomment">/// API version error handling
+    </span><span class="kw">fn </span>handle_api_error(<span class="kw-2">&amp;</span><span class="self">self</span>, response: <span class="kw-2">&amp;</span>Response) -&gt; CertificateHandlerError {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(version) = response.headers().get(<span class="string">&quot;mithril-api-version&quot;</span>) {
+            CertificateHandlerError::ApiVersionMismatch(<span class="macro">format!</span>(
+                <span class="string">&quot;server version: &#39;{}&#39;, signer version: &#39;{}&#39;&quot;</span>,
+                version.to_str().unwrap(),
+                MITHRIL_API_VERSION
+            ))
+        } <span class="kw">else </span>{
+            CertificateHandlerError::ApiVersionMismatch(<span class="macro">format!</span>(
+                <span class="string">&quot;version precondition failed, sent version &#39;{}&#39;.&quot;</span>,
+                MITHRIL_API_VERSION
+            ))
+        }
+    }
 }
 
 <span class="attribute">#[async_trait]
@@ -628,6 +755,7 @@
                     <span class="prelude-val">Ok</span>(epoch_settings) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(epoch_settings)),
                     <span class="prelude-val">Err</span>(err) =&gt; <span class="prelude-val">Err</span>(CertificateHandlerError::JsonParseFailed(err.to_string())),
                 },
+                StatusCode::PRECONDITION_FAILED =&gt; <span class="prelude-val">Err</span>(<span class="self">self</span>.handle_api_error(<span class="kw-2">&amp;</span>response)),
                 <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(CertificateHandlerError::RemoteServerTechnical(
                     response.text().<span class="kw">await</span>.unwrap_or_default(),
                 )),
@@ -654,6 +782,7 @@
                     <span class="prelude-val">Ok</span>(pending_certificate) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(pending_certificate)),
                     <span class="prelude-val">Err</span>(err) =&gt; <span class="prelude-val">Err</span>(CertificateHandlerError::JsonParseFailed(err.to_string())),
                 },
+                StatusCode::PRECONDITION_FAILED =&gt; <span class="prelude-val">Err</span>(<span class="self">self</span>.handle_api_error(<span class="kw-2">&amp;</span>response)),
                 StatusCode::NO_CONTENT =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
                 <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(CertificateHandlerError::RemoteServerTechnical(
                     response.text().<span class="kw">await</span>.unwrap_or_default(),
@@ -677,6 +806,7 @@
         <span class="kw">match </span>response {
             <span class="prelude-val">Ok</span>(response) =&gt; <span class="kw">match </span>response.status() {
                 StatusCode::CREATED =&gt; <span class="prelude-val">Ok</span>(()),
+                StatusCode::PRECONDITION_FAILED =&gt; <span class="prelude-val">Err</span>(<span class="self">self</span>.handle_api_error(<span class="kw-2">&amp;</span>response)),
                 StatusCode::BAD_REQUEST =&gt; <span class="prelude-val">Err</span>(CertificateHandlerError::RemoteServerLogical(
                     <span class="macro">format!</span>(<span class="string">&quot;bad request: {}&quot;</span>, response.text().<span class="kw">await</span>.unwrap_or_default()),
                 )),
@@ -705,6 +835,7 @@
         <span class="kw">match </span>response {
             <span class="prelude-val">Ok</span>(response) =&gt; <span class="kw">match </span>response.status() {
                 StatusCode::CREATED =&gt; <span class="prelude-val">Ok</span>(()),
+                StatusCode::PRECONDITION_FAILED =&gt; <span class="prelude-val">Err</span>(<span class="self">self</span>.handle_api_error(<span class="kw-2">&amp;</span>response)),
                 StatusCode::BAD_REQUEST =&gt; <span class="prelude-val">Err</span>(CertificateHandlerError::RemoteServerLogical(
                     <span class="macro">format!</span>(<span class="string">&quot;bad request: {}&quot;</span>, response.text().<span class="kw">await</span>.unwrap_or_default()),
                 )),
@@ -855,6 +986,22 @@
     }
 
     <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>test_epoch_settings_ko_412() {
+        <span class="kw">let </span>(server, config) = setup_test();
+        <span class="kw">let </span>_snapshots_mock = server.mock(|when, then| {
+            when.path(<span class="string">&quot;/epoch-settings&quot;</span>);
+            then.status(<span class="number">412</span>).header(<span class="string">&quot;mithril-api-version&quot;</span>, <span class="string">&quot;0.0.999&quot;</span>);
+        });
+        <span class="kw">let </span>certificate_handler = CertificateHandlerHTTPClient::new(config.aggregator_endpoint);
+        <span class="kw">let </span>epoch_settings = certificate_handler
+            .retrieve_epoch_settings()
+            .<span class="kw">await
+            </span>.unwrap_err();
+
+        <span class="macro">assert!</span>(epoch_settings.is_api_version_mismatch());
+    }
+
+    <span class="attribute">#[tokio::test]
     </span><span class="kw">async fn </span>test_epoch_settings_ko_500() {
         <span class="kw">let </span>(server, config) = setup_test();
         <span class="kw">let </span>_snapshots_mock = server.mock(|when, then| {
@@ -886,6 +1033,22 @@
             pending_certificate_expected,
             pending_certificate.unwrap().unwrap()
         );
+    }
+
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>test_certificate_pending_ko_412() {
+        <span class="kw">let </span>(server, config) = setup_test();
+        <span class="kw">let </span>_snapshots_mock = server.mock(|when, then| {
+            when.path(<span class="string">&quot;/certificate-pending&quot;</span>);
+            then.status(<span class="number">412</span>).header(<span class="string">&quot;mithril-api-version&quot;</span>, <span class="string">&quot;0.0.999&quot;</span>);
+        });
+        <span class="kw">let </span>certificate_handler = CertificateHandlerHTTPClient::new(config.aggregator_endpoint);
+        <span class="kw">let </span>error = certificate_handler
+            .retrieve_pending_certificate()
+            .<span class="kw">await
+            </span>.unwrap_err();
+
+        <span class="macro">assert!</span>(error.is_api_version_mismatch());
     }
 
     <span class="attribute">#[tokio::test]
@@ -931,7 +1094,25 @@
     }
 
     <span class="attribute">#[tokio::test]
-    </span><span class="kw">async fn </span>test_register_signer_ok_400() {
+    </span><span class="kw">async fn </span>test_register_signer_ko_412() {
+        <span class="kw">let </span>(server, config) = setup_test();
+        <span class="kw">let </span>_snapshots_mock = server.mock(|when, then| {
+            when.method(POST).path(<span class="string">&quot;/register-signer&quot;</span>);
+            then.status(<span class="number">412</span>).header(<span class="string">&quot;mithril-api-version&quot;</span>, <span class="string">&quot;0.0.999&quot;</span>);
+        });
+        <span class="kw">let </span>single_signers = fake_data::signers(<span class="number">1</span>);
+        <span class="kw">let </span>single_signer = single_signers.first().unwrap();
+        <span class="kw">let </span>certificate_handler = CertificateHandlerHTTPClient::new(config.aggregator_endpoint);
+        <span class="kw">let </span>error = certificate_handler
+            .register_signer(single_signer)
+            .<span class="kw">await
+            </span>.unwrap_err();
+
+        <span class="macro">assert!</span>(error.is_api_version_mismatch());
+    }
+
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>test_register_signer_ko_400() {
         <span class="kw">let </span>single_signers = fake_data::signers(<span class="number">1</span>);
         <span class="kw">let </span>single_signer = single_signers.first().unwrap();
         <span class="kw">let </span>(server, config) = setup_test();
@@ -957,7 +1138,7 @@
     }
 
     <span class="attribute">#[tokio::test]
-    </span><span class="kw">async fn </span>test_register_signer_ok_500() {
+    </span><span class="kw">async fn </span>test_register_signer_ko_500() {
         <span class="kw">let </span>single_signers = fake_data::signers(<span class="number">1</span>);
         <span class="kw">let </span>single_signer = single_signers.first().unwrap();
         <span class="kw">let </span>(server, config) = setup_test();
@@ -987,6 +1168,23 @@
             .register_signatures(<span class="kw-2">&amp;</span>single_signatures)
             .<span class="kw">await</span>;
         register_signatures.expect(<span class="string">&quot;unexpected error&quot;</span>);
+    }
+
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>test_register_signatures_ko_412() {
+        <span class="kw">let </span>(server, config) = setup_test();
+        <span class="kw">let </span>_snapshots_mock = server.mock(|when, then| {
+            when.method(POST).path(<span class="string">&quot;/register-signatures&quot;</span>);
+            then.status(<span class="number">412</span>).header(<span class="string">&quot;mithril-api-version&quot;</span>, <span class="string">&quot;0.0.999&quot;</span>);
+        });
+        <span class="kw">let </span>single_signatures = fake_data::single_signatures((<span class="number">1</span>..<span class="number">5</span>).collect());
+        <span class="kw">let </span>certificate_handler = CertificateHandlerHTTPClient::new(config.aggregator_endpoint);
+        <span class="kw">let </span>error = certificate_handler
+            .register_signatures(<span class="kw-2">&amp;</span>single_signatures)
+            .<span class="kw">await
+            </span>.unwrap_err();
+
+        <span class="macro">assert!</span>(error.is_api_version_mismatch());
     }
 
     <span class="attribute">#[tokio::test]
