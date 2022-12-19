@@ -188,10 +188,46 @@
 <span id="188">188</span>
 <span id="189">189</span>
 <span id="190">190</span>
-</pre><pre class="rust"><code><span class="kw">use </span>std::error::Error <span class="kw">as </span>StdError;
-<span class="kw">use </span>std::fs;
-<span class="kw">use </span>std::sync::Arc;
+<span id="191">191</span>
+<span id="192">192</span>
+<span id="193">193</span>
+<span id="194">194</span>
+<span id="195">195</span>
+<span id="196">196</span>
+<span id="197">197</span>
+<span id="198">198</span>
+<span id="199">199</span>
+<span id="200">200</span>
+<span id="201">201</span>
+<span id="202">202</span>
+<span id="203">203</span>
+<span id="204">204</span>
+<span id="205">205</span>
+<span id="206">206</span>
+<span id="207">207</span>
+<span id="208">208</span>
+<span id="209">209</span>
+<span id="210">210</span>
+<span id="211">211</span>
+<span id="212">212</span>
+<span id="213">213</span>
+<span id="214">214</span>
+<span id="215">215</span>
+<span id="216">216</span>
+<span id="217">217</span>
+<span id="218">218</span>
+<span id="219">219</span>
+<span id="220">220</span>
+</pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
+<span class="kw">use </span>std::{
+    error::{Error <span class="kw">as </span>StdError, Error},
+    fs,
+    sync::Arc,
+};
 
+<span class="kw">use </span>mithril_common::digesters::cache::{
+    ImmutableFileDigestCacheProvider, JsonImmutableFileDigestCacheProviderBuilder,
+};
 <span class="kw">use </span>mithril_common::{
     chain_observer::{CardanoCliChainObserver, CardanoCliRunner, ChainObserver},
     crypto_helper::{OpCert, ProtocolPartyId, SerDeShelleyFileFormat},
@@ -216,9 +252,10 @@
 
 <span class="doccomment">/// The ServiceBuilder is intended to manage Services instance creation.
 /// The goal of this is to put all this code out of the way of business code.
+</span><span class="attribute">#[async_trait]
 </span><span class="kw">pub trait </span>ServiceBuilder {
     <span class="doccomment">/// Create a SignerService instance.
-    </span><span class="kw">fn </span>build(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;SignerServices, Box&lt;<span class="kw">dyn </span>StdError&gt;&gt;;
+    </span><span class="kw">async fn </span>build(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;SignerServices, Box&lt;<span class="kw">dyn </span>StdError&gt;&gt;;
 }
 
 <span class="doccomment">/// Create a SignerService instance for Production environment.
@@ -252,11 +289,30 @@
                 .ok_or(<span class="string">&quot;A party_id should at least be provided&quot;</span>)<span class="question-mark">?</span>),
         }
     }
+
+    <span class="kw">async fn </span>build_digester_cache_provider(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Arc&lt;<span class="kw">dyn </span>ImmutableFileDigestCacheProvider&gt;&gt;, Box&lt;<span class="kw">dyn </span>Error&gt;&gt; {
+        <span class="kw">if </span><span class="self">self</span>.config.disable_digests_cache {
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
+        }
+
+        <span class="kw">let </span>cache_provider = JsonImmutableFileDigestCacheProviderBuilder::new(
+            <span class="kw-2">&amp;</span><span class="self">self</span>.config.data_stores_directory,
+            <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;immutables_digests_{}.json&quot;</span>, <span class="self">self</span>.config.network),
+        )
+        .should_reset_digests_cache(<span class="self">self</span>.config.reset_digests_cache)
+        .build()
+        .<span class="kw">await</span><span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(Arc::new(cache_provider)))
+    }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; ServiceBuilder <span class="kw">for </span>ProductionServiceBuilder&lt;<span class="lifetime">&#39;a</span>&gt; {
+<span class="attribute">#[async_trait]
+</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; ServiceBuilder <span class="kw">for </span>ProductionServiceBuilder&lt;<span class="lifetime">&#39;a</span>&gt; {
     <span class="doccomment">/// Build a Services for the Production environment.
-    </span><span class="kw">fn </span>build(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;SignerServices, Box&lt;<span class="kw">dyn </span>StdError&gt;&gt; {
+    </span><span class="kw">async fn </span>build(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;SignerServices, Box&lt;<span class="kw">dyn </span>StdError&gt;&gt; {
         <span class="kw">if </span>!<span class="self">self</span>.config.data_stores_directory.exists() {
             fs::create_dir_all(<span class="self">self</span>.config.data_stores_directory.clone())
                 .map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;Could not create data stores directory: {:?}&quot;</span>, e))<span class="question-mark">?</span>;
@@ -276,6 +332,7 @@
         ));
         <span class="kw">let </span>digester = Arc::new(CardanoImmutableDigester::new(
             <span class="self">self</span>.config.db_directory.clone(),
+            <span class="self">self</span>.build_digester_cache_provider().<span class="kw">await</span><span class="question-mark">?</span>,
             slog_scope::logger(),
         ));
         <span class="kw">let </span>stake_store = Arc::new(StakeStore::new(
@@ -352,8 +409,8 @@
         test_dir
     }
 
-    <span class="attribute">#[test]
-    </span><span class="kw">fn </span>test_auto_create_stores_directory() {
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>test_auto_create_stores_directory() {
         <span class="kw">let </span>stores_dir = get_test_dir().join(<span class="string">&quot;stores&quot;</span>);
         <span class="kw">let </span>config = Config {
             cardano_cli_path: PathBuf::new(),
@@ -368,13 +425,16 @@
             store_retention_limit: <span class="prelude-val">None</span>,
             kes_secret_key_path: <span class="prelude-val">None</span>,
             operational_certificate_path: <span class="prelude-val">None</span>,
+            disable_digests_cache: <span class="bool-val">false</span>,
+            reset_digests_cache: <span class="bool-val">false</span>,
         };
 
         <span class="macro">assert!</span>(!stores_dir.exists());
         <span class="kw">let </span>service_builder = ProductionServiceBuilder::new(<span class="kw-2">&amp;</span>config);
         service_builder
             .build()
-            .expect(<span class="string">&quot;service builder build should not fail&quot;</span>);
+            .<span class="kw">await
+            </span>.expect(<span class="string">&quot;service builder build should not fail&quot;</span>);
         <span class="macro">assert!</span>(stores_dir.exists());
     }
 }

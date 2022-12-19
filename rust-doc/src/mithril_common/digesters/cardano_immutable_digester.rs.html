@@ -146,20 +146,379 @@
 <span id="146">146</span>
 <span id="147">147</span>
 <span id="148">148</span>
-</pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::digesters::{ImmutableDigester, ImmutableDigesterError, ImmutableFile};
-<span class="kw">use </span><span class="kw">crate</span>::entities::Beacon;
-
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
+<span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
+<span id="157">157</span>
+<span id="158">158</span>
+<span id="159">159</span>
+<span id="160">160</span>
+<span id="161">161</span>
+<span id="162">162</span>
+<span id="163">163</span>
+<span id="164">164</span>
+<span id="165">165</span>
+<span id="166">166</span>
+<span id="167">167</span>
+<span id="168">168</span>
+<span id="169">169</span>
+<span id="170">170</span>
+<span id="171">171</span>
+<span id="172">172</span>
+<span id="173">173</span>
+<span id="174">174</span>
+<span id="175">175</span>
+<span id="176">176</span>
+<span id="177">177</span>
+<span id="178">178</span>
+<span id="179">179</span>
+<span id="180">180</span>
+<span id="181">181</span>
+<span id="182">182</span>
+<span id="183">183</span>
+<span id="184">184</span>
+<span id="185">185</span>
+<span id="186">186</span>
+<span id="187">187</span>
+<span id="188">188</span>
+<span id="189">189</span>
+<span id="190">190</span>
+<span id="191">191</span>
+<span id="192">192</span>
+<span id="193">193</span>
+<span id="194">194</span>
+<span id="195">195</span>
+<span id="196">196</span>
+<span id="197">197</span>
+<span id="198">198</span>
+<span id="199">199</span>
+<span id="200">200</span>
+<span id="201">201</span>
+<span id="202">202</span>
+<span id="203">203</span>
+<span id="204">204</span>
+<span id="205">205</span>
+<span id="206">206</span>
+<span id="207">207</span>
+<span id="208">208</span>
+<span id="209">209</span>
+<span id="210">210</span>
+<span id="211">211</span>
+<span id="212">212</span>
+<span id="213">213</span>
+<span id="214">214</span>
+<span id="215">215</span>
+<span id="216">216</span>
+<span id="217">217</span>
+<span id="218">218</span>
+<span id="219">219</span>
+<span id="220">220</span>
+<span id="221">221</span>
+<span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
+<span id="226">226</span>
+<span id="227">227</span>
+<span id="228">228</span>
+<span id="229">229</span>
+<span id="230">230</span>
+<span id="231">231</span>
+<span id="232">232</span>
+<span id="233">233</span>
+<span id="234">234</span>
+<span id="235">235</span>
+<span id="236">236</span>
+<span id="237">237</span>
+<span id="238">238</span>
+<span id="239">239</span>
+<span id="240">240</span>
+<span id="241">241</span>
+<span id="242">242</span>
+<span id="243">243</span>
+<span id="244">244</span>
+<span id="245">245</span>
+<span id="246">246</span>
+<span id="247">247</span>
+<span id="248">248</span>
+<span id="249">249</span>
+<span id="250">250</span>
+<span id="251">251</span>
+<span id="252">252</span>
+<span id="253">253</span>
+<span id="254">254</span>
+<span id="255">255</span>
+<span id="256">256</span>
+<span id="257">257</span>
+<span id="258">258</span>
+<span id="259">259</span>
+<span id="260">260</span>
+<span id="261">261</span>
+<span id="262">262</span>
+<span id="263">263</span>
+<span id="264">264</span>
+<span id="265">265</span>
+<span id="266">266</span>
+<span id="267">267</span>
+<span id="268">268</span>
+<span id="269">269</span>
+<span id="270">270</span>
+<span id="271">271</span>
+<span id="272">272</span>
+<span id="273">273</span>
+<span id="274">274</span>
+<span id="275">275</span>
+<span id="276">276</span>
+<span id="277">277</span>
+<span id="278">278</span>
+<span id="279">279</span>
+<span id="280">280</span>
+<span id="281">281</span>
+<span id="282">282</span>
+<span id="283">283</span>
+<span id="284">284</span>
+<span id="285">285</span>
+<span id="286">286</span>
+<span id="287">287</span>
+<span id="288">288</span>
+<span id="289">289</span>
+<span id="290">290</span>
+<span id="291">291</span>
+<span id="292">292</span>
+<span id="293">293</span>
+<span id="294">294</span>
+<span id="295">295</span>
+<span id="296">296</span>
+<span id="297">297</span>
+<span id="298">298</span>
+<span id="299">299</span>
+<span id="300">300</span>
+<span id="301">301</span>
+<span id="302">302</span>
+<span id="303">303</span>
+<span id="304">304</span>
+<span id="305">305</span>
+<span id="306">306</span>
+<span id="307">307</span>
+<span id="308">308</span>
+<span id="309">309</span>
+<span id="310">310</span>
+<span id="311">311</span>
+<span id="312">312</span>
+<span id="313">313</span>
+<span id="314">314</span>
+<span id="315">315</span>
+<span id="316">316</span>
+<span id="317">317</span>
+<span id="318">318</span>
+<span id="319">319</span>
+<span id="320">320</span>
+<span id="321">321</span>
+<span id="322">322</span>
+<span id="323">323</span>
+<span id="324">324</span>
+<span id="325">325</span>
+<span id="326">326</span>
+<span id="327">327</span>
+<span id="328">328</span>
+<span id="329">329</span>
+<span id="330">330</span>
+<span id="331">331</span>
+<span id="332">332</span>
+<span id="333">333</span>
+<span id="334">334</span>
+<span id="335">335</span>
+<span id="336">336</span>
+<span id="337">337</span>
+<span id="338">338</span>
+<span id="339">339</span>
+<span id="340">340</span>
+<span id="341">341</span>
+<span id="342">342</span>
+<span id="343">343</span>
+<span id="344">344</span>
+<span id="345">345</span>
+<span id="346">346</span>
+<span id="347">347</span>
+<span id="348">348</span>
+<span id="349">349</span>
+<span id="350">350</span>
+<span id="351">351</span>
+<span id="352">352</span>
+<span id="353">353</span>
+<span id="354">354</span>
+<span id="355">355</span>
+<span id="356">356</span>
+<span id="357">357</span>
+<span id="358">358</span>
+<span id="359">359</span>
+<span id="360">360</span>
+<span id="361">361</span>
+<span id="362">362</span>
+<span id="363">363</span>
+<span id="364">364</span>
+<span id="365">365</span>
+<span id="366">366</span>
+<span id="367">367</span>
+<span id="368">368</span>
+<span id="369">369</span>
+<span id="370">370</span>
+<span id="371">371</span>
+<span id="372">372</span>
+<span id="373">373</span>
+<span id="374">374</span>
+<span id="375">375</span>
+<span id="376">376</span>
+<span id="377">377</span>
+<span id="378">378</span>
+<span id="379">379</span>
+<span id="380">380</span>
+<span id="381">381</span>
+<span id="382">382</span>
+<span id="383">383</span>
+<span id="384">384</span>
+<span id="385">385</span>
+<span id="386">386</span>
+<span id="387">387</span>
+<span id="388">388</span>
+<span id="389">389</span>
+<span id="390">390</span>
+<span id="391">391</span>
+<span id="392">392</span>
+<span id="393">393</span>
+<span id="394">394</span>
+<span id="395">395</span>
+<span id="396">396</span>
+<span id="397">397</span>
+<span id="398">398</span>
+<span id="399">399</span>
+<span id="400">400</span>
+<span id="401">401</span>
+<span id="402">402</span>
+<span id="403">403</span>
+<span id="404">404</span>
+<span id="405">405</span>
+<span id="406">406</span>
+<span id="407">407</span>
+<span id="408">408</span>
+<span id="409">409</span>
+<span id="410">410</span>
+<span id="411">411</span>
+<span id="412">412</span>
+<span id="413">413</span>
+<span id="414">414</span>
+<span id="415">415</span>
+<span id="416">416</span>
+<span id="417">417</span>
+<span id="418">418</span>
+<span id="419">419</span>
+<span id="420">420</span>
+<span id="421">421</span>
+<span id="422">422</span>
+<span id="423">423</span>
+<span id="424">424</span>
+<span id="425">425</span>
+<span id="426">426</span>
+<span id="427">427</span>
+<span id="428">428</span>
+<span id="429">429</span>
+<span id="430">430</span>
+<span id="431">431</span>
+<span id="432">432</span>
+<span id="433">433</span>
+<span id="434">434</span>
+<span id="435">435</span>
+<span id="436">436</span>
+<span id="437">437</span>
+<span id="438">438</span>
+<span id="439">439</span>
+<span id="440">440</span>
+<span id="441">441</span>
+<span id="442">442</span>
+<span id="443">443</span>
+<span id="444">444</span>
+<span id="445">445</span>
+<span id="446">446</span>
+<span id="447">447</span>
+<span id="448">448</span>
+<span id="449">449</span>
+<span id="450">450</span>
+<span id="451">451</span>
+<span id="452">452</span>
+<span id="453">453</span>
+<span id="454">454</span>
+<span id="455">455</span>
+<span id="456">456</span>
+<span id="457">457</span>
+<span id="458">458</span>
+<span id="459">459</span>
+<span id="460">460</span>
+<span id="461">461</span>
+<span id="462">462</span>
+<span id="463">463</span>
+<span id="464">464</span>
+<span id="465">465</span>
+<span id="466">466</span>
+<span id="467">467</span>
+<span id="468">468</span>
+<span id="469">469</span>
+<span id="470">470</span>
+<span id="471">471</span>
+<span id="472">472</span>
+<span id="473">473</span>
+<span id="474">474</span>
+<span id="475">475</span>
+<span id="476">476</span>
+<span id="477">477</span>
+<span id="478">478</span>
+<span id="479">479</span>
+<span id="480">480</span>
+<span id="481">481</span>
+<span id="482">482</span>
+<span id="483">483</span>
+<span id="484">484</span>
+<span id="485">485</span>
+<span id="486">486</span>
+<span id="487">487</span>
+<span id="488">488</span>
+<span id="489">489</span>
+<span id="490">490</span>
+<span id="491">491</span>
+<span id="492">492</span>
+<span id="493">493</span>
+<span id="494">494</span>
+<span id="495">495</span>
+<span id="496">496</span>
+<span id="497">497</span>
+</pre><pre class="rust"><code><span class="kw">use crate</span>::{
+    digesters::{
+        cache::ImmutableFileDigestCacheProvider, ImmutableDigester, ImmutableDigesterError,
+        ImmutableFile,
+    },
+    entities::{Beacon, HexEncodedDigest, ImmutableFileName},
+};
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>sha2::{Digest, Sha256};
-<span class="kw">use </span>slog::{debug, info, Logger};
-<span class="kw">use </span>std::fs::File;
-<span class="kw">use </span>std::io;
-<span class="kw">use </span>std::path::PathBuf;
+<span class="kw">use </span>slog::{debug, info, warn, Logger};
+<span class="kw">use </span>std::{collections::BTreeMap, io, path::PathBuf, sync::Arc};
+
+<span class="doccomment">/// Result of a cache computation, contains the digest and the list of new entries to add
+/// to the [ImmutableFileDigestCacheProvider].
+</span><span class="kw">type </span>CacheComputationResult =
+    <span class="prelude-ty">Result</span>&lt;([u8; <span class="number">32</span>], Vec&lt;(ImmutableFileName, HexEncodedDigest)&gt;), io::Error&gt;;
 
 <span class="doccomment">/// A digester working directly on a Cardano DB immutables files
 </span><span class="kw">pub struct </span>CardanoImmutableDigester {
     <span class="doccomment">/// A cardano node DB directory
     </span>db_directory: PathBuf,
+
+    <span class="doccomment">/// A [ImmutableFileDigestCacheProvider] instance
+    </span>cache_provider: <span class="prelude-ty">Option</span>&lt;Arc&lt;<span class="kw">dyn </span>ImmutableFileDigestCacheProvider&gt;&gt;,
 
     <span class="doccomment">/// The logger where the logs should be written
     </span>logger: Logger,
@@ -167,9 +526,14 @@
 
 <span class="kw">impl </span>CardanoImmutableDigester {
     <span class="doccomment">/// ImmutableDigester factory
-    </span><span class="kw">pub fn </span>new(db_directory: PathBuf, logger: Logger) -&gt; <span class="self">Self </span>{
+    </span><span class="kw">pub fn </span>new(
+        db_directory: PathBuf,
+        cache_provider: <span class="prelude-ty">Option</span>&lt;Arc&lt;<span class="kw">dyn </span>ImmutableFileDigestCacheProvider&gt;&gt;,
+        logger: Logger,
+    ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             db_directory,
+            cache_provider,
             logger,
         }
     }
@@ -198,17 +562,41 @@
             <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; {
                 <span class="macro">info!</span>(<span class="self">self</span>.logger, <span class="string">&quot;#compute_digest&quot;</span>; <span class="string">&quot;beacon&quot; </span>=&gt; #<span class="question-mark">?</span>beacon, <span class="string">&quot;nb_of_immutables&quot; </span>=&gt; immutables.len());
 
+                <span class="kw">let </span>cached_values = <span class="kw">match </span><span class="self">self</span>.cache_provider.as_ref() {
+                    <span class="prelude-val">None </span>=&gt; BTreeMap::from_iter(immutables.into_iter().map(|i| (i, <span class="prelude-val">None</span>))),
+                    <span class="prelude-val">Some</span>(cache_provider) =&gt; <span class="kw">match </span>cache_provider.get(immutables.clone()).<span class="kw">await </span>{
+                        <span class="prelude-val">Ok</span>(values) =&gt; values,
+                        <span class="prelude-val">Err</span>(error) =&gt; {
+                            <span class="macro">warn!</span>(
+                                <span class="self">self</span>.logger,
+                                <span class="string">&quot;Error while getting cached immutable files digests: {}&quot;</span>, error
+                            );
+                            BTreeMap::from_iter(immutables.into_iter().map(|i| (i, <span class="prelude-val">None</span>)))
+                        }
+                    },
+                };
+
                 <span class="comment">// digest is done in a separate thread because it is blocking the whole task
                 </span><span class="kw">let </span>logger = <span class="self">self</span>.logger.clone();
                 <span class="kw">let </span>thread_beacon = beacon.clone();
-                <span class="kw">let </span>hash = tokio::task::spawn_blocking(<span class="kw">move </span>|| -&gt; <span class="prelude-ty">Result</span>&lt;[u8; <span class="number">32</span>], io::Error&gt; {
-                    compute_hash(logger, <span class="kw-2">&amp;</span>thread_beacon, <span class="kw-2">&amp;</span>immutables)
-                })
-                .<span class="kw">await
-                </span>.map_err(|e| ImmutableDigesterError::DigestComputationError(e.into()))<span class="question-mark">??</span>;
+                <span class="kw">let </span>(hash, new_cache_entries) =
+                    tokio::task::spawn_blocking(<span class="kw">move </span>|| -&gt; CacheComputationResult {
+                        compute_hash(logger, <span class="kw-2">&amp;</span>thread_beacon, cached_values)
+                    })
+                    .<span class="kw">await
+                    </span>.map_err(|e| ImmutableDigesterError::DigestComputationError(e.into()))<span class="question-mark">??</span>;
                 <span class="kw">let </span>digest = hex::encode(hash);
 
                 <span class="macro">debug!</span>(<span class="self">self</span>.logger, <span class="string">&quot;#computed digest: {:?}&quot;</span>, digest);
+
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(cache_provider) = <span class="self">self</span>.cache_provider.as_ref() {
+                    <span class="kw">if let </span><span class="prelude-val">Err</span>(error) = cache_provider.store(new_cache_entries).<span class="kw">await </span>{
+                        <span class="macro">warn!</span>(
+                            <span class="self">self</span>.logger,
+                            <span class="string">&quot;Error while storing new immutable files digests to cache: {}&quot;</span>, error
+                        );
+                    }
+                }
 
                 <span class="prelude-val">Ok</span>(digest)
             }
@@ -219,9 +607,10 @@
 <span class="kw">fn </span>compute_hash(
     logger: Logger,
     beacon: <span class="kw-2">&amp;</span>Beacon,
-    entries: <span class="kw-2">&amp;</span>Vec&lt;ImmutableFile&gt;,
-) -&gt; <span class="prelude-ty">Result</span>&lt;[u8; <span class="number">32</span>], io::Error&gt; {
+    entries: BTreeMap&lt;ImmutableFile, <span class="prelude-ty">Option</span>&lt;HexEncodedDigest&gt;&gt;,
+) -&gt; CacheComputationResult {
     <span class="kw">let </span><span class="kw-2">mut </span>hasher = Sha256::new();
+    <span class="kw">let </span><span class="kw-2">mut </span>new_cached_entries = Vec::new();
     <span class="kw">let </span><span class="kw-2">mut </span>progress = Progress {
         index: <span class="number">0</span>,
         total: entries.len(),
@@ -229,17 +618,24 @@
 
     hasher.update(beacon.compute_hash().as_bytes());
 
-    <span class="kw">for </span>(ix, entry) <span class="kw">in </span>entries.iter().enumerate() {
-        <span class="kw">let </span><span class="kw-2">mut </span>file = File::open(<span class="kw-2">&amp;</span>entry.path)<span class="question-mark">?</span>;
-
-        io::copy(<span class="kw-2">&amp;mut </span>file, <span class="kw-2">&amp;mut </span>hasher)<span class="question-mark">?</span>;
+    <span class="kw">for </span>(ix, (entry, cache)) <span class="kw">in </span>entries.iter().enumerate() {
+        <span class="kw">match </span>cache {
+            <span class="prelude-val">None </span>=&gt; {
+                <span class="kw">let </span>data = hex::encode(entry.compute_raw_hash::&lt;Sha256&gt;()<span class="question-mark">?</span>);
+                hasher.update(<span class="kw-2">&amp;</span>data);
+                new_cached_entries.push((entry.filename.clone(), data));
+            }
+            <span class="prelude-val">Some</span>(digest) =&gt; {
+                hasher.update(digest);
+            }
+        };
 
         <span class="kw">if </span>progress.report(ix) {
             <span class="macro">info!</span>(logger, <span class="string">&quot;hashing: {}&quot;</span>, <span class="kw-2">&amp;</span>progress);
         }
     }
 
-    <span class="prelude-val">Ok</span>(hasher.finalize().into())
+    <span class="prelude-val">Ok</span>((hasher.finalize().into(), new_cached_entries))
 }
 
 <span class="kw">struct </span>Progress {
@@ -267,6 +663,33 @@
 <span class="attribute">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
     <span class="kw">use </span><span class="kw">super</span>::Progress;
+    <span class="kw">use crate</span>::{
+        digesters::{
+            cache::{
+                ImmutableDigesterCacheGetError, ImmutableDigesterCacheProviderError,
+                ImmutableDigesterCacheStoreError, ImmutableFileDigestCacheProvider,
+                MemoryImmutableFileDigestCacheProvider, MockImmutableFileDigestCacheProvider,
+            },
+            CardanoImmutableDigester, DummyImmutablesDbBuilder, ImmutableDigester,
+            ImmutableDigesterError,
+        },
+        entities::{Beacon, ImmutableFileNumber},
+    };
+    <span class="kw">use </span>sha2::Sha256;
+    <span class="kw">use </span>slog::Drain;
+    <span class="kw">use </span>std::{collections::BTreeMap, io, sync::Arc};
+    <span class="kw">use </span>tokio::time::Instant;
+
+    <span class="kw">fn </span>create_logger() -&gt; slog::Logger {
+        <span class="kw">let </span>decorator = slog_term::PlainDecorator::new(slog_term::TestStdoutWriter);
+        <span class="kw">let </span>drain = slog_term::CompactFormat::new(decorator).build().fuse();
+        <span class="kw">let </span>drain = slog_async::Async::new(drain).build().fuse();
+        slog::Logger::root(Arc::new(drain), <span class="macro">slog::o!</span>())
+    }
+
+    <span class="kw">fn </span>db_builder(dir_name: <span class="kw-2">&amp;</span>str) -&gt; DummyImmutablesDbBuilder {
+        DummyImmutablesDbBuilder::new(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;cardano_immutable_digester/{}&quot;</span>, dir_name))
+    }
 
     <span class="attribute">#[test]
     </span><span class="kw">fn </span>reports_progress_every_5_percent() {
@@ -292,6 +715,281 @@
         <span class="macro">assert!</span>(progress.report(<span class="number">12</span>));
         <span class="macro">assert!</span>(!progress.report(<span class="number">3</span>));
         <span class="macro">assert!</span>(!progress.report(<span class="number">15</span>));
+    }
+
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>fail_if_no_file_in_folder() {
+        <span class="kw">let </span>immutable_db = db_builder(<span class="string">&quot;fail_if_no_file_in_folder&quot;</span>).build();
+        <span class="kw">let </span>digester = CardanoImmutableDigester::new(immutable_db.dir, <span class="prelude-val">None</span>, create_logger());
+        <span class="kw">let </span>beacon = Beacon::new(<span class="string">&quot;devnet&quot;</span>.to_string(), <span class="number">1</span>, <span class="number">1</span>);
+
+        <span class="kw">let </span>result = digester
+            .compute_digest(<span class="kw-2">&amp;</span>beacon)
+            .<span class="kw">await
+            </span>.expect_err(<span class="string">&quot;compute_digest should&#39;ve failed&quot;</span>);
+
+        <span class="macro">assert_eq!</span>(
+            <span class="macro">format!</span>(
+                <span class="string">&quot;{:?}&quot;</span>,
+                ImmutableDigesterError::NotEnoughImmutable {
+                    expected_number: beacon.immutable_file_number,
+                    found_number: <span class="prelude-val">None</span>,
+                }
+            ),
+            <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, result)
+        );
+    }
+
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>fail_if_a_invalid_file_is_in_immutable_folder() {
+        <span class="kw">let </span>immutable_db = db_builder(<span class="string">&quot;fail_if_no_immutable_exist&quot;</span>)
+            .with_non_immutables(<span class="kw-2">&amp;</span>[<span class="string">&quot;not_immutable&quot;</span>])
+            .build();
+        <span class="kw">let </span>digester = CardanoImmutableDigester::new(immutable_db.dir, <span class="prelude-val">None</span>, create_logger());
+        <span class="kw">let </span>beacon = Beacon::new(<span class="string">&quot;devnet&quot;</span>.to_string(), <span class="number">1</span>, <span class="number">1</span>);
+
+        <span class="macro">assert!</span>(digester.compute_digest(<span class="kw-2">&amp;</span>beacon).<span class="kw">await</span>.is_err());
+    }
+
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>fail_if_theres_only_the_uncompleted_immutable_trio() {
+        <span class="kw">let </span>immutable_db = db_builder(<span class="string">&quot;fail_if_theres_only_the_uncompleted_immutable_trio&quot;</span>)
+            .append_immutable_trio()
+            .build();
+        <span class="kw">let </span>digester = CardanoImmutableDigester::new(immutable_db.dir, <span class="prelude-val">None</span>, create_logger());
+        <span class="kw">let </span>beacon = Beacon::new(<span class="string">&quot;devnet&quot;</span>.to_string(), <span class="number">1</span>, <span class="number">1</span>);
+
+        <span class="kw">let </span>result = digester
+            .compute_digest(<span class="kw-2">&amp;</span>beacon)
+            .<span class="kw">await
+            </span>.expect_err(<span class="string">&quot;compute_digest should&#39;ve failed&quot;</span>);
+
+        <span class="macro">assert_eq!</span>(
+            <span class="macro">format!</span>(
+                <span class="string">&quot;{:?}&quot;</span>,
+                ImmutableDigesterError::NotEnoughImmutable {
+                    expected_number: beacon.immutable_file_number,
+                    found_number: <span class="prelude-val">None</span>,
+                }
+            ),
+            <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, result)
+        );
+    }
+
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>fail_if_less_immutable_than_what_required_in_beacon() {
+        <span class="kw">let </span>immutable_db = db_builder(<span class="string">&quot;fail_if_less_immutable_than_what_required_in_beacon&quot;</span>)
+            .with_immutables(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>])
+            .append_immutable_trio()
+            .build();
+        <span class="kw">let </span>digester = CardanoImmutableDigester::new(immutable_db.dir, <span class="prelude-val">None</span>, create_logger());
+        <span class="kw">let </span>beacon = Beacon::new(<span class="string">&quot;devnet&quot;</span>.to_string(), <span class="number">1</span>, <span class="number">10</span>);
+
+        <span class="kw">let </span>result = digester
+            .compute_digest(<span class="kw-2">&amp;</span>beacon)
+            .<span class="kw">await
+            </span>.expect_err(<span class="string">&quot;compute_digest should&#39;ve failed&quot;</span>);
+
+        <span class="macro">assert_eq!</span>(
+            <span class="macro">format!</span>(
+                <span class="string">&quot;{:?}&quot;</span>,
+                ImmutableDigesterError::NotEnoughImmutable {
+                    expected_number: beacon.immutable_file_number,
+                    found_number: <span class="prelude-val">Some</span>(<span class="number">5</span>),
+                }
+            ),
+            <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, result)
+        );
+    }
+
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>can_compute_hash_of_a_hundred_immutable_file_trio() {
+        <span class="kw">let </span>immutable_db = db_builder(<span class="string">&quot;can_compute_hash_of_a_hundred_immutable_file_trio&quot;</span>)
+            .with_immutables(<span class="kw-2">&amp;</span>(<span class="number">1</span>..=<span class="number">100</span>).collect::&lt;Vec&lt;ImmutableFileNumber&gt;&gt;())
+            .append_immutable_trio()
+            .build();
+        <span class="kw">let </span>logger = create_logger();
+        <span class="kw">let </span>digester = CardanoImmutableDigester::new(
+            immutable_db.dir,
+            <span class="prelude-val">Some</span>(Arc::new(MemoryImmutableFileDigestCacheProvider::default())),
+            logger.clone(),
+        );
+        <span class="kw">let </span>beacon = Beacon::new(<span class="string">&quot;devnet&quot;</span>.to_string(), <span class="number">1</span>, <span class="number">100</span>);
+
+        <span class="kw">let </span>result = digester
+            .compute_digest(<span class="kw-2">&amp;</span>beacon)
+            .<span class="kw">await
+            </span>.expect(<span class="string">&quot;compute_digest must not fail&quot;</span>);
+
+        <span class="macro">assert_eq!</span>(
+            <span class="string">&quot;a27fd67e495c2c77e4b6b0af9925b2b0bc39656c56adfad4aaab9f20fae49122&quot;</span>.to_string(),
+            result
+        )
+    }
+
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>digests_are_stored_into_cache_provider() {
+        <span class="kw">let </span>immutable_db = db_builder(<span class="string">&quot;digests_are_stored_into_cache_provider&quot;</span>)
+            .with_immutables(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>])
+            .append_immutable_trio()
+            .build();
+        <span class="kw">let </span>immutables = immutable_db.immutables_files;
+        <span class="kw">let </span>cache = Arc::new(MemoryImmutableFileDigestCacheProvider::default());
+        <span class="kw">let </span>logger = create_logger();
+        <span class="kw">let </span>digester =
+            CardanoImmutableDigester::new(immutable_db.dir, <span class="prelude-val">Some</span>(cache.clone()), logger.clone());
+        <span class="kw">let </span>beacon = Beacon::new(<span class="string">&quot;devnet&quot;</span>.to_string(), <span class="number">1</span>, <span class="number">2</span>);
+
+        digester
+            .compute_digest(<span class="kw-2">&amp;</span>beacon)
+            .<span class="kw">await
+            </span>.expect(<span class="string">&quot;compute_digest must not fail&quot;</span>);
+
+        <span class="kw">let </span>cached_entries = cache
+            .get(immutables.clone())
+            .<span class="kw">await
+            </span>.expect(<span class="string">&quot;Cache read should not fail&quot;</span>);
+        <span class="kw">let </span>expected: BTreeMap&lt;<span class="kw">_</span>, <span class="kw">_</span>&gt; = immutables
+            .into_iter()
+            .map(|i| {
+                <span class="kw">let </span>digest = hex::encode(i.compute_raw_hash::&lt;Sha256&gt;().unwrap());
+                (i, <span class="prelude-val">Some</span>(digest))
+            })
+            .collect();
+
+        <span class="macro">assert_eq!</span>(expected, cached_entries);
+    }
+
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>computed_digest_with_cold_or_hot_or_without_any_cache_are_equals() {
+        <span class="kw">let </span>immutable_db = DummyImmutablesDbBuilder::new(
+            <span class="string">&quot;computed_digest_with_cold_or_hot_or_without_any_cache_are_equals&quot;</span>,
+        )
+        .with_immutables(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>])
+        .append_immutable_trio()
+        .build();
+        <span class="kw">let </span>logger = create_logger();
+        <span class="kw">let </span>no_cache_digester =
+            CardanoImmutableDigester::new(immutable_db.dir.clone(), <span class="prelude-val">None</span>, logger.clone());
+        <span class="kw">let </span>cache_digester = CardanoImmutableDigester::new(
+            immutable_db.dir,
+            <span class="prelude-val">Some</span>(Arc::new(MemoryImmutableFileDigestCacheProvider::default())),
+            logger.clone(),
+        );
+        <span class="kw">let </span>beacon = Beacon::new(<span class="string">&quot;devnet&quot;</span>.to_string(), <span class="number">1</span>, <span class="number">3</span>);
+
+        <span class="kw">let </span>without_cache_digest = no_cache_digester
+            .compute_digest(<span class="kw-2">&amp;</span>beacon)
+            .<span class="kw">await
+            </span>.expect(<span class="string">&quot;compute_digest must not fail&quot;</span>);
+
+        <span class="kw">let </span>cold_cache_digest = cache_digester
+            .compute_digest(<span class="kw-2">&amp;</span>beacon)
+            .<span class="kw">await
+            </span>.expect(<span class="string">&quot;compute_digest must not fail&quot;</span>);
+
+        <span class="kw">let </span>full_cache_digest = cache_digester
+            .compute_digest(<span class="kw-2">&amp;</span>beacon)
+            .<span class="kw">await
+            </span>.expect(<span class="string">&quot;compute_digest must not fail&quot;</span>);
+
+        <span class="macro">assert_eq!</span>(
+            without_cache_digest, full_cache_digest,
+            <span class="string">&quot;Digests with or without cache should be the same&quot;
+        </span>);
+
+        <span class="macro">assert_eq!</span>(
+            cold_cache_digest, full_cache_digest,
+            <span class="string">&quot;Digests with cold or with hot cache should be the same&quot;
+        </span>);
+    }
+
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>hash_computation_is_quicker_with_a_full_cache() {
+        <span class="kw">let </span>immutable_db = db_builder(<span class="string">&quot;hash_computation_is_quicker_with_a_full_cache&quot;</span>)
+            .with_immutables(<span class="kw-2">&amp;</span>(<span class="number">1</span>..=<span class="number">50</span>).collect::&lt;Vec&lt;ImmutableFileNumber&gt;&gt;())
+            .append_immutable_trio()
+            .set_file_size(<span class="number">65536</span>)
+            .build();
+        <span class="kw">let </span>cache = MemoryImmutableFileDigestCacheProvider::default();
+        <span class="kw">let </span>logger = create_logger();
+        <span class="kw">let </span>digester =
+            CardanoImmutableDigester::new(immutable_db.dir, <span class="prelude-val">Some</span>(Arc::new(cache)), logger.clone());
+        <span class="kw">let </span>beacon = Beacon::new(<span class="string">&quot;devnet&quot;</span>.to_string(), <span class="number">1</span>, <span class="number">50</span>);
+
+        <span class="kw">let </span>now = Instant::now();
+        digester
+            .compute_digest(<span class="kw-2">&amp;</span>beacon)
+            .<span class="kw">await
+            </span>.expect(<span class="string">&quot;compute_digest must not fail&quot;</span>);
+        <span class="kw">let </span>elapsed_without_cache = now.elapsed();
+
+        <span class="kw">let </span>now = Instant::now();
+        digester
+            .compute_digest(<span class="kw-2">&amp;</span>beacon)
+            .<span class="kw">await
+            </span>.expect(<span class="string">&quot;compute_digest must not fail&quot;</span>);
+        <span class="kw">let </span>elapsed_with_cache = now.elapsed();
+
+        <span class="comment">// Note real performance doesn&#39;t matter here, the purpose is only to check that the computation
+        // time is faster with cache.
+        // We set the limit to 90% to avoid flakiness and ensure that the cache is useful (Note: Real
+        // performance is around ~100 times faster in debug).
+        </span><span class="macro">assert!</span>(
+            elapsed_with_cache &lt; (elapsed_without_cache * <span class="number">9 </span>/ <span class="number">10</span>),
+            <span class="string">&quot;digest computation with full cache should be faster than without cache,\
+            time elapsed: with cache {:?}, without cache {:?}&quot;</span>,
+            elapsed_with_cache,
+            elapsed_without_cache
+        );
+    }
+
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>cache_read_failure_dont_block_computation() {
+        <span class="kw">let </span>immutable_db = db_builder(<span class="string">&quot;cache_read_failure_dont_block_computation&quot;</span>)
+            .with_immutables(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>])
+            .append_immutable_trio()
+            .build();
+        <span class="kw">let </span><span class="kw-2">mut </span>cache = MockImmutableFileDigestCacheProvider::new();
+        cache.expect_get().returning(|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(BTreeMap::new()));
+        cache.expect_store().returning(|<span class="kw">_</span>| {
+            <span class="prelude-val">Err</span>(ImmutableDigesterCacheProviderError::Store(
+                ImmutableDigesterCacheStoreError::Io(io::Error::new(io::ErrorKind::Other, <span class="string">&quot;error&quot;</span>)),
+            ))
+        });
+        <span class="kw">let </span>logger = create_logger();
+        <span class="kw">let </span>digester =
+            CardanoImmutableDigester::new(immutable_db.dir, <span class="prelude-val">Some</span>(Arc::new(cache)), logger.clone());
+        <span class="kw">let </span>beacon = Beacon::new(<span class="string">&quot;devnet&quot;</span>.to_string(), <span class="number">1</span>, <span class="number">3</span>);
+
+        digester
+            .compute_digest(<span class="kw-2">&amp;</span>beacon)
+            .<span class="kw">await
+            </span>.expect(<span class="string">&quot;compute_digest must not fail even with cache write failure&quot;</span>);
+    }
+
+    <span class="attribute">#[tokio::test]
+    </span><span class="kw">async fn </span>cache_write_failure_dont_block_computation() {
+        <span class="kw">let </span>immutable_db = db_builder(<span class="string">&quot;cache_write_failure_dont_block_computation&quot;</span>)
+            .with_immutables(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>])
+            .append_immutable_trio()
+            .build();
+        <span class="kw">let </span><span class="kw-2">mut </span>cache = MockImmutableFileDigestCacheProvider::new();
+        cache.expect_get().returning(|<span class="kw">_</span>| {
+            <span class="prelude-val">Err</span>(ImmutableDigesterCacheProviderError::Get(
+                ImmutableDigesterCacheGetError::Io(io::Error::new(io::ErrorKind::Other, <span class="string">&quot;error&quot;</span>)),
+            ))
+        });
+        cache.expect_store().returning(|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(()));
+        <span class="kw">let </span>logger = create_logger();
+        <span class="kw">let </span>digester =
+            CardanoImmutableDigester::new(immutable_db.dir, <span class="prelude-val">Some</span>(Arc::new(cache)), logger.clone());
+        <span class="kw">let </span>beacon = Beacon::new(<span class="string">&quot;devnet&quot;</span>.to_string(), <span class="number">1</span>, <span class="number">3</span>);
+
+        digester
+            .compute_digest(<span class="kw-2">&amp;</span>beacon)
+            .<span class="kw">await
+            </span>.expect(<span class="string">&quot;compute_digest must not fail even with cache read failure&quot;</span>);
     }
 }
 </code></pre></div>

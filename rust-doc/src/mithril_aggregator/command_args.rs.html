@@ -588,23 +588,50 @@
 <span id="588">588</span>
 <span id="589">589</span>
 <span id="590">590</span>
+<span id="591">591</span>
+<span id="592">592</span>
+<span id="593">593</span>
+<span id="594">594</span>
+<span id="595">595</span>
+<span id="596">596</span>
+<span id="597">597</span>
+<span id="598">598</span>
+<span id="599">599</span>
+<span id="600">600</span>
+<span id="601">601</span>
+<span id="602">602</span>
+<span id="603">603</span>
+<span id="604">604</span>
+<span id="605">605</span>
+<span id="606">606</span>
+<span id="607">607</span>
+<span id="608">608</span>
+<span id="609">609</span>
+<span id="610">610</span>
+<span id="611">611</span>
+<span id="612">612</span>
+<span id="613">613</span>
+<span id="614">614</span>
+<span id="615">615</span>
+<span id="616">616</span>
+<span id="617">617</span>
+<span id="618">618</span>
 </pre><pre class="rust"><code><span class="kw">use </span>clap::{Parser, Subcommand};
 <span class="kw">use </span>config::{builder::DefaultState, ConfigBuilder, Map, Source, Value, ValueKind};
 <span class="kw">use </span>slog::Level;
 <span class="kw">use </span>slog_scope::debug;
-<span class="kw">use </span>std::error::Error;
-<span class="kw">use </span>std::fs;
-<span class="kw">use </span>std::path::PathBuf;
-<span class="kw">use </span>std::sync::Arc;
-<span class="kw">use </span>tokio::sync::RwLock;
-<span class="kw">use </span>tokio::time::Duration;
+<span class="kw">use </span>std::{error::Error, fs, path::PathBuf, sync::Arc};
+<span class="kw">use </span>tokio::{sync::RwLock, time::Duration};
 
 <span class="kw">use </span>mithril_common::{
     certificate_chain::MithrilCertificateVerifier,
     chain_observer::{CardanoCliRunner, ChainObserver},
     crypto_helper::{key_decode_hex, ProtocolGenesisSigner, ProtocolGenesisVerifier},
     database::{ApplicationNodeType, DatabaseVersionChecker},
-    digesters::{CardanoImmutableDigester, ImmutableFileSystemObserver},
+    digesters::{
+        cache::{ImmutableFileDigestCacheProvider, JsonImmutableFileDigestCacheProviderBuilder},
+        CardanoImmutableDigester, ImmutableFileSystemObserver,
+    },
     entities::{Epoch, HexEncodedGenesisSecretKey},
     store::{adapter::SQLiteAdapter, StakeStore},
     BeaconProviderImpl,
@@ -844,6 +871,16 @@
     /// Defaults to work folder
     </span><span class="attribute">#[clap(long)]
     </span><span class="kw">pub </span>snapshot_directory: <span class="prelude-ty">Option</span>&lt;PathBuf&gt;,
+
+    <span class="doccomment">/// Disable immutables digests cache.
+    </span><span class="attribute">#[clap(long)]
+    </span>disable_digests_cache: bool,
+
+    <span class="doccomment">/// If set the existing immutables digests cache will be reset.
+    ///
+    /// Will be ignored if set in conjunction with `--disable-digests-cache`.
+    </span><span class="attribute">#[clap(long)]
+    </span>reset_digests_cache: bool,
 }
 
 <span class="kw">impl </span>Source <span class="kw">for </span>ServeCommand {
@@ -947,6 +984,7 @@
         ));
         <span class="kw">let </span>digester = Arc::new(CardanoImmutableDigester::new(
             config.db_directory.clone(),
+            <span class="self">self</span>.build_digester_cache_provider(<span class="kw-2">&amp;</span>config).<span class="kw">await</span><span class="question-mark">?</span>,
             slog_scope::logger(),
         ));
         <span class="kw">let </span>multi_signer = Arc::new(RwLock::new(MultiSignerImpl::new(
@@ -1042,6 +1080,24 @@
 
         <span class="macro">println!</span>(<span class="string">&quot;Exiting...&quot;</span>);
         <span class="prelude-val">Ok</span>(())
+    }
+
+    <span class="kw">async fn </span>build_digester_cache_provider(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        config: <span class="kw-2">&amp;</span>Configuration,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Arc&lt;<span class="kw">dyn </span>ImmutableFileDigestCacheProvider&gt;&gt;, Box&lt;<span class="kw">dyn </span>Error&gt;&gt; {
+        <span class="kw">if </span><span class="self">self</span>.disable_digests_cache {
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
+        }
+        <span class="kw">let </span>cache_provider = JsonImmutableFileDigestCacheProviderBuilder::new(
+            <span class="kw-2">&amp;</span>config.data_stores_directory,
+            <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;immutables_digests_{}.json&quot;</span>, config.network),
+        )
+        .should_reset_digests_cache(<span class="self">self</span>.reset_digests_cache)
+        .build()
+        .<span class="kw">await</span><span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(Arc::new(cache_provider)))
     }
 }
 

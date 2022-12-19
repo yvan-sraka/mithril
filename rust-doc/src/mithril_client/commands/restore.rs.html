@@ -73,16 +73,68 @@
 <span id="73">73</span>
 <span id="74">74</span>
 <span id="75">75</span>
-</pre><pre class="rust"><code><span class="kw">use </span>std::{error::Error, path::Path, sync::Arc};
-
-<span class="kw">use </span>clap::Parser;
+<span id="76">76</span>
+<span id="77">77</span>
+<span id="78">78</span>
+<span id="79">79</span>
+<span id="80">80</span>
+<span id="81">81</span>
+<span id="82">82</span>
+<span id="83">83</span>
+<span id="84">84</span>
+<span id="85">85</span>
+<span id="86">86</span>
+<span id="87">87</span>
+<span id="88">88</span>
+<span id="89">89</span>
+<span id="90">90</span>
+<span id="91">91</span>
+<span id="92">92</span>
+<span id="93">93</span>
+<span id="94">94</span>
+<span id="95">95</span>
+<span id="96">96</span>
+<span id="97">97</span>
+<span id="98">98</span>
+<span id="99">99</span>
+<span id="100">100</span>
+<span id="101">101</span>
+<span id="102">102</span>
+<span id="103">103</span>
+<span id="104">104</span>
+<span id="105">105</span>
+<span id="106">106</span>
+<span id="107">107</span>
+<span id="108">108</span>
+<span id="109">109</span>
+<span id="110">110</span>
+<span id="111">111</span>
+<span id="112">112</span>
+<span id="113">113</span>
+<span id="114">114</span>
+<span id="115">115</span>
+<span id="116">116</span>
+<span id="117">117</span>
+<span id="118">118</span>
+<span id="119">119</span>
+<span id="120">120</span>
+<span id="121">121</span>
+<span id="122">122</span>
+<span id="123">123</span>
+<span id="124">124</span>
+</pre><pre class="rust"><code><span class="kw">use </span>clap::Parser;
 <span class="kw">use </span>config::{builder::DefaultState, ConfigBuilder};
+<span class="kw">use </span>directories::ProjectDirs;
 <span class="kw">use </span>mithril_common::{
     certificate_chain::MithrilCertificateVerifier,
     crypto_helper::{key_decode_hex, ProtocolGenesisVerifier},
-    digesters::CardanoImmutableDigester,
+    digesters::{
+        cache::ImmutableFileDigestCacheProvider,
+        cache::JsonImmutableFileDigestCacheProviderBuilder, CardanoImmutableDigester,
+    },
 };
-<span class="kw">use </span>slog_scope::debug;
+<span class="kw">use </span>slog_scope::{debug, warn};
+<span class="kw">use </span>std::{error::Error, path::Path, sync::Arc};
 
 <span class="kw">use crate</span>::{AggregatorHTTPClient, AggregatorHandler, Config, Runtime};
 
@@ -92,6 +144,16 @@
     <span class="doccomment">/// Enable JSON output.
     </span><span class="attribute">#[clap(long)]
     </span>json: bool,
+
+    <span class="doccomment">/// Disable immutables digests cache.
+    </span><span class="attribute">#[clap(long)]
+    </span>disable_digests_cache: bool,
+
+    <span class="doccomment">/// If set the existing immutables digests cache will be reset.
+    ///
+    /// Will be ignored if set in conjunction with `--disable-digests-cache`.
+    </span><span class="attribute">#[clap(long)]
+    </span>reset_digests_cache: bool,
 
     <span class="doccomment">/// Digest of the snapshot to download. Use the `list` command to get that information.
     </span>digest: String,
@@ -112,14 +174,21 @@
         <span class="macro">debug!</span>(<span class="string">&quot;{:?}&quot;</span>, config);
         <span class="kw">let </span><span class="kw-2">mut </span>runtime = Runtime::new(config.network.clone());
         <span class="kw">let </span>aggregator_handler =
-            AggregatorHTTPClient::new(config.network.clone(), config.aggregator_endpoint);
+            AggregatorHTTPClient::new(config.network.clone(), config.aggregator_endpoint.clone());
         <span class="kw">let </span>certificate_verifier = Box::new(MithrilCertificateVerifier::new(slog_scope::logger()));
         <span class="kw">let </span>genesis_verification_key = key_decode_hex(<span class="kw-2">&amp;</span>config.genesis_verification_key)<span class="question-mark">?</span>;
         <span class="kw">let </span>genesis_verifier =
             ProtocolGenesisVerifier::from_verification_key(genesis_verification_key);
         <span class="kw">let </span>unpacked_path = aggregator_handler.unpack_snapshot(<span class="kw-2">&amp;</span><span class="self">self</span>.digest).<span class="kw">await</span><span class="question-mark">?</span>;
+
         <span class="kw">let </span>digester = Box::new(CardanoImmutableDigester::new(
             Path::new(<span class="kw-2">&amp;</span>unpacked_path).into(),
+            build_digester_cache_provider(
+                <span class="self">self</span>.disable_digests_cache,
+                <span class="self">self</span>.reset_digests_cache,
+                <span class="kw-2">&amp;</span>config,
+            )
+            .<span class="kw">await</span><span class="question-mark">?</span>,
             slog_scope::logger(),
         ));
         <span class="kw">let </span>output = runtime
@@ -146,6 +215,35 @@ docker run -v cardano-node-ipc:/ipc -v cardano-node-data:/data --mount type=bind
             config.network.clone()
         );
         <span class="prelude-val">Ok</span>(())
+    }
+}
+
+<span class="kw">async fn </span>build_digester_cache_provider(
+    disable_digests_cache: bool,
+    reset_digests_cache: bool,
+    config: <span class="kw-2">&amp;</span>Config,
+) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Arc&lt;<span class="kw">dyn </span>ImmutableFileDigestCacheProvider&gt;&gt;, Box&lt;<span class="kw">dyn </span>Error&gt;&gt; {
+    <span class="kw">if </span>disable_digests_cache {
+        <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
+    }
+
+    <span class="kw">match </span>ProjectDirs::from(<span class="string">&quot;io&quot;</span>, <span class="string">&quot;iohk&quot;</span>, <span class="string">&quot;mithril&quot;</span>) {
+        <span class="prelude-val">None </span>=&gt; {
+            <span class="macro">warn!</span>(<span class="string">&quot;Could not get cache directory, disabling immutables digests cache&quot;</span>);
+            <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
+        }
+        <span class="prelude-val">Some</span>(project_dirs) =&gt; {
+            <span class="kw">let </span>cache_provider = JsonImmutableFileDigestCacheProviderBuilder::new(
+                project_dirs.cache_dir(),
+                <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;immutables_digests_{}.json&quot;</span>, config.network),
+            )
+            .ensure_dir_exist()
+            .should_reset_digests_cache(reset_digests_cache)
+            .build()
+            .<span class="kw">await</span><span class="question-mark">?</span>;
+
+            <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(Arc::new(cache_provider)))
+        }
     }
 }
 </code></pre></div>
