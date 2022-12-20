@@ -1122,6 +1122,13 @@
 <span id="1122">1122</span>
 <span id="1123">1123</span>
 <span id="1124">1124</span>
+<span id="1125">1125</span>
+<span id="1126">1126</span>
+<span id="1127">1127</span>
+<span id="1128">1128</span>
+<span id="1129">1129</span>
+<span id="1130">1130</span>
+<span id="1131">1131</span>
 </pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>chrono::Utc;
 <span class="kw">use </span>mithril_common::entities::Epoch;
@@ -1738,11 +1745,15 @@
     };
     <span class="kw">use crate</span>::{MithrilSignerRegisterer, ProtocolParametersStorer, SignerRegistrationRound};
     <span class="kw">use </span>mithril_common::chain_observer::FakeObserver;
-    <span class="kw">use </span>mithril_common::crypto_helper::tests_setup::setup_certificate_chain;
-    <span class="kw">use </span>mithril_common::crypto_helper::{key_decode_hex, ProtocolMultiSignature};
+    <span class="kw">use </span>mithril_common::crypto_helper::{
+        key_decode_hex,
+        tests_setup::{setup_certificate_chain, setup_signers},
+        ProtocolMultiSignature,
+    };
     <span class="kw">use </span>mithril_common::digesters::DumbImmutableFileObserver;
     <span class="kw">use </span>mithril_common::entities::{
-        Beacon, CertificatePending, Epoch, HexEncodedKey, ProtocolMessage, StakeDistribution,
+        Beacon, CertificatePending, Epoch, HexEncodedKey, ProtocolMessage, SignerWithStake,
+        StakeDistribution,
     };
     <span class="kw">use </span>mithril_common::{entities::ProtocolMessagePartKey, fake_data, store::StakeStorer};
     <span class="kw">use </span>mithril_common::{BeaconProviderImpl, CardanoNetwork};
@@ -1973,10 +1984,13 @@
         <span class="kw">let </span>beacon = runner.get_beacon_from_chain().<span class="kw">await</span>.unwrap();
         runner.update_beacon(<span class="kw-2">&amp;</span>beacon).<span class="kw">await</span>.unwrap();
 
-        <span class="kw">let </span>signers = fake_data::signers_with_stakes(<span class="number">5</span>);
+        <span class="kw">let </span>protocol_parameters = fake_data::protocol_parameters();
+        <span class="kw">let </span>signers = setup_signers(<span class="number">5</span>, <span class="kw-2">&amp;</span>protocol_parameters.clone().into())
+            .into_iter()
+            .map(|s| s.<span class="number">0</span>)
+            .collect::&lt;Vec&lt;SignerWithStake&gt;&gt;();
         <span class="kw">let </span>current_signers = signers[<span class="number">1</span>..<span class="number">3</span>].to_vec();
         <span class="kw">let </span>next_signers = signers[<span class="number">2</span>..<span class="number">5</span>].to_vec();
-        <span class="kw">let </span>protocol_parameters = fake_data::protocol_parameters();
         deps.simulate_genesis(
             current_signers.clone(),
             next_signers.clone(),
