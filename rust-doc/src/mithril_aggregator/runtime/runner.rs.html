@@ -1109,26 +1109,6 @@
 <span id="1109">1109</span>
 <span id="1110">1110</span>
 <span id="1111">1111</span>
-<span id="1112">1112</span>
-<span id="1113">1113</span>
-<span id="1114">1114</span>
-<span id="1115">1115</span>
-<span id="1116">1116</span>
-<span id="1117">1117</span>
-<span id="1118">1118</span>
-<span id="1119">1119</span>
-<span id="1120">1120</span>
-<span id="1121">1121</span>
-<span id="1122">1122</span>
-<span id="1123">1123</span>
-<span id="1124">1124</span>
-<span id="1125">1125</span>
-<span id="1126">1126</span>
-<span id="1127">1127</span>
-<span id="1128">1128</span>
-<span id="1129">1129</span>
-<span id="1130">1130</span>
-<span id="1131">1131</span>
 </pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>chrono::Utc;
 <span class="kw">use </span>mithril_common::entities::Epoch;
@@ -1746,16 +1726,16 @@
     <span class="kw">use crate</span>::{MithrilSignerRegisterer, ProtocolParametersStorer, SignerRegistrationRound};
     <span class="kw">use </span>mithril_common::chain_observer::FakeObserver;
     <span class="kw">use </span>mithril_common::crypto_helper::{
-        key_decode_hex,
-        tests_setup::{setup_certificate_chain, setup_signers},
-        ProtocolMultiSignature,
+        key_decode_hex, tests_setup::setup_certificate_chain, ProtocolMultiSignature,
     };
     <span class="kw">use </span>mithril_common::digesters::DumbImmutableFileObserver;
     <span class="kw">use </span>mithril_common::entities::{
-        Beacon, CertificatePending, Epoch, HexEncodedKey, ProtocolMessage, SignerWithStake,
-        StakeDistribution,
+        Beacon, CertificatePending, Epoch, HexEncodedKey, ProtocolMessage, StakeDistribution,
     };
-    <span class="kw">use </span>mithril_common::{entities::ProtocolMessagePartKey, fake_data, store::StakeStorer};
+    <span class="kw">use </span>mithril_common::test_utils::MithrilFixtureBuilder;
+    <span class="kw">use </span>mithril_common::{
+        entities::ProtocolMessagePartKey, store::StakeStorer, test_utils::fake_data,
+    };
     <span class="kw">use </span>mithril_common::{BeaconProviderImpl, CardanoNetwork};
     <span class="kw">use </span>std::collections::HashMap;
     <span class="kw">use </span>std::path::Path;
@@ -1827,10 +1807,18 @@
 
     <span class="attribute">#[tokio::test]
     </span><span class="kw">async fn </span>test_update_stake_distribution() {
-        <span class="kw">let </span>(deps, config) = initialize_dependencies().<span class="kw">await</span>;
+        <span class="kw">let </span>(<span class="kw-2">mut </span>deps, config) = initialize_dependencies().<span class="kw">await</span>;
+        <span class="kw">let </span>chain_observer = Arc::new(FakeObserver::default());
+        deps.chain_observer = chain_observer.clone();
         <span class="kw">let </span>deps = Arc::new(deps);
         <span class="kw">let </span>runner = AggregatorRunner::new(config, deps.clone());
         <span class="kw">let </span>beacon = runner.get_beacon_from_chain().<span class="kw">await</span>.unwrap();
+        <span class="kw">let </span>fixture = MithrilFixtureBuilder::default().with_signers(<span class="number">5</span>).build();
+        <span class="kw">let </span>expected = fixture.stake_distribution();
+
+        chain_observer
+            .set_signers(fixture.signers_with_stake())
+            .<span class="kw">await</span>;
         runner
             .update_beacon(<span class="kw-2">&amp;</span>beacon)
             .<span class="kw">await
@@ -1839,13 +1827,6 @@
             .update_stake_distribution(<span class="kw-2">&amp;</span>beacon)
             .<span class="kw">await
             </span>.expect(<span class="string">&quot;updating stake distribution should not return an error&quot;</span>);
-
-        <span class="kw">let </span>current_stake_distribution = deps
-            .chain_observer
-            .get_current_stake_distribution()
-            .<span class="kw">await
-            </span>.unwrap()
-            .expect(<span class="string">&quot;The stake distribution should not be None.&quot;</span>);
 
         <span class="kw">let </span>saved_stake_distribution = deps
             .stake_store
@@ -1859,13 +1840,7 @@
                 )
             });
 
-        <span class="macro">assert_eq!</span>(
-            current_stake_distribution.len(),
-            saved_stake_distribution.len()
-        );
-        <span class="kw">for </span>(party_id, stake) <span class="kw">in </span>current_stake_distribution.iter() {
-            <span class="macro">assert_eq!</span>(stake, saved_stake_distribution.get(party_id).unwrap());
-        }
+        <span class="macro">assert_eq!</span>(expected, saved_stake_distribution);
     }
 
     <span class="attribute">#[tokio::test]
@@ -1946,11 +1921,11 @@
         <span class="kw">let </span>beacon = runner.get_beacon_from_chain().<span class="kw">await</span>.unwrap();
         runner.update_beacon(<span class="kw-2">&amp;</span>beacon).<span class="kw">await</span>.unwrap();
 
-        <span class="kw">let </span>signers = fake_data::signers_with_stakes(<span class="number">5</span>);
-        <span class="kw">let </span>current_signers = signers[<span class="number">1</span>..<span class="number">3</span>].to_vec();
-        <span class="kw">let </span>next_signers = signers[<span class="number">2</span>..<span class="number">5</span>].to_vec();
+        <span class="kw">let </span>fixture = MithrilFixtureBuilder::default().with_signers(<span class="number">5</span>).build();
+        <span class="kw">let </span>current_signers = fixture.signers_with_stake()[<span class="number">1</span>..<span class="number">3</span>].to_vec();
+        <span class="kw">let </span>next_signers = fixture.signers_with_stake()[<span class="number">2</span>..<span class="number">5</span>].to_vec();
         <span class="kw">let </span>protocol_parameters = fake_data::protocol_parameters();
-        deps.simulate_genesis(
+        deps.prepare_for_genesis(
             current_signers.clone(),
             next_signers.clone(),
             <span class="kw-2">&amp;</span>protocol_parameters.clone(),
@@ -1984,17 +1959,12 @@
         <span class="kw">let </span>beacon = runner.get_beacon_from_chain().<span class="kw">await</span>.unwrap();
         runner.update_beacon(<span class="kw-2">&amp;</span>beacon).<span class="kw">await</span>.unwrap();
 
-        <span class="kw">let </span>protocol_parameters = fake_data::protocol_parameters();
-        <span class="kw">let </span>signers = setup_signers(<span class="number">5</span>, <span class="kw-2">&amp;</span>protocol_parameters.clone().into())
-            .into_iter()
-            .map(|s| s.<span class="number">0</span>)
-            .collect::&lt;Vec&lt;SignerWithStake&gt;&gt;();
-        <span class="kw">let </span>current_signers = signers[<span class="number">1</span>..<span class="number">3</span>].to_vec();
-        <span class="kw">let </span>next_signers = signers[<span class="number">2</span>..<span class="number">5</span>].to_vec();
-        deps.simulate_genesis(
-            current_signers.clone(),
-            next_signers.clone(),
-            <span class="kw-2">&amp;</span>protocol_parameters.clone(),
+        <span class="kw">let </span>fixture = MithrilFixtureBuilder::default().with_signers(<span class="number">5</span>).build();
+
+        deps.prepare_for_genesis(
+            fixture.signers_with_stake(),
+            fixture.signers_with_stake(),
+            <span class="kw-2">&amp;</span>fixture.protocol_parameters(),
         )
         .<span class="kw">await</span>;
 
@@ -2033,7 +2003,7 @@
 
         <span class="kw">let </span><span class="kw-2">mut </span>expected = WorkingCertificate::from_pending_certificate(
             <span class="kw-2">&amp;</span>certificate_pending,
-            <span class="kw-2">&amp;</span>current_signers,
+            <span class="kw-2">&amp;</span>fixture.signers_with_stake(),
             <span class="kw-2">&amp;</span>message,
             <span class="kw-2">&amp;</span>aggregate_verification_key,
             <span class="kw-2">&amp;</span>sut.initiated_at,
@@ -2087,18 +2057,15 @@
         <span class="kw">let </span>(deps, config) = initialize_dependencies().<span class="kw">await</span>;
         <span class="kw">let </span>deps = Arc::new(deps);
         <span class="kw">let </span>runner = AggregatorRunner::new(config, deps.clone());
-        <span class="kw">let </span>beacon = runner.get_beacon_from_chain().<span class="kw">await</span>.unwrap();
         <span class="kw">let </span>digest = <span class="string">&quot;1+2+3+4=10&quot;</span>.to_string();
-        runner.update_beacon(<span class="kw-2">&amp;</span>beacon).<span class="kw">await</span>.unwrap();
-        <span class="kw">for </span>epoch <span class="kw">in </span>[
-            beacon.epoch.offset_to_signer_retrieval_epoch().unwrap(),
-            beacon.epoch.offset_to_next_signer_retrieval_epoch(),
-        ] {
-            deps.protocol_parameters_store
-                .save_protocol_parameters(epoch, fake_data::protocol_parameters())
-                .<span class="kw">await
-                </span>.unwrap();
-        }
+        runner.update_beacon(<span class="kw-2">&amp;</span>fake_data::beacon()).<span class="kw">await</span>.unwrap();
+        <span class="kw">let </span>fixture = MithrilFixtureBuilder::default().build();
+        deps.prepare_for_genesis(
+            fixture.signers_with_stake(),
+            fixture.signers_with_stake(),
+            <span class="kw-2">&amp;</span>fixture.protocol_parameters(),
+        )
+        .<span class="kw">await</span>;
 
         runner
             .update_message_in_multisigner(digest)
@@ -2192,15 +2159,8 @@
             .expect_get_multi_signature()
             .return_once(<span class="kw">move </span>|| <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(multi_signature)));
         deps.multi_signer = Arc::new(RwLock::new(mock_multi_signer));
-        <span class="kw">let </span>certificate_store = deps.certificate_store.clone();
+        deps.init_state_from_chain(<span class="kw-2">&amp;</span>certificate_chain, <span class="macro">vec!</span>[]).<span class="kw">await</span>;
         <span class="kw">let </span>runner = AggregatorRunner::new(config, Arc::new(deps));
-        <span class="kw">for </span>certificate <span class="kw">in </span>certificate_chain[<span class="number">1</span>..].iter().rev() {
-            certificate_store
-                .as_ref()
-                .save(certificate.to_owned())
-                .<span class="kw">await
-                </span>.expect(<span class="string">&quot;save certificate to store should not fail&quot;</span>);
-        }
 
         <span class="kw">let </span>certificate = runner
             .create_and_save_certificate(<span class="kw-2">&amp;</span>working_certificate)

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["MithrilFixture","A fixture of Mithril data types."],["SignerFixture","A signer fixture, containing a [signer entity][SignerWithStake] with its corresponding protocol [signer][ProtocolSigner] and [initializer][ProtocolInitializer]"]]};

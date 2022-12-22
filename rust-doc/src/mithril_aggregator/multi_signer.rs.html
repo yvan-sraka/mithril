@@ -1019,18 +1019,6 @@
 <span id="1019">1019</span>
 <span id="1020">1020</span>
 <span id="1021">1021</span>
-<span id="1022">1022</span>
-<span id="1023">1023</span>
-<span id="1024">1024</span>
-<span id="1025">1025</span>
-<span id="1026">1026</span>
-<span id="1027">1027</span>
-<span id="1028">1028</span>
-<span id="1029">1029</span>
-<span id="1030">1030</span>
-<span id="1031">1031</span>
-<span id="1032">1032</span>
-<span id="1033">1033</span>
 </pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>chrono::prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span>hex::ToHex;
@@ -1760,8 +1748,8 @@
     };
     <span class="kw">use </span>mithril_common::{
         crypto_helper::tests_setup::<span class="kw-2">*</span>,
-        fake_data,
         store::{adapter::MemoryAdapter, StakeStore},
+        test_utils::{fake_data, MithrilFixtureBuilder},
     };
     <span class="kw">use </span>std::{collections::HashMap, sync::Arc};
 
@@ -1894,17 +1882,9 @@
     <span class="attribute">#[tokio::test]
     </span><span class="kw">async fn </span>test_multi_signer_stake_distribution_ok() {
         <span class="kw">let </span><span class="kw-2">mut </span>multi_signer = setup_multi_signer().<span class="kw">await</span>;
+        <span class="kw">let </span>fixture = MithrilFixtureBuilder::default().with_signers(<span class="number">5</span>).build();
+        <span class="kw">let </span><span class="kw-2">mut </span>stake_distribution_expected = fixture.protocol_stake_distribution();
 
-        <span class="kw">let </span><span class="kw-2">mut </span>stake_distribution_expected: ProtocolStakeDistribution =
-            setup_signers(<span class="number">5</span>, <span class="kw-2">&amp;</span>setup_protocol_parameters())
-                .iter()
-                .map(|(signer_with_stake, <span class="kw">_</span>, <span class="kw">_</span>)| {
-                    (
-                        signer_with_stake.party_id.to_owned(),
-                        signer_with_stake.stake,
-                    )
-                })
-                .collect::&lt;<span class="kw">_</span>&gt;();
         stake_distribution_expected.sort_by_key(|k| k.<span class="number">0</span>.clone());
         multi_signer
             .update_stake_distribution(<span class="kw-2">&amp;</span>stake_distribution_expected)
@@ -1951,22 +1931,15 @@
             .<span class="kw">await
             </span>.expect(<span class="string">&quot;update protocol parameters failed&quot;</span>);
 
-        <span class="kw">let </span>signers = setup_signers(<span class="number">5</span>, <span class="kw-2">&amp;</span>protocol_parameters);
+        <span class="kw">let </span>fixture = MithrilFixtureBuilder::default().with_signers(<span class="number">5</span>).build();
 
-        <span class="kw">let </span>stake_distribution = <span class="kw-2">&amp;</span>signers
-            .iter()
-            .map(|(signer_with_stake, <span class="kw">_</span>, <span class="kw">_</span>)| {
-                (
-                    signer_with_stake.party_id.to_owned(),
-                    signer_with_stake.stake,
-                )
-            })
-            .collect::&lt;<span class="kw">_</span>&gt;();
+        <span class="kw">let </span>stake_distribution = fixture.protocol_stake_distribution();
+
         multi_signer
-            .update_stake_distribution(stake_distribution)
+            .update_stake_distribution(<span class="kw-2">&amp;</span>stake_distribution)
             .<span class="kw">await
             </span>.expect(<span class="string">&quot;update stake distribution failed&quot;</span>);
-        <span class="kw">for </span>(signer_with_stake, <span class="kw">_</span>, <span class="kw">_</span>) <span class="kw">in </span><span class="kw-2">&amp;</span>signers {
+        <span class="kw">for </span>signer_with_stake <span class="kw">in </span><span class="kw-2">&amp;</span>fixture.signers_with_stake() {
             verification_key_store
                 .save_verification_key(
                     start_epoch.offset_to_recording_epoch(),
@@ -1992,17 +1965,20 @@
         <span class="kw">let </span><span class="kw-2">mut </span>signatures = Vec::new();
 
         <span class="kw">let </span><span class="kw-2">mut </span>expected_certificate_signers: Vec&lt;SignerWithStake&gt; = Vec::new();
-        <span class="kw">for </span>(signer_with_stake, protocol_signer, _protocol_initializer) <span class="kw">in </span><span class="kw-2">&amp;</span>signers {
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(signature) = protocol_signer.sign(message.compute_hash().as_bytes()) {
+        <span class="kw">for </span>signer_fixture <span class="kw">in </span>fixture.signers_fixture() {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(signature) = signer_fixture
+                .protocol_signer
+                .sign(message.compute_hash().as_bytes())
+            {
                 <span class="kw">let </span>won_indexes = signature.indexes.clone();
 
                 signatures.push(entities::SingleSignatures::new(
-                    signer_with_stake.party_id.to_owned(),
+                    signer_fixture.signer_with_stake.party_id.to_owned(),
                     key_encode_hex(signature).unwrap(),
                     won_indexes,
                 ));
 
-                expected_certificate_signers.push(signer_with_stake.to_owned())
+                expected_certificate_signers.push(signer_fixture.signer_with_stake.to_owned())
             }
         }
 

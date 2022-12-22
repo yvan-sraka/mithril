@@ -299,12 +299,6 @@
 <span id="299">299</span>
 <span id="300">300</span>
 <span id="301">301</span>
-<span id="302">302</span>
-<span id="303">303</span>
-<span id="304">304</span>
-<span id="305">305</span>
-<span id="306">306</span>
-<span id="307">307</span>
 </pre><pre class="rust"><code><span class="kw">use </span>hex::ToHex;
 <span class="kw">use </span>slog_scope::{info, trace, warn};
 <span class="kw">use </span>std::path::PathBuf;
@@ -544,34 +538,33 @@
 </span><span class="kw">mod </span>tests {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
-    <span class="kw">use </span>mithril_common::crypto_helper::tests_setup::<span class="kw-2">*</span>;
-    <span class="kw">use </span>mithril_common::crypto_helper::{key_decode_hex, ProtocolClerk, ProtocolSingleSignature};
-    <span class="kw">use </span>mithril_common::entities::ProtocolMessagePartKey;
+    <span class="kw">use </span>mithril_common::{
+        crypto_helper::{key_decode_hex, tests_setup::<span class="kw-2">*</span>, ProtocolClerk, ProtocolSingleSignature},
+        entities::ProtocolMessagePartKey,
+        test_utils::MithrilFixtureBuilder,
+    };
 
     <span class="attribute">#[test]
     </span><span class="kw">fn </span>compute_single_signature_success() {
         <span class="kw">let </span>snapshot_digest = <span class="string">&quot;digest&quot;</span>.to_string();
         <span class="kw">let </span>protocol_parameters = setup_protocol_parameters();
-        <span class="kw">let </span>signers = setup_signers(<span class="number">5</span>, <span class="kw-2">&amp;</span>protocol_parameters);
-        <span class="kw">let </span>signers_with_stake = signers
-            .iter()
-            .map(
-                |(signer_with_stake, _protocol_signer, _protocol_initializer)| {
-                    signer_with_stake.to_owned()
-                },
-            )
-            .collect::&lt;Vec&lt;SignerWithStake&gt;&gt;();
-        <span class="kw">let </span>current_signer = <span class="kw-2">&amp;</span>signers[<span class="number">0</span>];
-        <span class="kw">let </span>single_signer = MithrilSingleSigner::new(current_signer.<span class="number">0</span>.party_id.to_owned());
-        <span class="kw">let </span>protocol_signer = <span class="kw-2">&amp;</span>current_signer.<span class="number">1</span>;
-        <span class="kw">let </span>clerk = ProtocolClerk::from_signer(protocol_signer);
+        <span class="kw">let </span>fixture = MithrilFixtureBuilder::default().with_signers(<span class="number">5</span>).build();
+        <span class="kw">let </span>signers_with_stake = fixture.signers_with_stake();
+        <span class="kw">let </span>current_signer = <span class="kw-2">&amp;</span>fixture.signers_fixture()[<span class="number">0</span>];
+        <span class="kw">let </span>single_signer =
+            MithrilSingleSigner::new(current_signer.signer_with_stake.party_id.to_owned());
+        <span class="kw">let </span>clerk = ProtocolClerk::from_signer(<span class="kw-2">&amp;</span>current_signer.protocol_signer);
         <span class="kw">let </span>avk = clerk.compute_avk();
         <span class="kw">let </span><span class="kw-2">mut </span>protocol_message = ProtocolMessage::new();
         protocol_message.set_message_part(ProtocolMessagePartKey::SnapshotDigest, snapshot_digest);
         <span class="kw">let </span>expected_message = protocol_message.compute_hash().as_bytes().to_vec();
 
         <span class="kw">let </span>sign_result = single_signer
-            .compute_single_signatures(<span class="kw-2">&amp;</span>protocol_message, <span class="kw-2">&amp;</span>signers_with_stake, <span class="kw-2">&amp;</span>current_signer.<span class="number">2</span>)
+            .compute_single_signatures(
+                <span class="kw-2">&amp;</span>protocol_message,
+                <span class="kw-2">&amp;</span>signers_with_stake,
+                <span class="kw-2">&amp;</span>current_signer.protocol_initializer,
+            )
             .expect(<span class="string">&quot;single signer should not fail&quot;</span>)
             .expect(<span class="string">&quot;single signer should produce a signature here&quot;</span>);
 
@@ -580,34 +573,29 @@
             decoded_sig
                 .verify(
                     <span class="kw-2">&amp;</span>protocol_parameters,
-                    <span class="kw-2">&amp;</span>protocol_signer.verification_key(),
-                    <span class="kw-2">&amp;</span>protocol_signer.get_stake(),
+                    <span class="kw-2">&amp;</span>current_signer.protocol_signer.verification_key(),
+                    <span class="kw-2">&amp;</span>current_signer.protocol_signer.get_stake(),
                     <span class="kw-2">&amp;</span>avk,
                     <span class="kw-2">&amp;</span>expected_message
                 )
                 .is_ok(),
             <span class="string">&quot;produced single signature should be valid&quot;
         </span>);
-        <span class="comment">//TODO: decoded_sig.pk should probably be a StmVerificationKeyPoP, uncomment once fixed
-        //assert_eq!(current_signer.2, decoded_sig.pk);
-    </span>}
+    }
 
     <span class="attribute">#[test]
     </span><span class="kw">fn </span>compute_aggregate_verification_key_success() {
-        <span class="kw">let </span>signers = setup_signers(<span class="number">5</span>, <span class="kw-2">&amp;</span>setup_protocol_parameters());
-        <span class="kw">let </span>signers_with_stake = signers
-            .iter()
-            .map(
-                |(signer_with_stake, _protocol_signer, _protocol_initializer)| {
-                    signer_with_stake.to_owned()
-                },
-            )
-            .collect::&lt;Vec&lt;SignerWithStake&gt;&gt;();
-        <span class="kw">let </span>current_signer = <span class="kw-2">&amp;</span>signers[<span class="number">0</span>];
-        <span class="kw">let </span>single_signer = MithrilSingleSigner::new(current_signer.<span class="number">0</span>.party_id.to_owned());
-        <span class="kw">let </span>protocol_initializer = <span class="kw-2">&amp;</span>current_signer.<span class="number">2</span>;
+        <span class="kw">let </span>fixture = MithrilFixtureBuilder::default().with_signers(<span class="number">5</span>).build();
+        <span class="kw">let </span>signers_with_stake = fixture.signers_with_stake();
+        <span class="kw">let </span>current_signer = <span class="kw-2">&amp;</span>fixture.signers_fixture()[<span class="number">0</span>];
+        <span class="kw">let </span>single_signer =
+            MithrilSingleSigner::new(current_signer.signer_with_stake.party_id.to_owned());
+
         single_signer
-            .compute_aggregate_verification_key(<span class="kw-2">&amp;</span>signers_with_stake, protocol_initializer)
+            .compute_aggregate_verification_key(
+                <span class="kw-2">&amp;</span>signers_with_stake,
+                <span class="kw-2">&amp;</span>current_signer.protocol_initializer,
+            )
             .expect(<span class="string">&quot;compute aggregate verification signature should not fail&quot;</span>)
             .expect(<span class="string">&quot;aggregate verification signature should not be empty&quot;</span>);
     }

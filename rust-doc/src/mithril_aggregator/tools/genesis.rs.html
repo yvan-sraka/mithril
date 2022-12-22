@@ -282,7 +282,6 @@
 <span id="282">282</span>
 <span id="283">283</span>
 <span id="284">284</span>
-<span id="285">285</span>
 </pre><pre class="rust"><code><span class="kw">use </span>std::{error::Error, fs::File, io::prelude::<span class="kw-2">*</span>, io::Write, path::Path, sync::Arc};
 
 <span class="kw">use </span>mithril_common::{
@@ -444,9 +443,9 @@
 
     <span class="kw">use </span>mithril_common::{
         certificate_chain::MithrilCertificateVerifier,
-        crypto_helper::{tests_setup, ProtocolClerk, ProtocolGenesisSigner},
-        fake_data,
+        crypto_helper::{ProtocolClerk, ProtocolGenesisSigner},
         store::adapter::MemoryAdapter,
+        test_utils::{fake_data, MithrilFixtureBuilder},
     };
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
@@ -464,10 +463,9 @@
     }
 
     <span class="kw">fn </span>create_fake_genesis_avk() -&gt; ProtocolAggregateVerificationKey {
-        <span class="kw">let </span>protocol_parameters = tests_setup::setup_protocol_parameters();
-        <span class="kw">let </span>signers = tests_setup::setup_signers(<span class="number">5</span>, <span class="kw-2">&amp;</span>protocol_parameters);
-        <span class="kw">let </span>first_signer = <span class="kw-2">&amp;</span>signers.first().unwrap().<span class="number">1</span>;
-        <span class="kw">let </span>clerk = ProtocolClerk::from_signer(first_signer);
+        <span class="kw">let </span>fixture = MithrilFixtureBuilder::default().with_signers(<span class="number">5</span>).build();
+        <span class="kw">let </span>first_signer = fixture.signers_fixture()[<span class="number">0</span>].clone().protocol_signer;
+        <span class="kw">let </span>clerk = ProtocolClerk::from_signer(<span class="kw-2">&amp;</span>first_signer);
         clerk.compute_avk()
     }
 

@@ -69,6 +69,7 @@
 <span id="69">69</span>
 <span id="70">70</span>
 <span id="71">71</span>
+<span id="72">72</span>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::crypto_helper::{key_decode_hex, ProtocolSingleSignature};
 <span class="kw">use </span><span class="kw">crate</span>::entities::{HexEncodedSingleSignature, LotteryIndex, PartyId};
 <span class="kw">use </span>serde::{Deserialize, Serialize};
@@ -117,22 +118,23 @@
 <span class="attribute">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
-    <span class="kw">use </span><span class="kw">crate</span>::crypto_helper::key_encode_hex;
-    <span class="kw">use </span><span class="kw">crate</span>::crypto_helper::tests_setup::{
-        setup_message, setup_protocol_parameters, setup_signers,
+    <span class="kw">use crate</span>::{
+        crypto_helper::{key_encode_hex, tests_setup::setup_message},
+        test_utils::MithrilFixtureBuilder,
     };
 
     <span class="attribute">#[test]
     </span><span class="kw">fn </span>single_signatures_should_convert_to_protocol_signatures() {
         <span class="kw">let </span>message = setup_message();
-        <span class="kw">let </span>signers = setup_signers(<span class="number">1</span>, <span class="kw-2">&amp;</span>setup_protocol_parameters());
-        <span class="kw">let </span>(signer_with_stake, protocol_signer, <span class="kw">_</span>) = signers.first().unwrap();
-        <span class="kw">let </span>protocol_sigs = protocol_signer
+        <span class="kw">let </span>fixture = MithrilFixtureBuilder::default().with_signers(<span class="number">1</span>).build();
+        <span class="kw">let </span>signer = <span class="kw-2">&amp;</span>fixture.signers_fixture()[<span class="number">0</span>];
+        <span class="kw">let </span>protocol_sigs = signer
+            .protocol_signer
             .sign(message.compute_hash().as_bytes())
             .unwrap();
 
         <span class="kw">let </span>signature = SingleSignatures::new(
-            signer_with_stake.party_id.to_owned(),
+            signer.signer_with_stake.party_id.to_owned(),
             key_encode_hex(<span class="kw-2">&amp;</span>protocol_sigs).unwrap(),
             protocol_sigs.indexes.clone(),
         );

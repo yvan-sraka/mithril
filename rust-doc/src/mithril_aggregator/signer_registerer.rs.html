@@ -308,12 +308,6 @@
 <span id="308">308</span>
 <span id="309">309</span>
 <span id="310">310</span>
-<span id="311">311</span>
-<span id="312">312</span>
-<span id="313">313</span>
-<span id="314">314</span>
-<span id="315">315</span>
-<span id="316">316</span>
 </pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>thiserror::Error;
@@ -517,10 +511,9 @@
 
     <span class="kw">use </span>mithril_common::{
         chain_observer::FakeObserver,
-        crypto_helper::tests_setup::setup_signers,
         entities::{Epoch, PartyId, Signer},
-        fake_data,
         store::adapter::MemoryAdapter,
+        test_utils::MithrilFixtureBuilder,
     };
 
     <span class="kw">use crate</span>::{
@@ -538,13 +531,9 @@
         <span class="kw">let </span>signer_registerer =
             MithrilSignerRegisterer::new(Arc::new(chain_observer), verification_key_store.clone());
         <span class="kw">let </span>registration_epoch = Epoch(<span class="number">1</span>);
-        <span class="kw">let </span>signers = setup_signers(<span class="number">5</span>, <span class="kw-2">&amp;</span>fake_data::protocol_parameters().into());
-        <span class="kw">let </span>signer_to_register: Signer = signers[<span class="number">0</span>].<span class="number">0</span>.clone().into();
-        <span class="macro">assert!</span>(signer_to_register.operational_certificate.is_some());
-        <span class="kw">let </span>stake_distribution = signers
-            .into_iter()
-            .map(|s| (s.<span class="number">0</span>.party_id, s.<span class="number">0</span>.stake))
-            .collect::&lt;HashMap&lt;<span class="kw">_</span>, <span class="kw">_</span>&gt;&gt;();
+        <span class="kw">let </span>fixture = MithrilFixtureBuilder::default().with_signers(<span class="number">5</span>).build();
+        <span class="kw">let </span>signer_to_register: Signer = fixture.signers()[<span class="number">0</span>].to_owned();
+        <span class="kw">let </span>stake_distribution = fixture.stake_distribution();
 
         signer_registerer
             .open_registration_round(registration_epoch, stake_distribution)
@@ -580,13 +569,12 @@
         <span class="kw">let </span>signer_registerer =
             MithrilSignerRegisterer::new(Arc::new(chain_observer), verification_key_store.clone());
         <span class="kw">let </span>registration_epoch = Epoch(<span class="number">1</span>);
-        <span class="kw">let </span>signers = setup_signers(<span class="number">5</span>, <span class="kw-2">&amp;</span>fake_data::protocol_parameters().into());
-        <span class="kw">let </span>signer_to_register: Signer = signers[<span class="number">1</span>].<span class="number">0</span>.clone().into();
-        <span class="macro">assert!</span>(signer_to_register.operational_certificate.is_none());
-        <span class="kw">let </span>stake_distribution = signers
-            .into_iter()
-            .map(|s| (s.<span class="number">0</span>.party_id, s.<span class="number">0</span>.stake))
-            .collect::&lt;HashMap&lt;<span class="kw">_</span>, <span class="kw">_</span>&gt;&gt;();
+        <span class="kw">let </span>fixture = MithrilFixtureBuilder::default()
+            .with_signers(<span class="number">5</span>)
+            .disable_signers_certification()
+            .build();
+        <span class="kw">let </span>signer_to_register: Signer = fixture.signers()[<span class="number">0</span>].to_owned();
+        <span class="kw">let </span>stake_distribution = fixture.stake_distribution();
 
         signer_registerer
             .open_registration_round(registration_epoch, stake_distribution)
@@ -621,8 +609,8 @@
         ));
         <span class="kw">let </span>signer_registerer =
             MithrilSignerRegisterer::new(Arc::new(chain_observer), verification_key_store.clone());
-        <span class="kw">let </span>signers = setup_signers(<span class="number">5</span>, <span class="kw-2">&amp;</span>fake_data::protocol_parameters().into());
-        <span class="kw">let </span>signer_to_register: Signer = signers[<span class="number">1</span>].<span class="number">0</span>.clone().into();
+        <span class="kw">let </span>fixture = MithrilFixtureBuilder::default().with_signers(<span class="number">5</span>).build();
+        <span class="kw">let </span>signer_to_register: Signer = fixture.signers()[<span class="number">0</span>].to_owned();
 
         signer_registerer
             .register_signer(<span class="kw-2">&amp;</span>signer_to_register)

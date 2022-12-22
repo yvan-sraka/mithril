@@ -628,16 +628,24 @@
 <span id="628">628</span>
 <span id="629">629</span>
 <span id="630">630</span>
+<span id="631">631</span>
+<span id="632">632</span>
+<span id="633">633</span>
+<span id="634">634</span>
+<span id="635">635</span>
+<span id="636">636</span>
+<span id="637">637</span>
+<span id="638">638</span>
+<span id="639">639</span>
 </pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>reqwest::{<span class="self">self</span>, Client, RequestBuilder, Response, StatusCode};
 <span class="kw">use </span>slog_scope::debug;
 <span class="kw">use </span>std::io;
 <span class="kw">use </span>thiserror::Error;
-<span class="kw">use </span>tokio::sync::RwLock;
 
 <span class="kw">use </span>mithril_common::{
     entities::{CertificatePending, EpochSettings, Signer, SingleSignatures},
-    fake_data, MITHRIL_API_VERSION,
+    MITHRIL_API_VERSION,
 };
 
 <span class="attribute">#[cfg(test)]
@@ -855,89 +863,99 @@
     }
 }
 
-<span class="doccomment">/// This certificate handler is intended to be used by test services.
-/// It actually does not communicate with an aggregator host but mimics this behavior.
-/// It is driven by a Tester that controls the CertificatePending it can return and it can return its internal state for testing.
-</span><span class="kw">pub struct </span>DumbCertificateHandler {
-    epoch_settings: RwLock&lt;<span class="prelude-ty">Option</span>&lt;EpochSettings&gt;&gt;,
-    certificate_pending: RwLock&lt;<span class="prelude-ty">Option</span>&lt;CertificatePending&gt;&gt;,
-    last_registered_signer: RwLock&lt;<span class="prelude-ty">Option</span>&lt;Signer&gt;&gt;,
-}
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>dumb {
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use </span>mithril_common::test_utils::fake_data;
+    <span class="kw">use </span>tokio::sync::RwLock;
 
-<span class="kw">impl </span>DumbCertificateHandler {
-    <span class="doccomment">/// Instanciate a new DumbCertificateHandler.
-    </span><span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{
-            epoch_settings: RwLock::new(<span class="prelude-val">None</span>),
-            certificate_pending: RwLock::new(<span class="prelude-val">None</span>),
-            last_registered_signer: RwLock::new(<span class="prelude-val">None</span>),
+    <span class="doccomment">/// This certificate handler is intended to be used by test services.
+    /// It actually does not communicate with an aggregator host but mimics this behavior.
+    /// It is driven by a Tester that controls the CertificatePending it can return and it can return its internal state for testing.
+    </span><span class="kw">pub struct </span>DumbCertificateHandler {
+        epoch_settings: RwLock&lt;<span class="prelude-ty">Option</span>&lt;EpochSettings&gt;&gt;,
+        certificate_pending: RwLock&lt;<span class="prelude-ty">Option</span>&lt;CertificatePending&gt;&gt;,
+        last_registered_signer: RwLock&lt;<span class="prelude-ty">Option</span>&lt;Signer&gt;&gt;,
+    }
+
+    <span class="kw">impl </span>DumbCertificateHandler {
+        <span class="doccomment">/// Instanciate a new DumbCertificateHandler.
+        </span><span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
+            <span class="self">Self </span>{
+                epoch_settings: RwLock::new(<span class="prelude-val">None</span>),
+                certificate_pending: RwLock::new(<span class="prelude-val">None</span>),
+                last_registered_signer: RwLock::new(<span class="prelude-val">None</span>),
+            }
+        }
+
+        <span class="doccomment">/// this method pilots the epoch settings handler
+        </span><span class="kw">pub async fn </span>set_epoch_settings(<span class="kw-2">&amp;</span><span class="self">self</span>, epoch_settings: <span class="prelude-ty">Option</span>&lt;EpochSettings&gt;) {
+            <span class="kw">let </span><span class="kw-2">mut </span>epoch_settings_writer = <span class="self">self</span>.epoch_settings.write().<span class="kw">await</span>;
+            <span class="kw-2">*</span>epoch_settings_writer = epoch_settings;
+        }
+
+        <span class="doccomment">/// this method pilots the certificate pending handler
+        /// calling this method unsets the last registered signer
+        </span><span class="kw">pub async fn </span>set_certificate_pending(
+            <span class="kw-2">&amp;</span><span class="self">self</span>,
+            certificate_pending: <span class="prelude-ty">Option</span>&lt;CertificatePending&gt;,
+        ) {
+            <span class="kw">let </span><span class="kw-2">mut </span>cert = <span class="self">self</span>.certificate_pending.write().<span class="kw">await</span>;
+            <span class="kw-2">*</span>cert = certificate_pending;
+            <span class="kw">let </span><span class="kw-2">mut </span>signer = <span class="self">self</span>.last_registered_signer.write().<span class="kw">await</span>;
+            <span class="kw-2">*</span>signer = <span class="prelude-val">None</span>;
+        }
+
+        <span class="doccomment">/// Return the last signer that called with the `register` method.
+        </span><span class="kw">pub async fn </span>get_last_registered_signer(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Signer&gt; {
+            <span class="self">self</span>.last_registered_signer.read().<span class="kw">await</span>.clone()
         }
     }
 
-    <span class="doccomment">/// this method pilots the epoch settings handler
-    </span><span class="kw">pub async fn </span>set_epoch_settings(<span class="kw-2">&amp;</span><span class="self">self</span>, epoch_settings: <span class="prelude-ty">Option</span>&lt;EpochSettings&gt;) {
-        <span class="kw">let </span><span class="kw-2">mut </span>epoch_settings_writer = <span class="self">self</span>.epoch_settings.write().<span class="kw">await</span>;
-        <span class="kw-2">*</span>epoch_settings_writer = epoch_settings;
-    }
-
-    <span class="doccomment">/// this method pilots the certificate pending handler
-    /// calling this method unsets the last registered signer
-    </span><span class="kw">pub async fn </span>set_certificate_pending(<span class="kw-2">&amp;</span><span class="self">self</span>, certificate_pending: <span class="prelude-ty">Option</span>&lt;CertificatePending&gt;) {
-        <span class="kw">let </span><span class="kw-2">mut </span>cert = <span class="self">self</span>.certificate_pending.write().<span class="kw">await</span>;
-        <span class="kw-2">*</span>cert = certificate_pending;
-        <span class="kw">let </span><span class="kw-2">mut </span>signer = <span class="self">self</span>.last_registered_signer.write().<span class="kw">await</span>;
-        <span class="kw-2">*</span>signer = <span class="prelude-val">None</span>;
-    }
-
-    <span class="doccomment">/// Return the last signer that called with the `register` method.
-    </span><span class="kw">pub async fn </span>get_last_registered_signer(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Signer&gt; {
-        <span class="self">self</span>.last_registered_signer.read().<span class="kw">await</span>.clone()
-    }
-}
-
-<span class="kw">impl </span>Default <span class="kw">for </span>DumbCertificateHandler {
-    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{
-            epoch_settings: RwLock::new(<span class="prelude-val">Some</span>(fake_data::epoch_settings())),
-            certificate_pending: RwLock::new(<span class="prelude-val">Some</span>(fake_data::certificate_pending())),
-            last_registered_signer: RwLock::new(<span class="prelude-val">None</span>),
+    <span class="kw">impl </span>Default <span class="kw">for </span>DumbCertificateHandler {
+        <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+            <span class="self">Self </span>{
+                epoch_settings: RwLock::new(<span class="prelude-val">Some</span>(fake_data::epoch_settings())),
+                certificate_pending: RwLock::new(<span class="prelude-val">Some</span>(fake_data::certificate_pending())),
+                last_registered_signer: RwLock::new(<span class="prelude-val">None</span>),
+            }
         }
     }
-}
 
-<span class="attribute">#[async_trait]
-</span><span class="kw">impl </span>CertificateHandler <span class="kw">for </span>DumbCertificateHandler {
-    <span class="kw">async fn </span>retrieve_epoch_settings(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;EpochSettings&gt;, CertificateHandlerError&gt; {
-        <span class="kw">let </span>epoch_settings = <span class="self">self</span>.epoch_settings.read().<span class="kw">await</span>.clone();
+    <span class="attribute">#[async_trait]
+    </span><span class="kw">impl </span>CertificateHandler <span class="kw">for </span>DumbCertificateHandler {
+        <span class="kw">async fn </span>retrieve_epoch_settings(
+            <span class="kw-2">&amp;</span><span class="self">self</span>,
+        ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;EpochSettings&gt;, CertificateHandlerError&gt; {
+            <span class="kw">let </span>epoch_settings = <span class="self">self</span>.epoch_settings.read().<span class="kw">await</span>.clone();
 
-        <span class="prelude-val">Ok</span>(epoch_settings)
-    }
+            <span class="prelude-val">Ok</span>(epoch_settings)
+        }
 
-    <span class="kw">async fn </span>retrieve_pending_certificate(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;CertificatePending&gt;, CertificateHandlerError&gt; {
-        <span class="kw">let </span>cert = <span class="self">self</span>.certificate_pending.read().<span class="kw">await</span>.clone();
+        <span class="kw">async fn </span>retrieve_pending_certificate(
+            <span class="kw-2">&amp;</span><span class="self">self</span>,
+        ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;CertificatePending&gt;, CertificateHandlerError&gt; {
+            <span class="kw">let </span>cert = <span class="self">self</span>.certificate_pending.read().<span class="kw">await</span>.clone();
 
-        <span class="prelude-val">Ok</span>(cert)
-    }
+            <span class="prelude-val">Ok</span>(cert)
+        }
 
-    <span class="doccomment">/// Registers signer with the aggregator
-    </span><span class="kw">async fn </span>register_signer(<span class="kw-2">&amp;</span><span class="self">self</span>, signer: <span class="kw-2">&amp;</span>Signer) -&gt; <span class="prelude-ty">Result</span>&lt;(), CertificateHandlerError&gt; {
-        <span class="kw">let </span><span class="kw-2">mut </span>last_registered_signer = <span class="self">self</span>.last_registered_signer.write().<span class="kw">await</span>;
-        <span class="kw">let </span>signer = signer.clone();
-        <span class="kw-2">*</span>last_registered_signer = <span class="prelude-val">Some</span>(signer);
+        <span class="doccomment">/// Registers signer with the aggregator
+        </span><span class="kw">async fn </span>register_signer(<span class="kw-2">&amp;</span><span class="self">self</span>, signer: <span class="kw-2">&amp;</span>Signer) -&gt; <span class="prelude-ty">Result</span>&lt;(), CertificateHandlerError&gt; {
+            <span class="kw">let </span><span class="kw-2">mut </span>last_registered_signer = <span class="self">self</span>.last_registered_signer.write().<span class="kw">await</span>;
+            <span class="kw">let </span>signer = signer.clone();
+            <span class="kw-2">*</span>last_registered_signer = <span class="prelude-val">Some</span>(signer);
 
-        <span class="prelude-val">Ok</span>(())
-    }
+            <span class="prelude-val">Ok</span>(())
+        }
 
-    <span class="doccomment">/// Registers single signatures with the aggregator
-    </span><span class="kw">async fn </span>register_signatures(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        _signatures: <span class="kw-2">&amp;</span>SingleSignatures,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), CertificateHandlerError&gt; {
-        <span class="prelude-val">Ok</span>(())
+        <span class="doccomment">/// Registers single signatures with the aggregator
+        </span><span class="kw">async fn </span>register_signatures(
+            <span class="kw-2">&amp;</span><span class="self">self</span>,
+            _signatures: <span class="kw-2">&amp;</span>SingleSignatures,
+        ) -&gt; <span class="prelude-ty">Result</span>&lt;(), CertificateHandlerError&gt; {
+            <span class="prelude-val">Ok</span>(())
+        }
     }
 }
 
@@ -949,7 +967,7 @@
     <span class="kw">use </span>serde_json::json;
     <span class="kw">use </span>std::path::{Path, PathBuf};
 
-    <span class="kw">use </span>mithril_common::fake_data;
+    <span class="kw">use </span>mithril_common::test_utils::fake_data;
 
     <span class="kw">use </span><span class="kw">crate</span>::configuration::Config;
 
