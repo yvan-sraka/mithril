@@ -366,6 +366,16 @@
 <span id="366">366</span>
 <span id="367">367</span>
 <span id="368">368</span>
+<span id="369">369</span>
+<span id="370">370</span>
+<span id="371">371</span>
+<span id="372">372</span>
+<span id="373">373</span>
+<span id="374">374</span>
+<span id="375">375</span>
+<span id="376">376</span>
+<span id="377">377</span>
+<span id="378">378</span>
 </pre><pre class="rust"><code><span class="doccomment">//! API for mithril key certification.
 //! Includes the wrappers for StmInitializer and KeyReg, and ProtocolRegistrationErrorWrapper.
 //! These wrappers allows keeping mithril-stm agnostic to Cardano, while providing some
@@ -397,7 +407,7 @@
 </span><span class="kw">type </span>D = Blake2b&lt;U32&gt;;
 
 <span class="doccomment">/// The KES period that is used to check if the KES keys is expired
-</span><span class="kw">pub type </span>KESPeriod = usize;
+</span><span class="kw">pub type </span>KESPeriod = u32;
 
 <span class="doccomment">/// New registration error
 </span><span class="attribute">#[derive(Error, Debug, PartialEq, Eq)]
@@ -421,7 +431,7 @@
 
     <span class="doccomment">/// Error raised when a KES Signature verification fails
     </span><span class="attribute">#[error(<span class="string">&quot;KES signature verification error: CurrentKesPeriod={0}, StartKesPeriod={1}&quot;</span>)]
-    </span>KesSignatureInvalid(usize, u64),
+    </span>KesSignatureInvalid(u32, u64),
 
     <span class="doccomment">/// Error raised when a KES Signature is needed but not provided
     </span><span class="attribute">#[error(<span class="string">&quot;missing KES signature&quot;</span>)]
@@ -450,6 +460,10 @@
     <span class="doccomment">/// Error raised when a KES update error occurs
     </span><span class="attribute">#[error(<span class="string">&quot;KES key cannot be updated for period {0}&quot;</span>)]
     </span>KesUpdate(KESPeriod),
+
+    <span class="doccomment">/// Period of key file does not match with period provided by user
+    </span><span class="attribute">#[error(<span class="string">&quot;Period of key file, {0}, does not match with period provided by user, {1}&quot;</span>)]
+    </span>KesMismatch(KESPeriod, KESPeriod),
 }
 <span class="doccomment">/// Wrapper structure for [MithrilStm:StmInitializer](mithril_stm::stm::StmInitializer).
 /// It now obtains a KES signature over the Mithril key. This allows the signers prove
@@ -487,17 +501,23 @@
         <span class="kw">let </span>kes_signature = <span class="kw">if let </span><span class="prelude-val">Some</span>(kes_sk_path) = kes_sk_path {
             <span class="kw">let </span><span class="kw-2">mut </span>kes_sk: Sum6Kes = Sum6Kes::from_file(kes_sk_path)<span class="question-mark">?</span>;
 
-            <span class="comment">// We need to perform the evolutions, as the key is stored in evolution 0 in `kes.skey`
-            </span><span class="kw">for </span>period <span class="kw">in </span><span class="number">0</span>..kes_period.unwrap_or_default() {
+            <span class="kw">let </span>kes_sk_period = kes_sk.get_period();
+            <span class="kw">let </span>provided_period = kes_period.unwrap_or_default();
+            <span class="kw">if </span>kes_sk_period &gt; provided_period {
+                <span class="kw">return </span><span class="prelude-val">Err</span>(ProtocolInitializerErrorWrapper::KesMismatch(
+                    kes_sk_period,
+                    provided_period,
+                ));
+            }
+
+            <span class="comment">// We need to perform the evolutions
+            </span><span class="kw">for </span>period <span class="kw">in </span>kes_sk_period..provided_period {
                 kes_sk
-                    .update(period)
+                    .update()
                     .map_err(|<span class="kw">_</span>| ProtocolInitializerErrorWrapper::KesUpdate(period))<span class="question-mark">?</span>;
             }
 
-            <span class="prelude-val">Some</span>(kes_sk.sign(
-                kes_period.unwrap_or_default(),
-                <span class="kw-2">&amp;</span>stm_initializer.verification_key().to_bytes(),
-            ))
+            <span class="prelude-val">Some</span>(kes_sk.sign(<span class="kw-2">&amp;</span>stm_initializer.verification_key().to_bytes()))
         } <span class="kw">else </span>{
             <span class="macro">println!</span>(<span class="string">&quot;WARNING: Non certified signer registration by providing only a Pool Id is decommissionned and must be used for tests only!&quot;</span>);
             <span class="prelude-val">None
@@ -516,7 +536,7 @@
 
     <span class="doccomment">/// Extract the verification key signature.
     </span><span class="kw">pub fn </span>verification_key_signature(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;ProtocolSignerVerificationKeySignature&gt; {
-        <span class="self">self</span>.kes_signature.clone()
+        <span class="self">self</span>.kes_signature
     }
 
     <span class="doccomment">/// Extract the stake of the party
