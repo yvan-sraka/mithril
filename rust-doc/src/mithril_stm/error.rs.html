@@ -198,6 +198,21 @@
 <span id="198">198</span>
 <span id="199">199</span>
 <span id="200">200</span>
+<span id="201">201</span>
+<span id="202">202</span>
+<span id="203">203</span>
+<span id="204">204</span>
+<span id="205">205</span>
+<span id="206">206</span>
+<span id="207">207</span>
+<span id="208">208</span>
+<span id="209">209</span>
+<span id="210">210</span>
+<span id="211">211</span>
+<span id="212">212</span>
+<span id="213">213</span>
+<span id="214">214</span>
+<span id="215">215</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Crate specific errors
 
 </span><span class="kw">use </span><span class="kw">crate</span>::merkle_tree::{BatchPath, Path};
@@ -225,6 +240,10 @@
     <span class="doccomment">/// Incorrect proof of possession
     </span><span class="attribute">#[error(<span class="string">&quot;Key with invalid PoP&quot;</span>)]
     </span>KeyInvalid(Box&lt;VerificationKeyPoP&gt;),
+
+    <span class="doccomment">/// At least one signature in the batch is invalid
+    </span><span class="attribute">#[error(<span class="string">&quot;One signature in the batch is invalid&quot;</span>)]
+    </span>BatchInvalid,
 }
 
 <span class="doccomment">/// Errors which can be output by Mithril single signature verification.
@@ -245,6 +264,10 @@
     <span class="doccomment">/// A party submitted an invalid signature
     </span><span class="attribute">#[error(<span class="string">&quot;A provided signature is invalid&quot;</span>)]
     </span>SignatureInvalid(Signature),
+
+    <span class="doccomment">/// Batch verification of STM signatures failed
+    </span><span class="attribute">#[error(<span class="string">&quot;Batch verification of STM signatures failed&quot;</span>)]
+    </span>BatchInvalid,
 
     <span class="doccomment">/// This error occurs when the the serialization of the raw bytes failed
     </span><span class="attribute">#[error(<span class="string">&quot;Invalid bytes&quot;</span>)]
@@ -281,6 +304,10 @@
     <span class="doccomment">/// Invalid merkle batch path
     </span><span class="attribute">#[error(<span class="string">&quot;Batch path does not verify against root&quot;</span>)]
     </span>PathInvalid(BatchPath&lt;D&gt;),
+
+    <span class="doccomment">/// Batch verification of STM aggregate signatures failed
+    </span><span class="attribute">#[error(<span class="string">&quot;Batch verification of STM aggregate signatures failed&quot;</span>)]
+    </span>BatchInvalid,
 }
 
 <span class="doccomment">/// Error types for aggregation.
@@ -346,6 +373,7 @@
         <span class="kw">match </span>e {
             MultiSignatureError::SerializationError =&gt; <span class="self">Self</span>::SerializationError,
             MultiSignatureError::SignatureInvalid(e) =&gt; <span class="self">Self</span>::SignatureInvalid(e),
+            MultiSignatureError::BatchInvalid =&gt; <span class="macro">unreachable!</span>(),
             MultiSignatureError::KeyInvalid(<span class="kw">_</span>) =&gt; <span class="macro">unreachable!</span>(),
             MultiSignatureError::AggregateSignatureInvalid =&gt; <span class="macro">unreachable!</span>(),
         }
@@ -356,6 +384,7 @@
     <span class="kw">fn </span>from(e: MultiSignatureError) -&gt; <span class="self">Self </span>{
         <span class="kw">match </span>e {
             MultiSignatureError::AggregateSignatureInvalid =&gt; <span class="self">Self</span>::AggregateSignatureInvalid,
+            MultiSignatureError::BatchInvalid =&gt; <span class="self">Self</span>::BatchInvalid,
             MultiSignatureError::SerializationError =&gt; <span class="macro">unreachable!</span>(),
             MultiSignatureError::KeyInvalid(<span class="kw">_</span>) =&gt; <span class="macro">unreachable!</span>(),
             MultiSignatureError::SignatureInvalid(_e) =&gt; <span class="macro">unreachable!</span>(),
@@ -376,13 +405,14 @@
             MultiSignatureError::KeyInvalid(e) =&gt; <span class="self">Self</span>::KeyInvalid(e),
             MultiSignatureError::SignatureInvalid(<span class="kw">_</span>) =&gt; <span class="macro">unreachable!</span>(),
             MultiSignatureError::AggregateSignatureInvalid =&gt; <span class="macro">unreachable!</span>(),
+            MultiSignatureError::BatchInvalid =&gt; <span class="macro">unreachable!</span>(),
         }
     }
 }
 
 <span class="doccomment">/// If verifying a single signature, the signature should be provided. If verifying a multi-sig,
 /// no need to provide the signature
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>blst_err_to_atms(
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>blst_err_to_mithril(
     e: BLST_ERROR,
     sig: <span class="prelude-ty">Option</span>&lt;Signature&gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(), MultiSignatureError&gt; {
