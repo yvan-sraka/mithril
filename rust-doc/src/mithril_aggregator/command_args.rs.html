@@ -616,6 +616,7 @@
 <span id="616">616</span>
 <span id="617">617</span>
 <span id="618">618</span>
+<span id="619">619</span>
 </pre><pre class="rust"><code><span class="kw">use </span>clap::{Parser, Subcommand};
 <span class="kw">use </span>config::{builder::DefaultState, ConfigBuilder, Map, Source, Value, ValueKind};
 <span class="kw">use </span>slog::Level;
@@ -720,15 +721,16 @@
     protocol_parameters_store: Arc&lt;ProtocolParametersStore&gt;,
     config: <span class="kw-2">&amp;</span>Configuration,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>Error&gt;&gt; {
-    <span class="kw">let </span>(work_epoch, epoch_to_sign) = <span class="kw">match </span>chain_observer
+    <span class="kw">let </span>(work_epoch, epoch_to_sign, next_epoch_to_sign) = <span class="kw">match </span>chain_observer
         .get_current_epoch()
         .<span class="kw">await</span><span class="question-mark">?
         </span>.ok_or(<span class="string">&quot;Can&#39;t retrieve current epoch&quot;</span>)<span class="question-mark">?
     </span>{
-        Epoch(<span class="number">0</span>) =&gt; (Epoch(<span class="number">0</span>), Epoch(<span class="number">1</span>)),
+        Epoch(<span class="number">0</span>) =&gt; (Epoch(<span class="number">0</span>), Epoch(<span class="number">1</span>), Epoch(<span class="number">2</span>)),
         epoch =&gt; (
             epoch.offset_to_signer_retrieval_epoch()<span class="question-mark">?</span>,
             epoch.offset_to_next_signer_retrieval_epoch(),
+            epoch.offset_to_next_signer_retrieval_epoch().next(),
         ),
     };
 
@@ -739,7 +741,7 @@
     {
         <span class="macro">debug!</span>(<span class="string">&quot;First launch, will use the configured protocol parameters for the current and next epoch certificate&quot;</span>);
 
-        <span class="kw">for </span>epoch <span class="kw">in </span>[work_epoch, epoch_to_sign] {
+        <span class="kw">for </span>epoch <span class="kw">in </span>[work_epoch, epoch_to_sign, next_epoch_to_sign] {
             protocol_parameters_store
                 .save_protocol_parameters(epoch, config.protocol_parameters.clone())
                 .<span class="kw">await</span><span class="question-mark">?</span>;
