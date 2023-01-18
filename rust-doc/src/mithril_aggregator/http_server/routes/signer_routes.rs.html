@@ -219,6 +219,10 @@
 <span id="219">219</span>
 <span id="220">220</span>
 <span id="221">221</span>
+<span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::http_server::routes::middlewares;
 <span class="kw">use </span><span class="kw">crate</span>::DependencyManager;
 <span class="kw">use </span>std::sync::Arc;
@@ -242,8 +246,9 @@
 }
 
 <span class="kw">mod </span>handlers {
+    <span class="kw">use </span><span class="kw">crate</span>::FromRegisterSignerAdapter;
     <span class="kw">use crate</span>::{http_server::routes::reply, SignerRegisterer, SignerRegistrationError};
-    <span class="kw">use </span>mithril_common::entities;
+    <span class="kw">use </span>mithril_common::messages::RegisterSignerMessage;
     <span class="kw">use </span>slog_scope::{debug, warn};
     <span class="kw">use </span>std::convert::Infallible;
     <span class="kw">use </span>std::sync::Arc;
@@ -251,10 +256,14 @@
 
     <span class="doccomment">/// Register Signer
     </span><span class="kw">pub async fn </span>register_signer(
-        signer: entities::Signer,
+        register_signer_message: RegisterSignerMessage,
         signer_registerer: Arc&lt;<span class="kw">dyn </span>SignerRegisterer&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw">impl </span>warp::Reply, Infallible&gt; {
-        <span class="macro">debug!</span>(<span class="string">&quot;⇄ HTTP SERVER: register_signer/{:?}&quot;</span>, signer);
+        <span class="macro">debug!</span>(
+            <span class="string">&quot;⇄ HTTP SERVER: register_signer/{:?}&quot;</span>,
+            register_signer_message
+        );
+        <span class="kw">let </span>signer = FromRegisterSignerAdapter::adapt(register_signer_message);
 
         <span class="kw">match </span>signer_registerer.register_signer(<span class="kw-2">&amp;</span>signer).<span class="kw">await </span>{
             <span class="prelude-val">Ok</span>(()) =&gt; <span class="prelude-val">Ok</span>(reply::empty(StatusCode::CREATED)),
@@ -289,8 +298,8 @@
     <span class="kw">const </span>API_SPEC_FILE: <span class="kw-2">&amp;</span>str = <span class="string">&quot;../openapi.yaml&quot;</span>;
 
     <span class="kw">use </span>mithril_common::crypto_helper::ProtocolRegistrationError;
+    <span class="kw">use </span>mithril_common::messages::RegisterSignerMessage;
     <span class="kw">use </span>mithril_common::test_utils::apispec::APISpec;
-    <span class="kw">use </span>mithril_common::test_utils::fake_data;
     <span class="kw">use </span>warp::http::Method;
     <span class="kw">use </span>warp::test::request;
 
@@ -321,7 +330,7 @@
         <span class="kw">let </span>(<span class="kw-2">mut </span>dependency_manager, <span class="kw">_</span>) = initialize_dependencies().<span class="kw">await</span>;
         dependency_manager.signer_registerer = Arc::new(mock_signer_registerer);
 
-        <span class="kw">let </span>signer = <span class="kw-2">&amp;</span>fake_data::signers(<span class="number">1</span>)[<span class="number">0</span>];
+        <span class="kw">let </span>signer: RegisterSignerMessage = RegisterSignerMessage::dummy();
 
         <span class="kw">let </span>method = Method::POST.as_str();
         <span class="kw">let </span>path = <span class="string">&quot;/register-signer&quot;</span>;
@@ -329,7 +338,7 @@
         <span class="kw">let </span>response = request()
             .method(method)
             .path(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;/{}{}&quot;</span>, SERVER_BASE_PATH, path))
-            .json(signer)
+            .json(<span class="kw-2">&amp;</span>signer)
             .reply(<span class="kw-2">&amp;</span>setup_router(Arc::new(dependency_manager)))
             .<span class="kw">await</span>;
 
@@ -351,7 +360,7 @@
         <span class="kw">let </span>(<span class="kw-2">mut </span>dependency_manager, <span class="kw">_</span>) = initialize_dependencies().<span class="kw">await</span>;
         dependency_manager.signer_registerer = Arc::new(mock_signer_registerer);
 
-        <span class="kw">let </span>signer = <span class="kw-2">&amp;</span>fake_data::signers(<span class="number">1</span>)[<span class="number">0</span>];
+        <span class="kw">let </span>signer: RegisterSignerMessage = RegisterSignerMessage::dummy();
 
         <span class="kw">let </span>method = Method::POST.as_str();
         <span class="kw">let </span>path = <span class="string">&quot;/register-signer&quot;</span>;
@@ -359,7 +368,7 @@
         <span class="kw">let </span>response = request()
             .method(method)
             .path(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;/{}{}&quot;</span>, SERVER_BASE_PATH, path))
-            .json(signer)
+            .json(<span class="kw-2">&amp;</span>signer)
             .reply(<span class="kw-2">&amp;</span>setup_router(Arc::new(dependency_manager)))
             .<span class="kw">await</span>;
 
@@ -385,7 +394,7 @@
         <span class="kw">let </span>(<span class="kw-2">mut </span>dependency_manager, <span class="kw">_</span>) = initialize_dependencies().<span class="kw">await</span>;
         dependency_manager.signer_registerer = Arc::new(mock_signer_registerer);
 
-        <span class="kw">let </span>signer = fake_data::signers(<span class="number">1</span>)[<span class="number">0</span>].clone();
+        <span class="kw">let </span>signer: RegisterSignerMessage = RegisterSignerMessage::dummy();
 
         <span class="kw">let </span>method = Method::POST.as_str();
         <span class="kw">let </span>path = <span class="string">&quot;/register-signer&quot;</span>;
@@ -419,15 +428,14 @@
         <span class="kw">let </span>(<span class="kw-2">mut </span>dependency_manager, <span class="kw">_</span>) = initialize_dependencies().<span class="kw">await</span>;
         dependency_manager.signer_registerer = Arc::new(mock_signer_registerer);
 
-        <span class="kw">let </span>signer = <span class="kw-2">&amp;</span>fake_data::signers(<span class="number">1</span>)[<span class="number">0</span>];
-
+        <span class="kw">let </span>signer: RegisterSignerMessage = RegisterSignerMessage::dummy();
         <span class="kw">let </span>method = Method::POST.as_str();
         <span class="kw">let </span>path = <span class="string">&quot;/register-signer&quot;</span>;
 
         <span class="kw">let </span>response = request()
             .method(method)
             .path(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;/{}{}&quot;</span>, SERVER_BASE_PATH, path))
-            .json(signer)
+            .json(<span class="kw-2">&amp;</span>signer)
             .reply(<span class="kw-2">&amp;</span>setup_router(Arc::new(dependency_manager)))
             .<span class="kw">await</span>;
 
