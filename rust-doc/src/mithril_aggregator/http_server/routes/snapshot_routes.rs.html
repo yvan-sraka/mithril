@@ -427,6 +427,10 @@
 <span id="427">427</span>
 <span id="428">428</span>
 <span id="429">429</span>
+<span id="430">430</span>
+<span id="431">431</span>
+<span id="432">432</span>
+<span id="433">433</span>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::http_server::routes::middlewares;
 <span class="kw">use </span><span class="kw">crate</span>::DependencyManager;
 <span class="kw">use </span>std::sync::Arc;
@@ -486,6 +490,7 @@
 <span class="kw">mod </span>handlers {
     <span class="kw">use </span><span class="kw">crate</span>::http_server::routes::reply;
     <span class="kw">use </span><span class="kw">crate</span>::http_server::SERVER_BASE_PATH;
+    <span class="kw">use </span><span class="kw">crate</span>::message_adapters::ToSnapshotMessageAdapter;
     <span class="kw">use crate</span>::{Configuration, SnapshotStore};
     <span class="kw">use </span>slog_scope::{debug, warn};
     <span class="kw">use </span>std::convert::Infallible;
@@ -585,7 +590,10 @@
 
         <span class="kw">match </span>snapshot_store.get_snapshot_details(digest).<span class="kw">await </span>{
             <span class="prelude-val">Ok</span>(snapshot) =&gt; <span class="kw">match </span>snapshot {
-                <span class="prelude-val">Some</span>(snapshot) =&gt; <span class="prelude-val">Ok</span>(reply::json(<span class="kw-2">&amp;</span>snapshot, StatusCode::OK)),
+                <span class="prelude-val">Some</span>(snapshot) =&gt; <span class="prelude-val">Ok</span>(reply::json(
+                    <span class="kw-2">&amp;</span>ToSnapshotMessageAdapter::adapt(snapshot),
+                    StatusCode::OK,
+                )),
                 <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Ok</span>(reply::empty(StatusCode::NOT_FOUND)),
             },
             <span class="prelude-val">Err</span>(err) =&gt; <span class="prelude-val">Ok</span>(reply::internal_server_error(err.to_string())),

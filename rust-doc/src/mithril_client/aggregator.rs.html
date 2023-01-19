@@ -662,6 +662,7 @@
 <span id="662">662</span>
 <span id="663">663</span>
 <span id="664">664</span>
+<span id="665">665</span>
 </pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>flate2::read::GzDecoder;
 <span class="kw">use </span>futures::StreamExt;
@@ -678,12 +679,13 @@
 <span class="kw">use </span>thiserror::Error;
 
 <span class="kw">use </span>mithril_common::{
+    certificate_chain::{CertificateRetriever, CertificateRetrieverError},
     entities::{Certificate, Snapshot},
+    messages::SnapshotMessage,
     MITHRIL_API_VERSION,
 };
 
-<span class="kw">use </span>mithril_common::certificate_chain::CertificateRetriever;
-<span class="kw">use </span>mithril_common::certificate_chain::CertificateRetrieverError;
+<span class="kw">use </span><span class="kw">crate</span>::FromSnapshotMessageAdapter;
 
 <span class="doccomment">/// [AggregatorHandler] related errors.
 </span><span class="attribute">#[derive(Error, Debug)]
@@ -860,8 +862,8 @@
 
         <span class="kw">match </span>response {
             <span class="prelude-val">Ok</span>(response) =&gt; <span class="kw">match </span>response.status() {
-                StatusCode::OK =&gt; <span class="kw">match </span>response.json::&lt;Snapshot&gt;().<span class="kw">await </span>{
-                    <span class="prelude-val">Ok</span>(snapshot) =&gt; <span class="prelude-val">Ok</span>(snapshot),
+                StatusCode::OK =&gt; <span class="kw">match </span>response.json::&lt;SnapshotMessage&gt;().<span class="kw">await </span>{
+                    <span class="prelude-val">Ok</span>(snapshot) =&gt; <span class="prelude-val">Ok</span>(FromSnapshotMessageAdapter::adapt(snapshot)),
                     <span class="prelude-val">Err</span>(err) =&gt; <span class="prelude-val">Err</span>(AggregatorHandlerError::JsonParseFailed(err.to_string())),
                 },
                 StatusCode::PRECONDITION_FAILED =&gt; <span class="prelude-val">Err</span>(<span class="self">self</span>.handle_api_error(<span class="kw-2">&amp;</span>response)),

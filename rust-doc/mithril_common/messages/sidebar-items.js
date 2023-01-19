@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["EpochSettingsMessage","EpochSettings represents the settings of an epoch"],["RegisterSignatureMessage","Message structure to register single signature."],["RegisterSignerMessage","Register Signer Message"]]};
+window.SIDEBAR_ITEMS = {"struct":[["EpochSettingsMessage","EpochSettings represents the settings of an epoch"],["RegisterSignatureMessage","Message structure to register single signature."],["RegisterSignerMessage","Register Signer Message"],["SnapshotMessage","Message structure of a snapshot"]]};
