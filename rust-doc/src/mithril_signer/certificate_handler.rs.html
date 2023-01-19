@@ -640,6 +640,8 @@
 <span id="640">640</span>
 <span id="641">641</span>
 <span id="642">642</span>
+<span id="643">643</span>
+<span id="644">644</span>
 </pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>reqwest::{<span class="self">self</span>, Client, RequestBuilder, Response, StatusCode};
 <span class="kw">use </span>slog_scope::debug;
@@ -654,7 +656,7 @@
 <span class="attribute">#[cfg(test)]
 </span><span class="kw">use </span>mockall::automock;
 
-<span class="kw">use </span><span class="kw">crate</span>::ToRegisterSignerMessageAdapter;
+<span class="kw">use crate</span>::{message_adapters::ToRegisterSignatureMessageAdapter, ToRegisterSignerMessageAdapter};
 
 <span class="doccomment">/// Error structure for the Certificate Handler.
 </span><span class="attribute">#[derive(Error, Debug)]
@@ -842,9 +844,11 @@
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), CertificateHandlerError&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;Register signatures&quot;</span>);
         <span class="kw">let </span>url = <span class="macro">format!</span>(<span class="string">&quot;{}/register-signatures&quot;</span>, <span class="self">self</span>.aggregator_endpoint);
+        <span class="kw">let </span>register_single_signature_message =
+            ToRegisterSignatureMessageAdapter::adapt(signatures.to_owned());
         <span class="kw">let </span>response = <span class="self">self
             </span>.prepare_request_builder(Client::new().post(url.clone()))
-            .json(signatures)
+            .json(<span class="kw-2">&amp;</span>register_single_signature_message)
             .send()
             .<span class="kw">await</span>;
 

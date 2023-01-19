@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["RegisterSignerMessage","Register Signer Message"]]};
+window.SIDEBAR_ITEMS = {"struct":[["RegisterSignatureMessage","Message structure to register single signature."],["RegisterSignerMessage","Register Signer Message"]]};
