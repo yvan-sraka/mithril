@@ -642,6 +642,10 @@
 <span id="642">642</span>
 <span id="643">643</span>
 <span id="644">644</span>
+<span id="645">645</span>
+<span id="646">646</span>
+<span id="647">647</span>
+<span id="648">648</span>
 </pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>reqwest::{<span class="self">self</span>, Client, RequestBuilder, Response, StatusCode};
 <span class="kw">use </span>slog_scope::debug;
@@ -650,13 +654,17 @@
 
 <span class="kw">use </span>mithril_common::{
     entities::{CertificatePending, EpochSettings, Signer, SingleSignatures},
+    messages::EpochSettingsMessage,
     MITHRIL_API_VERSION,
 };
 
 <span class="attribute">#[cfg(test)]
 </span><span class="kw">use </span>mockall::automock;
 
-<span class="kw">use crate</span>::{message_adapters::ToRegisterSignatureMessageAdapter, ToRegisterSignerMessageAdapter};
+<span class="kw">use crate</span>::{
+    message_adapters::ToRegisterSignatureMessageAdapter, FromEpochSettingsAdapter,
+    ToRegisterSignerMessageAdapter,
+};
 
 <span class="doccomment">/// Error structure for the Certificate Handler.
 </span><span class="attribute">#[derive(Error, Debug)]
@@ -768,8 +776,8 @@
 
         <span class="kw">match </span>response {
             <span class="prelude-val">Ok</span>(response) =&gt; <span class="kw">match </span>response.status() {
-                StatusCode::OK =&gt; <span class="kw">match </span>response.json::&lt;EpochSettings&gt;().<span class="kw">await </span>{
-                    <span class="prelude-val">Ok</span>(epoch_settings) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(epoch_settings)),
+                StatusCode::OK =&gt; <span class="kw">match </span>response.json::&lt;EpochSettingsMessage&gt;().<span class="kw">await </span>{
+                    <span class="prelude-val">Ok</span>(message) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(FromEpochSettingsAdapter::adapt(message))),
                     <span class="prelude-val">Err</span>(err) =&gt; <span class="prelude-val">Err</span>(CertificateHandlerError::JsonParseFailed(err.to_string())),
                 },
                 StatusCode::PRECONDITION_FAILED =&gt; <span class="prelude-val">Err</span>(<span class="self">self</span>.handle_api_error(<span class="kw-2">&amp;</span>response)),

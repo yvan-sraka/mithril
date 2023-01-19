@@ -150,13 +150,6 @@
 <span id="150">150</span>
 <span id="151">151</span>
 <span id="152">152</span>
-<span id="153">153</span>
-<span id="154">154</span>
-<span id="155">155</span>
-<span id="156">156</span>
-<span id="157">157</span>
-<span id="158">158</span>
-<span id="159">159</span>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::http_server::routes::middlewares;
 <span class="kw">use </span><span class="kw">crate</span>::DependencyManager;
 <span class="kw">use </span>std::sync::Arc;
@@ -184,7 +177,7 @@
 <span class="kw">mod </span>handlers {
     <span class="kw">use </span><span class="kw">crate</span>::dependency::MultiSignerWrapper;
     <span class="kw">use </span><span class="kw">crate</span>::http_server::routes::reply;
-    <span class="kw">use crate</span>::{ProtocolParametersStore, ProtocolParametersStorer};
+    <span class="kw">use crate</span>::{ProtocolParametersStore, ProtocolParametersStorer, ToEpochSettingsMessageAdapter};
     <span class="kw">use </span>mithril_common::entities::EpochSettings;
     <span class="kw">use </span>slog_scope::{debug, warn};
     <span class="kw">use </span>std::convert::Infallible;
@@ -209,22 +202,15 @@
                         .<span class="kw">await</span>,
                 ) {
                     (<span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(protocol_parameters)), <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(next_protocol_parameters))) =&gt; {
-                        <span class="macro">println!</span>(
-                            <span class="string">&quot;EpochSettings={:?}&quot;</span>,
-                            EpochSettings {
-                                epoch: beacon.epoch,
-                                protocol_parameters: protocol_parameters.clone(),
-                                next_protocol_parameters: next_protocol_parameters.clone(),
-                            }
-                        );
-                        <span class="prelude-val">Ok</span>(reply::json(
-                            <span class="kw-2">&amp;</span>EpochSettings {
-                                epoch: beacon.epoch,
-                                protocol_parameters,
-                                next_protocol_parameters,
-                            },
-                            StatusCode::OK,
-                        ))
+                        <span class="kw">let </span>epoch_settings = EpochSettings {
+                            epoch: beacon.epoch,
+                            protocol_parameters,
+                            next_protocol_parameters,
+                        };
+                        <span class="macro">println!</span>(<span class="string">&quot;EpochSettings={:?}&quot;</span>, epoch_settings);
+                        <span class="kw">let </span>epoch_settings_message =
+                            ToEpochSettingsMessageAdapter::adapt(epoch_settings);
+                        <span class="prelude-val">Ok</span>(reply::json(<span class="kw-2">&amp;</span>epoch_settings_message, StatusCode::OK))
                     }
                     (<span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>), <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="kw">_</span>))) | (<span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="kw">_</span>)), <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)) | (<span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>), <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)) =&gt; {
                         <span class="macro">warn!</span>(<span class="string">&quot;epoch_settings::could_not_retrieve_protocol_parameters&quot;</span>);
