@@ -663,6 +663,8 @@
 <span id="663">663</span>
 <span id="664">664</span>
 <span id="665">665</span>
+<span id="666">666</span>
+<span id="667">667</span>
 </pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>flate2::read::GzDecoder;
 <span class="kw">use </span>futures::StreamExt;
@@ -681,11 +683,11 @@
 <span class="kw">use </span>mithril_common::{
     certificate_chain::{CertificateRetriever, CertificateRetrieverError},
     entities::{Certificate, Snapshot},
-    messages::SnapshotMessage,
+    messages::{CertificateMessage, SnapshotMessage},
     MITHRIL_API_VERSION,
 };
 
-<span class="kw">use </span><span class="kw">crate</span>::FromSnapshotMessageAdapter;
+<span class="kw">use crate</span>::{FromCertificateMessageAdapter, FromSnapshotMessageAdapter};
 
 <span class="doccomment">/// [AggregatorHandler] related errors.
 </span><span class="attribute">#[derive(Error, Debug)]
@@ -789,8 +791,10 @@
 
         <span class="kw">match </span>response {
             <span class="prelude-val">Ok</span>(response) =&gt; <span class="kw">match </span>response.status() {
-                StatusCode::OK =&gt; <span class="kw">match </span>response.json::&lt;Certificate&gt;().<span class="kw">await </span>{
-                    <span class="prelude-val">Ok</span>(certificate) =&gt; <span class="prelude-val">Ok</span>(certificate),
+                StatusCode::OK =&gt; <span class="kw">match </span>response.json::&lt;CertificateMessage&gt;().<span class="kw">await </span>{
+                    <span class="prelude-val">Ok</span>(certificate_message) =&gt; {
+                        <span class="prelude-val">Ok</span>(FromCertificateMessageAdapter::adapt(certificate_message))
+                    }
                     <span class="prelude-val">Err</span>(err) =&gt; <span class="prelude-val">Err</span>(AggregatorHandlerError::JsonParseFailed(err.to_string())),
                 },
                 StatusCode::NOT_FOUND =&gt; <span class="prelude-val">Err</span>(AggregatorHandlerError::RemoteServerLogical(

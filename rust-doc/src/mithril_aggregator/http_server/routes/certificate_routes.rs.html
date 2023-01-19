@@ -246,6 +246,10 @@
 <span id="246">246</span>
 <span id="247">247</span>
 <span id="248">248</span>
+<span id="249">249</span>
+<span id="250">250</span>
+<span id="251">251</span>
+<span id="252">252</span>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::http_server::routes::middlewares;
 <span class="kw">use </span><span class="kw">crate</span>::DependencyManager;
 <span class="kw">use </span>std::sync::Arc;
@@ -282,6 +286,7 @@
 
 <span class="kw">mod </span>handlers {
     <span class="kw">use </span><span class="kw">crate</span>::http_server::routes::reply;
+    <span class="kw">use </span><span class="kw">crate</span>::message_adapters::ToCertificateMessageAdapter;
     <span class="kw">use crate</span>::{CertificatePendingStore, CertificateStore};
     <span class="kw">use </span>slog_scope::{debug, warn};
     <span class="kw">use </span>std::convert::Infallible;
@@ -315,7 +320,10 @@
         );
 
         <span class="kw">match </span>certificate_store.get_from_hash(<span class="kw-2">&amp;</span>certificate_hash).<span class="kw">await </span>{
-            <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(certificate)) =&gt; <span class="prelude-val">Ok</span>(reply::json(<span class="kw-2">&amp;</span>certificate, StatusCode::OK)),
+            <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(certificate)) =&gt; <span class="prelude-val">Ok</span>(reply::json(
+                <span class="kw-2">&amp;</span>ToCertificateMessageAdapter::adapt(certificate),
+                StatusCode::OK,
+            )),
             <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; <span class="prelude-val">Ok</span>(reply::empty(StatusCode::NOT_FOUND)),
             <span class="prelude-val">Err</span>(err) =&gt; {
                 <span class="macro">warn!</span>(<span class="string">&quot;certificate_certificate_hash::error&quot;</span>; <span class="string">&quot;error&quot; </span>=&gt; <span class="question-mark">?</span>err);
