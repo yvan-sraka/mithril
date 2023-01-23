@@ -654,16 +654,16 @@
 
 <span class="kw">use </span>mithril_common::{
     entities::{CertificatePending, EpochSettings, Signer, SingleSignatures},
-    messages::EpochSettingsMessage,
+    messages::{CertificatePendingMessage, EpochSettingsMessage},
     MITHRIL_API_VERSION,
 };
 
 <span class="attribute">#[cfg(test)]
 </span><span class="kw">use </span>mockall::automock;
 
-<span class="kw">use crate</span>::{
-    message_adapters::ToRegisterSignatureMessageAdapter, FromEpochSettingsAdapter,
-    ToRegisterSignerMessageAdapter,
+<span class="kw">use </span><span class="kw">crate</span>::message_adapters::{
+    FromEpochSettingsAdapter, FromPendingCertificateMessageAdapter,
+    ToRegisterSignatureMessageAdapter, ToRegisterSignerMessageAdapter,
 };
 
 <span class="doccomment">/// Error structure for the Certificate Handler.
@@ -803,8 +803,8 @@
 
         <span class="kw">match </span>response {
             <span class="prelude-val">Ok</span>(response) =&gt; <span class="kw">match </span>response.status() {
-                StatusCode::OK =&gt; <span class="kw">match </span>response.json::&lt;CertificatePending&gt;().<span class="kw">await </span>{
-                    <span class="prelude-val">Ok</span>(pending_certificate) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(pending_certificate)),
+                StatusCode::OK =&gt; <span class="kw">match </span>response.json::&lt;CertificatePendingMessage&gt;().<span class="kw">await </span>{
+                    <span class="prelude-val">Ok</span>(message) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(FromPendingCertificateMessageAdapter::adapt(message))),
                     <span class="prelude-val">Err</span>(err) =&gt; <span class="prelude-val">Err</span>(CertificateHandlerError::JsonParseFailed(err.to_string())),
                 },
                 StatusCode::PRECONDITION_FAILED =&gt; <span class="prelude-val">Err</span>(<span class="self">self</span>.handle_api_error(<span class="kw-2">&amp;</span>response)),

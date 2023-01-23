@@ -250,6 +250,9 @@
 <span id="250">250</span>
 <span id="251">251</span>
 <span id="252">252</span>
+<span id="253">253</span>
+<span id="254">254</span>
+<span id="255">255</span>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::http_server::routes::middlewares;
 <span class="kw">use </span><span class="kw">crate</span>::DependencyManager;
 <span class="kw">use </span>std::sync::Arc;
@@ -287,7 +290,7 @@
 <span class="kw">mod </span>handlers {
     <span class="kw">use </span><span class="kw">crate</span>::http_server::routes::reply;
     <span class="kw">use </span><span class="kw">crate</span>::message_adapters::ToCertificateMessageAdapter;
-    <span class="kw">use crate</span>::{CertificatePendingStore, CertificateStore};
+    <span class="kw">use crate</span>::{CertificatePendingStore, CertificateStore, ToCertificatePendingMessageAdapter};
     <span class="kw">use </span>slog_scope::{debug, warn};
     <span class="kw">use </span>std::convert::Infallible;
     <span class="kw">use </span>std::sync::Arc;
@@ -300,7 +303,10 @@
         <span class="macro">debug!</span>(<span class="string">&quot;⇄ HTTP SERVER: certificate_pending&quot;</span>);
 
         <span class="kw">match </span>certificate_pending_store.get().<span class="kw">await </span>{
-            <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(certificate_pending)) =&gt; <span class="prelude-val">Ok</span>(reply::json(<span class="kw-2">&amp;</span>certificate_pending, StatusCode::OK)),
+            <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(certificate_pending)) =&gt; <span class="prelude-val">Ok</span>(reply::json(
+                <span class="kw-2">&amp;</span>ToCertificatePendingMessageAdapter::adapt(certificate_pending),
+                StatusCode::OK,
+            )),
             <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; <span class="prelude-val">Ok</span>(reply::empty(StatusCode::NO_CONTENT)),
             <span class="prelude-val">Err</span>(err) =&gt; {
                 <span class="macro">warn!</span>(<span class="string">&quot;certificate_pending::error&quot;</span>; <span class="string">&quot;error&quot; </span>=&gt; <span class="question-mark">?</span>err);
