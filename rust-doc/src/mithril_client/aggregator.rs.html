@@ -665,6 +665,8 @@
 <span id="665">665</span>
 <span id="666">666</span>
 <span id="667">667</span>
+<span id="668">668</span>
+<span id="669">669</span>
 </pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>flate2::read::GzDecoder;
 <span class="kw">use </span>futures::StreamExt;
@@ -683,11 +685,13 @@
 <span class="kw">use </span>mithril_common::{
     certificate_chain::{CertificateRetriever, CertificateRetrieverError},
     entities::{Certificate, Snapshot},
-    messages::{CertificateMessage, SnapshotMessage},
+    messages::{CertificateMessage, SnapshotListMessage, SnapshotMessage},
     MITHRIL_API_VERSION,
 };
 
-<span class="kw">use crate</span>::{FromCertificateMessageAdapter, FromSnapshotMessageAdapter};
+<span class="kw">use crate</span>::{
+    FromCertificateMessageAdapter, FromSnapshotListMessageAdapter, FromSnapshotMessageAdapter,
+};
 
 <span class="doccomment">/// [AggregatorHandler] related errors.
 </span><span class="attribute">#[derive(Error, Debug)]
@@ -840,8 +844,8 @@
 
         <span class="kw">match </span>response {
             <span class="prelude-val">Ok</span>(response) =&gt; <span class="kw">match </span>response.status() {
-                StatusCode::OK =&gt; <span class="kw">match </span>response.json::&lt;Vec&lt;Snapshot&gt;&gt;().<span class="kw">await </span>{
-                    <span class="prelude-val">Ok</span>(snapshots) =&gt; <span class="prelude-val">Ok</span>(snapshots),
+                StatusCode::OK =&gt; <span class="kw">match </span>response.json::&lt;SnapshotListMessage&gt;().<span class="kw">await </span>{
+                    <span class="prelude-val">Ok</span>(snapshots) =&gt; <span class="prelude-val">Ok</span>(FromSnapshotListMessageAdapter::adapt(snapshots)),
                     <span class="prelude-val">Err</span>(err) =&gt; <span class="prelude-val">Err</span>(AggregatorHandlerError::JsonParseFailed(err.to_string())),
                 },
                 StatusCode::PRECONDITION_FAILED =&gt; <span class="prelude-val">Err</span>(<span class="self">self</span>.handle_api_error(<span class="kw-2">&amp;</span>response)),
