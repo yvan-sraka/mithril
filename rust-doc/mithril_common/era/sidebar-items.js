@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":[["SupportedEra","The era that the software is running or will run"]],"struct":[["EraChecker","EraChecker allows the verification of the current era"]]};

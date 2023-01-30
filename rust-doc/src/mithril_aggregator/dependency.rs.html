@@ -373,18 +373,28 @@
 <a href="#373" id="373">373</a>
 <a href="#374" id="374">374</a>
 <a href="#375" id="375">375</a>
-</pre><pre class="rust"><code><span class="kw">use </span>mithril_common::certificate_chain::CertificateVerifier;
-<span class="kw">use </span>mithril_common::chain_observer::ChainObserver;
-<span class="kw">use </span>mithril_common::crypto_helper::ProtocolGenesisVerifier;
-<span class="kw">use </span>mithril_common::digesters::{ImmutableDigester, ImmutableFileObserver};
-<span class="kw">use </span>mithril_common::entities::{
-    Certificate, Epoch, ProtocolParameters, Signer, SignerWithStake, StakeDistribution,
+<a href="#376" id="376">376</a>
+<a href="#377" id="377">377</a>
+<a href="#378" id="378">378</a>
+<a href="#379" id="379">379</a>
+<a href="#380" id="380">380</a>
+<a href="#381" id="381">381</a>
+<a href="#382" id="382">382</a>
+<a href="#383" id="383">383</a>
+</pre><pre class="rust"><code><span class="kw">use </span>mithril_common::{
+    certificate_chain::CertificateVerifier,
+    chain_observer::ChainObserver,
+    crypto_helper::ProtocolGenesisVerifier,
+    digesters::{ImmutableDigester, ImmutableFileObserver},
+    entities::{
+        Certificate, Epoch, ProtocolParameters, Signer, SignerWithStake, StakeDistribution,
+    },
+    era::EraChecker,
+    store::{StakeStore, StakeStorer},
+    BeaconProvider,
 };
-<span class="kw">use </span>mithril_common::store::{StakeStore, StakeStorer};
-<span class="kw">use </span>mithril_common::BeaconProvider;
 
-<span class="kw">use </span>std::collections::HashMap;
-<span class="kw">use </span>std::sync::Arc;
+<span class="kw">use </span>std::{collections::HashMap, sync::Arc};
 <span class="kw">use </span>tokio::sync::RwLock;
 
 <span class="kw">use </span><span class="kw">crate</span>::multi_signer::MultiSigner;
@@ -457,6 +467,9 @@
 
     <span class="doccomment">/// Signer registration round opener service
     </span><span class="kw">pub </span>signer_registration_round_opener: Arc&lt;<span class="kw">dyn </span>SignerRegistrationRoundOpener&gt;,
+
+    <span class="doccomment">/// Era checker service
+    </span><span class="kw">pub </span>era_checker: Arc&lt;EraChecker&gt;,
 }
 
 <span class="attr">#[doc(hidden)]
@@ -639,6 +652,7 @@
         chain_observer::FakeObserver,
         crypto_helper::{key_encode_hex, ProtocolGenesisSigner},
         digesters::{DumbImmutableDigester, DumbImmutableFileObserver},
+        era::{EraChecker, SupportedEra},
         store::{adapter::MemoryAdapter, StakeStore},
         test_utils::fake_data,
         BeaconProviderImpl, CardanoNetwork,
@@ -716,6 +730,7 @@
             chain_observer.clone(),
             verification_key_store.clone(),
         ));
+        <span class="kw">let </span>era_checker = Arc::new(EraChecker::new(SupportedEra::dummy()));
 
         <span class="kw">let </span>dependency_manager = DependencyManager {
             config,
@@ -737,6 +752,7 @@
             genesis_verifier,
             signer_registerer: signer_registerer.clone(),
             signer_registration_round_opener: signer_registerer,
+            era_checker,
         };
 
         <span class="kw">let </span>config = AggregatorConfig::new(

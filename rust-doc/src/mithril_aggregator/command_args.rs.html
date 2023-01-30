@@ -617,6 +617,12 @@
 <a href="#617" id="617">617</a>
 <a href="#618" id="618">618</a>
 <a href="#619" id="619">619</a>
+<a href="#620" id="620">620</a>
+<a href="#621" id="621">621</a>
+<a href="#622" id="622">622</a>
+<a href="#623" id="623">623</a>
+<a href="#624" id="624">624</a>
+<a href="#625" id="625">625</a>
 </pre><pre class="rust"><code><span class="kw">use </span>clap::{Parser, Subcommand};
 <span class="kw">use </span>config::{builder::DefaultState, ConfigBuilder, Map, Source, Value, ValueKind};
 <span class="kw">use </span>slog::Level;
@@ -634,6 +640,7 @@
         CardanoImmutableDigester, ImmutableFileSystemObserver,
     },
     entities::{Epoch, HexEncodedGenesisSecretKey},
+    era::{EraChecker, SupportedEra},
     store::{adapter::SQLiteAdapter, StakeStore},
     BeaconProviderImpl,
 };
@@ -1016,6 +1023,10 @@
             ongoing_snapshot_directory,
         ));
 
+        <span class="comment">// TODO: use EraReader when it is implemented to retrieve current era
+        </span><span class="kw">let </span>current_era = SupportedEra::Thales;
+        <span class="kw">let </span>era_checker = Arc::new(EraChecker::new(current_era));
+
         <span class="comment">// Init dependency manager
         </span><span class="kw">let </span>dependency_manager = DependencyManager {
             config: config.clone(),
@@ -1037,6 +1048,7 @@
             genesis_verifier,
             signer_registerer: signer_registerer.clone(),
             signer_registration_round_opener: signer_registerer.clone(),
+            era_checker: era_checker.clone(),
         };
         <span class="kw">let </span>dependency_manager = Arc::new(dependency_manager);
 

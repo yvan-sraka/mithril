@@ -215,6 +215,17 @@
 <a href="#215" id="215">215</a>
 <a href="#216" id="216">216</a>
 <a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
+<a href="#221" id="221">221</a>
+<a href="#222" id="222">222</a>
+<a href="#223" id="223">223</a>
+<a href="#224" id="224">224</a>
+<a href="#225" id="225">225</a>
+<a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
+<a href="#228" id="228">228</a>
 </pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>std::{
     error::{Error <span class="kw">as </span>StdError, Error},
@@ -222,15 +233,19 @@
     sync::Arc,
 };
 
-<span class="kw">use </span>mithril_common::digesters::cache::{
-    ImmutableFileDigestCacheProvider, JsonImmutableFileDigestCacheProviderBuilder,
-};
 <span class="kw">use </span>mithril_common::{
     chain_observer::{CardanoCliChainObserver, CardanoCliRunner, ChainObserver},
     crypto_helper::{OpCert, ProtocolPartyId, SerDeShelleyFileFormat},
     digesters::{CardanoImmutableDigester, ImmutableDigester, ImmutableFileSystemObserver},
+    era::EraChecker,
     store::{adapter::SQLiteAdapter, StakeStore},
     BeaconProvider, BeaconProviderImpl,
+};
+<span class="kw">use </span>mithril_common::{
+    digesters::cache::{
+        ImmutableFileDigestCacheProvider, JsonImmutableFileDigestCacheProviderBuilder,
+    },
+    era::SupportedEra,
 };
 
 <span class="kw">use crate</span>::{
@@ -345,6 +360,9 @@
             Arc::new(ImmutableFileSystemObserver::new(<span class="kw-2">&amp;</span><span class="self">self</span>.config.db_directory)),
             <span class="self">self</span>.config.get_network()<span class="question-mark">?</span>.to_owned(),
         ));
+        <span class="comment">// TODO: use EraReader when it is implemented to retrieve current era
+        </span><span class="kw">let </span>current_era = SupportedEra::Thales;
+        <span class="kw">let </span>era_checker = Arc::new(EraChecker::new(current_era));
 
         <span class="kw">let </span>services = SignerServices {
             beacon_provider,
@@ -354,6 +372,7 @@
             single_signer,
             stake_store,
             protocol_initializer_store,
+            era_checker,
         };
 
         <span class="prelude-val">Ok</span>(services)
@@ -382,6 +401,9 @@
 
     <span class="doccomment">/// ProtocolInitializer store
     </span><span class="kw">pub </span>protocol_initializer_store: ProtocolInitializerStoreService,
+
+    <span class="doccomment">/// Era checker service
+    </span><span class="kw">pub </span>era_checker: Arc&lt;EraChecker&gt;,
 }
 
 <span class="attr">#[cfg(test)]
