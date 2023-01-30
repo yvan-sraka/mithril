@@ -646,6 +646,15 @@
 <a href="#646" id="646">646</a>
 <a href="#647" id="647">647</a>
 <a href="#648" id="648">648</a>
+<a href="#649" id="649">649</a>
+<a href="#650" id="650">650</a>
+<a href="#651" id="651">651</a>
+<a href="#652" id="652">652</a>
+<a href="#653" id="653">653</a>
+<a href="#654" id="654">654</a>
+<a href="#655" id="655">655</a>
+<a href="#656" id="656">656</a>
+<a href="#657" id="657">657</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::runtime::{AggregatorRunnerTrait, RuntimeError, WorkingCertificate};
 
 <span class="kw">use </span>mithril_common::entities::Beacon;
@@ -869,6 +878,7 @@
 
         <span class="kw">if </span>maybe_current_beacon.is_none() || maybe_current_beacon.unwrap().epoch &lt; new_beacon.epoch
         {
+            <span class="self">self</span>.runner.close_signer_registration_round().<span class="kw">await</span><span class="question-mark">?</span>;
             <span class="self">self</span>.runner.update_stake_distribution(<span class="kw-2">&amp;</span>new_beacon).<span class="kw">await</span><span class="question-mark">?</span>;
             <span class="self">self</span>.runner
                 .open_signer_registration_round(<span class="kw-2">&amp;</span>new_beacon)
@@ -1014,6 +1024,10 @@
             .once()
             .returning(|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(()));
         runner
+            .expect_close_signer_registration_round()
+            .once()
+            .returning(|| <span class="prelude-val">Ok</span>(()));
+        runner
             .expect_open_signer_registration_round()
             .once()
             .returning(|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(()));
@@ -1056,6 +1070,10 @@
             .with(predicate::eq(fake_data::beacon()))
             .once()
             .returning(|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(()));
+        runner
+            .expect_close_signer_registration_round()
+            .once()
+            .returning(|| <span class="prelude-val">Ok</span>(()));
         runner
             .expect_open_signer_registration_round()
             .once()

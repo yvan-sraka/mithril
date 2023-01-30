@@ -1109,6 +1109,46 @@
 <a href="#1109" id="1109">1109</a>
 <a href="#1110" id="1110">1110</a>
 <a href="#1111" id="1111">1111</a>
+<a href="#1112" id="1112">1112</a>
+<a href="#1113" id="1113">1113</a>
+<a href="#1114" id="1114">1114</a>
+<a href="#1115" id="1115">1115</a>
+<a href="#1116" id="1116">1116</a>
+<a href="#1117" id="1117">1117</a>
+<a href="#1118" id="1118">1118</a>
+<a href="#1119" id="1119">1119</a>
+<a href="#1120" id="1120">1120</a>
+<a href="#1121" id="1121">1121</a>
+<a href="#1122" id="1122">1122</a>
+<a href="#1123" id="1123">1123</a>
+<a href="#1124" id="1124">1124</a>
+<a href="#1125" id="1125">1125</a>
+<a href="#1126" id="1126">1126</a>
+<a href="#1127" id="1127">1127</a>
+<a href="#1128" id="1128">1128</a>
+<a href="#1129" id="1129">1129</a>
+<a href="#1130" id="1130">1130</a>
+<a href="#1131" id="1131">1131</a>
+<a href="#1132" id="1132">1132</a>
+<a href="#1133" id="1133">1133</a>
+<a href="#1134" id="1134">1134</a>
+<a href="#1135" id="1135">1135</a>
+<a href="#1136" id="1136">1136</a>
+<a href="#1137" id="1137">1137</a>
+<a href="#1138" id="1138">1138</a>
+<a href="#1139" id="1139">1139</a>
+<a href="#1140" id="1140">1140</a>
+<a href="#1141" id="1141">1141</a>
+<a href="#1142" id="1142">1142</a>
+<a href="#1143" id="1143">1143</a>
+<a href="#1144" id="1144">1144</a>
+<a href="#1145" id="1145">1145</a>
+<a href="#1146" id="1146">1146</a>
+<a href="#1147" id="1147">1147</a>
+<a href="#1148" id="1148">1148</a>
+<a href="#1149" id="1149">1149</a>
+<a href="#1150" id="1150">1150</a>
+<a href="#1151" id="1151">1151</a>
 </pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>chrono::Utc;
 <span class="kw">use </span>mithril_common::entities::Epoch;
@@ -1187,9 +1227,12 @@
     <span class="doccomment">/// Read the stake distribution from the blockchain and store it.
     </span><span class="kw">async fn </span>update_stake_distribution(<span class="kw-2">&amp;</span><span class="self">self</span>, new_beacon: <span class="kw-2">&amp;</span>Beacon) -&gt; <span class="prelude-ty">Result</span>&lt;(), RuntimeError&gt;;
 
-    <span class="doccomment">/// Open the signer registration round for an epoch.
+    <span class="doccomment">/// Open the signer registration round of an epoch.
     </span><span class="kw">async fn </span>open_signer_registration_round(<span class="kw-2">&amp;</span><span class="self">self</span>, new_beacon: <span class="kw-2">&amp;</span>Beacon)
         -&gt; <span class="prelude-ty">Result</span>&lt;(), RuntimeError&gt;;
+
+    <span class="doccomment">/// Close the signer registration round of an epoch.
+    </span><span class="kw">async fn </span>close_signer_registration_round(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), RuntimeError&gt;;
 
     <span class="doccomment">/// Update the multisigner with the protocol parameters from configuration.
     </span><span class="kw">async fn </span>update_protocol_parameters_in_multisigner(
@@ -1420,6 +1463,17 @@
         <span class="self">self</span>.dependencies
             .signer_registration_round_opener
             .open_registration_round(registration_epoch, stakes)
+            .<span class="kw">await</span><span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(())
+    }
+
+    <span class="kw">async fn </span>close_signer_registration_round(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), RuntimeError&gt; {
+        <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: close signer registration round&quot;</span>);
+
+        <span class="self">self</span>.dependencies
+            .signer_registration_round_opener
+            .close_registration_round()
             .<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(())
@@ -1879,6 +1933,32 @@
             <span class="prelude-val">Some</span>(expected_signer_registration_round),
             saved_current_round,
         );
+    }
+
+    <span class="attr">#[tokio::test]
+    </span><span class="kw">async fn </span>test_close_signer_registration_round() {
+        <span class="kw">let </span>(<span class="kw-2">mut </span>deps, config) = initialize_dependencies().<span class="kw">await</span>;
+        <span class="kw">let </span>signer_registration_round_opener = Arc::new(MithrilSignerRegisterer::new(
+            deps.chain_observer.clone(),
+            deps.verification_key_store.clone(),
+        ));
+        deps.signer_registration_round_opener = signer_registration_round_opener.clone();
+        <span class="kw">let </span>deps = Arc::new(deps);
+        <span class="kw">let </span>runner = AggregatorRunner::new(config, deps.clone());
+
+        <span class="kw">let </span>beacon = fake_data::beacon();
+        runner
+            .open_signer_registration_round(<span class="kw-2">&amp;</span>beacon)
+            .<span class="kw">await
+            </span>.expect(<span class="string">&quot;opening signer registration should not return an error&quot;</span>);
+
+        runner
+            .close_signer_registration_round()
+            .<span class="kw">await
+            </span>.expect(<span class="string">&quot;closing signer registration should not return an error&quot;</span>);
+
+        <span class="kw">let </span>saved_current_round = signer_registration_round_opener.get_current_round().<span class="kw">await</span>;
+        <span class="macro">assert!</span>(saved_current_round.is_none());
     }
 
     <span class="attr">#[tokio::test]
