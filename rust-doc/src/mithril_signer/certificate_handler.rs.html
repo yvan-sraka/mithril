@@ -645,6 +645,10 @@
 <a href="#645" id="645">645</a>
 <a href="#646" id="646">646</a>
 <a href="#647" id="647">647</a>
+<a href="#648" id="648">648</a>
+<a href="#649" id="649">649</a>
+<a href="#650" id="650">650</a>
+<a href="#651" id="651">651</a>
 </pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>reqwest::{<span class="self">self</span>, Client, RequestBuilder, Response, StatusCode};
 <span class="kw">use </span>slog_scope::debug;
@@ -654,7 +658,7 @@
 <span class="kw">use </span>mithril_common::{
     entities::{CertificatePending, EpochSettings, Signer, SingleSignatures},
     messages::{CertificatePendingMessage, EpochSettingsMessage},
-    MITHRIL_API_VERSION,
+    MITHRIL_API_VERSION, MITHRIL_API_VERSION_HEADER,
 };
 
 <span class="attr">#[cfg(test)]
@@ -741,12 +745,12 @@
 
     <span class="doccomment">/// Forge a client request adding protocol version in the headers.
     </span><span class="kw">pub fn </span>prepare_request_builder(<span class="kw-2">&amp;</span><span class="self">self</span>, request_builder: RequestBuilder) -&gt; RequestBuilder {
-        request_builder.header(<span class="string">&quot;API_VERSION&quot;</span>, MITHRIL_API_VERSION)
+        request_builder.header(MITHRIL_API_VERSION_HEADER, MITHRIL_API_VERSION)
     }
 
     <span class="doccomment">/// API version error handling
     </span><span class="kw">fn </span>handle_api_error(<span class="kw-2">&amp;</span><span class="self">self</span>, response: <span class="kw-2">&amp;</span>Response) -&gt; CertificateHandlerError {
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(version) = response.headers().get(<span class="string">&quot;mithril-api-version&quot;</span>) {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(version) = response.headers().get(MITHRIL_API_VERSION_HEADER) {
             CertificateHandlerError::ApiVersionMismatch(<span class="macro">format!</span>(
                 <span class="string">&quot;server version: &#39;{}&#39;, signer version: &#39;{}&#39;&quot;</span>,
                 version.to_str().unwrap(),
@@ -1028,7 +1032,8 @@
         <span class="kw">let </span>(server, config) = setup_test();
         <span class="kw">let </span>_snapshots_mock = server.mock(|when, then| {
             when.path(<span class="string">&quot;/epoch-settings&quot;</span>);
-            then.status(<span class="number">412</span>).header(<span class="string">&quot;mithril-api-version&quot;</span>, <span class="string">&quot;0.0.999&quot;</span>);
+            then.status(<span class="number">412</span>)
+                .header(MITHRIL_API_VERSION_HEADER, <span class="string">&quot;0.0.999&quot;</span>);
         });
         <span class="kw">let </span>certificate_handler = CertificateHandlerHTTPClient::new(config.aggregator_endpoint);
         <span class="kw">let </span>epoch_settings = certificate_handler
@@ -1078,7 +1083,8 @@
         <span class="kw">let </span>(server, config) = setup_test();
         <span class="kw">let </span>_snapshots_mock = server.mock(|when, then| {
             when.path(<span class="string">&quot;/certificate-pending&quot;</span>);
-            then.status(<span class="number">412</span>).header(<span class="string">&quot;mithril-api-version&quot;</span>, <span class="string">&quot;0.0.999&quot;</span>);
+            then.status(<span class="number">412</span>)
+                .header(MITHRIL_API_VERSION_HEADER, <span class="string">&quot;0.0.999&quot;</span>);
         });
         <span class="kw">let </span>certificate_handler = CertificateHandlerHTTPClient::new(config.aggregator_endpoint);
         <span class="kw">let </span>error = certificate_handler
@@ -1136,7 +1142,8 @@
         <span class="kw">let </span>(server, config) = setup_test();
         <span class="kw">let </span>_snapshots_mock = server.mock(|when, then| {
             when.method(POST).path(<span class="string">&quot;/register-signer&quot;</span>);
-            then.status(<span class="number">412</span>).header(<span class="string">&quot;mithril-api-version&quot;</span>, <span class="string">&quot;0.0.999&quot;</span>);
+            then.status(<span class="number">412</span>)
+                .header(MITHRIL_API_VERSION_HEADER, <span class="string">&quot;0.0.999&quot;</span>);
         });
         <span class="kw">let </span>single_signers = fake_data::signers(<span class="number">1</span>);
         <span class="kw">let </span>single_signer = single_signers.first().unwrap();
@@ -1213,7 +1220,8 @@
         <span class="kw">let </span>(server, config) = setup_test();
         <span class="kw">let </span>_snapshots_mock = server.mock(|when, then| {
             when.method(POST).path(<span class="string">&quot;/register-signatures&quot;</span>);
-            then.status(<span class="number">412</span>).header(<span class="string">&quot;mithril-api-version&quot;</span>, <span class="string">&quot;0.0.999&quot;</span>);
+            then.status(<span class="number">412</span>)
+                .header(MITHRIL_API_VERSION_HEADER, <span class="string">&quot;0.0.999&quot;</span>);
         });
         <span class="kw">let </span>single_signatures = fake_data::single_signatures((<span class="number">1</span>..<span class="number">5</span>).collect());
         <span class="kw">let </span>certificate_handler = CertificateHandlerHTTPClient::new(config.aggregator_endpoint);

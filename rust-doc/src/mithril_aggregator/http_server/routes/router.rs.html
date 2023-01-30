@@ -128,13 +128,17 @@
 <a href="#128" id="128">128</a>
 <a href="#129" id="129">129</a>
 <a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::http_server::routes::{
     certificate_routes, epoch_routes, signatures_routes, signer_routes, snapshot_routes,
 };
 <span class="kw">use </span><span class="kw">crate</span>::http_server::SERVER_BASE_PATH;
 <span class="kw">use </span><span class="kw">crate</span>::DependencyManager;
 
-<span class="kw">use </span>mithril_common::{MITHRIL_API_VERSION, MITHRIL_API_VERSION_REQUIREMENT};
+<span class="kw">use </span>mithril_common::{
+    MITHRIL_API_VERSION, MITHRIL_API_VERSION_HEADER, MITHRIL_API_VERSION_REQUIREMENT,
+};
 
 <span class="kw">use </span>reqwest::header::{HeaderMap, HeaderValue};
 <span class="kw">use </span>reqwest::StatusCode;
@@ -164,7 +168,7 @@
         .allow_methods(<span class="macro">vec!</span>[Method::GET, Method::POST, Method::OPTIONS]);
     <span class="kw">let </span><span class="kw-2">mut </span>headers = HeaderMap::new();
     headers.insert(
-        <span class="string">&quot;mithril-api-version&quot;</span>,
+        MITHRIL_API_VERSION_HEADER,
         HeaderValue::from_static(MITHRIL_API_VERSION),
     );
     warp::any()
@@ -184,7 +188,7 @@
 
 <span class="doccomment">/// API Version verification
 </span><span class="kw">fn </span>header_must_be() -&gt; <span class="kw">impl </span>Filter&lt;Extract = (), Error = Rejection&gt; + Copy {
-    warp::header::optional(<span class="string">&quot;mithril-api-version&quot;</span>)
+    warp::header::optional(MITHRIL_API_VERSION_HEADER)
         .and_then(|maybe_header: <span class="prelude-ty">Option</span>&lt;String&gt;| <span class="kw">async move </span>{
             <span class="kw">match </span>maybe_header {
                 <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Ok</span>(()),
@@ -227,7 +231,7 @@
     </span><span class="kw">async fn </span>test_parse_version_error() {
         <span class="kw">let </span>filters = header_must_be();
         warp::test::request()
-            .header(<span class="string">&quot;mithril-api-version&quot;</span>, <span class="string">&quot;not_a_version&quot;</span>)
+            .header(MITHRIL_API_VERSION_HEADER, <span class="string">&quot;not_a_version&quot;</span>)
             .path(<span class="string">&quot;/aggregator/whatever&quot;</span>)
             .filter(<span class="kw-2">&amp;</span>filters)
             .<span class="kw">await
@@ -240,7 +244,7 @@
     </span><span class="kw">async fn </span>test_bad_version() {
         <span class="kw">let </span>filters = header_must_be();
         warp::test::request()
-            .header(<span class="string">&quot;mithril-api-version&quot;</span>, <span class="string">&quot;0.0.999&quot;</span>)
+            .header(MITHRIL_API_VERSION_HEADER, <span class="string">&quot;0.0.999&quot;</span>)
             .path(<span class="string">&quot;/aggregator/whatever&quot;</span>)
             .filter(<span class="kw-2">&amp;</span>filters)
             .<span class="kw">await
@@ -251,7 +255,7 @@
     </span><span class="kw">async fn </span>test_good_version() {
         <span class="kw">let </span>filters = header_must_be();
         warp::test::request()
-            .header(<span class="string">&quot;mithril-api-version&quot;</span>, MITHRIL_API_VERSION)
+            .header(MITHRIL_API_VERSION_HEADER, MITHRIL_API_VERSION)
             .path(<span class="string">&quot;/aggregator/whatever&quot;</span>)
             .filter(<span class="kw-2">&amp;</span>filters)
             .<span class="kw">await
