@@ -312,7 +312,7 @@
         <span class="kw">match </span>node_type {
             <span class="string">&quot;aggregator&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Aggregator),
             <span class="string">&quot;signer&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Signer),
-            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">&quot;unknown node type &#39;{}&#39;&quot;</span>, node_type).into()),
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">&quot;unknown node type &#39;{node_type}&#39;&quot;</span>).into()),
         }
     }
 }
@@ -345,12 +345,12 @@
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
             version: row.get::&lt;i64, <span class="kw">_</span>&gt;(<span class="number">0</span>),
             application_type: ApplicationNodeType::new(<span class="kw-2">&amp;</span>row.get::&lt;String, <span class="kw">_</span>&gt;(<span class="number">1</span>))
-                .map_err(|e| HydrationError::InvalidData(<span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, e)))<span class="question-mark">?</span>,
+                .map_err(|e| HydrationError::InvalidData(<span class="macro">format!</span>(<span class="string">&quot;{e}&quot;</span>)))<span class="question-mark">?</span>,
             updated_at: NaiveDateTime::parse_from_str(
                 <span class="kw-2">&amp;</span>row.get::&lt;String, <span class="kw">_</span>&gt;(<span class="number">2</span>),
                 <span class="string">&quot;%Y-%m-%d %H:%M:%S&quot;</span>,
             )
-            .map_err(|e| HydrationError::InvalidData(<span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, e)))<span class="question-mark">?</span>,
+            .map_err(|e| HydrationError::InvalidData(<span class="macro">format!</span>(<span class="string">&quot;{e}&quot;</span>)))<span class="question-mark">?</span>,
         })
     }
 
@@ -427,7 +427,7 @@ insert into db_version (application_type, version) values (&#39;{application_typ
         application_type: <span class="kw-2">&amp;</span>ApplicationNodeType,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;DatabaseVersion&gt;, Box&lt;<span class="kw">dyn </span>Error&gt;&gt; {
         <span class="kw">let </span>condition = <span class="string">&quot;application_type = ?&quot;</span>;
-        <span class="kw">let </span>params = [Value::String(<span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, application_type))];
+        <span class="kw">let </span>params = [Value::String(<span class="macro">format!</span>(<span class="string">&quot;{application_type}&quot;</span>))];
         <span class="kw">let </span>result = <span class="self">self</span>.find(<span class="prelude-val">Some</span>(condition), <span class="kw-2">&amp;</span>params)<span class="question-mark">?</span>.next();
 
         <span class="prelude-val">Ok</span>(result)

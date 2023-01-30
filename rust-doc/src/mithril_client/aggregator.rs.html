@@ -665,8 +665,6 @@
 <a href="#665" id="665">665</a>
 <a href="#666" id="666">666</a>
 <a href="#667" id="667">667</a>
-<a href="#668" id="668">668</a>
-<a href="#669" id="669">669</a>
 </pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>flate2::read::GzDecoder;
 <span class="kw">use </span>futures::StreamExt;
@@ -824,9 +822,8 @@
             ))
         } <span class="kw">else </span>{
             AggregatorHandlerError::ApiVersionMismatch(<span class="macro">format!</span>(
-                <span class="string">&quot;version precondition failed, sent version &#39;{}&#39;.&quot;</span>,
-                MITHRIL_API_VERSION
-            ))
+                <span class="string">&quot;version precondition failed, sent version &#39;{MITHRIL_API_VERSION}&#39;.&quot;
+            </span>))
         }
     }
 }
@@ -983,9 +980,8 @@
 <span class="doccomment">/// Computes local archive filepath
 </span><span class="kw">fn </span>archive_file_path(digest: <span class="kw-2">&amp;</span>str, network: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;PathBuf, AggregatorHandlerError&gt; {
     <span class="prelude-val">Ok</span>(env::current_dir()<span class="question-mark">?</span>.join(path::Path::new(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
-        <span class="string">&quot;data/{}/{}/snapshot.archive.tar.gz&quot;</span>,
-        network, digest
-    ))))
+        <span class="string">&quot;data/{network}/{digest}/snapshot.archive.tar.gz&quot;
+    </span>))))
 }
 
 <span class="attr">#[cfg(test)]
@@ -1031,7 +1027,7 @@
             .join(path::Path::new(data_file_name));
         fs::create_dir_all(source_file_path.parent().unwrap()).unwrap();
         <span class="kw">let </span><span class="kw-2">mut </span>source_file = fs::File::create(<span class="kw-2">&amp;</span>source_file_path).unwrap();
-        <span class="macro">write!</span>(source_file, <span class="string">&quot;{}&quot;</span>, data_expected).unwrap();
+        <span class="macro">write!</span>(source_file, <span class="string">&quot;{data_expected}&quot;</span>).unwrap();
         <span class="kw">let </span>archive_file = fs::File::create(<span class="kw-2">&amp;</span>archive_file_path).unwrap();
         <span class="kw">let </span>archive_encoder = GzEncoder::new(<span class="kw-2">&amp;</span>archive_file, Compression::default());
         <span class="kw">let </span><span class="kw-2">mut </span>archive_builder = tar::Builder::new(archive_encoder);
@@ -1097,7 +1093,7 @@
         <span class="kw">let </span>(server, config) = setup_test();
         <span class="kw">let </span>snapshot_expected = fake_data::snapshots(<span class="number">1</span>).first().unwrap().to_owned();
         <span class="kw">let </span>_snapshots_mock = server.mock(|when, then| {
-            when.path(<span class="macro">format!</span>(<span class="string">&quot;/snapshot/{}&quot;</span>, digest));
+            when.path(<span class="macro">format!</span>(<span class="string">&quot;/snapshot/{digest}&quot;</span>));
             then.status(<span class="number">200</span>).body(<span class="macro">json!</span>(snapshot_expected).to_string());
         });
         <span class="kw">let </span>aggregator_client =
@@ -1112,7 +1108,7 @@
         <span class="kw">let </span>digest = <span class="string">&quot;digest123&quot;</span>;
         <span class="kw">let </span>(server, config) = setup_test();
         <span class="kw">let </span>_snapshots_mock = server.mock(|when, then| {
-            when.path(<span class="macro">format!</span>(<span class="string">&quot;/snapshot/{}&quot;</span>, digest));
+            when.path(<span class="macro">format!</span>(<span class="string">&quot;/snapshot/{digest}&quot;</span>));
             then.status(<span class="number">404</span>);
         });
         <span class="kw">let </span>aggregator_client =
@@ -1126,7 +1122,7 @@
         <span class="kw">let </span>(server, config) = setup_test();
         <span class="kw">let </span>digest = <span class="string">&quot;digest123&quot;</span>;
         <span class="kw">let </span>_snapshots_mock = server.mock(|when, then| {
-            when.path(<span class="macro">format!</span>(<span class="string">&quot;/snapshot/{}&quot;</span>, digest));
+            when.path(<span class="macro">format!</span>(<span class="string">&quot;/snapshot/{digest}&quot;</span>));
             then.status(<span class="number">412</span>).header(<span class="string">&quot;mithril-api-version&quot;</span>, <span class="string">&quot;0.0.999&quot;</span>);
         });
         <span class="kw">let </span>aggregator_client =
@@ -1144,7 +1140,7 @@
         <span class="kw">let </span>digest = <span class="string">&quot;digest123&quot;</span>;
         <span class="kw">let </span>(server, config) = setup_test();
         <span class="kw">let </span>_snapshots_mock = server.mock(|when, then| {
-            when.path(<span class="macro">format!</span>(<span class="string">&quot;/snapshot/{}&quot;</span>, digest));
+            when.path(<span class="macro">format!</span>(<span class="string">&quot;/snapshot/{digest}&quot;</span>));
             then.status(<span class="number">500</span>);
         });
         <span class="kw">let </span>aggregator_client =
@@ -1263,7 +1259,7 @@
         <span class="kw">let </span>(server, config) = setup_test();
         <span class="kw">let </span>certificate_hash = <span class="string">&quot;certificate-hash-123&quot;</span>;
         <span class="kw">let </span>_snapshots_mock = server.mock(|when, then| {
-            when.path(<span class="macro">format!</span>(<span class="string">&quot;/certificate/{}&quot;</span>, certificate_hash));
+            when.path(<span class="macro">format!</span>(<span class="string">&quot;/certificate/{certificate_hash}&quot;</span>));
             then.status(<span class="number">412</span>).header(<span class="string">&quot;mithril-api-version&quot;</span>, <span class="string">&quot;0.0.999&quot;</span>);
         });
         <span class="kw">let </span>aggregator_client =
@@ -1280,7 +1276,7 @@
         <span class="kw">let </span>(server, config) = setup_test();
         <span class="kw">let </span>certificate_expected = fake_data::certificate(certificate_hash.to_string());
         <span class="kw">let </span>_certificate_mock = server.mock(|when, then| {
-            when.path(<span class="macro">format!</span>(<span class="string">&quot;/certificate/{}&quot;</span>, certificate_hash));
+            when.path(<span class="macro">format!</span>(<span class="string">&quot;/certificate/{certificate_hash}&quot;</span>));
             then.status(<span class="number">200</span>)
                 .body(<span class="macro">json!</span>(certificate_expected).to_string());
         });
@@ -1298,7 +1294,7 @@
         <span class="kw">let </span>certificate_hash = <span class="string">&quot;certificate-hash-123&quot;</span>;
         <span class="kw">let </span>(server, config) = setup_test();
         <span class="kw">let </span>_certificate_mock = server.mock(|when, then| {
-            when.path(<span class="macro">format!</span>(<span class="string">&quot;/certificate/{}&quot;</span>, certificate_hash));
+            when.path(<span class="macro">format!</span>(<span class="string">&quot;/certificate/{certificate_hash}&quot;</span>));
             then.status(<span class="number">404</span>);
         });
         <span class="kw">let </span>aggregator_client =
@@ -1314,7 +1310,7 @@
         <span class="kw">let </span>certificate_hash = <span class="string">&quot;certificate-hash-123&quot;</span>;
         <span class="kw">let </span>(server, config) = setup_test();
         <span class="kw">let </span>_certificate_mock = server.mock(|when, then| {
-            when.path(<span class="macro">format!</span>(<span class="string">&quot;/certificate/{}&quot;</span>, certificate_hash));
+            when.path(<span class="macro">format!</span>(<span class="string">&quot;/certificate/{certificate_hash}&quot;</span>));
             then.status(<span class="number">500</span>);
         });
         <span class="kw">let </span>aggregator_client =
