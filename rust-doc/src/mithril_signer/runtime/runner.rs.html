@@ -798,6 +798,55 @@
 <a href="#798" id="798">798</a>
 <a href="#799" id="799">799</a>
 <a href="#800" id="800">800</a>
+<a href="#801" id="801">801</a>
+<a href="#802" id="802">802</a>
+<a href="#803" id="803">803</a>
+<a href="#804" id="804">804</a>
+<a href="#805" id="805">805</a>
+<a href="#806" id="806">806</a>
+<a href="#807" id="807">807</a>
+<a href="#808" id="808">808</a>
+<a href="#809" id="809">809</a>
+<a href="#810" id="810">810</a>
+<a href="#811" id="811">811</a>
+<a href="#812" id="812">812</a>
+<a href="#813" id="813">813</a>
+<a href="#814" id="814">814</a>
+<a href="#815" id="815">815</a>
+<a href="#816" id="816">816</a>
+<a href="#817" id="817">817</a>
+<a href="#818" id="818">818</a>
+<a href="#819" id="819">819</a>
+<a href="#820" id="820">820</a>
+<a href="#821" id="821">821</a>
+<a href="#822" id="822">822</a>
+<a href="#823" id="823">823</a>
+<a href="#824" id="824">824</a>
+<a href="#825" id="825">825</a>
+<a href="#826" id="826">826</a>
+<a href="#827" id="827">827</a>
+<a href="#828" id="828">828</a>
+<a href="#829" id="829">829</a>
+<a href="#830" id="830">830</a>
+<a href="#831" id="831">831</a>
+<a href="#832" id="832">832</a>
+<a href="#833" id="833">833</a>
+<a href="#834" id="834">834</a>
+<a href="#835" id="835">835</a>
+<a href="#836" id="836">836</a>
+<a href="#837" id="837">837</a>
+<a href="#838" id="838">838</a>
+<a href="#839" id="839">839</a>
+<a href="#840" id="840">840</a>
+<a href="#841" id="841">841</a>
+<a href="#842" id="842">842</a>
+<a href="#843" id="843">843</a>
+<a href="#844" id="844">844</a>
+<a href="#845" id="845">845</a>
+<a href="#846" id="846">846</a>
+<a href="#847" id="847">847</a>
+<a href="#848" id="848">848</a>
+<a href="#849" id="849">849</a>
 </pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>slog_scope::{debug, info, trace, warn};
 <span class="kw">use </span>std::error::Error <span class="kw">as </span>StdError;
@@ -886,6 +935,10 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         maybe_signature: <span class="prelude-ty">Option</span>&lt;SingleSignatures&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
+
+    <span class="doccomment">/// Read the current era and update the EraChecker.
+    </span><span class="kw">async fn </span>update_era_checker(<span class="kw-2">&amp;</span><span class="self">self</span>, epoch: Epoch)
+        -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
 }
 
 <span class="doccomment">/// This type represents the errors thrown from the Runner.
@@ -1229,6 +1282,25 @@
             <span class="prelude-val">Ok</span>(())
         }
     }
+
+    <span class="kw">async fn </span>update_era_checker(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        epoch: Epoch,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
+        <span class="kw">let </span>era_token = <span class="self">self
+            </span>.services
+            .era_reader
+            .read_era_epoch_token(epoch)
+            .<span class="kw">await
+            </span>.map_err(Box::new)<span class="question-mark">?</span>;
+
+        <span class="self">self</span>.services.era_checker.change_era(
+            era_token.get_current_supported_era()<span class="question-mark">?</span>,
+            era_token.get_current_epoch(),
+        );
+
+        <span class="prelude-val">Ok</span>(())
+    }
 }
 
 <span class="attr">#[cfg(test)]
@@ -1238,7 +1310,7 @@
         crypto_helper::ProtocolInitializer,
         digesters::{DumbImmutableDigester, DumbImmutableFileObserver},
         entities::{Epoch, StakeDistribution},
-        era::{EraChecker, SupportedEra},
+        era::{adapters::EraReaderBootstrapAdapter, EraChecker, EraReader},
         store::{
             adapter::{DumbStoreAdapter, MemoryAdapter},
             StakeStore, StakeStorer,
@@ -1267,34 +1339,45 @@
         }
     }
 
-    <span class="kw">fn </span>init_services() -&gt; SignerServices {
+    <span class="kw">async fn </span>init_services() -&gt; SignerServices {
         <span class="kw">let </span>adapter: MemoryAdapter&lt;Epoch, ProtocolInitializer&gt; = MemoryAdapter::new(<span class="prelude-val">None</span>).unwrap();
         <span class="kw">let </span>chain_observer = Arc::new(FakeObserver::default());
-        <span class="kw">let </span>era_checker = Arc::new(EraChecker::new(SupportedEra::dummy()));
+        <span class="kw">let </span>beacon_provider = Arc::new(BeaconProviderImpl::new(
+            chain_observer.clone(),
+            Arc::new(DumbImmutableFileObserver::default()),
+            CardanoNetwork::TestNet(<span class="number">42</span>),
+        ));
+        <span class="kw">let </span>era_reader = Arc::new(EraReader::new(Box::new(EraReaderBootstrapAdapter)));
+        <span class="kw">let </span>era_epoch_token = era_reader
+            .read_era_epoch_token(beacon_provider.get_current_beacon().<span class="kw">await</span>.unwrap().epoch)
+            .<span class="kw">await
+            </span>.unwrap();
+        <span class="kw">let </span>era_checker = Arc::new(EraChecker::new(
+            era_epoch_token.get_current_supported_era().unwrap(),
+            era_epoch_token.get_current_epoch(),
+        ));
+
         SignerServices {
             stake_store: Arc::new(StakeStore::new(Box::new(DumbStoreAdapter::new()), <span class="prelude-val">None</span>)),
             certificate_handler: Arc::new(DumbCertificateHandler::default()),
-            chain_observer: chain_observer.clone(),
+            chain_observer,
             digester: Arc::new(DumbImmutableDigester::new(DIGESTER_RESULT, <span class="bool-val">true</span>)),
             single_signer: Arc::new(MithrilSingleSigner::new(<span class="string">&quot;1&quot;</span>.to_string())),
-            beacon_provider: Arc::new(BeaconProviderImpl::new(
-                chain_observer,
-                Arc::new(DumbImmutableFileObserver::default()),
-                CardanoNetwork::TestNet(<span class="number">42</span>),
-            )),
+            beacon_provider,
             protocol_initializer_store: Arc::new(ProtocolInitializerStore::new(
                 Box::new(adapter),
                 <span class="prelude-val">None</span>,
             )),
             era_checker,
+            era_reader,
         }
     }
 
-    <span class="kw">fn </span>init_runner(
+    <span class="kw">async fn </span>init_runner(
         maybe_services: <span class="prelude-ty">Option</span>&lt;SignerServices&gt;,
         maybe_config: <span class="prelude-ty">Option</span>&lt;Config&gt;,
     ) -&gt; SignerRunner {
-        <span class="kw">let </span>services = init_services();
+        <span class="kw">let </span>services = init_services().<span class="kw">await</span>;
         <span class="kw">let </span>config = Config {
             aggregator_endpoint: <span class="string">&quot;http://0.0.0.0:3000&quot;</span>.to_string(),
             cardano_cli_path: PathBuf::new(),
@@ -1320,7 +1403,7 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_get_current_beacon() {
-        <span class="kw">let </span><span class="kw-2">mut </span>services = init_services();
+        <span class="kw">let </span><span class="kw-2">mut </span>services = init_services().<span class="kw">await</span>;
         <span class="kw">let </span>expected = fake_data::beacon();
         <span class="kw">let </span><span class="kw-2">mut </span>beacon_provider = MockFakeBeaconProvider::new();
         beacon_provider
@@ -1328,7 +1411,7 @@
             .once()
             .returning(|| <span class="prelude-val">Ok</span>(fake_data::beacon()));
         services.beacon_provider = Arc::new(beacon_provider);
-        <span class="kw">let </span>runner = init_runner(<span class="prelude-val">Some</span>(services), <span class="prelude-val">None</span>);
+        <span class="kw">let </span>runner = init_runner(<span class="prelude-val">Some</span>(services), <span class="prelude-val">None</span>).<span class="kw">await</span>;
 
         <span class="macro">assert_eq!</span>(
             expected,
@@ -1341,7 +1424,7 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_update_stake_distribution() {
-        <span class="kw">let </span>services = init_services();
+        <span class="kw">let </span>services = init_services().<span class="kw">await</span>;
         <span class="kw">let </span>stake_store = services.stake_store.clone();
         <span class="kw">let </span>current_epoch = services
             .chain_observer
@@ -1349,7 +1432,7 @@
             .<span class="kw">await
             </span>.expect(<span class="string">&quot;chain observer should not fail&quot;</span>)
             .expect(<span class="string">&quot;the observer should return an epoch&quot;</span>);
-        <span class="kw">let </span>runner = init_runner(<span class="prelude-val">Some</span>(services), <span class="prelude-val">None</span>);
+        <span class="kw">let </span>runner = init_runner(<span class="prelude-val">Some</span>(services), <span class="prelude-val">None</span>).<span class="kw">await</span>;
         <span class="macro">assert!</span>(stake_store
             .get_stakes(current_epoch)
             .<span class="kw">await
@@ -1372,7 +1455,7 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_register_signer_to_aggregator() {
-        <span class="kw">let </span><span class="kw-2">mut </span>services = init_services();
+        <span class="kw">let </span><span class="kw-2">mut </span>services = init_services().<span class="kw">await</span>;
         <span class="kw">let </span>certificate_handler = Arc::new(DumbCertificateHandler::default());
         services.certificate_handler = certificate_handler.clone();
         <span class="kw">let </span>protocol_initializer_store = services.protocol_initializer_store.clone();
@@ -1395,7 +1478,7 @@
             .save_stakes(epoch, stakes)
             .<span class="kw">await
             </span>.unwrap();
-        <span class="kw">let </span>runner = init_runner(<span class="prelude-val">Some</span>(services), <span class="prelude-val">None</span>);
+        <span class="kw">let </span>runner = init_runner(<span class="prelude-val">Some</span>(services), <span class="prelude-val">None</span>).<span class="kw">await</span>;
         <span class="kw">let </span>epoch = chain_observer
             .current_beacon
             .read()
@@ -1430,9 +1513,9 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_can_i_sign() {
-        <span class="kw">let </span>services = init_services();
+        <span class="kw">let </span>services = init_services().<span class="kw">await</span>;
         <span class="kw">let </span>protocol_initializer_store = services.protocol_initializer_store.clone();
-        <span class="kw">let </span>runner = init_runner(<span class="prelude-val">Some</span>(services), <span class="prelude-val">None</span>);
+        <span class="kw">let </span>runner = init_runner(<span class="prelude-val">Some</span>(services), <span class="prelude-val">None</span>).<span class="kw">await</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>pending_certificate = fake_data::certificate_pending();
         <span class="kw">let </span>epoch = pending_certificate.beacon.epoch;
         <span class="kw">let </span><span class="kw-2">mut </span>signer = <span class="kw-2">&amp;mut </span>pending_certificate.signers[<span class="number">0</span>];
@@ -1457,9 +1540,9 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_associate_signers_with_stake() {
-        <span class="kw">let </span>services = init_services();
+        <span class="kw">let </span>services = init_services().<span class="kw">await</span>;
         <span class="kw">let </span>stake_store = services.stake_store.clone();
-        <span class="kw">let </span>runner = init_runner(<span class="prelude-val">Some</span>(services), <span class="prelude-val">None</span>);
+        <span class="kw">let </span>runner = init_runner(<span class="prelude-val">Some</span>(services), <span class="prelude-val">None</span>).<span class="kw">await</span>;
         <span class="kw">let </span>epoch = Epoch(<span class="number">12</span>);
         <span class="kw">let </span>expected = fake_data::signers_with_stakes(<span class="number">5</span>);
         <span class="kw">let </span>signers = expected
@@ -1487,7 +1570,7 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_compute_message() {
-        <span class="kw">let </span><span class="kw-2">mut </span>services = init_services();
+        <span class="kw">let </span><span class="kw-2">mut </span>services = init_services().<span class="kw">await</span>;
         <span class="kw">let </span>current_beacon = services
             .beacon_provider
             .get_current_beacon()
@@ -1522,7 +1605,7 @@
             .expect(<span class="string">&quot;an avk should have been computed&quot;</span>);
         expected.set_message_part(ProtocolMessagePartKey::NextAggregateVerificationKey, avk);
 
-        <span class="kw">let </span>runner = init_runner(<span class="prelude-val">Some</span>(services), <span class="prelude-val">None</span>);
+        <span class="kw">let </span>runner = init_runner(<span class="prelude-val">Some</span>(services), <span class="prelude-val">None</span>).<span class="kw">await</span>;
         <span class="kw">let </span>message = runner
             .compute_message(<span class="kw-2">&amp;</span>current_beacon, <span class="kw-2">&amp;</span>next_signers)
             .<span class="kw">await
@@ -1533,7 +1616,7 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_compute_single_signature() {
-        <span class="kw">let </span><span class="kw-2">mut </span>services = init_services();
+        <span class="kw">let </span><span class="kw-2">mut </span>services = init_services().<span class="kw">await</span>;
         <span class="kw">let </span>current_beacon = services
             .beacon_provider
             .get_current_beacon()
@@ -1573,7 +1656,7 @@
             .compute_single_signatures(<span class="kw-2">&amp;</span>message, <span class="kw-2">&amp;</span>signers, <span class="kw-2">&amp;</span>protocol_initializer)
             .expect(<span class="string">&quot;compute_single_signatures should not fail&quot;</span>);
 
-        <span class="kw">let </span>runner = init_runner(<span class="prelude-val">Some</span>(services), <span class="prelude-val">None</span>);
+        <span class="kw">let </span>runner = init_runner(<span class="prelude-val">Some</span>(services), <span class="prelude-val">None</span>).<span class="kw">await</span>;
         <span class="kw">let </span>single_signature = runner
             .compute_single_signature(current_beacon.epoch, <span class="kw-2">&amp;</span>message, <span class="kw-2">&amp;</span>signers)
             .<span class="kw">await
@@ -1583,19 +1666,34 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_send_single_signature() {
-        <span class="kw">let </span><span class="kw-2">mut </span>services = init_services();
+        <span class="kw">let </span><span class="kw-2">mut </span>services = init_services().<span class="kw">await</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>certificate_handler = MockCertificateHandler::new();
         certificate_handler
             .expect_register_signatures()
             .once()
             .returning(|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(()));
         services.certificate_handler = Arc::new(certificate_handler);
-        <span class="kw">let </span>runner = init_runner(<span class="prelude-val">Some</span>(services), <span class="prelude-val">None</span>);
+        <span class="kw">let </span>runner = init_runner(<span class="prelude-val">Some</span>(services), <span class="prelude-val">None</span>).<span class="kw">await</span>;
 
         runner
             .send_single_signature(<span class="prelude-val">Some</span>(fake_data::single_signatures(<span class="macro">vec!</span>[<span class="number">2</span>, <span class="number">5</span>, <span class="number">12</span>])))
             .<span class="kw">await
             </span>.expect(<span class="string">&quot;send_single_signature should not fail&quot;</span>);
+    }
+
+    <span class="attr">#[tokio::test]
+    </span><span class="kw">async fn </span>test_update_era_checker() {
+        <span class="kw">let </span>services = init_services().<span class="kw">await</span>;
+        <span class="kw">let </span>beacon_provider = services.beacon_provider.clone();
+        <span class="kw">let </span>era_checker = services.era_checker.clone();
+        <span class="kw">let </span><span class="kw-2">mut </span>beacon = beacon_provider.get_current_beacon().<span class="kw">await</span>.unwrap();
+
+        <span class="macro">assert_eq!</span>(beacon.epoch, era_checker.current_epoch());
+        <span class="kw">let </span>runner = init_runner(<span class="prelude-val">Some</span>(services), <span class="prelude-val">None</span>).<span class="kw">await</span>;
+        beacon.epoch += <span class="number">1</span>;
+        runner.update_era_checker(beacon.epoch).<span class="kw">await</span>.unwrap();
+
+        <span class="macro">assert_eq!</span>(beacon.epoch, era_checker.current_epoch());
     }
 }
 </code></pre></div>

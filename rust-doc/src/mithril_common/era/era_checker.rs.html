@@ -52,32 +52,59 @@
 <a href="#52" id="52">52</a>
 <a href="#53" id="53">53</a>
 <a href="#54" id="54">54</a>
+<a href="#55" id="55">55</a>
+<a href="#56" id="56">56</a>
+<a href="#57" id="57">57</a>
+<a href="#58" id="58">58</a>
+<a href="#59" id="59">59</a>
+<a href="#60" id="60">60</a>
+<a href="#61" id="61">61</a>
+<a href="#62" id="62">62</a>
+<a href="#63" id="63">63</a>
+<a href="#64" id="64">64</a>
+<a href="#65" id="65">65</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::sync::RwLock;
+
+<span class="kw">use </span><span class="kw">crate</span>::entities::Epoch;
 
 <span class="kw">use </span><span class="kw">super</span>::SupportedEra;
 
+<span class="kw">struct </span>SupportedEraStamp {
+    era: SupportedEra,
+    epoch: Epoch,
+}
+
 <span class="doccomment">/// EraChecker allows the verification of the current era
 </span><span class="kw">pub struct </span>EraChecker {
-    current_era: RwLock&lt;SupportedEra&gt;,
+    current_era_stamp: RwLock&lt;SupportedEraStamp&gt;,
 }
 
 <span class="kw">impl </span>EraChecker {
     <span class="doccomment">/// Era checker factory
-    </span><span class="kw">pub fn </span>new(era: SupportedEra) -&gt; <span class="self">Self </span>{
+    </span><span class="kw">pub fn </span>new(era: SupportedEra, epoch: Epoch) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
-            current_era: RwLock::new(era),
+            current_era_stamp: RwLock::new(SupportedEraStamp { era, epoch }),
         }
     }
 
     <span class="doccomment">/// Retrieve the current era
     </span><span class="kw">pub fn </span>current_era(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; SupportedEra {
-        <span class="self">self</span>.current_era.read().unwrap().to_owned()
+        <span class="self">self</span>.current_era_stamp.read().unwrap().era
+    }
+
+    <span class="doccomment">/// Retrieve the Epoch the checker was the last updated.
+    </span><span class="kw">pub fn </span>current_epoch(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Epoch {
+        <span class="self">self</span>.current_era_stamp.read().unwrap().epoch
     }
 
     <span class="doccomment">/// Change the current era
-    </span><span class="kw">pub fn </span>change_era(<span class="kw-2">&amp;</span><span class="self">self</span>, new_era: SupportedEra) {
-        <span class="kw">let </span><span class="kw-2">mut </span>era = <span class="self">self</span>.current_era.write().unwrap();
-        <span class="kw-2">*</span>era = new_era;
+    </span><span class="kw">pub fn </span>change_era(<span class="kw-2">&amp;</span><span class="self">self</span>, new_era: SupportedEra, current_epoch: Epoch) {
+        <span class="kw">let </span>new_stamp = SupportedEraStamp {
+            era: new_era,
+            epoch: current_epoch,
+        };
+        <span class="kw">let </span><span class="kw-2">mut </span>stamp = <span class="self">self</span>.current_era_stamp.write().unwrap();
+        <span class="kw-2">*</span>stamp = new_stamp;
     }
 
     <span class="doccomment">/// Check if an era is active
@@ -93,17 +120,12 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>can_change_era() {
         <span class="kw">let </span>expected_era = SupportedEra::dummy();
-        <span class="kw">let </span>era_checker = EraChecker::new(expected_era);
-        era_checker.change_era(expected_era);
+        <span class="kw">let </span>era_checker = EraChecker::new(expected_era, Epoch(<span class="number">1</span>));
+        era_checker.change_era(expected_era, Epoch(<span class="number">2</span>));
 
         <span class="macro">assert_eq!</span>(expected_era, era_checker.current_era());
-    }
-
-    <span class="attr">#[test]
-    </span><span class="kw">fn </span>is_era_active_panics_when_current_era_not_set() {
-        <span class="kw">let </span>expected_era = SupportedEra::dummy();
-        <span class="kw">let </span>era_checker = EraChecker::new(expected_era);
-        era_checker.is_era_active(expected_era);
+        <span class="macro">assert_eq!</span>(Epoch(<span class="number">2</span>), era_checker.current_epoch());
+        <span class="macro">assert!</span>(era_checker.is_era_active(expected_era));
     }
 }
 </code></pre></div>

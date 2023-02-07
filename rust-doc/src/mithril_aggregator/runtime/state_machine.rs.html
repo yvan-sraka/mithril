@@ -655,6 +655,17 @@
 <a href="#655" id="655">655</a>
 <a href="#656" id="656">656</a>
 <a href="#657" id="657">657</a>
+<a href="#658" id="658">658</a>
+<a href="#659" id="659">659</a>
+<a href="#660" id="660">660</a>
+<a href="#661" id="661">661</a>
+<a href="#662" id="662">662</a>
+<a href="#663" id="663">663</a>
+<a href="#664" id="664">664</a>
+<a href="#665" id="665">665</a>
+<a href="#666" id="666">666</a>
+<a href="#667" id="667">667</a>
+<a href="#668" id="668">668</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::runtime::{AggregatorRunnerTrait, RuntimeError, WorkingCertificate};
 
 <span class="kw">use </span>mithril_common::entities::Beacon;
@@ -879,6 +890,7 @@
         <span class="kw">if </span>maybe_current_beacon.is_none() || maybe_current_beacon.unwrap().epoch &lt; new_beacon.epoch
         {
             <span class="self">self</span>.runner.close_signer_registration_round().<span class="kw">await</span><span class="question-mark">?</span>;
+            <span class="self">self</span>.runner.update_era_checker(<span class="kw-2">&amp;</span>new_beacon).<span class="kw">await</span><span class="question-mark">?</span>;
             <span class="self">self</span>.runner.update_stake_distribution(<span class="kw-2">&amp;</span>new_beacon).<span class="kw">await</span><span class="question-mark">?</span>;
             <span class="self">self</span>.runner
                 .open_signer_registration_round(<span class="kw-2">&amp;</span>new_beacon)
@@ -1045,6 +1057,11 @@
             .expect_is_certificate_chain_valid()
             .once()
             .returning(|| <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>));
+        runner
+            .expect_update_era_checker()
+            .with(predicate::eq(fake_data::beacon()))
+            .once()
+            .returning(|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(()));
 
         <span class="kw">let </span><span class="kw-2">mut </span>runtime = init_runtime(
             <span class="prelude-val">Some</span>(AggregatorState::Idle(IdleState {
@@ -1092,6 +1109,11 @@
             .expect_is_certificate_chain_valid()
             .once()
             .returning(|| <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>));
+        runner
+            .expect_update_era_checker()
+            .with(predicate::eq(fake_data::beacon()))
+            .once()
+            .returning(|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(()));
 
         <span class="kw">let </span><span class="kw-2">mut </span>runtime = init_runtime(
             <span class="prelude-val">Some</span>(AggregatorState::Idle(IdleState {

@@ -381,6 +381,18 @@
 <a href="#381" id="381">381</a>
 <a href="#382" id="382">382</a>
 <a href="#383" id="383">383</a>
+<a href="#384" id="384">384</a>
+<a href="#385" id="385">385</a>
+<a href="#386" id="386">386</a>
+<a href="#387" id="387">387</a>
+<a href="#388" id="388">388</a>
+<a href="#389" id="389">389</a>
+<a href="#390" id="390">390</a>
+<a href="#391" id="391">391</a>
+<a href="#392" id="392">392</a>
+<a href="#393" id="393">393</a>
+<a href="#394" id="394">394</a>
+<a href="#395" id="395">395</a>
 </pre><pre class="rust"><code><span class="kw">use </span>mithril_common::{
     certificate_chain::CertificateVerifier,
     chain_observer::ChainObserver,
@@ -389,7 +401,7 @@
     entities::{
         Certificate, Epoch, ProtocolParameters, Signer, SignerWithStake, StakeDistribution,
     },
-    era::EraChecker,
+    era::{EraChecker, EraReader},
     store::{StakeStore, StakeStorer},
     BeaconProvider,
 };
@@ -470,6 +482,9 @@
 
     <span class="doccomment">/// Era checker service
     </span><span class="kw">pub </span>era_checker: Arc&lt;EraChecker&gt;,
+
+    <span class="doccomment">/// Era reader service
+    </span><span class="kw">pub </span>era_reader: Arc&lt;EraReader&gt;,
 }
 
 <span class="attr">#[doc(hidden)]
@@ -652,10 +667,10 @@
         chain_observer::FakeObserver,
         crypto_helper::{key_encode_hex, ProtocolGenesisSigner},
         digesters::{DumbImmutableDigester, DumbImmutableFileObserver},
-        era::{EraChecker, SupportedEra},
+        era::{adapters::EraReaderBootstrapAdapter, EraChecker, EraReader},
         store::{adapter::MemoryAdapter, StakeStore},
         test_utils::fake_data,
-        BeaconProviderImpl, CardanoNetwork,
+        BeaconProvider, BeaconProviderImpl, CardanoNetwork,
     };
     <span class="kw">use </span>std::{path::PathBuf, sync::Arc};
     <span class="kw">use </span>tokio::sync::RwLock;
@@ -730,7 +745,15 @@
             chain_observer.clone(),
             verification_key_store.clone(),
         ));
-        <span class="kw">let </span>era_checker = Arc::new(EraChecker::new(SupportedEra::dummy()));
+        <span class="kw">let </span>era_reader = Arc::new(EraReader::new(Box::new(EraReaderBootstrapAdapter)));
+        <span class="kw">let </span>era_epoch_token = era_reader
+            .read_era_epoch_token(beacon_provider.get_current_beacon().<span class="kw">await</span>.unwrap().epoch)
+            .<span class="kw">await
+            </span>.unwrap();
+        <span class="kw">let </span>era_checker = Arc::new(EraChecker::new(
+            era_epoch_token.get_current_supported_era().unwrap(),
+            era_epoch_token.get_current_epoch(),
+        ));
 
         <span class="kw">let </span>dependency_manager = DependencyManager {
             config,
@@ -753,6 +776,7 @@
             signer_registerer: signer_registerer.clone(),
             signer_registration_round_opener: signer_registerer,
             era_checker,
+            era_reader,
         };
 
         <span class="kw">let </span>config = AggregatorConfig::new(

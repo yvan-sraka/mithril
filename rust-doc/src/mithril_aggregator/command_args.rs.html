@@ -623,6 +623,13 @@
 <a href="#623" id="623">623</a>
 <a href="#624" id="624">624</a>
 <a href="#625" id="625">625</a>
+<a href="#626" id="626">626</a>
+<a href="#627" id="627">627</a>
+<a href="#628" id="628">628</a>
+<a href="#629" id="629">629</a>
+<a href="#630" id="630">630</a>
+<a href="#631" id="631">631</a>
+<a href="#632" id="632">632</a>
 </pre><pre class="rust"><code><span class="kw">use </span>clap::{Parser, Subcommand};
 <span class="kw">use </span>config::{builder::DefaultState, ConfigBuilder, Map, Source, Value, ValueKind};
 <span class="kw">use </span>slog::Level;
@@ -640,9 +647,9 @@
         CardanoImmutableDigester, ImmutableFileSystemObserver,
     },
     entities::{Epoch, HexEncodedGenesisSecretKey},
-    era::{EraChecker, SupportedEra},
+    era::{adapters::EraReaderBootstrapAdapter, EraChecker, EraReader},
     store::{adapter::SQLiteAdapter, StakeStore},
-    BeaconProviderImpl,
+    BeaconProvider, BeaconProviderImpl,
 };
 
 <span class="kw">use crate</span>::{
@@ -1024,8 +1031,14 @@
         ));
 
         <span class="comment">// TODO: use EraReader when it is implemented to retrieve current era
-        </span><span class="kw">let </span>current_era = SupportedEra::Thales;
-        <span class="kw">let </span>era_checker = Arc::new(EraChecker::new(current_era));
+        </span><span class="kw">let </span>era_reader = Arc::new(EraReader::new(Box::new(EraReaderBootstrapAdapter)));
+        <span class="kw">let </span>era_epoch_token = era_reader
+            .read_era_epoch_token(beacon_provider.get_current_beacon().<span class="kw">await</span><span class="question-mark">?</span>.epoch)
+            .<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>era_checker = Arc::new(EraChecker::new(
+            era_epoch_token.get_current_supported_era()<span class="question-mark">?</span>,
+            era_epoch_token.get_current_epoch(),
+        ));
 
         <span class="comment">// Init dependency manager
         </span><span class="kw">let </span>dependency_manager = DependencyManager {
@@ -1049,6 +1062,7 @@
             signer_registerer: signer_registerer.clone(),
             signer_registration_round_opener: signer_registerer.clone(),
             era_checker: era_checker.clone(),
+            era_reader: era_reader.clone(),
         };
         <span class="kw">let </span>dependency_manager = Arc::new(dependency_manager);
 
