@@ -300,6 +300,27 @@
 <a href="#300" id="300">300</a>
 <a href="#301" id="301">301</a>
 <a href="#302" id="302">302</a>
+<a href="#303" id="303">303</a>
+<a href="#304" id="304">304</a>
+<a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
+<a href="#308" id="308">308</a>
+<a href="#309" id="309">309</a>
+<a href="#310" id="310">310</a>
+<a href="#311" id="311">311</a>
+<a href="#312" id="312">312</a>
+<a href="#313" id="313">313</a>
+<a href="#314" id="314">314</a>
+<a href="#315" id="315">315</a>
+<a href="#316" id="316">316</a>
+<a href="#317" id="317">317</a>
+<a href="#318" id="318">318</a>
+<a href="#319" id="319">319</a>
+<a href="#320" id="320">320</a>
+<a href="#321" id="321">321</a>
+<a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
 </pre><pre class="rust"><code><span class="kw">use </span>hex::ToHex;
 <span class="kw">use </span>slog_scope::{info, trace, warn};
 <span class="kw">use </span>std::path::PathBuf;
@@ -418,12 +439,11 @@
         <span class="self">Self </span>{ party_id }
     }
 
-    <span class="doccomment">/// Create a cryptographic signer.
-    </span><span class="kw">fn </span>create_protocol_signer(
+    <span class="doccomment">/// Create a protocol key registration.
+    </span><span class="kw">fn </span>create_protocol_key_registration(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         signers_with_stake: <span class="kw-2">&amp;</span>[SignerWithStake],
-        protocol_initializer: <span class="kw-2">&amp;</span>ProtocolInitializer,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;ProtocolSigner, SingleSignerError&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;ProtocolKeyRegistration, SingleSignerError&gt; {
         <span class="kw">let </span>signers = signers_with_stake
             .iter()
             .filter(|signer| !signer.verification_key.is_empty())
@@ -466,9 +486,34 @@
                 )
                 .map_err(|e| SingleSignerError::ProtocolSignerCreationFailure(e.to_string()))<span class="question-mark">?</span>;
         }
+        <span class="prelude-val">Ok</span>(key_reg)
+    }
+
+    <span class="doccomment">/// Create a protocol signer.
+    </span><span class="kw">fn </span>create_protocol_signer(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        signers_with_stake: <span class="kw-2">&amp;</span>[SignerWithStake],
+        protocol_initializer: <span class="kw-2">&amp;</span>ProtocolInitializer,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;ProtocolSigner, SingleSignerError&gt; {
+        <span class="kw">let </span>key_reg = <span class="self">self</span>.create_protocol_key_registration(signers_with_stake)<span class="question-mark">?</span>;
         <span class="kw">let </span>closed_reg = key_reg.close();
 
         <span class="prelude-val">Ok</span>(protocol_initializer.to_owned().new_signer(closed_reg)<span class="question-mark">?</span>)
+    }
+
+    <span class="doccomment">/// Create a cryptographic clerk.
+    </span><span class="kw">fn </span>create_protocol_clerk(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        signers_with_stake: <span class="kw-2">&amp;</span>[SignerWithStake],
+        protocol_initializer: <span class="kw-2">&amp;</span>ProtocolInitializer,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;ProtocolClerk, SingleSignerError&gt; {
+        <span class="kw">let </span>key_reg = <span class="self">self</span>.create_protocol_key_registration(signers_with_stake)<span class="question-mark">?</span>;
+        <span class="kw">let </span>closed_reg = key_reg.close();
+
+        <span class="prelude-val">Ok</span>(ProtocolClerk::from_registration(
+            <span class="kw-2">&amp;</span>protocol_initializer.get_protocol_parameters(),
+            <span class="kw-2">&amp;</span>closed_reg,
+        ))
     }
 }
 
@@ -515,13 +560,10 @@
         signers_with_stake: <span class="kw-2">&amp;</span>[SignerWithStake],
         protocol_initializer: <span class="kw-2">&amp;</span>ProtocolInitializer,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;String&gt;, SingleSignerError&gt; {
-        <span class="kw">match </span><span class="self">self</span>.create_protocol_signer(signers_with_stake, protocol_initializer) {
-            <span class="prelude-val">Ok</span>(protocol_signer) =&gt; {
-                <span class="kw">let </span>clerk = ProtocolClerk::from_signer(<span class="kw-2">&amp;</span>protocol_signer);
-                <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(
-                    key_encode_hex(clerk.compute_avk()).map_err(SingleSignerError::Codec)<span class="question-mark">?</span>,
-                ))
-            }
+        <span class="kw">match </span><span class="self">self</span>.create_protocol_clerk(signers_with_stake, protocol_initializer) {
+            <span class="prelude-val">Ok</span>(clerk) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(
+                key_encode_hex(clerk.compute_avk()).map_err(SingleSignerError::Codec)<span class="question-mark">?</span>,
+            )),
             <span class="prelude-val">Err</span>(SingleSignerError::ProtocolSignerCreationFailure(err)) =&gt; {
                 <span class="macro">warn!</span>(<span class="string">&quot;compute_aggregate_verification_key::protocol_signer_creation_failure&quot;</span>; <span class="string">&quot;error&quot; </span>=&gt; err);
                 <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
