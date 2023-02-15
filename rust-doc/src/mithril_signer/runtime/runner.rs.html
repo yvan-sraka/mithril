@@ -847,6 +847,8 @@
 <a href="#847" id="847">847</a>
 <a href="#848" id="848">848</a>
 <a href="#849" id="849">849</a>
+<a href="#850" id="850">850</a>
+<a href="#851" id="851">851</a>
 </pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>slog_scope::{debug, info, trace, warn};
 <span class="kw">use </span>std::error::Error <span class="kw">as </span>StdError;
@@ -868,7 +870,7 @@
     store::StakeStorer,
 };
 
-<span class="kw">use crate</span>::{Config, MithrilProtocolInitializerBuilder};
+<span class="kw">use crate</span>::{Configuration, MithrilProtocolInitializerBuilder};
 
 <span class="kw">use </span><span class="kw">super</span>::signer_services::SignerServices;
 
@@ -963,13 +965,13 @@
 
 <span class="doccomment">/// Controller methods for the Signer&#39;s state machine.
 </span><span class="kw">pub struct </span>SignerRunner {
-    config: Config,
+    config: Configuration,
     services: SignerServices,
 }
 
 <span class="kw">impl </span>SignerRunner {
     <span class="doccomment">/// Create a new Runner instance.
-    </span><span class="kw">pub fn </span>new(config: Config, services: SignerServices) -&gt; <span class="self">Self </span>{
+    </span><span class="kw">pub fn </span>new(config: Configuration, services: SignerServices) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{ services, config }
     }
 }
@@ -1310,7 +1312,7 @@
         crypto_helper::ProtocolInitializer,
         digesters::{DumbImmutableDigester, DumbImmutableFileObserver},
         entities::{Epoch, StakeDistribution},
-        era::{adapters::EraReaderBootstrapAdapter, EraChecker, EraReader},
+        era::{adapters::EraReaderBootstrapAdapter, EraChecker, EraReader, EraReaderAdapterType},
         store::{
             adapter::{DumbStoreAdapter, MemoryAdapter},
             StakeStore, StakeStorer,
@@ -1375,10 +1377,10 @@
 
     <span class="kw">async fn </span>init_runner(
         maybe_services: <span class="prelude-ty">Option</span>&lt;SignerServices&gt;,
-        maybe_config: <span class="prelude-ty">Option</span>&lt;Config&gt;,
+        maybe_config: <span class="prelude-ty">Option</span>&lt;Configuration&gt;,
     ) -&gt; SignerRunner {
         <span class="kw">let </span>services = init_services().<span class="kw">await</span>;
-        <span class="kw">let </span>config = Config {
+        <span class="kw">let </span>config = Configuration {
             aggregator_endpoint: <span class="string">&quot;http://0.0.0.0:3000&quot;</span>.to_string(),
             cardano_cli_path: PathBuf::new(),
             cardano_node_socket_path: PathBuf::new(),
@@ -1393,6 +1395,8 @@
             disable_digests_cache: <span class="bool-val">false</span>,
             store_retention_limit: <span class="prelude-val">None</span>,
             reset_digests_cache: <span class="bool-val">false</span>,
+            era_reader_adapter_type: EraReaderAdapterType::Bootstrap,
+            era_reader_adapter_params: <span class="prelude-val">None</span>,
         };
 
         SignerRunner::new(

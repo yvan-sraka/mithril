@@ -292,6 +292,15 @@
 <a href="#292" id="292">292</a>
 <a href="#293" id="293">293</a>
 <a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
+<a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
+<a href="#299" id="299">299</a>
+<a href="#300" id="300">300</a>
+<a href="#301" id="301">301</a>
+<a href="#302" id="302">302</a>
+<a href="#303" id="303">303</a>
 </pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>std::{fs, sync::Arc};
 
@@ -303,14 +312,14 @@
     chain_observer::{CardanoCliChainObserver, CardanoCliRunner, ChainObserver},
     crypto_helper::{OpCert, ProtocolPartyId, SerDeShelleyFileFormat},
     digesters::{CardanoImmutableDigester, ImmutableDigester, ImmutableFileSystemObserver},
-    era::{adapters::EraReaderBootstrapAdapter, EraChecker, EraReader},
+    era::{EraChecker, EraReader},
     store::{adapter::SQLiteAdapter, StakeStore},
     BeaconProvider, BeaconProviderImpl,
 };
 
 <span class="kw">use crate</span>::{
     certificate_handler::CertificateHandler, single_signer::SingleSigner,
-    CertificateHandlerHTTPClient, Config, MithrilSingleSigner, ProtocolInitializerStore,
+    CertificateHandlerHTTPClient, Configuration, MithrilSingleSigner, ProtocolInitializerStore,
     ProtocolInitializerStorer,
 };
 
@@ -333,16 +342,16 @@
 
 <span class="doccomment">/// Create a SignerService instance for Production environment.
 </span><span class="kw">pub struct </span>ProductionServiceBuilder&lt;<span class="lifetime">&#39;a</span>&gt; {
-    config: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Config,
-    chain_observer_builder: <span class="kw">fn</span>(<span class="kw-2">&amp;</span>Config) -&gt; <span class="prelude-ty">Result</span>&lt;ChainObserverService&gt;,
-    immutable_file_observer_builder: <span class="kw">fn</span>(<span class="kw-2">&amp;</span>Config) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;<span class="kw">dyn </span>ImmutableFileObserver&gt;&gt;,
+    config: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Configuration,
+    chain_observer_builder: <span class="kw">fn</span>(<span class="kw-2">&amp;</span>Configuration) -&gt; <span class="prelude-ty">Result</span>&lt;ChainObserverService&gt;,
+    immutable_file_observer_builder: <span class="kw">fn</span>(<span class="kw-2">&amp;</span>Configuration) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;<span class="kw">dyn </span>ImmutableFileObserver&gt;&gt;,
 }
 
 <span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; ProductionServiceBuilder&lt;<span class="lifetime">&#39;a</span>&gt; {
     <span class="doccomment">/// Create a new production service builder.
-    </span><span class="kw">pub fn </span>new(config: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Config) -&gt; <span class="self">Self </span>{
-        <span class="kw">let </span>chain_observer_builder: <span class="kw">fn</span>(<span class="kw-2">&amp;</span>Config) -&gt; <span class="prelude-ty">Result</span>&lt;ChainObserverService&gt; =
-            |config: <span class="kw-2">&amp;</span>Config| {
+    </span><span class="kw">pub fn </span>new(config: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Configuration) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span>chain_observer_builder: <span class="kw">fn</span>(<span class="kw-2">&amp;</span>Configuration) -&gt; <span class="prelude-ty">Result</span>&lt;ChainObserverService&gt; =
+            |config: <span class="kw-2">&amp;</span>Configuration| {
                 <span class="prelude-val">Ok</span>(Arc::new(CardanoCliChainObserver::new(Box::new(
                     CardanoCliRunner::new(
                         config.cardano_cli_path.clone(),
@@ -351,12 +360,13 @@
                     ),
                 ))))
             };
-        <span class="kw">let </span>immutable_file_observer_builder: <span class="kw">fn</span>(<span class="kw-2">&amp;</span>Config) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;<span class="kw">dyn </span>ImmutableFileObserver&gt;&gt; =
-            |config: <span class="kw-2">&amp;</span>Config| {
-                <span class="prelude-val">Ok</span>(Arc::new(ImmutableFileSystemObserver::new(
-                    <span class="kw-2">&amp;</span>config.db_directory,
-                )))
-            };
+        <span class="kw">let </span>immutable_file_observer_builder: <span class="kw">fn</span>(
+            <span class="kw-2">&amp;</span>Configuration,
+        ) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;<span class="kw">dyn </span>ImmutableFileObserver&gt;&gt; = |config: <span class="kw-2">&amp;</span>Configuration| {
+            <span class="prelude-val">Ok</span>(Arc::new(ImmutableFileSystemObserver::new(
+                <span class="kw-2">&amp;</span>config.db_directory,
+            )))
+        };
 
         <span class="self">Self </span>{
             config,
@@ -368,7 +378,7 @@
     <span class="doccomment">/// Override immutable file observer builder.
     </span><span class="kw">pub fn </span>override_immutable_file_observer_builder(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        builder: <span class="kw">fn</span>(<span class="kw-2">&amp;</span>Config) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;<span class="kw">dyn </span>ImmutableFileObserver&gt;&gt;,
+        builder: <span class="kw">fn</span>(<span class="kw-2">&amp;</span>Configuration) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;<span class="kw">dyn </span>ImmutableFileObserver&gt;&gt;,
     ) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
         <span class="self">self</span>.immutable_file_observer_builder = builder;
 
@@ -378,7 +388,7 @@
     <span class="doccomment">/// Override default chain observer builder.
     </span><span class="kw">pub fn </span>override_chain_observer_builder(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        builder: <span class="kw">fn</span>(<span class="kw-2">&amp;</span>Config) -&gt; <span class="prelude-ty">Result</span>&lt;ChainObserverService&gt;,
+        builder: <span class="kw">fn</span>(<span class="kw-2">&amp;</span>Configuration) -&gt; <span class="prelude-ty">Result</span>&lt;ChainObserverService&gt;,
     ) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
         <span class="self">self</span>.chain_observer_builder = builder;
 
@@ -464,8 +474,11 @@
                 <span class="self">self</span>.config.get_network()<span class="question-mark">?</span>.to_owned(),
             ))
         };
-        <span class="comment">// TODO: use EraReader when it is implemented to retrieve current era
-        </span><span class="kw">let </span>era_reader = Arc::new(EraReader::new(Box::new(EraReaderBootstrapAdapter)));
+
+        <span class="kw">let </span>era_reader = Arc::new(EraReader::new(
+            <span class="self">self</span>.config
+                .build_era_reader_adapter(chain_observer.clone())<span class="question-mark">?</span>,
+        ));
         <span class="kw">let </span>era_epoch_token = era_reader
             .read_era_epoch_token(beacon_provider.get_current_beacon().<span class="kw">await</span><span class="question-mark">?</span>.epoch)
             .<span class="kw">await</span><span class="question-mark">?</span>;
@@ -526,6 +539,7 @@
         chain_observer::FakeObserver,
         digesters::DumbImmutableFileObserver,
         entities::{Beacon, Epoch},
+        era::EraReaderAdapterType,
     };
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
@@ -548,7 +562,7 @@
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_auto_create_stores_directory() {
         <span class="kw">let </span>stores_dir = get_test_dir().join(<span class="string">&quot;stores&quot;</span>);
-        <span class="kw">let </span>config = Config {
+        <span class="kw">let </span>config = Configuration {
             cardano_cli_path: PathBuf::new(),
             cardano_node_socket_path: PathBuf::new(),
             network_magic: <span class="prelude-val">None</span>,
@@ -563,18 +577,22 @@
             operational_certificate_path: <span class="prelude-val">None</span>,
             disable_digests_cache: <span class="bool-val">false</span>,
             reset_digests_cache: <span class="bool-val">false</span>,
+            era_reader_adapter_type: EraReaderAdapterType::Bootstrap,
+            era_reader_adapter_params: <span class="prelude-val">None</span>,
         };
 
         <span class="macro">assert!</span>(!stores_dir.exists());
-        <span class="kw">let </span>chain_observer_builder: <span class="kw">fn</span>(<span class="kw-2">&amp;</span>Config) -&gt; <span class="prelude-ty">Result</span>&lt;ChainObserverService&gt; = |_config| {
+        <span class="kw">let </span>chain_observer_builder: <span class="kw">fn</span>(<span class="kw-2">&amp;</span>Configuration) -&gt; <span class="prelude-ty">Result</span>&lt;ChainObserverService&gt; = |_config| {
             <span class="prelude-val">Ok</span>(Arc::new(FakeObserver::new(<span class="prelude-val">Some</span>(Beacon {
                 epoch: Epoch(<span class="number">1</span>),
                 immutable_file_number: <span class="number">1</span>,
                 network: <span class="string">&quot;devnet&quot;</span>.to_string(),
             }))))
         };
-        <span class="kw">let </span>immutable_file_observer_builder: <span class="kw">fn</span>(<span class="kw-2">&amp;</span>Config) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;<span class="kw">dyn </span>ImmutableFileObserver&gt;&gt; =
-            |_config: <span class="kw-2">&amp;</span>Config| <span class="prelude-val">Ok</span>(Arc::new(DumbImmutableFileObserver::default()));
+        <span class="kw">let </span>immutable_file_observer_builder: <span class="kw">fn</span>(
+            <span class="kw-2">&amp;</span>Configuration,
+        ) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;<span class="kw">dyn </span>ImmutableFileObserver&gt;&gt; =
+            |_config: <span class="kw-2">&amp;</span>Configuration| <span class="prelude-val">Ok</span>(Arc::new(DumbImmutableFileObserver::default()));
 
         <span class="kw">let </span><span class="kw-2">mut </span>service_builder = ProductionServiceBuilder::new(<span class="kw-2">&amp;</span>config);
         service_builder

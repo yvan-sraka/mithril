@@ -649,6 +649,8 @@
 <a href="#649" id="649">649</a>
 <a href="#650" id="650">650</a>
 <a href="#651" id="651">651</a>
+<a href="#652" id="652">652</a>
+<a href="#653" id="653">653</a>
 </pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>reqwest::{<span class="self">self</span>, Client, RequestBuilder, Response, StatusCode};
 <span class="kw">use </span>slog_scope::debug;
@@ -983,17 +985,17 @@
 </span><span class="kw">mod </span>tests {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span>httpmock::prelude::<span class="kw-2">*</span>;
-    <span class="kw">use </span>mithril_common::entities::ClientError;
+    <span class="kw">use </span>mithril_common::{entities::ClientError, era::EraReaderAdapterType};
     <span class="kw">use </span>serde_json::json;
     <span class="kw">use </span>std::path::{Path, PathBuf};
 
     <span class="kw">use </span>mithril_common::test_utils::fake_data;
 
-    <span class="kw">use </span><span class="kw">crate</span>::configuration::Config;
+    <span class="kw">use </span><span class="kw">crate</span>::configuration::Configuration;
 
-    <span class="kw">fn </span>setup_test() -&gt; (MockServer, Config) {
+    <span class="kw">fn </span>setup_test() -&gt; (MockServer, Configuration) {
         <span class="kw">let </span>server = MockServer::start();
-        <span class="kw">let </span>config = Config {
+        <span class="kw">let </span>config = Configuration {
             cardano_cli_path: PathBuf::new().join(<span class="string">&quot;cardano-cli&quot;</span>),
             cardano_node_socket_path: PathBuf::new().join(<span class="string">&quot;whatever&quot;</span>),
             network_magic: <span class="prelude-val">Some</span>(<span class="number">42</span>),
@@ -1008,6 +1010,8 @@
             operational_certificate_path: <span class="prelude-val">None</span>,
             disable_digests_cache: <span class="bool-val">false</span>,
             reset_digests_cache: <span class="bool-val">false</span>,
+            era_reader_adapter_type: EraReaderAdapterType::Bootstrap,
+            era_reader_adapter_params: <span class="prelude-val">None</span>,
         };
         (server, config)
     }
