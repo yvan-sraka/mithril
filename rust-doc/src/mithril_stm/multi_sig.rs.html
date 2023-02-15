@@ -749,6 +749,41 @@
 <a href="#749" id="749">749</a>
 <a href="#750" id="750">750</a>
 <a href="#751" id="751">751</a>
+<a href="#752" id="752">752</a>
+<a href="#753" id="753">753</a>
+<a href="#754" id="754">754</a>
+<a href="#755" id="755">755</a>
+<a href="#756" id="756">756</a>
+<a href="#757" id="757">757</a>
+<a href="#758" id="758">758</a>
+<a href="#759" id="759">759</a>
+<a href="#760" id="760">760</a>
+<a href="#761" id="761">761</a>
+<a href="#762" id="762">762</a>
+<a href="#763" id="763">763</a>
+<a href="#764" id="764">764</a>
+<a href="#765" id="765">765</a>
+<a href="#766" id="766">766</a>
+<a href="#767" id="767">767</a>
+<a href="#768" id="768">768</a>
+<a href="#769" id="769">769</a>
+<a href="#770" id="770">770</a>
+<a href="#771" id="771">771</a>
+<a href="#772" id="772">772</a>
+<a href="#773" id="773">773</a>
+<a href="#774" id="774">774</a>
+<a href="#775" id="775">775</a>
+<a href="#776" id="776">776</a>
+<a href="#777" id="777">777</a>
+<a href="#778" id="778">778</a>
+<a href="#779" id="779">779</a>
+<a href="#780" id="780">780</a>
+<a href="#781" id="781">781</a>
+<a href="#782" id="782">782</a>
+<a href="#783" id="783">783</a>
+<a href="#784" id="784">784</a>
+<a href="#785" id="785">785</a>
+<a href="#786" id="786">786</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Base multi-signature scheme, used as a primitive for STM.
 //! See Section 2.4 of [the paper](https://eprint.iacr.org/2021/916).
 //! This module uses the `blst` library as a backend for pairings.
@@ -756,6 +791,7 @@
 </span><span class="kw">use </span><span class="kw">crate</span>::error::{blst_err_to_mithril, MultiSignatureError};
 <span class="kw">use </span><span class="kw">crate</span>::stm::Index;
 <span class="kw">use </span>blake2::{digest::consts::U16, Blake2b, Blake2b512, Digest};
+<span class="kw">use </span>unsafe_helpers::<span class="kw-2">*</span>;
 
 <span class="comment">// We use `min_sig` resulting in signatures of 48 bytes and public keys of
 // 96. We can switch that around if desired by using `min_vk`.
@@ -763,11 +799,7 @@
     AggregatePublicKey, AggregateSignature, PublicKey <span class="kw">as </span>BlstVk, SecretKey <span class="kw">as </span>BlstSk,
     Signature <span class="kw">as </span>BlstSig,
 };
-<span class="kw">use </span>blst::{
-    blst_p1, blst_p1_affine, blst_p1_compress, blst_p1_from_affine, blst_p1_to_affine,
-    blst_p1_uncompress, blst_p2, blst_p2_affine, blst_p2_from_affine, blst_p2_to_affine,
-    blst_scalar, p1_affines, p2_affines,
-};
+<span class="kw">use </span>blst::{blst_p1, blst_p2, p1_affines, p2_affines, BLST_ERROR};
 
 <span class="kw">use </span>rand_core::{CryptoRng, RngCore};
 <span class="kw">use </span>serde::{de::Visitor, Deserialize, Deserializer, Serialize, Serializer};
@@ -777,7 +809,6 @@
     hash::{Hash, Hasher},
     iter::Sum,
 };
-
 <span class="doccomment">/// String used to generate the proofs of possession.
 </span><span class="kw">const </span>POP: <span class="kw-2">&amp;</span>[u8] = <span class="string">b&quot;PoP&quot;</span>;
 
@@ -951,22 +982,7 @@
     </span><span class="comment">// If we are really looking for performance improvements, we can combine the
     // two final exponentiations (for verifying k1 and k2) into a single one.
     </span><span class="kw">pub fn </span>check(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), MultiSignatureError&gt; {
-        <span class="kw">use </span>blst::{
-            blst_fp12, blst_fp12_finalverify, blst_p1_affine_generator, blst_p2_affine_generator,
-            BLST_ERROR,
-        };
-        <span class="kw">let </span>result = <span class="kw">unsafe </span>{
-            <span class="kw">let </span>g1_p = <span class="kw-2">*</span>blst_p1_affine_generator();
-            <span class="kw">let </span>mvk_p = std::mem::transmute::&lt;<span class="kw-2">&amp;</span>BlstVk, <span class="kw-2">&amp;</span>blst_p2_affine&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>.vk.<span class="number">0</span>);
-            <span class="kw">let </span>ml_lhs = blst_fp12::miller_loop(mvk_p, <span class="kw-2">&amp;</span>g1_p);
-
-            <span class="kw">let </span><span class="kw-2">mut </span>k2_p = blst_p1_affine::default();
-            blst_p1_to_affine(<span class="kw-2">&amp;mut </span>k2_p, <span class="kw-2">&amp;</span><span class="self">self</span>.pop.k2);
-            <span class="kw">let </span>g2_p = <span class="kw-2">*</span>blst_p2_affine_generator();
-            <span class="kw">let </span>ml_rhs = blst_fp12::miller_loop(<span class="kw-2">&amp;</span>g2_p, <span class="kw-2">&amp;</span>k2_p);
-
-            blst_fp12_finalverify(<span class="kw-2">&amp;</span>ml_lhs, <span class="kw-2">&amp;</span>ml_rhs)
-        };
+        <span class="kw">let </span>result = verify_pairing(<span class="kw-2">&amp;</span><span class="self">self</span>.vk, <span class="kw-2">&amp;</span><span class="self">self</span>.pop);
 
         <span class="kw">if </span>!(<span class="self">self</span>.pop.k1.verify(<span class="bool-val">false</span>, POP, <span class="kw-2">&amp;</span>[], <span class="kw-2">&amp;</span>[], <span class="kw-2">&amp;</span><span class="self">self</span>.vk.<span class="number">0</span>, <span class="bool-val">false</span>)
             == BLST_ERROR::BLST_SUCCESS
@@ -976,6 +992,7 @@
         }
         <span class="prelude-val">Ok</span>(())
     }
+
     <span class="doccomment">/// Convert to a 144 byte string.
     ///
     /// # Layout
@@ -1020,12 +1037,8 @@
     </span><span class="kw">pub fn </span>to_bytes(<span class="self">self</span>) -&gt; [u8; <span class="number">96</span>] {
         <span class="kw">let </span><span class="kw-2">mut </span>pop_bytes = [<span class="number">0u8</span>; <span class="number">96</span>];
         pop_bytes[..<span class="number">48</span>].copy_from_slice(<span class="kw-2">&amp;</span><span class="self">self</span>.k1.to_bytes());
-        <span class="kw">let </span>k2_bytes = <span class="kw">unsafe </span>{
-            <span class="kw">let </span><span class="kw-2">mut </span>bytes = [<span class="number">0u8</span>; <span class="number">48</span>];
-            blst_p1_compress(bytes.as_mut_ptr(), <span class="kw-2">&amp;</span><span class="self">self</span>.k2);
-            bytes
-        };
-        pop_bytes[<span class="number">48</span>..].copy_from_slice(<span class="kw-2">&amp;</span>k2_bytes);
+
+        pop_bytes[<span class="number">48</span>..].copy_from_slice(<span class="kw-2">&amp;</span>compress_p1(<span class="kw-2">&amp;</span><span class="self">self</span>.k2)[..]);
         pop_bytes
     }
 
@@ -1039,13 +1052,7 @@
             }
         };
 
-        <span class="kw">let </span>k2 = <span class="kw">unsafe </span>{
-            <span class="kw">let </span><span class="kw-2">mut </span>point = blst_p1_affine::default();
-            <span class="kw">let </span><span class="kw-2">mut </span>out = blst_p1::default();
-            blst_p1_uncompress(<span class="kw-2">&amp;mut </span>point, bytes[<span class="number">48</span>..].as_ptr());
-            blst_p1_from_affine(<span class="kw-2">&amp;mut </span>out, <span class="kw-2">&amp;</span>point);
-            out
-        };
+        <span class="kw">let </span>k2 = uncompress_p1(<span class="kw-2">&amp;</span>bytes[<span class="number">48</span>..<span class="number">96</span>])<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{ k1, k2 })
     }
@@ -1056,15 +1063,8 @@
     /// `k1 =  H_G1(b&quot;PoP&quot; || mvk)` and `k2 = g1 * sk` where `H_G1` hashes into
     /// `G1` and `g1` is the generator in `G1`.
     </span><span class="kw">fn </span>from(sk: <span class="kw-2">&amp;</span>SigningKey) -&gt; <span class="self">Self </span>{
-        <span class="kw">use </span>blst::blst_sk_to_pk_in_g1;
         <span class="kw">let </span>k1 = sk.<span class="number">0</span>.sign(POP, <span class="kw-2">&amp;</span>[], <span class="kw-2">&amp;</span>[]);
-        <span class="kw">let </span>k2 = <span class="kw">unsafe </span>{
-            <span class="kw">let </span>sk_scalar = std::mem::transmute::&lt;<span class="kw-2">&amp;</span>BlstSk, <span class="kw-2">&amp;</span>blst_scalar&gt;(<span class="kw-2">&amp;</span>sk.<span class="number">0</span>);
-
-            <span class="kw">let </span><span class="kw-2">mut </span>out = blst_p1::default();
-            blst_sk_to_pk_in_g1(<span class="kw-2">&amp;mut </span>out, sk_scalar);
-            out
-        };
+        <span class="kw">let </span>k2 = scalar_to_pk_in_g1(sk);
 
         <span class="self">Self </span>{ k1, k2 }
     }
@@ -1161,43 +1161,15 @@
             scalars.extend_from_slice(hasher.finalize().as_slice());
         }
 
-        <span class="kw">let </span>transmuted_vks: Vec&lt;blst_p2&gt; = vks
-            .iter()
-            .map(|vk| <span class="kw">unsafe </span>{
-                <span class="kw">let </span><span class="kw-2">mut </span>projective_p2 = blst_p2::default();
-                blst_p2_from_affine(
-                    <span class="kw-2">&amp;mut </span>projective_p2,
-                    <span class="kw-2">&amp;</span>std::mem::transmute::&lt;BlstVk, blst_p2_affine&gt;(vk.<span class="number">0</span>),
-                );
-                projective_p2
-            })
-            .collect();
+        <span class="kw">let </span>transmuted_vks: Vec&lt;blst_p2&gt; = vks.iter().map(vk_from_p2_affine).collect();
 
-        <span class="kw">let </span>transmuted_sigs: Vec&lt;blst_p1&gt; = signatures
-            .iter()
-            .map(|<span class="kw-2">&amp;</span>sig| <span class="kw">unsafe </span>{
-                <span class="kw">let </span><span class="kw-2">mut </span>projective_p1 = blst_p1::default();
-                blst_p1_from_affine(
-                    <span class="kw-2">&amp;mut </span>projective_p1,
-                    <span class="kw-2">&amp;</span>std::mem::transmute::&lt;BlstSig, blst_p1_affine&gt;(sig),
-                );
-                projective_p1
-            })
-            .collect();
+        <span class="kw">let </span>transmuted_sigs: Vec&lt;blst_p1&gt; = signatures.iter().map(sig_to_p1).collect();
 
         <span class="kw">let </span>grouped_vks = p2_affines::from(transmuted_vks.as_slice());
         <span class="kw">let </span>grouped_sigs = p1_affines::from(transmuted_sigs.as_slice());
 
-        <span class="kw">let </span>aggr_vk: BlstVk = <span class="kw">unsafe </span>{
-            <span class="kw">let </span><span class="kw-2">mut </span>affine_p2 = blst_p2_affine::default();
-            blst_p2_to_affine(<span class="kw-2">&amp;mut </span>affine_p2, <span class="kw-2">&amp;</span>grouped_vks.mult(scalars.as_slice(), <span class="number">128</span>));
-            std::mem::transmute::&lt;blst_p2_affine, BlstVk&gt;(affine_p2)
-        };
-        <span class="kw">let </span>aggr_sig: BlstSig = <span class="kw">unsafe </span>{
-            <span class="kw">let </span><span class="kw-2">mut </span>affine_p1 = blst_p1_affine::default();
-            blst_p1_to_affine(<span class="kw-2">&amp;mut </span>affine_p1, <span class="kw-2">&amp;</span>grouped_sigs.mult(scalars.as_slice(), <span class="number">128</span>));
-            std::mem::transmute::&lt;blst_p1_affine, BlstSig&gt;(affine_p1)
-        };
+        <span class="kw">let </span>aggr_vk: BlstVk = p2_affine_to_vk(<span class="kw-2">&amp;</span>grouped_vks.mult(<span class="kw-2">&amp;</span>scalars, <span class="number">128</span>));
+        <span class="kw">let </span>aggr_sig: BlstSig = p1_affine_to_sig(<span class="kw-2">&amp;</span>grouped_sigs.mult(<span class="kw-2">&amp;</span>scalars, <span class="number">128</span>));
 
         <span class="prelude-val">Ok</span>((VerificationKey(aggr_vk), Signature(aggr_sig)))
     }
@@ -1253,8 +1225,8 @@
         <span class="kw">let </span>signatures: Vec&lt;<span class="kw-2">&amp;</span>BlstSig&gt; = iter.map(|x| <span class="kw-2">&amp;</span>x.<span class="number">0</span>).collect();
         <span class="macro">assert!</span>(!signatures.is_empty(), <span class="string">&quot;One cannot add an empty vector&quot;</span>);
         <span class="kw">let </span>aggregate = AggregateSignature::aggregate(<span class="kw-2">&amp;</span>signatures, <span class="bool-val">false</span>)
-                .expect(<span class="string">&quot;An MspSig is always a valid signature. This function only fails if signatures is empty or if the signatures are invalid, none of which can happen.&quot;</span>)
-                .to_signature();
+            .expect(<span class="string">&quot;An MspSig is always a valid signature. This function only fails if signatures is empty or if the signatures are invalid, none of which can happen.&quot;</span>)
+            .to_signature();
 
         <span class="self">Self</span>(aggregate)
     }
@@ -1339,6 +1311,104 @@
 <span class="macro">impl_serde!</span>(VerificationKey, VerificationKeyVisitor, <span class="number">96</span>);
 <span class="macro">impl_serde!</span>(ProofOfPossession, ProofOfPossessionVisitor, <span class="number">96</span>);
 <span class="macro">impl_serde!</span>(Signature, SignatureVisitor, <span class="number">48</span>);
+
+<span class="comment">// ---------------------------------------------------------------------
+// Unsafe helpers
+// ---------------------------------------------------------------------
+
+</span><span class="kw">mod </span>unsafe_helpers {
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use </span><span class="kw">crate</span>::error::MultiSignatureError::SerializationError;
+    <span class="kw">use </span>blst::{
+        blst_fp12, blst_fp12_finalverify, blst_p1_affine, blst_p1_affine_generator,
+        blst_p1_compress, blst_p1_from_affine, blst_p1_to_affine, blst_p1_uncompress,
+        blst_p2_affine, blst_p2_affine_generator, blst_p2_from_affine, blst_p2_to_affine,
+        blst_scalar, blst_sk_to_pk_in_g1,
+    };
+
+    <span class="doccomment">/// Check manually if the pairing `e(g1,mvk) = e(k2,g2)` holds.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>verify_pairing(vk: <span class="kw-2">&amp;</span>VerificationKey, pop: <span class="kw-2">&amp;</span>ProofOfPossession) -&gt; bool {
+        <span class="kw">unsafe </span>{
+            <span class="kw">let </span>g1_p = <span class="kw-2">*</span>blst_p1_affine_generator();
+            <span class="kw">let </span>mvk_p = std::mem::transmute::&lt;BlstVk, blst_p2_affine&gt;(vk.<span class="number">0</span>);
+            <span class="kw">let </span>ml_lhs = blst_fp12::miller_loop(<span class="kw-2">&amp;</span>mvk_p, <span class="kw-2">&amp;</span>g1_p);
+
+            <span class="kw">let </span><span class="kw-2">mut </span>k2_p = blst_p1_affine::default();
+            blst_p1_to_affine(<span class="kw-2">&amp;mut </span>k2_p, <span class="kw-2">&amp;</span>pop.k2);
+            <span class="kw">let </span>g2_p = <span class="kw-2">*</span>blst_p2_affine_generator();
+            <span class="kw">let </span>ml_rhs = blst_fp12::miller_loop(<span class="kw-2">&amp;</span>g2_p, <span class="kw-2">&amp;</span>k2_p);
+
+            blst_fp12_finalverify(<span class="kw-2">&amp;</span>ml_lhs, <span class="kw-2">&amp;</span>ml_rhs)
+        }
+    }
+
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>compress_p1(k2: <span class="kw-2">&amp;</span>blst_p1) -&gt; [u8; <span class="number">48</span>] {
+        <span class="kw">let </span><span class="kw-2">mut </span>bytes = [<span class="number">0u8</span>; <span class="number">48</span>];
+        <span class="kw">unsafe </span>{ blst_p1_compress(bytes.as_mut_ptr(), k2) }
+        bytes
+    }
+
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>uncompress_p1(bytes: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;blst_p1, MultiSignatureError&gt; {
+        <span class="kw">unsafe </span>{
+            <span class="kw">if </span>bytes.len() == <span class="number">48 </span>{
+                <span class="kw">let </span><span class="kw-2">mut </span>point = blst_p1_affine::default();
+                <span class="kw">let </span><span class="kw-2">mut </span>out = blst_p1::default();
+                blst_p1_uncompress(<span class="kw-2">&amp;mut </span>point, bytes.as_ptr());
+                blst_p1_from_affine(<span class="kw-2">&amp;mut </span>out, <span class="kw-2">&amp;</span>point);
+                <span class="prelude-val">Ok</span>(out)
+            } <span class="kw">else </span>{
+                <span class="prelude-val">Err</span>(SerializationError)
+            }
+        }
+    }
+
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>scalar_to_pk_in_g1(sk: <span class="kw-2">&amp;</span>SigningKey) -&gt; blst_p1 {
+        <span class="kw">unsafe </span>{
+            <span class="kw">let </span>sk_scalar = std::mem::transmute::&lt;<span class="kw-2">&amp;</span>BlstSk, <span class="kw-2">&amp;</span>blst_scalar&gt;(<span class="kw-2">&amp;</span>sk.<span class="number">0</span>);
+            <span class="kw">let </span><span class="kw-2">mut </span>out = blst_p1::default();
+            blst_sk_to_pk_in_g1(<span class="kw-2">&amp;mut </span>out, sk_scalar);
+            out
+        }
+    }
+
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>vk_from_p2_affine(vk: <span class="kw-2">&amp;</span>VerificationKey) -&gt; blst_p2 {
+        <span class="kw">unsafe </span>{
+            <span class="kw">let </span><span class="kw-2">mut </span>projective_p2 = blst_p2::default();
+            blst_p2_from_affine(
+                <span class="kw-2">&amp;mut </span>projective_p2,
+                <span class="kw-2">&amp;</span>std::mem::transmute::&lt;BlstVk, blst_p2_affine&gt;(vk.<span class="number">0</span>),
+            );
+            projective_p2
+        }
+    }
+
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>sig_to_p1(sig: <span class="kw-2">&amp;</span>BlstSig) -&gt; blst_p1 {
+        <span class="kw">unsafe </span>{
+            <span class="kw">let </span><span class="kw-2">mut </span>projective_p1 = blst_p1::default();
+            blst_p1_from_affine(
+                <span class="kw-2">&amp;mut </span>projective_p1,
+                <span class="kw-2">&amp;</span>std::mem::transmute::&lt;BlstSig, blst_p1_affine&gt;(<span class="kw-2">*</span>sig),
+            );
+            projective_p1
+        }
+    }
+
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>p2_affine_to_vk(grouped_vks: <span class="kw-2">&amp;</span>blst_p2) -&gt; BlstVk {
+        <span class="kw">unsafe </span>{
+            <span class="kw">let </span><span class="kw-2">mut </span>affine_p2 = blst_p2_affine::default();
+            blst_p2_to_affine(<span class="kw-2">&amp;mut </span>affine_p2, grouped_vks);
+            std::mem::transmute::&lt;blst_p2_affine, BlstVk&gt;(affine_p2)
+        }
+    }
+
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>p1_affine_to_sig(grouped_sigs: <span class="kw-2">&amp;</span>blst_p1) -&gt; BlstSig {
+        <span class="kw">unsafe </span>{
+            <span class="kw">let </span><span class="kw-2">mut </span>affine_p1 = blst_p1_affine::default();
+            blst_p1_to_affine(<span class="kw-2">&amp;mut </span>affine_p1, grouped_sigs);
+            std::mem::transmute::&lt;blst_p1_affine, BlstSig&gt;(affine_p1)
+        }
+    }
+}
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
