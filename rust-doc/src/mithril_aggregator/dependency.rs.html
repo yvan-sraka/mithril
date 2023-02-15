@@ -395,6 +395,17 @@
 <a href="#395" id="395">395</a>
 <a href="#396" id="396">396</a>
 <a href="#397" id="397">397</a>
+<a href="#398" id="398">398</a>
+<a href="#399" id="399">399</a>
+<a href="#400" id="400">400</a>
+<a href="#401" id="401">401</a>
+<a href="#402" id="402">402</a>
+<a href="#403" id="403">403</a>
+<a href="#404" id="404">404</a>
+<a href="#405" id="405">405</a>
+<a href="#406" id="406">406</a>
+<a href="#407" id="407">407</a>
+<a href="#408" id="408">408</a>
 </pre><pre class="rust"><code><span class="kw">use </span>mithril_common::{
     certificate_chain::CertificateVerifier,
     chain_observer::ChainObserver,
@@ -411,14 +422,14 @@
 <span class="kw">use </span>std::{collections::HashMap, sync::Arc};
 <span class="kw">use </span>tokio::sync::RwLock;
 
-<span class="kw">use </span><span class="kw">crate</span>::multi_signer::MultiSigner;
-<span class="kw">use </span><span class="kw">crate</span>::snapshot_stores::SnapshotStore;
 <span class="kw">use </span><span class="kw">crate</span>::snapshot_uploaders::SnapshotUploader;
 <span class="kw">use crate</span>::{
     configuration::<span class="kw-2">*</span>, CertificatePendingStore, CertificateStore, ProtocolParametersStore,
     ProtocolParametersStorer, SignerRegisterer, SignerRegistrationRoundOpener,
     SingleSignatureStore, Snapshotter, VerificationKeyStore, VerificationKeyStorer,
 };
+<span class="kw">use crate</span>::{event_store::EventMessage, snapshot_stores::SnapshotStore};
+<span class="kw">use crate</span>::{event_store::TransmitterService, multi_signer::MultiSigner};
 
 <span class="doccomment">/// MultiSignerWrapper wraps a MultiSigner
 </span><span class="kw">pub type </span>MultiSignerWrapper = Arc&lt;RwLock&lt;<span class="kw">dyn </span>MultiSigner&gt;&gt;;
@@ -487,6 +498,9 @@
 
     <span class="doccomment">/// Era reader service
     </span><span class="kw">pub </span>era_reader: Arc&lt;EraReader&gt;,
+
+    <span class="doccomment">/// Event Transmitter Service
+    </span><span class="kw">pub </span>event_transmitter: Arc&lt;TransmitterService&lt;EventMessage&gt;&gt;,
 }
 
 <span class="attr">#[doc(hidden)]
@@ -659,10 +673,10 @@
 <span class="attr">#[cfg(test)]
 </span><span class="kw">pub mod </span>tests {
     <span class="kw">use crate</span>::{
-        AggregatorConfig, CertificatePendingStore, CertificateStore, Configuration,
-        DependencyManager, DumbSnapshotUploader, DumbSnapshotter, LocalSnapshotStore,
-        MithrilSignerRegisterer, MultiSignerImpl, ProtocolParametersStore, SingleSignatureStore,
-        SnapshotStoreType, SnapshotUploaderType, VerificationKeyStore,
+        event_store::TransmitterService, AggregatorConfig, CertificatePendingStore,
+        CertificateStore, Configuration, DependencyManager, DumbSnapshotUploader, DumbSnapshotter,
+        LocalSnapshotStore, MithrilSignerRegisterer, MultiSignerImpl, ProtocolParametersStore,
+        SingleSignatureStore, SnapshotStoreType, SnapshotUploaderType, VerificationKeyStore,
     };
     <span class="kw">use </span>mithril_common::{
         certificate_chain::MithrilCertificateVerifier,
@@ -675,7 +689,10 @@
         BeaconProvider, BeaconProviderImpl, CardanoNetwork,
     };
     <span class="kw">use </span>std::{path::PathBuf, sync::Arc};
-    <span class="kw">use </span>tokio::sync::RwLock;
+    <span class="kw">use </span>tokio::sync::{
+        mpsc::{<span class="self">self</span>},
+        RwLock,
+    };
 
     <span class="kw">pub async fn </span>initialize_dependencies() -&gt; (DependencyManager, AggregatorConfig) {
         <span class="kw">let </span>genesis_signer = ProtocolGenesisSigner::create_deterministic_genesis_signer();
@@ -758,6 +775,10 @@
             era_epoch_token.get_current_supported_era().unwrap(),
             era_epoch_token.get_current_epoch(),
         ));
+        <span class="kw">let </span>event_transmitter = {
+            <span class="kw">let </span>(tx, <span class="kw-2">mut </span>_rx) = mpsc::unbounded_channel();
+            Arc::new(TransmitterService::new(tx))
+        };
 
         <span class="kw">let </span>dependency_manager = DependencyManager {
             config,
@@ -781,6 +802,7 @@
             signer_registration_round_opener: signer_registerer,
             era_checker,
             era_reader,
+            event_transmitter,
         };
 
         <span class="kw">let </span>config = AggregatorConfig::new(

@@ -631,6 +631,25 @@
 <a href="#631" id="631">631</a>
 <a href="#632" id="632">632</a>
 <a href="#633" id="633">633</a>
+<a href="#634" id="634">634</a>
+<a href="#635" id="635">635</a>
+<a href="#636" id="636">636</a>
+<a href="#637" id="637">637</a>
+<a href="#638" id="638">638</a>
+<a href="#639" id="639">639</a>
+<a href="#640" id="640">640</a>
+<a href="#641" id="641">641</a>
+<a href="#642" id="642">642</a>
+<a href="#643" id="643">643</a>
+<a href="#644" id="644">644</a>
+<a href="#645" id="645">645</a>
+<a href="#646" id="646">646</a>
+<a href="#647" id="647">647</a>
+<a href="#648" id="648">648</a>
+<a href="#649" id="649">649</a>
+<a href="#650" id="650">650</a>
+<a href="#651" id="651">651</a>
+<a href="#652" id="652">652</a>
 </pre><pre class="rust"><code><span class="kw">use </span>clap::{Parser, Subcommand};
 <span class="kw">use </span>config::{builder::DefaultState, ConfigBuilder, Map, Source, Value, ValueKind};
 <span class="kw">use </span>slog::Level;
@@ -654,12 +673,15 @@
 };
 
 <span class="kw">use crate</span>::{
+    event_store::{<span class="self">self</span>, TransmitterService},
     tools::{GenesisTools, GenesisToolsDependency},
     AggregatorConfig, AggregatorRunner, AggregatorRuntime, CertificatePendingStore,
     CertificateStore, Configuration, DefaultConfiguration, DependencyManager, GenesisConfiguration,
     GzipSnapshotter, MithrilSignerRegisterer, MultiSignerImpl, ProtocolParametersStore,
     ProtocolParametersStorer, Server, SingleSignatureStore, VerificationKeyStore,
 };
+
+<span class="kw">const </span>SQLITE_MONITORING_FILE: <span class="kw-2">&amp;</span>str = <span class="string">&quot;monitoring.sqlite3&quot;</span>;
 
 <span class="kw">fn </span>setup_genesis_dependencies(
     config: <span class="kw-2">&amp;</span>GenesisConfiguration,
@@ -1041,6 +1063,9 @@
             era_epoch_token.get_current_supported_era()<span class="question-mark">?</span>,
             era_epoch_token.get_current_epoch(),
         ));
+        <span class="kw">let </span>(tx, rx) = tokio::sync::mpsc::unbounded_channel();
+        <span class="kw">let </span>event_transmitter = Arc::new(TransmitterService::new(tx));
+        <span class="kw">let </span><span class="kw-2">mut </span>event_store = event_store::EventStore::new(rx);
 
         <span class="comment">// Init dependency manager
         </span><span class="kw">let </span>dependency_manager = DependencyManager {
@@ -1065,6 +1090,7 @@
             signer_registration_round_opener: signer_registerer.clone(),
             era_checker: era_checker.clone(),
             era_reader: era_reader.clone(),
+            event_transmitter,
         };
         <span class="kw">let </span>dependency_manager = Arc::new(dependency_manager);
 
@@ -1075,16 +1101,27 @@
         )
         .<span class="kw">await</span><span class="question-mark">?</span>;
 
-        <span class="comment">// Start snapshot uploader
-        </span><span class="kw">let </span>network = config.get_network()<span class="question-mark">?</span>;
+        <span class="kw">let </span>network = config.get_network()<span class="question-mark">?</span>;
         <span class="kw">let </span>runtime_dependencies = dependency_manager.clone();
-        <span class="kw">let </span>handle = tokio::spawn(<span class="kw">async move </span>{
+
+        <span class="comment">// start the monitoring thread
+        </span><span class="kw">let </span>event_store_thread = tokio::spawn(<span class="kw">async move </span>{
+            event_store
+                .run(<span class="prelude-val">Some</span>(
+                    config.data_stores_directory.join(SQLITE_MONITORING_FILE),
+                ))
+                .<span class="kw">await
+                </span>.unwrap()
+        });
+
+        <span class="comment">// Start Aggregator state machine
+        </span><span class="kw">let </span>handle = tokio::spawn(<span class="kw">async move </span>{
             <span class="kw">let </span>config =
                 AggregatorConfig::new(config.run_interval, network, <span class="kw-2">&amp;</span>config.db_directory.clone());
             <span class="kw">let </span><span class="kw-2">mut </span>runtime = AggregatorRuntime::new(
                 Duration::from_millis(config.interval),
                 <span class="prelude-val">None</span>,
-                Arc::new(AggregatorRunner::new(config, runtime_dependencies.clone())),
+                Arc::new(AggregatorRunner::new(config, runtime_dependencies)),
             )
             .<span class="kw">await
             </span>.unwrap();
@@ -1107,6 +1144,7 @@
         http_server.start(shutdown_signal).<span class="kw">await</span>;
 
         handle.abort();
+        event_store_thread.<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="macro">println!</span>(<span class="string">&quot;Exiting...&quot;</span>);
         <span class="prelude-val">Ok</span>(())
