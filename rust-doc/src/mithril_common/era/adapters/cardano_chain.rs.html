@@ -203,12 +203,18 @@
 <a href="#203" id="203">203</a>
 <a href="#204" id="204">204</a>
 <a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
 </pre><pre class="rust"><code><span class="kw">use crate</span>::{
-    chain_observer::{ChainAddress, ChainObserver},
+    chain_observer::{ChainAddress, ChainObserver, TxDatumFieldTypeName},
     crypto_helper::{
         key_decode_hex, EraMarkersSigner, EraMarkersVerifier, EraMarkersVerifierSignature,
         EraMarkersVerifierVerificationKey,
     },
+    entities::HexEncodedEraMarkersSignature,
     era::{EraMarker, EraReaderAdapter},
 };
 <span class="kw">use </span>async_trait::async_trait;
@@ -219,8 +225,6 @@
 <span class="kw">use </span>thiserror::Error;
 
 <span class="kw">type </span>GeneralError = Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;;
-
-<span class="kw">type </span>HexEncodeEraMarkerSignature = String;
 
 <span class="doccomment">/// [EraMarkersPayload] related errors.
 </span><span class="attr">#[derive(Debug, Error)]
@@ -249,8 +253,11 @@
 <span class="doccomment">/// Era markers payload
 </span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 </span><span class="kw">pub struct </span>EraMarkersPayload {
-    markers: Vec&lt;EraMarker&gt;,
-    signature: <span class="prelude-ty">Option</span>&lt;HexEncodeEraMarkerSignature&gt;,
+    <span class="doccomment">/// List of Era markers
+    </span><span class="kw">pub </span>markers: Vec&lt;EraMarker&gt;,
+
+    <span class="doccomment">/// Era markers signature
+    </span><span class="kw">pub </span>signature: <span class="prelude-ty">Option</span>&lt;HexEncodedEraMarkersSignature&gt;,
 }
 
 <span class="kw">impl </span>EraMarkersPayload {
@@ -284,7 +291,6 @@
     }
 
     <span class="doccomment">/// Sign an era markers payload
-    </span><span class="attr">#[allow(dead_code)]
     </span><span class="kw">pub fn </span>sign(<span class="self">self</span>, signer: <span class="kw-2">&amp;</span>EraMarkersSigner) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, EraMarkersPayloadError&gt; {
         <span class="kw">let </span>signature = signer
             .sign(
@@ -332,7 +338,11 @@
             .<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let </span>markers_list = tx_datums
             .into_iter()
-            .filter_map(|datum| datum.get_nth_field_by_type(<span class="string">&quot;bytes&quot;</span>, <span class="number">0</span>).ok())
+            .filter_map(|datum| {
+                datum
+                    .get_nth_field_by_type(<span class="kw-2">&amp;</span>TxDatumFieldTypeName::Bytes, <span class="number">0</span>)
+                    .ok()
+            })
             .filter_map(|field_value| field_value.as_str().map(|s| s.to_string()))
             .filter_map(|field_value_str| key_decode_hex(<span class="kw-2">&amp;</span>field_value_str).ok())
             .filter_map(|era_markers_payload: EraMarkersPayload| {
@@ -349,7 +359,7 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>test {
-    <span class="kw">use </span><span class="kw">crate</span>::chain_observer::{FakeObserver, TxDatum};
+    <span class="kw">use </span><span class="kw">crate</span>::chain_observer::{FakeObserver, TxDatum, TxDatumBuilder, TxDatumFieldValue};
     <span class="kw">use </span><span class="kw">crate</span>::crypto_helper::{key_encode_hex, EraMarkersSigner};
     <span class="kw">use </span><span class="kw">crate</span>::entities::Epoch;
 
@@ -359,10 +369,10 @@
         payloads
             .into_iter()
             .map(|payload| {
-                TxDatum(<span class="macro">format!</span>(
-                    <span class="string">&quot;{{\&quot;constructor\&quot;:0,\&quot;fields\&quot;:[{{\&quot;bytes\&quot;:\&quot;{}\&quot;}}]}}&quot;</span>,
-                    key_encode_hex(payload).unwrap()
-                ))
+                TxDatumBuilder::new()
+                    .add_field(TxDatumFieldValue::Bytes(key_encode_hex(payload).unwrap()))
+                    .build()
+                    .unwrap()
             })
             .collect()
     }

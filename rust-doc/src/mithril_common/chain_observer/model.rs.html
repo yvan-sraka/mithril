@@ -137,26 +137,104 @@
 <a href="#137" id="137">137</a>
 <a href="#138" id="138">138</a>
 <a href="#139" id="139">139</a>
-</pre><pre class="rust"><code><span class="kw">use </span>serde_json::Value;
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+</pre><pre class="rust"><code><span class="kw">use </span>serde::Serialize;
+<span class="kw">use </span>serde_json::Value;
 <span class="kw">use </span>std::{collections::HashMap, error::Error <span class="kw">as </span>StdError};
+<span class="kw">use </span>strum_macros::{Display, EnumDiscriminants};
 <span class="kw">use </span>thiserror::Error;
 
-<span class="doccomment">/// [ChainAddress] represents an on chain address
+<span class="doccomment">/// [ChainAddress] represents an on chain address.
 </span><span class="kw">pub type </span>ChainAddress = String;
 
 <span class="doccomment">/// [TxDatum] related errors.
 </span><span class="attr">#[derive(Debug, Error)]
 </span><span class="kw">pub enum </span>TxDatumError {
-    <span class="doccomment">/// Generic [TxDatum] error.
-    </span><span class="attr">#[error(<span class="string">&quot;general error {0}&quot;</span>)]
-    </span>_General(Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;),
-
     <span class="doccomment">/// Error raised when the content could not be parsed.
-    </span><span class="attr">#[error(<span class="string">&quot;could not parse content: {0}&quot;</span>)]
+    </span><span class="attr">#[error(<span class="string">&quot;could not parse tx datum: {0}&quot;</span>)]
     </span>InvalidContent(Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;),
+
+    <span class="doccomment">/// Error raised when building the tx datum failed.
+    </span><span class="attr">#[error(<span class="string">&quot;could not build tx datum: {0}&quot;</span>)]
+    </span>Build(serde_json::Error),
 }
 
-<span class="doccomment">/// [TxDatum] represents transaction Datum
+<span class="doccomment">/// [TxDatum] represents transaction Datum.
 </span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq)]
 </span><span class="kw">pub struct </span>TxDatum(<span class="kw">pub </span>String);
 
@@ -164,7 +242,7 @@
     <span class="doccomment">/// Retrieves the nth field of the datum with given type
     </span><span class="kw">pub fn </span>get_nth_field_by_type(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        type_name: <span class="kw-2">&amp;</span>str,
+        type_name: <span class="kw-2">&amp;</span>TxDatumFieldTypeName,
         index: usize,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Value, Box&lt;<span class="kw">dyn </span>StdError&gt;&gt; {
         <span class="kw">let </span>tx_datum_raw = <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>;
@@ -187,7 +265,7 @@
         <span class="comment">// 3- Filter the vec (keep the ones that match the given type), and retrieve the nth entry of this filtered vec
         </span><span class="kw">let </span>field_value = fields
             .iter()
-            .filter(|<span class="kw-2">&amp;</span>field| field.get(type_name).is_some())
+            .filter(|<span class="kw-2">&amp;</span>field| field.get(type_name.to_string()).is_some())
             .nth(index)
             .ok_or_else(|| {
                 TxDatumError::InvalidContent(
@@ -197,10 +275,67 @@
                     .into(),
                 )
             })<span class="question-mark">?
-            </span>.get(type_name)
+            </span>.get(type_name.to_string())
             .unwrap();
 
         <span class="prelude-val">Ok</span>(field_value.to_owned())
+    }
+}
+
+<span class="doccomment">/// [TxDatumFieldValue] represents a fiel value of TxDatum.
+</span><span class="attr">#[derive(Debug, EnumDiscriminants, Serialize, Display)]
+#[serde(untagged)]
+#[strum(serialize_all = <span class="string">&quot;lowercase&quot;</span>)]
+#[strum_discriminants(derive(Serialize, Display))]
+#[strum_discriminants(name(TxDatumFieldTypeName))]
+#[strum_discriminants(strum(serialize_all = <span class="string">&quot;lowercase&quot;</span>))]
+</span><span class="kw">pub enum </span>TxDatumFieldValue {
+    <span class="doccomment">/// Bytes datum field value.
+    </span>Bytes(String),
+    <span class="doccomment">/// Integer datum field value
+    </span><span class="attr">#[allow(dead_code)]
+    </span>Int(u32),
+}
+
+<span class="doccomment">/// [TxDatumBuilder] is a [TxDatum] builder utility.
+</span><span class="attr">#[derive(Debug, Serialize)]
+</span><span class="kw">pub struct </span>TxDatumBuilder {
+    constructor: usize,
+    fields: Vec&lt;HashMap&lt;String, TxDatumFieldValue&gt;&gt;,
+}
+
+<span class="kw">impl </span>TxDatumBuilder {
+    <span class="doccomment">/// [TxDatumBuilder] factory
+    </span><span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            constructor: <span class="number">0</span>,
+            fields: Vec::new(),
+        }
+    }
+
+    <span class="doccomment">/// Add a field to the builder
+    </span><span class="kw">pub fn </span>add_field(<span class="kw-2">&amp;mut </span><span class="self">self</span>, field_value: TxDatumFieldValue) -&gt; <span class="kw-2">&amp;mut </span>TxDatumBuilder {
+        <span class="kw">let </span><span class="kw-2">mut </span>field = HashMap::new();
+        field.insert(
+            TxDatumFieldTypeName::from(<span class="kw-2">&amp;</span>field_value).to_string(),
+            field_value,
+        );
+        <span class="self">self</span>.fields.push(field);
+
+        <span class="self">self
+    </span>}
+
+    <span class="doccomment">/// Build a [TxDatum]
+    </span><span class="kw">pub fn </span>build(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;TxDatum, TxDatumError&gt; {
+        <span class="prelude-val">Ok</span>(TxDatum(
+            serde_json::to_string(<span class="kw-2">&amp;</span><span class="self">self</span>).map_err(TxDatumError::Build)<span class="question-mark">?</span>,
+        ))
+    }
+}
+
+<span class="kw">impl </span>Default <span class="kw">for </span>TxDatumBuilder {
+    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::new()
     }
 }
 
@@ -209,7 +344,24 @@
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
     <span class="kw">fn </span>dummy_tx_datum() -&gt; TxDatum {
-        TxDatum(<span class="string">&quot;{\&quot;constructor\&quot;:0,\&quot;fields\&quot;:[{\&quot;bytes\&quot;:\&quot;bytes0\&quot;}, {\&quot;int\&quot;:0}, {\&quot;int\&quot;:1}, {\&quot;bytes\&quot;:\&quot;bytes1\&quot;}, {\&quot;bytes\&quot;:\&quot;bytes2\&quot;}, {\&quot;int\&quot;:2}]}&quot;</span>.to_string())
+        <span class="kw">let </span><span class="kw-2">mut </span>tx_datum_builder = TxDatumBuilder::new();
+        <span class="kw">let </span>tx_datum = tx_datum_builder
+            .add_field(TxDatumFieldValue::Bytes(<span class="string">&quot;bytes0&quot;</span>.to_string()))
+            .add_field(TxDatumFieldValue::Int(<span class="number">0</span>))
+            .add_field(TxDatumFieldValue::Int(<span class="number">1</span>))
+            .add_field(TxDatumFieldValue::Bytes(<span class="string">&quot;bytes1&quot;</span>.to_string()))
+            .add_field(TxDatumFieldValue::Bytes(<span class="string">&quot;bytes2&quot;</span>.to_string()))
+            .add_field(TxDatumFieldValue::Int(<span class="number">2</span>))
+            .build()
+            .expect(<span class="string">&quot;tx_datum build should not fail&quot;</span>);
+        tx_datum
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_build_tx_datum() {
+        <span class="kw">let </span>tx_datum = dummy_tx_datum();
+        <span class="kw">let </span>tx_datum_expected = TxDatum(<span class="string">r#&quot;{&quot;constructor&quot;:0,&quot;fields&quot;:[{&quot;bytes&quot;:&quot;bytes0&quot;},{&quot;int&quot;:0},{&quot;int&quot;:1},{&quot;bytes&quot;:&quot;bytes1&quot;},{&quot;bytes&quot;:&quot;bytes2&quot;},{&quot;int&quot;:2}]}&quot;#</span>.to_string());
+        <span class="macro">assert_eq!</span>(tx_datum_expected, tx_datum);
     }
 
     <span class="attr">#[test]
@@ -218,7 +370,7 @@
         <span class="macro">assert_eq!</span>(
             <span class="string">&quot;bytes0&quot;</span>,
             tx_datum
-                .get_nth_field_by_type(<span class="string">&quot;bytes&quot;</span>, <span class="number">0</span>)
+                .get_nth_field_by_type(<span class="kw-2">&amp;</span>TxDatumFieldTypeName::Bytes, <span class="number">0</span>)
                 .unwrap()
                 .as_str()
                 .unwrap()
@@ -226,7 +378,7 @@
         <span class="macro">assert_eq!</span>(
             <span class="string">&quot;bytes1&quot;</span>,
             tx_datum
-                .get_nth_field_by_type(<span class="string">&quot;bytes&quot;</span>, <span class="number">1</span>)
+                .get_nth_field_by_type(<span class="kw-2">&amp;</span>TxDatumFieldTypeName::Bytes, <span class="number">1</span>)
                 .unwrap()
                 .as_str()
                 .unwrap()
@@ -234,13 +386,13 @@
         <span class="macro">assert_eq!</span>(
             <span class="string">&quot;bytes2&quot;</span>,
             tx_datum
-                .get_nth_field_by_type(<span class="string">&quot;bytes&quot;</span>, <span class="number">2</span>)
+                .get_nth_field_by_type(<span class="kw-2">&amp;</span>TxDatumFieldTypeName::Bytes, <span class="number">2</span>)
                 .unwrap()
                 .as_str()
                 .unwrap()
         );
         tx_datum
-            .get_nth_field_by_type(<span class="string">&quot;bytes&quot;</span>, <span class="number">100</span>)
+            .get_nth_field_by_type(<span class="kw-2">&amp;</span>TxDatumFieldTypeName::Bytes, <span class="number">100</span>)
             .expect_err(<span class="string">&quot;should have returned an error&quot;</span>);
     }
 
@@ -250,7 +402,7 @@
         <span class="macro">assert_eq!</span>(
             <span class="number">0</span>,
             tx_datum
-                .get_nth_field_by_type(<span class="string">&quot;int&quot;</span>, <span class="number">0</span>)
+                .get_nth_field_by_type(<span class="kw-2">&amp;</span>TxDatumFieldTypeName::Int, <span class="number">0</span>)
                 .unwrap()
                 .as_u64()
                 .unwrap()
@@ -258,7 +410,7 @@
         <span class="macro">assert_eq!</span>(
             <span class="number">1</span>,
             tx_datum
-                .get_nth_field_by_type(<span class="string">&quot;int&quot;</span>, <span class="number">1</span>)
+                .get_nth_field_by_type(<span class="kw-2">&amp;</span>TxDatumFieldTypeName::Int, <span class="number">1</span>)
                 .unwrap()
                 .as_u64()
                 .unwrap()
@@ -266,13 +418,13 @@
         <span class="macro">assert_eq!</span>(
             <span class="number">2</span>,
             tx_datum
-                .get_nth_field_by_type(<span class="string">&quot;int&quot;</span>, <span class="number">2</span>)
+                .get_nth_field_by_type(<span class="kw-2">&amp;</span>TxDatumFieldTypeName::Int, <span class="number">2</span>)
                 .unwrap()
                 .as_u64()
                 .unwrap()
         );
         tx_datum
-            .get_nth_field_by_type(<span class="string">&quot;int&quot;</span>, <span class="number">100</span>)
+            .get_nth_field_by_type(<span class="kw-2">&amp;</span>TxDatumFieldTypeName::Int, <span class="number">100</span>)
             .expect_err(<span class="string">&quot;should have returned an error&quot;</span>);
     }
 }

@@ -264,7 +264,7 @@
     <span class="kw">fn </span>get_projection() -&gt; Projection {
         <span class="kw">let </span><span class="kw-2">mut </span>projection = Projection::default();
         projection.add_field(<span class="string">&quot;event_id&quot;</span>, <span class="string">&quot;event_id&quot;</span>, <span class="string">&quot;int&quot;</span>);
-        projection.add_field(<span class="string">&quot;created_at&quot;</span>, <span class="string">&quot;unixepoch(created_at)&quot;</span>, <span class="string">&quot;string&quot;</span>);
+        projection.add_field(<span class="string">&quot;created_at&quot;</span>, <span class="string">&quot;strftime(&#39;%s&#39;, created_at)&quot;</span>, <span class="string">&quot;string&quot;</span>);
         projection.add_field(<span class="string">&quot;source&quot;</span>, <span class="string">&quot;source&quot;</span>, <span class="string">&quot;string&quot;</span>);
         projection.add_field(<span class="string">&quot;action&quot;</span>, <span class="string">&quot;action&quot;</span>, <span class="string">&quot;string&quot;</span>);
         projection.add_field(<span class="string">&quot;content&quot;</span>, <span class="string">&quot;content&quot;</span>, <span class="string">&quot;string&quot;</span>);
@@ -389,7 +389,7 @@
         <span class="kw">let </span>connection = Connection::open(<span class="string">&quot;:memory:&quot;</span>).unwrap();
         <span class="kw">let </span>provider = EventPersisterProvider::new(<span class="kw-2">&amp;</span>connection);
         <span class="macro">assert_eq!</span>(
-            <span class="string">r#&quot;insert into event (source, action, content) values (?1, ?2, ?3) returning event_id as event_id, unixepoch(created_at) as created_at, source as source, action as action, content as content&quot;#</span>,
+            <span class="string">r#&quot;insert into event (source, action, content) values (?1, ?2, ?3) returning event_id as event_id, strftime(&#39;%s&#39;, created_at) as created_at, source as source, action as action, content as content&quot;#</span>,
             provider.get_definition(<span class="prelude-val">None</span>)
         )
     }
