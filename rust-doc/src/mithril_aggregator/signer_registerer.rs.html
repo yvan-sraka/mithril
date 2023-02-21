@@ -318,6 +318,18 @@
 <a href="#318" id="318">318</a>
 <a href="#319" id="319">319</a>
 <a href="#320" id="320">320</a>
+<a href="#321" id="321">321</a>
+<a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
+<a href="#324" id="324">324</a>
+<a href="#325" id="325">325</a>
+<a href="#326" id="326">326</a>
+<a href="#327" id="327">327</a>
+<a href="#328" id="328">328</a>
+<a href="#329" id="329">329</a>
+<a href="#330" id="330">330</a>
+<a href="#331" id="331">331</a>
+<a href="#332" id="332">332</a>
 </pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>thiserror::Error;
@@ -329,7 +341,7 @@
     crypto_helper::{
         key_decode_hex, KESPeriod, ProtocolKeyRegistration, ProtocolRegistrationError,
     },
-    entities::{Epoch, Signer, StakeDistribution},
+    entities::{Epoch, Signer, SignerWithStake, StakeDistribution},
     store::StoreError,
 };
 
@@ -353,7 +365,7 @@
 
     <span class="doccomment">/// Signer is already registered.
     </span><span class="attr">#[error(<span class="string">&quot;signer already registered&quot;</span>)]
-    </span>ExistingSigner(),
+    </span>ExistingSigner(SignerWithStake),
 
     <span class="doccomment">/// Store error.
     </span><span class="attr">#[error(<span class="string">&quot;store error: {0}&quot;</span>)]
@@ -386,7 +398,10 @@
 #[async_trait]
 </span><span class="kw">pub trait </span>SignerRegisterer: Sync + Send {
     <span class="doccomment">/// Register a signer
-    </span><span class="kw">async fn </span>register_signer(<span class="kw-2">&amp;</span><span class="self">self</span>, signer: <span class="kw-2">&amp;</span>Signer) -&gt; <span class="prelude-ty">Result</span>&lt;(), SignerRegistrationError&gt;;
+    </span><span class="kw">async fn </span>register_signer(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        signer: <span class="kw-2">&amp;</span>Signer,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;SignerWithStake, SignerRegistrationError&gt;;
 }
 
 <span class="doccomment">/// Trait to open a signer registration round
@@ -461,7 +476,10 @@
 
 <span class="attr">#[async_trait]
 </span><span class="kw">impl </span>SignerRegisterer <span class="kw">for </span>MithrilSignerRegisterer {
-    <span class="kw">async fn </span>register_signer(<span class="kw-2">&amp;</span><span class="self">self</span>, signer: <span class="kw-2">&amp;</span>Signer) -&gt; <span class="prelude-ty">Result</span>&lt;(), SignerRegistrationError&gt; {
+    <span class="kw">async fn </span>register_signer(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        signer: <span class="kw-2">&amp;</span>Signer,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;SignerWithStake, SignerRegistrationError&gt; {
         <span class="kw">let </span>registration_round = <span class="self">self</span>.current_round.read().<span class="kw">await</span>;
         <span class="kw">let </span>registration_round = registration_round
             .as_ref()
@@ -511,16 +529,22 @@
             kes_period,
             verification_key,
         )<span class="question-mark">?</span>;
-        <span class="kw">let </span><span class="kw-2">mut </span>signer_save = signer.to_owned();
+        <span class="kw">let </span><span class="kw-2">mut </span>signer_save = SignerWithStake::from_signer(
+            signer.to_owned(),
+            <span class="kw-2">*</span>registration_round
+                .stake_distribution
+                .get(<span class="kw-2">&amp;</span>party_id_save)
+                .unwrap(),
+        );
         signer_save.party_id = party_id_save;
 
         <span class="kw">match </span><span class="self">self
             </span>.verification_key_store
-            .save_verification_key(registration_round.epoch, signer_save)
+            .save_verification_key(registration_round.epoch, signer_save.clone().into())
             .<span class="kw">await</span><span class="question-mark">?
         </span>{
-            <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Err</span>(SignerRegistrationError::ExistingSigner()),
-            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Ok</span>(()),
+            <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Err</span>(SignerRegistrationError::ExistingSigner(signer_save)),
+            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Ok</span>(signer_save),
         }
     }
 }

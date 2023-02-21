@@ -253,6 +253,22 @@
 <a href="#253" id="253">253</a>
 <a href="#254" id="254">254</a>
 <a href="#255" id="255">255</a>
+<a href="#256" id="256">256</a>
+<a href="#257" id="257">257</a>
+<a href="#258" id="258">258</a>
+<a href="#259" id="259">259</a>
+<a href="#260" id="260">260</a>
+<a href="#261" id="261">261</a>
+<a href="#262" id="262">262</a>
+<a href="#263" id="263">263</a>
+<a href="#264" id="264">264</a>
+<a href="#265" id="265">265</a>
+<a href="#266" id="266">266</a>
+<a href="#267" id="267">267</a>
+<a href="#268" id="268">268</a>
+<a href="#269" id="269">269</a>
+<a href="#270" id="270">270</a>
+<a href="#271" id="271">271</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::http_server::routes::middlewares;
 <span class="kw">use </span><span class="kw">crate</span>::DependencyManager;
 <span class="kw">use </span>std::sync::Arc;
@@ -279,7 +295,10 @@
         .and(middlewares::with_signer_registerer(
             dependency_manager.clone(),
         ))
-        .and(middlewares::with_event_transmitter(dependency_manager))
+        .and(middlewares::with_event_transmitter(
+            dependency_manager.clone(),
+        ))
+        .and(middlewares::with_beacon_provider(dependency_manager))
         .and_then(handlers::register_signer)
 }
 
@@ -288,6 +307,7 @@
     <span class="kw">use </span><span class="kw">crate</span>::FromRegisterSignerAdapter;
     <span class="kw">use crate</span>::{http_server::routes::reply, SignerRegisterer, SignerRegistrationError};
     <span class="kw">use </span>mithril_common::messages::RegisterSignerMessage;
+    <span class="kw">use </span>mithril_common::BeaconProvider;
     <span class="kw">use </span>slog_scope::{debug, warn};
     <span class="kw">use </span>std::convert::Infallible;
     <span class="kw">use </span>std::sync::Arc;
@@ -299,34 +319,43 @@
         register_signer_message: RegisterSignerMessage,
         signer_registerer: Arc&lt;<span class="kw">dyn </span>SignerRegisterer&gt;,
         event_transmitter: Arc&lt;TransmitterService&lt;EventMessage&gt;&gt;,
+        beacon_provider: Arc&lt;<span class="kw">dyn </span>BeaconProvider&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw">impl </span>warp::Reply, Infallible&gt; {
         <span class="macro">debug!</span>(
             <span class="string">&quot;⇄ HTTP SERVER: register_signer/{:?}&quot;</span>,
             register_signer_message
         );
         <span class="kw">let </span>signer = FromRegisterSignerAdapter::adapt(register_signer_message);
-        <span class="kw">let </span>headers: Vec&lt;(<span class="kw-2">&amp;</span>str, <span class="kw-2">&amp;</span>str)&gt; = <span class="kw">match </span>signer_node_version.as_ref() {
+        <span class="kw">let </span><span class="kw-2">mut </span>headers: Vec&lt;(<span class="kw-2">&amp;</span>str, <span class="kw-2">&amp;</span>str)&gt; = <span class="kw">match </span>signer_node_version.as_ref() {
             <span class="prelude-val">Some</span>(version) =&gt; <span class="macro">vec!</span>[(<span class="string">&quot;signer-node-version&quot;</span>, version)],
             <span class="prelude-val">None </span>=&gt; Vec::new(),
         };
+        <span class="kw">let </span>epoch_str = <span class="kw">if let </span><span class="prelude-val">Ok</span>(beacon) = beacon_provider.get_current_beacon().<span class="kw">await </span>{
+            <span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, beacon.epoch)
+        } <span class="kw">else </span>{
+            String::new()
+        };
 
+        <span class="kw">if </span>epoch_str.is_empty() {
+            headers.push((<span class="string">&quot;epoch&quot;</span>, epoch_str.as_str()));
+        }
         <span class="kw">match </span>signer_registerer.register_signer(<span class="kw-2">&amp;</span>signer).<span class="kw">await </span>{
-            <span class="prelude-val">Ok</span>(()) =&gt; {
+            <span class="prelude-val">Ok</span>(signer_with_stake) =&gt; {
                 <span class="kw">let _ </span>= event_transmitter.send_event_message(
                     <span class="string">&quot;HTTP::signer_register&quot;</span>,
                     <span class="string">&quot;register_signer&quot;</span>,
-                    <span class="kw-2">&amp;</span>signer,
+                    <span class="kw-2">&amp;</span>signer_with_stake,
                     headers,
                 );
 
                 <span class="prelude-val">Ok</span>(reply::empty(StatusCode::CREATED))
             }
-            <span class="prelude-val">Err</span>(SignerRegistrationError::ExistingSigner()) =&gt; {
+            <span class="prelude-val">Err</span>(SignerRegistrationError::ExistingSigner(signer_with_stake)) =&gt; {
                 <span class="macro">debug!</span>(<span class="string">&quot;register_signer::already_registered&quot;</span>);
                 <span class="kw">let _ </span>= event_transmitter.send_event_message(
                     <span class="string">&quot;HTTP::signer_register&quot;</span>,
                     <span class="string">&quot;register_signer&quot;</span>,
-                    <span class="kw-2">&amp;</span>signer,
+                    <span class="kw-2">&amp;</span>signer_with_stake,
                     headers,
                 );
                 <span class="prelude-val">Ok</span>(reply::empty(StatusCode::CREATED))
@@ -360,6 +389,7 @@
     <span class="kw">use </span>mithril_common::crypto_helper::ProtocolRegistrationError;
     <span class="kw">use </span>mithril_common::messages::RegisterSignerMessage;
     <span class="kw">use </span>mithril_common::test_utils::apispec::APISpec;
+    <span class="kw">use </span>mithril_common::test_utils::fake_data;
     <span class="kw">use </span>warp::http::Method;
     <span class="kw">use </span>warp::test::request;
 
@@ -383,10 +413,11 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_register_signer_post_ok() {
+        <span class="kw">let </span>signer_with_stake = fake_data::signers_with_stakes(<span class="number">1</span>).pop().unwrap();
         <span class="kw">let </span><span class="kw-2">mut </span>mock_signer_registerer = MockSignerRegisterer::new();
         mock_signer_registerer
             .expect_register_signer()
-            .return_once(|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(()));
+            .return_once(|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(signer_with_stake));
         <span class="kw">let </span>(<span class="kw-2">mut </span>dependency_manager, <span class="kw">_</span>) = initialize_dependencies().<span class="kw">await</span>;
         dependency_manager.signer_registerer = Arc::new(mock_signer_registerer);
 
@@ -413,10 +444,11 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_register_signer_post_ok_existing() {
+        <span class="kw">let </span>signer_with_stake = fake_data::signers_with_stakes(<span class="number">1</span>).pop().unwrap();
         <span class="kw">let </span><span class="kw-2">mut </span>mock_signer_registerer = MockSignerRegisterer::new();
         mock_signer_registerer
             .expect_register_signer()
-            .return_once(|<span class="kw">_</span>| <span class="prelude-val">Err</span>(SignerRegistrationError::ExistingSigner()));
+            .return_once(|<span class="kw">_</span>| <span class="prelude-val">Err</span>(SignerRegistrationError::ExistingSigner(signer_with_stake)));
         <span class="kw">let </span>(<span class="kw-2">mut </span>dependency_manager, <span class="kw">_</span>) = initialize_dependencies().<span class="kw">await</span>;
         dependency_manager.signer_registerer = Arc::new(mock_signer_registerer);
 

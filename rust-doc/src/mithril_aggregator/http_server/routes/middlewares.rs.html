@@ -62,11 +62,20 @@
 <a href="#62" id="62">62</a>
 <a href="#63" id="63">63</a>
 <a href="#64" id="64">64</a>
+<a href="#65" id="65">65</a>
+<a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::event_store::{EventMessage, TransmitterService};
 <span class="kw">use crate</span>::{
     dependency::MultiSignerWrapper, CertificatePendingStore, CertificateStore, Configuration,
     DependencyManager, ProtocolParametersStore, SignerRegisterer, SnapshotStore,
 };
+<span class="kw">use </span>mithril_common::BeaconProvider;
 <span class="kw">use </span>std::convert::Infallible;
 <span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>warp::Filter;
@@ -125,6 +134,13 @@
     dependency_manager: Arc&lt;DependencyManager&gt;,
 ) -&gt; <span class="kw">impl </span>Filter&lt;Extract = (Arc&lt;TransmitterService&lt;EventMessage&gt;&gt;,), Error = Infallible&gt; + Clone {
     warp::any().map(<span class="kw">move </span>|| dependency_manager.event_transmitter.clone())
+}
+
+<span class="doccomment">/// With round_opener middleware
+</span><span class="kw">pub fn </span>with_beacon_provider(
+    dependency_manager: Arc&lt;DependencyManager&gt;,
+) -&gt; <span class="kw">impl </span>Filter&lt;Extract = (Arc&lt;<span class="kw">dyn </span>BeaconProvider&gt;,), Error = Infallible&gt; + Clone {
+    warp::any().map(<span class="kw">move </span>|| dependency_manager.beacon_provider.clone())
 }
 </code></pre></div>
 </section></div></main><div id="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="mithril_aggregator" data-themes="" data-resource-suffix="" data-rustdoc-version="1.67.1 (d5a82bbd2 2023-02-07)" data-search-js="search-444266647c4dba98.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-af96d9e2fc13e081.css" ></div></body></html>
