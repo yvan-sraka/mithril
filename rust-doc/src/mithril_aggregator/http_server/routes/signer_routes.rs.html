@@ -269,6 +269,9 @@
 <a href="#269" id="269">269</a>
 <a href="#270" id="270">270</a>
 <a href="#271" id="271">271</a>
+<a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::http_server::routes::middlewares;
 <span class="kw">use </span><span class="kw">crate</span>::DependencyManager;
 <span class="kw">use </span>std::sync::Arc;
@@ -330,10 +333,13 @@
             <span class="prelude-val">Some</span>(version) =&gt; <span class="macro">vec!</span>[(<span class="string">&quot;signer-node-version&quot;</span>, version)],
             <span class="prelude-val">None </span>=&gt; Vec::new(),
         };
-        <span class="kw">let </span>epoch_str = <span class="kw">if let </span><span class="prelude-val">Ok</span>(beacon) = beacon_provider.get_current_beacon().<span class="kw">await </span>{
-            <span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, beacon.epoch)
-        } <span class="kw">else </span>{
-            String::new()
+        <span class="kw">let </span>epoch_str = <span class="kw">match </span>beacon_provider.get_current_beacon().<span class="kw">await </span>{
+            <span class="prelude-val">Ok</span>(beacon) =&gt; <span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, beacon.epoch),
+            <span class="prelude-val">Err</span>(e) =&gt; {
+                <span class="macro">warn!</span>(<span class="string">&quot;Could not read beacon to add in event: {e}&quot;</span>);
+
+                String::new()
+            }
         };
 
         <span class="kw">if </span>epoch_str.is_empty() {
