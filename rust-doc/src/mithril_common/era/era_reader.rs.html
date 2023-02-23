@@ -313,6 +313,10 @@
 <a href="#313" id="313">313</a>
 <a href="#314" id="314">314</a>
 <a href="#315" id="315">315</a>
+<a href="#316" id="316">316</a>
+<a href="#317" id="317">317</a>
+<a href="#318" id="318">318</a>
+<a href="#319" id="319">319</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::entities::Epoch;
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
@@ -372,6 +376,7 @@
     /// software.
     </span><span class="kw">pub fn </span>get_current_supported_era(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;SupportedEra, UnsupportedEraError&gt; {
         SupportedEra::from_str(<span class="kw-2">&amp;</span><span class="self">self</span>.current_era.name)
+            .map_err(|<span class="kw">_</span>| UnsupportedEraError::new(<span class="kw-2">&amp;</span><span class="self">self</span>.current_era.name))
     }
 
     <span class="doccomment">/// Return the [EraMarker] of the current Era.
@@ -390,7 +395,10 @@
     /// for upgrade.
     </span><span class="kw">pub fn </span>get_next_supported_era(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;SupportedEra&gt;, UnsupportedEraError&gt; {
         <span class="kw">match </span><span class="self">self</span>.next_era.as_ref() {
-            <span class="prelude-val">Some</span>(marker) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(SupportedEra::from_str(<span class="kw-2">&amp;</span>marker.name)<span class="question-mark">?</span>)),
+            <span class="prelude-val">Some</span>(marker) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(
+                SupportedEra::from_str(<span class="kw-2">&amp;</span>marker.name)
+                    .map_err(|<span class="kw">_</span>| UnsupportedEraError::new(<span class="kw-2">&amp;</span><span class="self">self</span>.current_era.name))<span class="question-mark">?</span>,
+            )),
             <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
         }
     }

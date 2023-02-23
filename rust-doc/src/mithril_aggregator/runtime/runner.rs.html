@@ -1186,6 +1186,16 @@
 <a href="#1186" id="1186">1186</a>
 <a href="#1187" id="1187">1187</a>
 <a href="#1188" id="1188">1188</a>
+<a href="#1189" id="1189">1189</a>
+<a href="#1190" id="1190">1190</a>
+<a href="#1191" id="1191">1191</a>
+<a href="#1192" id="1192">1192</a>
+<a href="#1193" id="1193">1193</a>
+<a href="#1194" id="1194">1194</a>
+<a href="#1195" id="1195">1195</a>
+<a href="#1196" id="1196">1196</a>
+<a href="#1197" id="1197">1197</a>
+<a href="#1198" id="1198">1198</a>
 </pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>chrono::Utc;
 <span class="kw">use </span>mithril_common::entities::Epoch;
@@ -1815,12 +1825,22 @@
             </span>.map_err(|e| {
                 RuntimeError::General(<span class="macro">format!</span>(<span class="string">&quot;Could not get Era information (&#39;{e}&#39;)&quot;</span>).into())
             })<span class="question-mark">?</span>;
-        <span class="self">self</span>.dependencies.era_checker.change_era(
-            token.get_current_supported_era().map_err(|e| {
-                RuntimeError::General(<span class="macro">format!</span>(<span class="string">&quot;Could not update EraChecker service (&#39;{e}&#39;)&quot;</span>).into())
-            })<span class="question-mark">?</span>,
-            token.get_current_epoch(),
+        <span class="kw">let </span>current_era = token.get_current_supported_era().map_err(|e| {
+            RuntimeError::General(<span class="macro">format!</span>(<span class="string">&quot;Could not update EraChecker service (&#39;{e}&#39;)&quot;</span>).into())
+        })<span class="question-mark">?</span>;
+        <span class="self">self</span>.dependencies
+            .era_checker
+            .change_era(current_era, token.get_current_epoch());
+        <span class="macro">debug!</span>(
+            <span class="string">&quot;Current Era is {} (Epoch {}).&quot;</span>,
+            current_era,
+            token.get_current_epoch()
         );
+
+        <span class="kw">if </span>token.get_next_supported_era().is_err() {
+            <span class="kw">let </span>era_name = <span class="kw-2">&amp;</span>token.get_next_era_marker().unwrap().name;
+            <span class="macro">warn!</span>(<span class="string">&quot;Upcoming Era &#39;{era_name}&#39; is not supported by this version of the software. Please update!&quot;</span>);
+        }
 
         <span class="prelude-val">Ok</span>(())
     }
