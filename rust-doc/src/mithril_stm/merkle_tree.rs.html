@@ -779,6 +779,20 @@
 <a href="#779" id="779">779</a>
 <a href="#780" id="780">780</a>
 <a href="#781" id="781">781</a>
+<a href="#782" id="782">782</a>
+<a href="#783" id="783">783</a>
+<a href="#784" id="784">784</a>
+<a href="#785" id="785">785</a>
+<a href="#786" id="786">786</a>
+<a href="#787" id="787">787</a>
+<a href="#788" id="788">788</a>
+<a href="#789" id="789">789</a>
+<a href="#790" id="790">790</a>
+<a href="#791" id="791">791</a>
+<a href="#792" id="792">792</a>
+<a href="#793" id="793">793</a>
+<a href="#794" id="794">794</a>
+<a href="#795" id="795">795</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Creation and verification of Merkle Trees
 </span><span class="kw">use </span><span class="kw">crate</span>::error::MerkleTreeError;
 <span class="kw">use </span><span class="kw">crate</span>::multi_sig::VerificationKey;
@@ -1408,6 +1422,7 @@
     <span class="kw">use </span>blake2::{digest::consts::U32, Blake2b};
     <span class="kw">use </span>proptest::collection::vec;
     <span class="kw">use </span>proptest::prelude::<span class="kw-2">*</span>;
+    <span class="kw">use </span>rand::{seq::IteratorRandom, thread_rng};
 
     <span class="macro">prop_compose! </span>{
         <span class="kw">fn </span>arb_tree(max_size: u32)
@@ -1462,36 +1477,6 @@
             <span class="kw">let </span>encoded = bincode::serialize(<span class="kw-2">&amp;</span>t).unwrap();
             <span class="kw">let </span>decoded: MerkleTree::&lt;Blake2b&lt;U32&gt;&gt; = bincode::deserialize(<span class="kw-2">&amp;</span>encoded).unwrap();
             <span class="macro">assert_eq!</span>(tree.nodes, decoded.nodes);
-        }
-
-        <span class="attr">#[test]
-        </span><span class="kw">fn </span>test_create_batch_proof((t, values) <span class="kw">in </span>arb_tree(<span class="number">30</span>)) {
-            <span class="kw">let </span><span class="kw-2">mut </span>mt_index_list :Vec&lt;usize&gt; = Vec::new();
-            <span class="kw">for </span>(i, _v) <span class="kw">in </span>values.iter().enumerate() {
-                mt_index_list.push(i);
-            }
-            mt_index_list.sort_unstable();
-            <span class="kw">let </span>batch_proof = t.get_batched_path(mt_index_list);
-            <span class="macro">assert!</span>(t.to_commitment_batch_compat().check(<span class="kw-2">&amp;</span>values, <span class="kw-2">&amp;</span>batch_proof).is_ok());
-        }
-
-        <span class="attr">#[test]
-        </span><span class="kw">fn </span>test_bytes_batch_path((t, values) <span class="kw">in </span>arb_tree(<span class="number">30</span>)) {
-            <span class="kw">let </span><span class="kw-2">mut </span>mt_index_list :Vec&lt;usize&gt; = Vec::new();
-            <span class="kw">for </span>(i, _v) <span class="kw">in </span>values.iter().enumerate() {
-                mt_index_list.push(i);
-            }
-            mt_index_list.sort_unstable();
-
-            <span class="kw">let </span>bp = t.get_batched_path(mt_index_list);
-
-            <span class="kw">let </span>bytes = <span class="kw-2">&amp;</span>bp.to_bytes();
-            <span class="kw">let </span>deserialized = BatchPath::from_bytes(bytes).unwrap();
-            <span class="macro">assert!</span>(t.to_commitment_batch_compat().check(<span class="kw-2">&amp;</span>values, <span class="kw-2">&amp;</span>deserialized).is_ok());
-
-            <span class="kw">let </span>encoded = bincode::serialize(<span class="kw-2">&amp;</span>bp).unwrap();
-            <span class="kw">let </span>decoded: BatchPath&lt;Blake2b&lt;U32&gt;&gt; = bincode::deserialize(<span class="kw-2">&amp;</span>encoded).unwrap();
-            <span class="macro">assert!</span>(t.to_commitment_batch_compat().check(<span class="kw-2">&amp;</span>values, <span class="kw-2">&amp;</span>decoded).is_ok());
         }
 
         <span class="attr">#[test]
@@ -1557,6 +1542,49 @@
                 hasher: PhantomData::&lt;Blake2b&lt;U32&gt;&gt;::default()
                 };
             <span class="macro">assert!</span>(t.to_commitment_batch_compat().check(<span class="kw-2">&amp;</span>batch_values, <span class="kw-2">&amp;</span>path).is_err());
+        }
+    }
+
+    <span class="macro">prop_compose! </span>{
+        <span class="kw">fn </span>arb_tree_arb_batch(max_size: u32)
+                   (v <span class="kw">in </span>vec(any::&lt;u64&gt;(), <span class="number">2</span>..max_size <span class="kw">as </span>usize)) -&gt; (MerkleTree&lt;Blake2b&lt;U32&gt;&gt;, Vec&lt;MTLeaf&gt;, Vec&lt;usize&gt;) {
+            <span class="kw">let </span><span class="kw-2">mut </span>rng = thread_rng();
+            <span class="kw">let </span>size = v.len();
+            <span class="kw">let </span>pks = <span class="macro">vec!</span>[VerificationKey::default(); size];
+            <span class="kw">let </span>leaves = pks.into_iter().zip(v.into_iter()).map(|(key, stake)| MTLeaf(key, stake)).collect::&lt;Vec&lt;MTLeaf&gt;&gt;();
+
+            <span class="kw">let </span>indices: Vec&lt;usize&gt; = (<span class="number">0</span>..size).collect();
+            <span class="kw">let </span><span class="kw-2">mut </span>mt_list: Vec&lt;usize&gt; = indices.into_iter().choose_multiple(<span class="kw-2">&amp;mut </span>rng, size * <span class="number">2 </span>/ <span class="number">10 </span>+ <span class="number">1</span>);
+            mt_list.sort_unstable();
+
+            <span class="kw">let </span><span class="kw-2">mut </span>batch_values: Vec&lt;MTLeaf&gt; = Vec::with_capacity(mt_list.len());
+            <span class="kw">for </span>i <span class="kw">in </span>mt_list.iter() {
+                batch_values.push(leaves[<span class="kw-2">*</span>i]);
+            }
+
+            (MerkleTree::&lt;Blake2b&lt;U32&gt;&gt;::create(<span class="kw-2">&amp;</span>leaves), batch_values, mt_list)
+        }
+    }
+
+    <span class="macro">proptest! </span>{
+        <span class="attr">#![proptest_config(ProptestConfig::with_cases(<span class="number">100</span>))]
+        #[test]
+        </span><span class="kw">fn </span>test_create_batch_proof((t, batch_values, indices) <span class="kw">in </span>arb_tree_arb_batch(<span class="number">30</span>)) {
+            <span class="kw">let </span>batch_proof = t.get_batched_path(indices);
+            <span class="macro">assert!</span>(t.to_commitment_batch_compat().check(<span class="kw-2">&amp;</span>batch_values, <span class="kw-2">&amp;</span>batch_proof).is_ok());
+        }
+
+        <span class="attr">#[test]
+        </span><span class="kw">fn </span>test_bytes_batch_path((t, batch_values, indices) <span class="kw">in </span>arb_tree_arb_batch(<span class="number">30</span>)) {
+            <span class="kw">let </span>bp = t.get_batched_path(indices);
+
+            <span class="kw">let </span>bytes = <span class="kw-2">&amp;</span>bp.to_bytes();
+            <span class="kw">let </span>deserialized = BatchPath::from_bytes(bytes).unwrap();
+            <span class="macro">assert!</span>(t.to_commitment_batch_compat().check(<span class="kw-2">&amp;</span>batch_values, <span class="kw-2">&amp;</span>deserialized).is_ok());
+
+            <span class="kw">let </span>encoded = bincode::serialize(<span class="kw-2">&amp;</span>bp).unwrap();
+            <span class="kw">let </span>decoded: BatchPath&lt;Blake2b&lt;U32&gt;&gt; = bincode::deserialize(<span class="kw-2">&amp;</span>encoded).unwrap();
+            <span class="macro">assert!</span>(t.to_commitment_batch_compat().check(<span class="kw-2">&amp;</span>batch_values, <span class="kw-2">&amp;</span>decoded).is_ok());
         }
     }
 }
