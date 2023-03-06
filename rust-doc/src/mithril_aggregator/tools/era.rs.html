@@ -93,13 +93,25 @@
 <a href="#93" id="93">93</a>
 <a href="#94" id="94">94</a>
 <a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::error::Error;
 
 <span class="kw">use </span>mithril_common::{
     chain_observer::{TxDatumBuilder, TxDatumFieldValue},
     crypto_helper::{key_encode_hex, EraMarkersSigner},
     entities::Epoch,
-    era::{adapters::EraMarkersPayloadCardanoChain, EraMarker, SupportedEra},
+    era::{
+        adapters::{EraMarkerItemCardanoChain, EraMarkersPayloadCardanoChain},
+        SupportedEra,
+    },
 };
 
 <span class="kw">type </span>EraToolsResult&lt;R&gt; = <span class="prelude-ty">Result</span>&lt;R, Box&lt;<span class="kw">dyn </span>Error&gt;&gt;;
@@ -123,15 +135,17 @@
         maybe_next_era_epoch: <span class="prelude-ty">Option</span>&lt;Epoch&gt;,
         era_markers_signer: <span class="kw-2">&amp;</span>EraMarkersSigner,
     ) -&gt; EraToolsResult&lt;String&gt; {
-        <span class="kw">if </span>maybe_next_era_epoch.unwrap_or_default() &gt;= current_era_epoch {
+        <span class="kw">if </span>maybe_next_era_epoch.is_some()
+            &amp;&amp; maybe_next_era_epoch.unwrap_or_default() &lt;= current_era_epoch
+        {
             <span class="prelude-val">Err</span>(<span class="string">&quot;next era epoch must be strictly greater than the current era epoch&quot;</span>.to_string())<span class="question-mark">?</span>;
         }
 
         <span class="kw">let </span><span class="kw-2">mut </span>era_markers = Vec::new();
         <span class="kw">for </span>(index, era) <span class="kw">in </span>SupportedEra::eras().iter().enumerate() {
             <span class="kw">let </span>era_marker = <span class="kw">match </span>index {
-                <span class="number">0 </span>=&gt; EraMarker::new(<span class="kw-2">&amp;</span>era.to_string(), <span class="prelude-val">Some</span>(current_era_epoch)),
-                <span class="number">1 </span>=&gt; EraMarker::new(<span class="kw-2">&amp;</span>era.to_string(), maybe_next_era_epoch),
+                <span class="number">0 </span>=&gt; EraMarkerItemCardanoChain::new(<span class="kw-2">&amp;</span>era.to_string(), <span class="prelude-val">Some</span>(current_era_epoch)),
+                <span class="number">1 </span>=&gt; EraMarkerItemCardanoChain::new(<span class="kw-2">&amp;</span>era.to_string(), maybe_next_era_epoch),
                 <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(<span class="string">&quot;too many eras retrieved, can&#39;t generate tx datum&quot;</span>.to_string())<span class="question-mark">?</span>,
             };
             era_markers.push(era_marker);
@@ -144,8 +158,12 @@
 
         <span class="kw">let </span>tx_datum = TxDatumBuilder::new()
             .add_field(TxDatumFieldValue::Bytes(
-                key_encode_hex(era_markers_payload)
-                    .map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;era markerspayload could not be hex encoded: {e}&quot;</span>))<span class="question-mark">?</span>,
+                key_encode_hex(era_markers_payload.markers).map_err(|e| {
+                    <span class="macro">format!</span>(<span class="string">&quot;era markers payload markers could not be hex encoded: {e}&quot;</span>)
+                })<span class="question-mark">?</span>,
+            ))
+            .add_field(TxDatumFieldValue::Bytes(
+                era_markers_payload.signature.unwrap_or_default(),
             ))
             .build()<span class="question-mark">?</span>;
 
@@ -184,7 +202,7 @@
         <span class="kw">let </span>era_markers_signer = EraMarkersSigner::create_deterministic_signer();
         <span class="kw">let </span>era_tools = build_tools();
         <span class="kw">let _ </span>= era_tools
-            .generate_tx_datum(Epoch(<span class="number">1</span>), <span class="prelude-val">Some</span>(Epoch(<span class="number">2</span>)), <span class="kw-2">&amp;</span>era_markers_signer)
+            .generate_tx_datum(Epoch(<span class="number">3</span>), <span class="prelude-val">Some</span>(Epoch(<span class="number">2</span>)), <span class="kw-2">&amp;</span>era_markers_signer)
             .expect_err(<span class="string">&quot;generate_tx_datum should have failed&quot;</span>);
     }
 }

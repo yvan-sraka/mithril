@@ -118,13 +118,21 @@
 <a href="#118" id="118">118</a>
 <a href="#119" id="119">119</a>
 <a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
 </pre><pre class="rust"><code><span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>std::{path::PathBuf, sync::Arc};
 <span class="kw">use </span>thiserror::Error;
 
 <span class="kw">use crate</span>::{
     chain_observer::{ChainAddress, ChainObserver},
-    crypto_helper::EraMarkersVerifierVerificationKey,
+    crypto_helper::key_decode_hex,
+    entities::HexEncodedEraMarkersSignature,
     era::{
         adapters::{
             EraReaderBootstrapAdapter, EraReaderCardanoChainAdapter, EraReaderDummyAdapter,
@@ -139,6 +147,7 @@
 #[serde(rename_all = <span class="string">&quot;lowercase&quot;</span>)]
 </span><span class="kw">pub enum </span>AdapterType {
     <span class="doccomment">/// Cardano chain adapter.
+    </span><span class="attr">#[serde(rename = <span class="string">&quot;cardano-chain&quot;</span>)]
     </span>CardanoChain,
     <span class="doccomment">/// File adapter.
     </span>File,
@@ -158,6 +167,10 @@
     <span class="doccomment">/// Parameters parse error.
     </span><span class="attr">#[error(<span class="string">&quot;era reader adapter parameters parse error: {0:?}&quot;</span>)]
     </span>ParseParameters(serde_json::Error),
+
+    <span class="doccomment">/// Parameters decode error.
+    </span><span class="attr">#[error(<span class="string">&quot;era reader adapter parameters decode error: {0:?}&quot;</span>)]
+    </span>Decode(String),
 }
 
 <span class="doccomment">/// Era adapter builder
@@ -185,7 +198,7 @@
                 <span class="attr">#[derive(Deserialize)]
                 </span><span class="kw">struct </span>CardanoChainAdapterConfig {
                     address: ChainAddress,
-                    verification_key: EraMarkersVerifierVerificationKey,
+                    verification_key: HexEncodedEraMarkersSignature,
                 }
 
                 <span class="kw">let </span>adapter_config: CardanoChainAdapterConfig = serde_json::from_str(
@@ -198,7 +211,8 @@
                 <span class="prelude-val">Ok</span>(Box::new(EraReaderCardanoChainAdapter::new(
                     adapter_config.address,
                     chain_observer,
-                    adapter_config.verification_key,
+                    key_decode_hex(<span class="kw-2">&amp;</span>adapter_config.verification_key)
+                        .map_err(AdapterBuilderError::Decode)<span class="question-mark">?</span>,
                 )))
             }
             AdapterType::File =&gt; {
