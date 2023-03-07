@@ -192,7 +192,7 @@
     </span><span class="kw">pub fn </span>build(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         chain_observer: Arc&lt;<span class="kw">dyn </span>ChainObserver&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Box&lt;<span class="kw">dyn </span>EraReaderAdapter&gt;, AdapterBuilderError&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;<span class="kw">dyn </span>EraReaderAdapter&gt;, AdapterBuilderError&gt; {
         <span class="kw">match </span><span class="self">self</span>.adapter_type {
             AdapterType::CardanoChain =&gt; {
                 <span class="attr">#[derive(Deserialize)]
@@ -208,7 +208,7 @@
                 )
                 .map_err(AdapterBuilderError::ParseParameters)<span class="question-mark">?</span>;
 
-                <span class="prelude-val">Ok</span>(Box::new(EraReaderCardanoChainAdapter::new(
+                <span class="prelude-val">Ok</span>(Arc::new(EraReaderCardanoChainAdapter::new(
                     adapter_config.address,
                     chain_observer,
                     key_decode_hex(<span class="kw-2">&amp;</span>adapter_config.verification_key)
@@ -229,7 +229,7 @@
                 .map_err(AdapterBuilderError::ParseParameters)<span class="question-mark">?</span>;
                 <span class="kw">let </span>file_adapter = EraReaderFileAdapter::new(adapter_config.markers_file);
 
-                <span class="prelude-val">Ok</span>(Box::new(file_adapter))
+                <span class="prelude-val">Ok</span>(Arc::new(file_adapter))
             }
             AdapterType::Dummy =&gt; {
                 <span class="attr">#[derive(Deserialize)]
@@ -243,12 +243,12 @@
                         .ok_or_else(AdapterBuilderError::MissingParameters)<span class="question-mark">?</span>,
                 )
                 .map_err(AdapterBuilderError::ParseParameters)<span class="question-mark">?</span>;
-                <span class="kw">let </span><span class="kw-2">mut </span>dummy_adapter = EraReaderDummyAdapter::default();
+                <span class="kw">let </span>dummy_adapter = EraReaderDummyAdapter::default();
                 dummy_adapter.set_markers(adapter_config.markers);
 
-                <span class="prelude-val">Ok</span>(Box::new(dummy_adapter))
+                <span class="prelude-val">Ok</span>(Arc::new(dummy_adapter))
             }
-            AdapterType::Bootstrap =&gt; <span class="prelude-val">Ok</span>(Box::new(EraReaderBootstrapAdapter)),
+            AdapterType::Bootstrap =&gt; <span class="prelude-val">Ok</span>(Arc::new(EraReaderBootstrapAdapter)),
         }
     }
 }

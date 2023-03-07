@@ -860,7 +860,6 @@
 <a href="#860" id="860">860</a>
 <a href="#861" id="861">861</a>
 <a href="#862" id="862">862</a>
-<a href="#863" id="863">863</a>
 </pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>slog_scope::{debug, info, trace, warn};
 <span class="kw">use </span>std::error::Error <span class="kw">as </span>StdError;
@@ -957,7 +956,7 @@
 
 <span class="doccomment">/// This type represents the errors thrown from the Runner.
 </span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Error)]
-</span><span class="kw">pub enum </span>RuntimeError {
+</span><span class="kw">pub enum </span>RunnerError {
     <span class="doccomment">/// Value was expected from a subsystem but None was returned.
     </span><span class="attr">#[error(<span class="string">&quot;No value returned by the subsystem for `{0}`.&quot;</span>)]
     </span>NoValueError(String),
@@ -970,9 +969,6 @@
     <span class="doccomment">/// Parse file error
     </span><span class="attr">#[error(<span class="string">&quot;File parse failed: {0}.&quot;</span>)]
     </span>FileParse(String),
-    <span class="doccomment">/// General subsystem error
-    </span><span class="attr">#[error(<span class="string">&quot;Subsystem unavailable: {0}.&quot;</span>)]
-    </span>SubsystemUnavailable(String),
 }
 
 <span class="doccomment">/// Controller methods for the Signer&#39;s state machine.
@@ -1039,19 +1035,19 @@
             .get_stakes(epoch_offset_to_recording_epoch)
             .<span class="kw">await</span><span class="question-mark">?
             </span>.ok_or_else(|| {
-                RuntimeError::NoValueError(<span class="macro">format!</span>(
+                RunnerError::NoValueError(<span class="macro">format!</span>(
                     <span class="string">&quot;stakes at epoch {epoch_offset_to_recording_epoch}&quot;
                 </span>))
             })<span class="question-mark">?</span>;
         <span class="kw">let </span>stake = stake_distribution
             .get(<span class="kw-2">&amp;</span><span class="self">self</span>.services.single_signer.get_party_id())
-            .ok_or(RuntimeError::NoStakeForSelf())<span class="question-mark">?</span>;
+            .ok_or_else(RunnerError::NoStakeForSelf)<span class="question-mark">?</span>;
         <span class="kw">let </span>(operational_certificate, operational_certificate_encoded) =
             <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.config.operational_certificate_path {
                 <span class="prelude-val">Some</span>(operational_certificate_path) =&gt; {
                     <span class="kw">let </span>opcert: OpCert =
                         OpCert::from_file(operational_certificate_path).map_err(|<span class="kw">_</span>| {
-                            RuntimeError::FileParse(<span class="string">&quot;operational_certificate_path&quot;</span>.to_string())
+                            RunnerError::FileParse(<span class="string">&quot;operational_certificate_path&quot;</span>.to_string())
                         })<span class="question-mark">?</span>;
                     (<span class="prelude-val">Some</span>(opcert.clone()), <span class="prelude-val">Some</span>(key_encode_hex(opcert)<span class="question-mark">?</span>))
                 }
@@ -1111,7 +1107,7 @@
             .chain_observer
             .get_current_stake_distribution()
             .<span class="kw">await</span><span class="question-mark">?
-            </span>.ok_or_else(|| RuntimeError::NoValueError(<span class="string">&quot;current_stake_distribution&quot;</span>.to_string()))<span class="question-mark">?</span>;
+            </span>.ok_or_else(|| RunnerError::NoValueError(<span class="string">&quot;current_stake_distribution&quot;</span>.to_string()))<span class="question-mark">?</span>;
         <span class="self">self</span>.services
             .stake_store
             .save_stakes(epoch.offset_to_recording_epoch(), stake_distribution)
@@ -1180,13 +1176,13 @@
             .stake_store
             .get_stakes(epoch)
             .<span class="kw">await</span><span class="question-mark">?
-            </span>.ok_or_else(|| RuntimeError::NoValueError(<span class="macro">format!</span>(<span class="string">&quot;stakes at epoch {epoch}&quot;</span>)))<span class="question-mark">?</span>;
+            </span>.ok_or_else(|| RunnerError::NoValueError(<span class="macro">format!</span>(<span class="string">&quot;stakes at epoch {epoch}&quot;</span>)))<span class="question-mark">?</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>signers_with_stake = <span class="macro">vec!</span>[];
 
         <span class="kw">for </span>signer <span class="kw">in </span>signers {
             <span class="kw">let </span>stake = stakes
                 .get(<span class="kw-2">&amp;*</span>signer.party_id)
-                .ok_or_else(|| RuntimeError::NoStakeForSigner(signer.party_id.to_string()))<span class="question-mark">?</span>;
+                .ok_or_else(|| RunnerError::NoStakeForSigner(signer.party_id.to_string()))<span class="question-mark">?</span>;
 
             signers_with_stake.push(SignerWithStake::new(
                 signer.party_id.to_owned(),
@@ -1226,7 +1222,7 @@
             .get_protocol_initializer(next_signer_retrieval_epoch)
             .<span class="kw">await</span><span class="question-mark">?
             </span>.ok_or_else(|| {
-                RuntimeError::NoValueError(<span class="macro">format!</span>(
+                RunnerError::NoValueError(<span class="macro">format!</span>(
                     <span class="string">&quot;protocol_initializer at epoch {next_signer_retrieval_epoch}&quot;
                 </span>))
             })<span class="question-mark">?</span>;
@@ -1235,7 +1231,7 @@
             </span>.services
             .single_signer
             .compute_aggregate_verification_key(next_signers, <span class="kw-2">&amp;</span>next_protocol_initializer)<span class="question-mark">?
-            </span>.ok_or_else(|| RuntimeError::NoValueError(<span class="string">&quot;next_signers avk&quot;</span>.to_string()))<span class="question-mark">?</span>;
+            </span>.ok_or_else(|| RunnerError::NoValueError(<span class="string">&quot;next_signers avk&quot;</span>.to_string()))<span class="question-mark">?</span>;
         message.set_message_part(ProtocolMessagePartKey::NextAggregateVerificationKey, avk);
 
         <span class="prelude-val">Ok</span>(message)
@@ -1256,7 +1252,7 @@
             .get_protocol_initializer(signer_retrieval_epoch)
             .<span class="kw">await</span><span class="question-mark">?
             </span>.ok_or_else(|| {
-                RuntimeError::NoValueError(<span class="macro">format!</span>(
+                RunnerError::NoValueError(<span class="macro">format!</span>(
                     <span class="string">&quot;protocol_initializer at epoch {signer_retrieval_epoch}&quot;
                 </span>))
             })<span class="question-mark">?</span>;
@@ -1301,6 +1297,8 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         epoch: Epoch,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
+        <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: update_era_checker&quot;</span>);
+
         <span class="kw">let </span>era_token = <span class="self">self
             </span>.services
             .era_reader
@@ -1373,7 +1371,7 @@
             Arc::new(DumbImmutableFileObserver::default()),
             CardanoNetwork::TestNet(<span class="number">42</span>),
         ));
-        <span class="kw">let </span>era_reader = Arc::new(EraReader::new(Box::new(EraReaderBootstrapAdapter)));
+        <span class="kw">let </span>era_reader = Arc::new(EraReader::new(Arc::new(EraReaderBootstrapAdapter)));
         <span class="kw">let </span>era_epoch_token = era_reader
             .read_era_epoch_token(beacon_provider.get_current_beacon().<span class="kw">await</span>.unwrap().epoch)
             .<span class="kw">await

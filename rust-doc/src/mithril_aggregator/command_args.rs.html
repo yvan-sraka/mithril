@@ -760,12 +760,36 @@
 <a href="#760" id="760">760</a>
 <a href="#761" id="761">761</a>
 <a href="#762" id="762">762</a>
+<a href="#763" id="763">763</a>
+<a href="#764" id="764">764</a>
+<a href="#765" id="765">765</a>
+<a href="#766" id="766">766</a>
+<a href="#767" id="767">767</a>
+<a href="#768" id="768">768</a>
+<a href="#769" id="769">769</a>
+<a href="#770" id="770">770</a>
+<a href="#771" id="771">771</a>
+<a href="#772" id="772">772</a>
+<a href="#773" id="773">773</a>
+<a href="#774" id="774">774</a>
+<a href="#775" id="775">775</a>
+<a href="#776" id="776">776</a>
+<a href="#777" id="777">777</a>
+<a href="#778" id="778">778</a>
+<a href="#779" id="779">779</a>
+<a href="#780" id="780">780</a>
+<a href="#781" id="781">781</a>
+<a href="#782" id="782">782</a>
 </pre><pre class="rust"><code><span class="kw">use </span>clap::{Parser, Subcommand};
 <span class="kw">use </span>config::{builder::DefaultState, ConfigBuilder, Map, Source, Value, ValueKind};
 <span class="kw">use </span>slog::Level;
-<span class="kw">use </span>slog_scope::debug;
-<span class="kw">use </span>std::{error::Error, fs, path::PathBuf, sync::Arc};
-<span class="kw">use </span>tokio::{sync::RwLock, time::Duration};
+<span class="kw">use </span>slog_scope::{crit, debug, info};
+<span class="kw">use </span>std::{error::Error, fs, net::IpAddr, path::PathBuf, sync::Arc};
+<span class="kw">use </span>tokio::{
+    sync::{oneshot, RwLock},
+    task::JoinSet,
+    time::Duration,
+};
 
 <span class="kw">use </span>mithril_common::{
     certificate_chain::MithrilCertificateVerifier,
@@ -786,11 +810,12 @@
 
 <span class="kw">use crate</span>::{
     event_store::{<span class="self">self</span>, TransmitterService},
+    http_server::routes::router,
     tools::{EraTools, GenesisTools, GenesisToolsDependency},
     AggregatorConfig, AggregatorRunner, AggregatorRuntime, CertificatePendingStore,
     CertificateStore, Configuration, DefaultConfiguration, DependencyManager, GenesisConfiguration,
     GzipSnapshotter, MithrilSignerRegisterer, MultiSignerImpl, ProtocolParametersStore,
-    ProtocolParametersStorer, Server, SingleSignatureStore, VerificationKeyStore,
+    ProtocolParametersStorer, SingleSignatureStore, VerificationKeyStore,
 };
 
 <span class="kw">const </span>SQLITE_MONITORING_FILE: <span class="kw-2">&amp;</span>str = <span class="string">&quot;monitoring.sqlite3&quot;</span>;
@@ -1216,7 +1241,42 @@
         .<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="kw">let </span>network = config.get_network()<span class="question-mark">?</span>;
-        <span class="kw">let </span>runtime_dependencies = dependency_manager.clone();
+        <span class="kw">let </span>runtime_dependency_manager = dependency_manager.clone();
+
+        <span class="comment">// start servers
+        </span><span class="macro">println!</span>(<span class="string">&quot;Starting server...&quot;</span>);
+        <span class="macro">println!</span>(<span class="string">&quot;Press Ctrl+C to stop&quot;</span>);
+        <span class="kw">let </span>(shutdown_tx, shutdown_rx) = oneshot::channel();
+
+        <span class="kw">let </span><span class="kw-2">mut </span>join_set = JoinSet::new();
+        join_set.spawn(<span class="kw">async move </span>{
+            <span class="kw">let </span>config =
+                AggregatorConfig::new(config.run_interval, network, <span class="kw-2">&amp;</span>config.db_directory.clone());
+            <span class="kw">let </span><span class="kw-2">mut </span>runtime = AggregatorRuntime::new(
+                Duration::from_millis(config.interval),
+                <span class="prelude-val">None</span>,
+                Arc::new(AggregatorRunner::new(config, runtime_dependency_manager)),
+            )
+            .<span class="kw">await
+            </span>.unwrap();
+            runtime.run().<span class="kw">await</span>.map_err(|e| e.to_string())
+        });
+        join_set.spawn(<span class="kw">async move </span>{
+            <span class="kw">let </span>routes = router::routes(dependency_manager);
+            <span class="kw">let </span>(<span class="kw">_</span>, server) = warp::serve(routes).bind_with_graceful_shutdown(
+                (
+                    config.server_ip.clone().parse::&lt;IpAddr&gt;().unwrap(),
+                    config.server_port,
+                ),
+                <span class="kw">async </span>{
+                    shutdown_rx.<span class="kw">await</span>.ok();
+                },
+            );
+            server.<span class="kw">await</span>;
+
+            <span class="prelude-val">Ok</span>(())
+        });
+        join_set.spawn(<span class="kw">async </span>{ tokio::signal::ctrl_c().<span class="kw">await</span>.map_err(|e| e.to_string()) });
 
         <span class="comment">// start the monitoring thread
         </span><span class="kw">let </span>event_store_thread = tokio::spawn(<span class="kw">async move </span>{
@@ -1228,39 +1288,19 @@
                 </span>.unwrap()
         });
 
-        <span class="comment">// Start Aggregator state machine
-        </span><span class="kw">let </span>handle = tokio::spawn(<span class="kw">async move </span>{
-            <span class="kw">let </span>config =
-                AggregatorConfig::new(config.run_interval, network, <span class="kw-2">&amp;</span>config.db_directory.clone());
-            <span class="kw">let </span><span class="kw-2">mut </span>runtime = AggregatorRuntime::new(
-                Duration::from_millis(config.interval),
-                <span class="prelude-val">None</span>,
-                Arc::new(AggregatorRunner::new(config, runtime_dependencies)),
-            )
-            .<span class="kw">await
-            </span>.unwrap();
-            runtime.run().<span class="kw">await
-        </span>});
+        <span class="kw">let </span>res = join_set.join_next().<span class="kw">await</span>.unwrap()<span class="question-mark">?</span>;
+        <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = res {
+            <span class="macro">crit!</span>(<span class="string">&quot;A critical error occurred: {e}&quot;</span>);
+        }
 
-        <span class="comment">// Start REST server
-        </span><span class="macro">println!</span>(<span class="string">&quot;Starting server...&quot;</span>);
-        <span class="macro">println!</span>(<span class="string">&quot;Press Ctrl+C to stop...&quot;</span>);
-        <span class="kw">let </span>shutdown_signal = <span class="kw">async </span>{
-            tokio::signal::ctrl_c()
-                .<span class="kw">await
-                </span>.expect(<span class="string">&quot;failed to install CTRL+C signal handler&quot;</span>);
-        };
-        <span class="kw">let </span>http_server = Server::new(
-            config.server_ip.clone(),
-            config.server_port,
-            dependency_manager.clone(),
-        );
-        http_server.start(shutdown_signal).<span class="kw">await</span>;
+        <span class="comment">// stop servers
+        </span>join_set.shutdown().<span class="kw">await</span>;
+        <span class="kw">let _ </span>= shutdown_tx.send(());
 
-        handle.abort();
+        <span class="macro">info!</span>(<span class="string">&quot;Event store is finishing...&quot;</span>);
         event_store_thread.<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="macro">println!</span>(<span class="string">&quot;Services stopped, exiting.&quot;</span>);
 
-        <span class="macro">println!</span>(<span class="string">&quot;Exiting...&quot;</span>);
         <span class="prelude-val">Ok</span>(())
     }
 

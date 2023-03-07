@@ -317,10 +317,38 @@
 <a href="#317" id="317">317</a>
 <a href="#318" id="318">318</a>
 <a href="#319" id="319">319</a>
+<a href="#320" id="320">320</a>
+<a href="#321" id="321">321</a>
+<a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
+<a href="#324" id="324">324</a>
+<a href="#325" id="325">325</a>
+<a href="#326" id="326">326</a>
+<a href="#327" id="327">327</a>
+<a href="#328" id="328">328</a>
+<a href="#329" id="329">329</a>
+<a href="#330" id="330">330</a>
+<a href="#331" id="331">331</a>
+<a href="#332" id="332">332</a>
+<a href="#333" id="333">333</a>
+<a href="#334" id="334">334</a>
+<a href="#335" id="335">335</a>
+<a href="#336" id="336">336</a>
+<a href="#337" id="337">337</a>
+<a href="#338" id="338">338</a>
+<a href="#339" id="339">339</a>
+<a href="#340" id="340">340</a>
+<a href="#341" id="341">341</a>
+<a href="#342" id="342">342</a>
+<a href="#343" id="343">343</a>
+<a href="#344" id="344">344</a>
+<a href="#345" id="345">345</a>
+<a href="#346" id="346">346</a>
+<a href="#347" id="347">347</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::entities::Epoch;
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
-<span class="kw">use </span>std::{error::Error <span class="kw">as </span>StdError, str::FromStr};
+<span class="kw">use </span>std::{error::Error <span class="kw">as </span>StdError, str::FromStr, sync::Arc};
 <span class="kw">use </span>thiserror::Error;
 
 <span class="kw">use super</span>::{supported_era::UnsupportedEraError, SupportedEra};
@@ -412,7 +440,7 @@
 <span class="doccomment">/// The EraReader is responsible of giving the current Era and the Era to come.
 /// It uses an [EraReaderAdapter] to read data from a backend.
 </span><span class="kw">pub struct </span>EraReader {
-    adapter: Box&lt;<span class="kw">dyn </span>EraReaderAdapter&gt;,
+    adapter: Arc&lt;<span class="kw">dyn </span>EraReaderAdapter&gt;,
 }
 
 <span class="doccomment">/// Error type when [EraReader] fails to return a [EraEpochToken].
@@ -429,13 +457,21 @@
     },
 
     <span class="doccomment">/// Data returned from the adapter are inconsistent or incomplete.
-    </span><span class="attr">#[error(<span class="string">&quot;Current Era could not be determined with data from the adapter.&quot;</span>)]
-    </span>CurrentEraNotFound,
+    </span><span class="attr">#[error(
+        <span class="string">&quot;Cannot determine the Era we are currently at epoch {epoch} using the adapter informations: {eras:?}&quot;
+    </span>)]
+    </span>CurrentEraNotFound {
+        <span class="doccomment">/// Current Epoch
+        </span>epoch: Epoch,
+
+        <span class="doccomment">/// Eras given by the adapter
+        </span>eras: Vec&lt;EraMarker&gt;,
+    },
 }
 
 <span class="kw">impl </span>EraReader {
     <span class="doccomment">/// Instantiate the [EraReader] injecting the adapter.
-    </span><span class="kw">pub fn </span>new(adapter: Box&lt;<span class="kw">dyn </span>EraReaderAdapter&gt;) -&gt; <span class="self">Self </span>{
+    </span><span class="kw">pub fn </span>new(adapter: Arc&lt;<span class="kw">dyn </span>EraReaderAdapter&gt;) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{ adapter }
     }
 
@@ -455,23 +491,23 @@
                 error: e,
             })<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>get_epoch = |era_marker: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>EraMarker&gt;| -&gt; Epoch {
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(marker) = era_marker {
-                marker.epoch.unwrap_or_default()
-            } <span class="kw">else </span>{
-                Epoch(<span class="number">0</span>)
-            }
-        };
-        <span class="kw">let </span>current_marker = eras.iter().fold(<span class="prelude-val">None</span>, |acc, marker| {
-            <span class="kw">if </span>get_epoch(<span class="prelude-val">Some</span>(marker)) &lt;= current_epoch &amp;&amp; get_epoch(<span class="prelude-val">Some</span>(marker)) &gt; get_epoch(acc)
-            {
-                <span class="prelude-val">Some</span>(marker)
-            } <span class="kw">else </span>{
-                acc
-            }
-        });
+        <span class="kw">let </span>current_marker = eras.iter().filter(|<span class="kw-2">&amp;</span>f| f.epoch.is_some()).fold(
+            <span class="prelude-val">None</span>,
+            |acc: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>EraMarker&gt;, marker| {
+                <span class="kw">if </span>marker.epoch.unwrap() &lt;= current_epoch
+                    &amp;&amp; (acc.is_none() || marker.epoch.unwrap() &gt; acc.unwrap().epoch.unwrap())
+                {
+                    <span class="prelude-val">Some</span>(marker)
+                } <span class="kw">else </span>{
+                    acc
+                }
+            },
+        );
         <span class="kw">let </span>current_era_marker =
-            current_marker.ok_or_else(|| EraReaderError::CurrentEraNotFound)<span class="question-mark">?</span>;
+            current_marker.ok_or_else(|| EraReaderError::CurrentEraNotFound {
+                epoch: current_epoch,
+                eras: eras.clone(),
+            })<span class="question-mark">?</span>;
 
         <span class="kw">let </span>next_era_marker = eras.last().filter(|<span class="kw-2">&amp;</span>marker| marker != current_era_marker);
 
@@ -508,10 +544,10 @@
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>current_era_is_supported() {
         <span class="kw">let </span>markers: Vec&lt;EraMarker&gt; = get_basic_marker_sample();
-        <span class="kw">let </span><span class="kw-2">mut </span>adapter = DummyAdapter::default();
+        <span class="kw">let </span>adapter = DummyAdapter::default();
         adapter.set_markers(markers);
 
-        <span class="kw">let </span>reader = EraReader::new(Box::new(adapter));
+        <span class="kw">let </span>reader = EraReader::new(Arc::new(adapter));
         <span class="kw">let </span>token = reader.read_era_epoch_token(Epoch(<span class="number">10</span>)).<span class="kw">await</span>.unwrap();
 
         <span class="macro">assert_eq!</span>(
@@ -530,10 +566,10 @@
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>era_epoch_token() {
         <span class="kw">let </span>markers: Vec&lt;EraMarker&gt; = get_basic_marker_sample();
-        <span class="kw">let </span><span class="kw-2">mut </span>adapter = DummyAdapter::default();
+        <span class="kw">let </span>adapter = DummyAdapter::default();
         adapter.set_markers(markers);
 
-        <span class="kw">let </span>reader = EraReader::new(Box::new(adapter));
+        <span class="kw">let </span>reader = EraReader::new(Arc::new(adapter));
         <span class="kw">let </span>token = reader.read_era_epoch_token(Epoch(<span class="number">10</span>)).<span class="kw">await</span>.unwrap();
         <span class="macro">assert_eq!</span>(
             SupportedEra::dummy(),
@@ -551,10 +587,10 @@
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>previous_era_is_not_supported() {
         <span class="kw">let </span>markers: Vec&lt;EraMarker&gt; = get_basic_marker_sample();
-        <span class="kw">let </span><span class="kw-2">mut </span>adapter = DummyAdapter::default();
+        <span class="kw">let </span>adapter = DummyAdapter::default();
         adapter.set_markers(markers);
 
-        <span class="kw">let </span>reader = EraReader::new(Box::new(adapter));
+        <span class="kw">let </span>reader = EraReader::new(Arc::new(adapter));
         <span class="kw">let </span>token = reader.read_era_epoch_token(Epoch(<span class="number">9</span>)).<span class="kw">await</span>.unwrap();
 
         <span class="macro">assert_eq!</span>(
@@ -590,10 +626,10 @@
             },
         ];
 
-        <span class="kw">let </span><span class="kw-2">mut </span>adapter = DummyAdapter::default();
+        <span class="kw">let </span>adapter = DummyAdapter::default();
         adapter.set_markers(markers);
 
-        <span class="kw">let </span>reader = EraReader::new(Box::new(adapter));
+        <span class="kw">let </span>reader = EraReader::new(Arc::new(adapter));
         <span class="kw">let _ </span>= reader
             .read_era_epoch_token(Epoch(<span class="number">9</span>))
             .<span class="kw">await
@@ -604,7 +640,7 @@
     </span><span class="kw">async fn </span>error_when_no_era() {
         <span class="kw">let </span>adapter = DummyAdapter::default();
 
-        <span class="kw">let </span>reader = EraReader::new(Box::new(adapter));
+        <span class="kw">let </span>reader = EraReader::new(Arc::new(adapter));
         <span class="kw">let _ </span>= reader
             .read_era_epoch_token(Epoch(<span class="number">9</span>))
             .<span class="kw">await
@@ -614,10 +650,10 @@
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>current_era_is_not_supported() {
         <span class="kw">let </span>markers: Vec&lt;EraMarker&gt; = get_basic_marker_sample();
-        <span class="kw">let </span><span class="kw-2">mut </span>adapter = DummyAdapter::default();
+        <span class="kw">let </span>adapter = DummyAdapter::default();
         adapter.set_markers(markers);
 
-        <span class="kw">let </span>reader = EraReader::new(Box::new(adapter));
+        <span class="kw">let </span>reader = EraReader::new(Arc::new(adapter));
         <span class="kw">let </span>token = reader.read_era_epoch_token(Epoch(<span class="number">9</span>)).<span class="kw">await</span>.unwrap();
 
         token
@@ -634,6 +670,26 @@
         token
             .get_next_supported_era()
             .expect(<span class="string">&quot;The next era is supported hence this shall not fail.&quot;</span>);
+    }
+
+    <span class="attr">#[tokio::test]
+    </span><span class="kw">async fn </span>epoch_0_should_work() {
+        <span class="kw">let </span>markers = <span class="macro">vec!</span>[EraMarker::new(
+            <span class="kw-2">&amp;</span>SupportedEra::dummy().to_string(),
+            <span class="prelude-val">Some</span>(Epoch(<span class="number">0</span>)),
+        )];
+        <span class="kw">let </span>adapter = DummyAdapter::default();
+        adapter.set_markers(markers);
+        <span class="kw">let </span>reader = EraReader::new(Arc::new(adapter));
+        <span class="kw">let </span>token = reader.read_era_epoch_token(Epoch(<span class="number">9</span>)).<span class="kw">await</span>.unwrap();
+
+        <span class="macro">assert_eq!</span>(
+            <span class="kw-2">&amp;</span>EraMarker {
+                name: SupportedEra::dummy().to_string(),
+                epoch: <span class="prelude-val">Some</span>(Epoch(<span class="number">0</span>))
+            },
+            token.get_current_era_marker()
+        );
     }
 }
 </code></pre></div>

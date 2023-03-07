@@ -63,7 +63,18 @@
 <a href="#63" id="63">63</a>
 <a href="#64" id="64">64</a>
 <a href="#65" id="65">65</a>
-</pre><pre class="rust"><code><span class="kw">use </span>std::error::Error;
+<a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
+<a href="#74" id="74">74</a>
+<a href="#75" id="75">75</a>
+<a href="#76" id="76">76</a>
+</pre><pre class="rust"><code><span class="kw">use </span>std::{error::Error, sync::RwLock};
 
 <span class="kw">use </span>async_trait::async_trait;
 
@@ -73,20 +84,31 @@
 /// to simulate not yet activated Eras.
 </span><span class="attr">#[derive(Default)]
 </span><span class="kw">pub struct </span>DummyAdapter {
-    markers: Vec&lt;EraMarker&gt;,
+    markers: RwLock&lt;Vec&lt;EraMarker&gt;&gt;,
 }
 
 <span class="kw">impl </span>DummyAdapter {
+    <span class="doccomment">/// Create a new instance directly from markers
+    </span><span class="kw">pub fn </span>from_markers(markers: Vec&lt;EraMarker&gt;) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span>myself = <span class="self">Self</span>::default();
+        myself.set_markers(markers);
+
+        myself
+    }
+
     <span class="doccomment">/// Tells what markers should be sent back by the adapter.
-    </span><span class="kw">pub fn </span>set_markers(<span class="kw-2">&amp;mut </span><span class="self">self</span>, markers: Vec&lt;EraMarker&gt;) {
-        <span class="self">self</span>.markers = markers;
+    </span><span class="kw">pub fn </span>set_markers(<span class="kw-2">&amp;</span><span class="self">self</span>, markers: Vec&lt;EraMarker&gt;) {
+        <span class="kw">let </span><span class="kw-2">mut </span>my_markers = <span class="self">self</span>.markers.write().unwrap();
+        <span class="kw-2">*</span>my_markers = markers;
     }
 }
 
 <span class="attr">#[async_trait]
 </span><span class="kw">impl </span>EraReaderAdapter <span class="kw">for </span>DummyAdapter {
     <span class="kw">async fn </span>read(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;EraMarker&gt;, Box&lt;<span class="kw">dyn </span>Error + Sync + Send&gt;&gt; {
-        <span class="prelude-val">Ok</span>(<span class="self">self</span>.markers.clone())
+        <span class="kw">let </span>markers = <span class="self">self</span>.markers.read().unwrap();
+
+        <span class="prelude-val">Ok</span>((<span class="kw-2">*</span>markers.clone()).to_vec())
     }
 }
 
@@ -116,7 +138,7 @@
             EraMarker::new(<span class="kw-2">&amp;</span>SupportedEra::dummy().to_string(), <span class="prelude-val">Some</span>(Epoch(<span class="number">10</span>))),
         ];
 
-        <span class="kw">let </span><span class="kw-2">mut </span>adapter = DummyAdapter::default();
+        <span class="kw">let </span>adapter = DummyAdapter::default();
         adapter.set_markers(markers.clone());
 
         <span class="macro">assert_eq!</span>(

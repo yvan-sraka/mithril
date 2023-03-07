@@ -1196,21 +1196,79 @@
 <a href="#1196" id="1196">1196</a>
 <a href="#1197" id="1197">1197</a>
 <a href="#1198" id="1198">1198</a>
+<a href="#1199" id="1199">1199</a>
+<a href="#1200" id="1200">1200</a>
+<a href="#1201" id="1201">1201</a>
+<a href="#1202" id="1202">1202</a>
+<a href="#1203" id="1203">1203</a>
+<a href="#1204" id="1204">1204</a>
+<a href="#1205" id="1205">1205</a>
+<a href="#1206" id="1206">1206</a>
+<a href="#1207" id="1207">1207</a>
+<a href="#1208" id="1208">1208</a>
+<a href="#1209" id="1209">1209</a>
+<a href="#1210" id="1210">1210</a>
+<a href="#1211" id="1211">1211</a>
+<a href="#1212" id="1212">1212</a>
+<a href="#1213" id="1213">1213</a>
+<a href="#1214" id="1214">1214</a>
+<a href="#1215" id="1215">1215</a>
+<a href="#1216" id="1216">1216</a>
+<a href="#1217" id="1217">1217</a>
+<a href="#1218" id="1218">1218</a>
+<a href="#1219" id="1219">1219</a>
+<a href="#1220" id="1220">1220</a>
+<a href="#1221" id="1221">1221</a>
+<a href="#1222" id="1222">1222</a>
+<a href="#1223" id="1223">1223</a>
+<a href="#1224" id="1224">1224</a>
+<a href="#1225" id="1225">1225</a>
+<a href="#1226" id="1226">1226</a>
+<a href="#1227" id="1227">1227</a>
+<a href="#1228" id="1228">1228</a>
+<a href="#1229" id="1229">1229</a>
+<a href="#1230" id="1230">1230</a>
+<a href="#1231" id="1231">1231</a>
+<a href="#1232" id="1232">1232</a>
+<a href="#1233" id="1233">1233</a>
+<a href="#1234" id="1234">1234</a>
+<a href="#1235" id="1235">1235</a>
+<a href="#1236" id="1236">1236</a>
+<a href="#1237" id="1237">1237</a>
+<a href="#1238" id="1238">1238</a>
+<a href="#1239" id="1239">1239</a>
+<a href="#1240" id="1240">1240</a>
+<a href="#1241" id="1241">1241</a>
+<a href="#1242" id="1242">1242</a>
+<a href="#1243" id="1243">1243</a>
+<a href="#1244" id="1244">1244</a>
+<a href="#1245" id="1245">1245</a>
+<a href="#1246" id="1246">1246</a>
+<a href="#1247" id="1247">1247</a>
+<a href="#1248" id="1248">1248</a>
+<a href="#1249" id="1249">1249</a>
+<a href="#1250" id="1250">1250</a>
+<a href="#1251" id="1251">1251</a>
+<a href="#1252" id="1252">1252</a>
+<a href="#1253" id="1253">1253</a>
+<a href="#1254" id="1254">1254</a>
 </pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>chrono::Utc;
 <span class="kw">use </span>mithril_common::entities::Epoch;
 <span class="kw">use </span>mithril_common::entities::PartyId;
 <span class="kw">use </span>mithril_common::store::StakeStorer;
 <span class="kw">use </span>slog_scope::{debug, info, warn};
-<span class="kw">use </span>std::path::Path;
-<span class="kw">use </span>std::path::PathBuf;
-<span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>mithril_common::crypto_helper::ProtocolStakeDistribution;
 <span class="kw">use </span>mithril_common::entities::{
     Beacon, Certificate, CertificatePending, ProtocolMessage, ProtocolMessagePartKey, Snapshot,
 };
 <span class="kw">use </span>mithril_common::CardanoNetwork;
+
+<span class="kw">use </span>std::error::Error <span class="kw">as </span>StdError;
+<span class="kw">use </span>std::path::Path;
+<span class="kw">use </span>std::path::PathBuf;
+<span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span><span class="kw">crate</span>::runtime::WorkingCertificate;
 <span class="kw">use </span><span class="kw">crate</span>::snapshot_uploaders::SnapshotLocation;
@@ -1223,7 +1281,7 @@
 <span class="attr">#[cfg(test)]
 </span><span class="kw">use </span>mockall::automock;
 
-<span class="kw">use </span><span class="kw">super</span>::RuntimeError;
+<span class="kw">use </span><span class="kw">super</span>::error::RunnerError;
 
 <span class="doccomment">/// Configuration structure dedicated to the AggregatorRuntime.
 </span><span class="attr">#[derive(Debug, Clone)]
@@ -1254,67 +1312,83 @@
 </span><span class="attr">#[async_trait]
 </span><span class="kw">pub trait </span>AggregatorRunnerTrait: Sync + Send {
     <span class="doccomment">/// Return the current beacon from the chain
-    </span><span class="kw">async fn </span>get_beacon_from_chain(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Beacon, RuntimeError&gt;;
+    </span><span class="kw">async fn </span>get_beacon_from_chain(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Beacon, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
 
     <span class="doccomment">/// Check if a certificate already have been issued for a given beacon.
     </span><span class="kw">async fn </span>does_certificate_exist_for_beacon(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         beacon: <span class="kw-2">&amp;</span>Beacon,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;bool, RuntimeError&gt;;
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;bool, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
 
     <span class="doccomment">/// Check if a certificate chain is valid.
-    </span><span class="kw">async fn </span>is_certificate_chain_valid(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;bool, RuntimeError&gt;;
+    </span><span class="kw">async fn </span>is_certificate_chain_valid(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;bool, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
 
     <span class="doccomment">/// Compute the digest of the last immutable file of the node.
-    </span><span class="kw">async fn </span>compute_digest(<span class="kw-2">&amp;</span><span class="self">self</span>, new_beacon: <span class="kw-2">&amp;</span>Beacon) -&gt; <span class="prelude-ty">Result</span>&lt;String, RuntimeError&gt;;
+    </span><span class="kw">async fn </span>compute_digest(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        new_beacon: <span class="kw-2">&amp;</span>Beacon,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;String, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
 
     <span class="doccomment">/// Update the multisigner with the given beacon.
-    </span><span class="kw">async fn </span>update_beacon(<span class="kw-2">&amp;</span><span class="self">self</span>, new_beacon: <span class="kw-2">&amp;</span>Beacon) -&gt; <span class="prelude-ty">Result</span>&lt;(), RuntimeError&gt;;
+    </span><span class="kw">async fn </span>update_beacon(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        new_beacon: <span class="kw-2">&amp;</span>Beacon,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
 
     <span class="doccomment">/// Read the stake distribution from the blockchain and store it.
-    </span><span class="kw">async fn </span>update_stake_distribution(<span class="kw-2">&amp;</span><span class="self">self</span>, new_beacon: <span class="kw-2">&amp;</span>Beacon) -&gt; <span class="prelude-ty">Result</span>&lt;(), RuntimeError&gt;;
+    </span><span class="kw">async fn </span>update_stake_distribution(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        new_beacon: <span class="kw-2">&amp;</span>Beacon,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
 
     <span class="doccomment">/// Open the signer registration round of an epoch.
-    </span><span class="kw">async fn </span>open_signer_registration_round(<span class="kw-2">&amp;</span><span class="self">self</span>, new_beacon: <span class="kw-2">&amp;</span>Beacon)
-        -&gt; <span class="prelude-ty">Result</span>&lt;(), RuntimeError&gt;;
+    </span><span class="kw">async fn </span>open_signer_registration_round(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        new_beacon: <span class="kw-2">&amp;</span>Beacon,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
 
     <span class="doccomment">/// Close the signer registration round of an epoch.
-    </span><span class="kw">async fn </span>close_signer_registration_round(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), RuntimeError&gt;;
+    </span><span class="kw">async fn </span>close_signer_registration_round(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
 
     <span class="doccomment">/// Update the multisigner with the protocol parameters from configuration.
     </span><span class="kw">async fn </span>update_protocol_parameters_in_multisigner(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         new_beacon: <span class="kw-2">&amp;</span>Beacon,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), RuntimeError&gt;;
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
 
     <span class="doccomment">/// Set the message to sign in the multisigner. The digest is only one part
     /// of the message, the next signing stake distribution must also be signed
     /// as part of the message.
-    </span><span class="kw">async fn </span>update_message_in_multisigner(<span class="kw-2">&amp;</span><span class="self">self</span>, digest: String) -&gt; <span class="prelude-ty">Result</span>&lt;(), RuntimeError&gt;;
+    </span><span class="kw">async fn </span>update_message_in_multisigner(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        digest: String,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
 
     <span class="doccomment">/// Return the actual pending certificate from the multisigner.
     </span><span class="kw">async fn </span>create_new_pending_certificate_from_multisigner(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         beacon: Beacon,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;CertificatePending, RuntimeError&gt;;
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;CertificatePending, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
 
     <span class="doccomment">/// Return the actual working certificate from the multisigner.
     </span><span class="kw">async fn </span>create_new_working_certificate(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         certificate_pending: <span class="kw-2">&amp;</span>CertificatePending,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;WorkingCertificate, RuntimeError&gt;;
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;WorkingCertificate, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
 
     <span class="doccomment">/// Store the given pending certificate.
     </span><span class="kw">async fn </span>save_pending_certificate(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         pending_certificate: CertificatePending,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), RuntimeError&gt;;
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
 
     <span class="doccomment">/// Drop the multisigner&#39;s actual pending certificate.
-    </span><span class="kw">async fn </span>drop_pending_certificate(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;CertificatePending&gt;, RuntimeError&gt;;
+    </span><span class="kw">async fn </span>drop_pending_certificate(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;CertificatePending&gt;, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
 
     <span class="doccomment">/// Check if the multisigner has issued a multi-signature.
-    </span><span class="kw">async fn </span>is_multisig_created(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;bool, RuntimeError&gt;;
+    </span><span class="kw">async fn </span>is_multisig_created(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;bool, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
 
     <span class="doccomment">/// Create an archive of the cardano node db directory naming it after the given beacon.
     ///
@@ -1322,7 +1396,7 @@
     </span><span class="kw">async fn </span>create_snapshot_archive(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         beacon: <span class="kw-2">&amp;</span>Beacon,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;OngoingSnapshot, RuntimeError&gt;;
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;OngoingSnapshot, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
 
     <span class="doccomment">/// Upload the snapshot at the given location using the configured uploader(s).
     ///
@@ -1330,13 +1404,13 @@
     </span><span class="kw">async fn </span>upload_snapshot_archive(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         ongoing_snapshot: <span class="kw-2">&amp;</span>OngoingSnapshot,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;SnapshotLocation&gt;, RuntimeError&gt;;
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;SnapshotLocation&gt;, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
 
     <span class="doccomment">/// Create a signed certificate.
     </span><span class="kw">async fn </span>create_and_save_certificate(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         working_certificate: <span class="kw-2">&amp;</span>WorkingCertificate,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Certificate, RuntimeError&gt;;
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Certificate, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
 
     <span class="doccomment">/// Create a snapshot and save it to the given locations.
     </span><span class="kw">async fn </span>create_and_save_snapshot(
@@ -1344,10 +1418,13 @@
         certificate: Certificate,
         ongoing_snapshot: <span class="kw-2">&amp;</span>OngoingSnapshot,
         remote_locations: Vec&lt;String&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Snapshot, RuntimeError&gt;;
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Snapshot, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
 
     <span class="doccomment">/// Update the EraChecker with EraReader information.
-    </span><span class="kw">async fn </span>update_era_checker(<span class="kw-2">&amp;</span><span class="self">self</span>, beacon: <span class="kw-2">&amp;</span>Beacon) -&gt; <span class="prelude-ty">Result</span>&lt;(), RuntimeError&gt;;
+    </span><span class="kw">async fn </span>update_era_checker(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        beacon: <span class="kw-2">&amp;</span>Beacon,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
 }
 
 <span class="doccomment">/// The runner responsibility is to expose a code API for the state machine. It
@@ -1370,15 +1447,16 @@
         beacon: <span class="kw-2">&amp;</span>Beacon,
         last_certificate: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Certificate&gt;,
         penultimate_certificate: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Certificate&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str, RuntimeError&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
         <span class="kw">match </span>(penultimate_certificate, last_certificate) {
             (<span class="prelude-val">Some</span>(penultimate_certificate), <span class="prelude-val">Some</span>(last_certificate)) =&gt; {
                 <span class="comment">// Check if last certificate is exactly at most one epoch before current epoch
                 </span><span class="kw">if </span>beacon.epoch - last_certificate.beacon.epoch &gt; Epoch(<span class="number">1</span>) {
-                    <span class="kw">return </span><span class="prelude-val">Err</span>(RuntimeError::CertificateChainEpochGap(
-                        beacon.epoch,
-                        last_certificate.beacon.epoch,
-                    ));
+                    <span class="kw">return </span><span class="prelude-val">Err</span>(RunnerError::EpochOutOfBounds(<span class="macro">format!</span>(
+                        <span class="string">&quot;Last certificate ({:?}) is more than 1 epoch ahead from now ({:?}).&quot;</span>,
+                        last_certificate.beacon.epoch, beacon.epoch
+                    ))
+                    .into());
                 }
                 <span class="comment">// Check if last certificate is first certificate of its epoch
                 </span><span class="kw">if </span>penultimate_certificate.beacon.epoch != last_certificate.beacon.epoch {
@@ -1397,19 +1475,21 @@
 #[async_trait]
 </span><span class="kw">impl </span>AggregatorRunnerTrait <span class="kw">for </span>AggregatorRunner {
     <span class="doccomment">/// Return the current beacon from the chain
-    </span><span class="kw">async fn </span>get_beacon_from_chain(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Beacon, RuntimeError&gt; {
+    </span><span class="kw">async fn </span>get_beacon_from_chain(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Beacon, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: get beacon from chain&quot;</span>);
-        <span class="prelude-val">Ok</span>(<span class="self">self
+        <span class="kw">let </span>beacon = <span class="self">self
             </span>.dependencies
             .beacon_provider
             .get_current_beacon()
-            .<span class="kw">await</span><span class="question-mark">?</span>)
+            .<span class="kw">await</span><span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(beacon)
     }
 
     <span class="kw">async fn </span>does_certificate_exist_for_beacon(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         beacon: <span class="kw-2">&amp;</span>Beacon,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;bool, RuntimeError&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;bool, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: does_certificate_exist_for_beacon&quot;</span>);
         <span class="kw">let </span>certificate_exist = <span class="self">self
             </span>.dependencies
@@ -1420,7 +1500,7 @@
         <span class="prelude-val">Ok</span>(certificate_exist)
     }
 
-    <span class="kw">async fn </span>is_certificate_chain_valid(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;bool, RuntimeError&gt; {
+    <span class="kw">async fn </span>is_certificate_chain_valid(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;bool, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: is_certificate_chain_valid&quot;</span>);
         <span class="kw">let </span>certificate_store = <span class="self">self</span>.dependencies.certificate_store.clone();
         <span class="kw">let </span>latest_certificates = certificate_store.get_list(<span class="number">1</span>).<span class="kw">await</span><span class="question-mark">?</span>;
@@ -1447,23 +1527,26 @@
         }
     }
 
-    <span class="kw">async fn </span>compute_digest(<span class="kw-2">&amp;</span><span class="self">self</span>, new_beacon: <span class="kw-2">&amp;</span>Beacon) -&gt; <span class="prelude-ty">Result</span>&lt;String, RuntimeError&gt; {
+    <span class="kw">async fn </span>compute_digest(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        new_beacon: <span class="kw-2">&amp;</span>Beacon,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;String, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: compute_digest&quot;</span>);
         <span class="kw">let </span>digester = <span class="self">self</span>.dependencies.digester.clone();
 
         <span class="macro">debug!</span>(<span class="string">&quot; &gt; computing digest&quot;</span>; <span class="string">&quot;cardano_db_directory&quot; </span>=&gt; <span class="self">self</span>.config.db_directory.display());
 
         <span class="macro">debug!</span>(<span class="string">&quot; &gt; launching digester thread&quot;</span>);
-        <span class="kw">let </span>digest = digester
-            .compute_digest(new_beacon)
-            .<span class="kw">await
-            </span>.map_err(|e| RuntimeError::General(e.into()))<span class="question-mark">?</span>;
+        <span class="kw">let </span>digest = digester.compute_digest(new_beacon).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="macro">debug!</span>(<span class="string">&quot; &gt; computed digest: {}&quot;</span>, digest);
 
         <span class="prelude-val">Ok</span>(digest)
     }
 
-    <span class="kw">async fn </span>update_beacon(<span class="kw-2">&amp;</span><span class="self">self</span>, new_beacon: <span class="kw-2">&amp;</span>Beacon) -&gt; <span class="prelude-ty">Result</span>&lt;(), RuntimeError&gt; {
+    <span class="kw">async fn </span>update_beacon(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        new_beacon: <span class="kw-2">&amp;</span>Beacon,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: update beacon&quot;</span>; <span class="string">&quot;beacon&quot; </span>=&gt; #<span class="question-mark">?</span>new_beacon);
         <span class="self">self</span>.dependencies
             .multi_signer
@@ -1474,14 +1557,21 @@
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">async fn </span>update_stake_distribution(<span class="kw-2">&amp;</span><span class="self">self</span>, new_beacon: <span class="kw-2">&amp;</span>Beacon) -&gt; <span class="prelude-ty">Result</span>&lt;(), RuntimeError&gt; {
+    <span class="kw">async fn </span>update_stake_distribution(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        new_beacon: <span class="kw-2">&amp;</span>Beacon,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: update stake distribution&quot;</span>; <span class="string">&quot;beacon&quot; </span>=&gt; #<span class="question-mark">?</span>new_beacon);
         <span class="kw">let </span>stake_distribution = <span class="self">self
             </span>.dependencies
             .chain_observer
             .get_current_stake_distribution()
             .<span class="kw">await</span><span class="question-mark">?
-            </span>.ok_or_else(|| RuntimeError::General(<span class="string">&quot;no epoch was returned&quot;</span>.to_string().into()))<span class="question-mark">?</span>;
+            </span>.ok_or_else(|| {
+                RunnerError::MissingStakeDistribution(<span class="macro">format!</span>(
+                    <span class="string">&quot;Chain observer: no stake distribution for beacon {new_beacon:?}.&quot;
+                </span>))
+            })<span class="question-mark">?</span>;
         <span class="kw">let </span>stake_distribution = stake_distribution
             .iter()
             .map(|(party_id, stake)| (party_id.to_owned(), <span class="kw-2">*</span>stake))
@@ -1499,7 +1589,7 @@
     <span class="kw">async fn </span>open_signer_registration_round(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         new_beacon: <span class="kw-2">&amp;</span>Beacon,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), RuntimeError&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: open signer registration round&quot;</span>; <span class="string">&quot;beacon&quot; </span>=&gt; #<span class="question-mark">?</span>new_beacon);
         <span class="kw">let </span>registration_epoch = new_beacon.epoch.offset_to_recording_epoch();
 
@@ -1513,38 +1603,40 @@
         <span class="self">self</span>.dependencies
             .signer_registration_round_opener
             .open_registration_round(registration_epoch, stakes)
-            .<span class="kw">await</span><span class="question-mark">?</span>;
-
-        <span class="prelude-val">Ok</span>(())
+            .<span class="kw">await
+            </span>.map_err(|e| e.into())
     }
 
-    <span class="kw">async fn </span>close_signer_registration_round(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), RuntimeError&gt; {
+    <span class="kw">async fn </span>close_signer_registration_round(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: close signer registration round&quot;</span>);
 
         <span class="self">self</span>.dependencies
             .signer_registration_round_opener
             .close_registration_round()
-            .<span class="kw">await</span><span class="question-mark">?</span>;
-
-        <span class="prelude-val">Ok</span>(())
+            .<span class="kw">await
+            </span>.map_err(|e| e.into())
     }
 
     <span class="kw">async fn </span>update_protocol_parameters_in_multisigner(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         new_beacon: <span class="kw-2">&amp;</span>Beacon,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), RuntimeError&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: update protocol parameters&quot;</span>; <span class="string">&quot;beacon&quot; </span>=&gt; #<span class="question-mark">?</span>new_beacon);
         <span class="kw">let </span>protocol_parameters = <span class="self">self</span>.dependencies.config.protocol_parameters.clone();
-        <span class="prelude-val">Ok</span>(<span class="self">self
-            </span>.dependencies
+
+        <span class="self">self</span>.dependencies
             .multi_signer
             .write()
             .<span class="kw">await
             </span>.update_protocol_parameters(<span class="kw-2">&amp;</span>protocol_parameters.into())
-            .<span class="kw">await</span><span class="question-mark">?</span>)
+            .<span class="kw">await
+            </span>.map_err(|e| e.into())
     }
 
-    <span class="kw">async fn </span>update_message_in_multisigner(<span class="kw-2">&amp;</span><span class="self">self</span>, digest: String) -&gt; <span class="prelude-ty">Result</span>&lt;(), RuntimeError&gt; {
+    <span class="kw">async fn </span>update_message_in_multisigner(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        digest: String,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: update message in multisigner&quot;</span>);
         <span class="kw">let </span><span class="kw-2">mut </span>multi_signer = <span class="self">self</span>.dependencies.multi_signer.write().<span class="kw">await</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>protocol_message = ProtocolMessage::new();
@@ -1553,20 +1645,19 @@
             ProtocolMessagePartKey::NextAggregateVerificationKey,
             multi_signer
                 .compute_next_stake_distribution_aggregate_verification_key()
-                .<span class="kw">await
-                </span>.map_err(RuntimeError::MultiSigner)<span class="question-mark">?
+                .<span class="kw">await</span><span class="question-mark">?
                 </span>.unwrap_or_default(),
         );
         multi_signer
             .update_current_message(protocol_message)
             .<span class="kw">await
-            </span>.map_err(RuntimeError::MultiSigner)
+            </span>.map_err(|e| e.into())
     }
 
     <span class="kw">async fn </span>create_new_pending_certificate_from_multisigner(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         beacon: Beacon,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;CertificatePending, RuntimeError&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;CertificatePending, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: create new pending certificate from multisigner&quot;</span>);
         <span class="kw">let </span>multi_signer = <span class="self">self</span>.dependencies.multi_signer.read().<span class="kw">await</span>;
 
@@ -1581,15 +1672,23 @@
             <span class="prelude-val">Err</span>(e) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(e.into()),
         };
 
-        <span class="kw">let </span>protocol_parameters = multi_signer
-            .get_protocol_parameters()
-            .<span class="kw">await</span><span class="question-mark">?
-            </span>.ok_or_else(|| RuntimeError::General(<span class="string">&quot;no protocol parameters&quot;</span>.to_string().into()))<span class="question-mark">?</span>;
+        <span class="kw">let </span>protocol_parameters =
+            multi_signer
+                .get_protocol_parameters()
+                .<span class="kw">await</span><span class="question-mark">?
+                </span>.ok_or_else(|| {
+                    RunnerError::MissingProtocolParameters(<span class="macro">format!</span>(
+                        <span class="string">&quot;no current protocol parameters found for beacon {beacon:?}&quot;
+                    </span>))
+                })<span class="question-mark">?</span>;
+
         <span class="kw">let </span>next_protocol_parameters = multi_signer
             .get_next_protocol_parameters()
             .<span class="kw">await</span><span class="question-mark">?
             </span>.ok_or_else(|| {
-                RuntimeError::General(<span class="string">&quot;no next protocol parameters&quot;</span>.to_string().into())
+                RunnerError::MissingProtocolParameters(<span class="macro">format!</span>(
+                    <span class="string">&quot;no next protocol parameters found for beacon {beacon:?}&quot;
+                </span>))
             })<span class="question-mark">?</span>;
 
         <span class="kw">let </span>pending_certificate = CertificatePending::new(
@@ -1606,7 +1705,7 @@
     <span class="kw">async fn </span>create_new_working_certificate(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         certificate_pending: <span class="kw-2">&amp;</span>CertificatePending,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;WorkingCertificate, RuntimeError&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;WorkingCertificate, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: create new working certificate&quot;</span>);
         <span class="kw">let </span>multi_signer = <span class="self">self</span>.dependencies.multi_signer.read().<span class="kw">await</span>;
 
@@ -1616,13 +1715,19 @@
             <span class="prelude-val">Err</span>(e) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(e.into()),
         };
         <span class="kw">let </span>protocol_message = multi_signer.get_current_message().<span class="kw">await</span>.ok_or_else(|| {
-            RuntimeError::General(<span class="string">&quot;Can&#39;t create a working certificate without a message&quot;</span>.into())
+            RunnerError::MissingProtocolMessage(<span class="macro">format!</span>(
+                <span class="string">&quot;no message found for beacon &#39;{:?}&#39;.&quot;</span>,
+                certificate_pending.beacon
+            ))
         })<span class="question-mark">?</span>;
         <span class="kw">let </span>aggregate_verification_key = multi_signer
             .compute_stake_distribution_aggregate_verification_key()
             .<span class="kw">await</span><span class="question-mark">?
             </span>.ok_or_else(|| {
-                RuntimeError::General(<span class="string">&quot;Can&#39;t create a working certificate without an AVK&quot;</span>.into())
+                RunnerError::NoComputedMultiSignature(<span class="macro">format!</span>(
+                    <span class="string">&quot;No AVK returned by the multisigner for beacon {:?}&quot;</span>,
+                    certificate_pending.beacon
+                ))
             })<span class="question-mark">?</span>;
 
         <span class="kw">let </span>certificate_store = <span class="self">self</span>.dependencies.certificate_store.clone();
@@ -1648,7 +1753,7 @@
     <span class="kw">async fn </span>save_pending_certificate(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         pending_certificate: CertificatePending,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), RuntimeError&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: saving pending certificate&quot;</span>);
 
         <span class="self">self</span>.dependencies
@@ -1658,7 +1763,9 @@
             </span>.map_err(|e| e.into())
     }
 
-    <span class="kw">async fn </span>drop_pending_certificate(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;CertificatePending&gt;, RuntimeError&gt; {
+    <span class="kw">async fn </span>drop_pending_certificate(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;CertificatePending&gt;, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: drop pending certificate&quot;</span>);
 
         <span class="kw">let </span>certificate_pending = <span class="self">self</span>.dependencies.certificate_pending_store.remove().<span class="kw">await</span><span class="question-mark">?</span>;
@@ -1671,7 +1778,7 @@
 
     <span class="doccomment">/// Is a multi-signature ready?
     /// Can we create a multi-signature.
-    </span><span class="kw">async fn </span>is_multisig_created(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;bool, RuntimeError&gt; {
+    </span><span class="kw">async fn </span>is_multisig_created(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;bool, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: check if we can create a multi-signature&quot;</span>);
         <span class="kw">let </span>has_multisig = <span class="self">self
             </span>.dependencies
@@ -1693,7 +1800,7 @@
     <span class="kw">async fn </span>create_snapshot_archive(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         beacon: <span class="kw-2">&amp;</span>Beacon,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;OngoingSnapshot, RuntimeError&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;OngoingSnapshot, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: create snapshot archive&quot;</span>);
 
         <span class="kw">let </span>snapshotter = <span class="self">self</span>.dependencies.snapshotter.clone();
@@ -1704,11 +1811,17 @@
             .<span class="kw">await
             </span>.get_current_message()
             .<span class="kw">await
-            </span>.ok_or_else(|| RuntimeError::General(<span class="string">&quot;no message found&quot;</span>.to_string().into()))<span class="question-mark">?</span>;
+            </span>.ok_or_else(|| {
+                RunnerError::MissingProtocolMessage(<span class="macro">format!</span>(
+                    <span class="string">&quot;no message found for beacon &#39;{beacon:?}&#39;.&quot;
+                </span>))
+            })<span class="question-mark">?</span>;
         <span class="kw">let </span>snapshot_digest = protocol_message
             .get_message_part(<span class="kw-2">&amp;</span>ProtocolMessagePartKey::SnapshotDigest)
             .ok_or_else(|| {
-                RuntimeError::General(<span class="string">&quot;no snapshot digest message part found&quot;</span>.to_string().into())
+                RunnerError::MissingProtocolMessage(<span class="macro">format!</span>(
+                    <span class="string">&quot;no digest message part found for beacon &#39;{beacon:?}&#39;.&quot;
+                </span>))
             })<span class="question-mark">?</span>;
         <span class="kw">let </span>snapshot_name = <span class="macro">format!</span>(
             <span class="string">&quot;{}-e{}-i{}.{}.tar.gz&quot;</span>,
@@ -1719,8 +1832,7 @@
             tokio::task::spawn_blocking(<span class="kw">move </span>|| -&gt; <span class="prelude-ty">Result</span>&lt;OngoingSnapshot, SnapshotError&gt; {
                 snapshotter.snapshot(<span class="kw-2">&amp;</span>snapshot_name)
             })
-            .<span class="kw">await
-            </span>.map_err(|e| RuntimeError::General(e.into()))<span class="question-mark">??</span>;
+            .<span class="kw">await</span><span class="question-mark">??</span>;
 
         <span class="macro">debug!</span>(<span class="string">&quot; &gt; snapshot created: &#39;{:?}&#39;&quot;</span>, ongoing_snapshot);
 
@@ -1730,14 +1842,13 @@
     <span class="kw">async fn </span>upload_snapshot_archive(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         ongoing_snapshot: <span class="kw-2">&amp;</span>OngoingSnapshot,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;SnapshotLocation&gt;, RuntimeError&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;SnapshotLocation&gt;, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: upload snapshot archive&quot;</span>);
         <span class="kw">let </span>location = <span class="self">self
             </span>.dependencies
             .snapshot_uploader
             .upload_snapshot(ongoing_snapshot.get_file_path())
-            .<span class="kw">await
-            </span>.map_err(RuntimeError::SnapshotUploader)<span class="question-mark">?</span>;
+            .<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="kw">if let </span><span class="prelude-val">Err</span>(error) = tokio::fs::remove_file(ongoing_snapshot.get_file_path()).<span class="kw">await </span>{
             <span class="macro">warn!</span>(
@@ -1752,7 +1863,7 @@
     <span class="kw">async fn </span>create_and_save_certificate(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         working_certificate: <span class="kw-2">&amp;</span>WorkingCertificate,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Certificate, RuntimeError&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Certificate, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: create and save certificate&quot;</span>);
         <span class="kw">let </span>certificate_store = <span class="self">self</span>.dependencies.certificate_store.clone();
         <span class="kw">let </span>multisigner = <span class="self">self</span>.dependencies.multi_signer.read().<span class="kw">await</span>;
@@ -1765,7 +1876,10 @@
             .into_keys()
             .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
         <span class="kw">let </span>multi_signature = multisigner.get_multi_signature().<span class="kw">await</span><span class="question-mark">?</span>.ok_or_else(|| {
-            RuntimeError::General(<span class="string">&quot;no multi signature generated&quot;</span>.to_string().into())
+            RunnerError::NoComputedMultiSignature(<span class="macro">format!</span>(
+                <span class="string">&quot;no multi signature generated for beacon {:?}&quot;</span>,
+                working_certificate.beacon
+            ))
         })<span class="question-mark">?</span>;
 
         <span class="kw">let </span>certificate = MithrilCertificateCreator::create_certificate(
@@ -1792,12 +1906,17 @@
         certificate: Certificate,
         ongoing_snapshot: <span class="kw-2">&amp;</span>OngoingSnapshot,
         remote_locations: Vec&lt;String&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Snapshot, RuntimeError&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Snapshot, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: create and save snapshot&quot;</span>);
         <span class="kw">let </span>snapshot_digest = certificate
             .protocol_message
             .get_message_part(<span class="kw-2">&amp;</span>ProtocolMessagePartKey::SnapshotDigest)
-            .ok_or_else(|| RuntimeError::General(<span class="string">&quot;message part not found&quot;</span>.to_string().into()))<span class="question-mark">?
+            .ok_or_else(|| {
+                RunnerError::MissingProtocolMessage(<span class="macro">format!</span>(
+                    <span class="string">&quot;message part &#39;digest&#39; not found for snapshot &#39;{}&#39;.&quot;</span>,
+                    ongoing_snapshot.get_file_path().display()
+                ))
+            })<span class="question-mark">?
             </span>.to_owned();
         <span class="kw">let </span>snapshot = Snapshot::new(
             snapshot_digest,
@@ -1816,18 +1935,17 @@
         <span class="prelude-val">Ok</span>(snapshot)
     }
 
-    <span class="kw">async fn </span>update_era_checker(<span class="kw-2">&amp;</span><span class="self">self</span>, beacon: <span class="kw-2">&amp;</span>Beacon) -&gt; <span class="prelude-ty">Result</span>&lt;(), RuntimeError&gt; {
+    <span class="kw">async fn </span>update_era_checker(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        beacon: <span class="kw-2">&amp;</span>Beacon,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
         <span class="kw">let </span>token = <span class="self">self
             </span>.dependencies
             .era_reader
             .read_era_epoch_token(beacon.epoch)
-            .<span class="kw">await
-            </span>.map_err(|e| {
-                RuntimeError::General(<span class="macro">format!</span>(<span class="string">&quot;Could not get Era information (&#39;{e}&#39;)&quot;</span>).into())
-            })<span class="question-mark">?</span>;
-        <span class="kw">let </span>current_era = token.get_current_supported_era().map_err(|e| {
-            RuntimeError::General(<span class="macro">format!</span>(<span class="string">&quot;Could not update EraChecker service (&#39;{e}&#39;)&quot;</span>).into())
-        })<span class="question-mark">?</span>;
+            .<span class="kw">await</span><span class="question-mark">?</span>;
+
+        <span class="kw">let </span>current_era = token.get_current_supported_era()<span class="question-mark">?</span>;
         <span class="self">self</span>.dependencies
             .era_checker
             .change_era(current_era, token.get_current_epoch());
@@ -1850,7 +1968,7 @@
 </span><span class="kw">pub mod </span>tests {
     <span class="kw">use </span><span class="kw">crate</span>::dependency::SimulateFromChainParams;
     <span class="kw">use </span><span class="kw">crate</span>::multi_signer::MockMultiSigner;
-    <span class="kw">use </span><span class="kw">crate</span>::runtime::{RuntimeError, WorkingCertificate};
+    <span class="kw">use </span><span class="kw">crate</span>::runtime::WorkingCertificate;
     <span class="kw">use </span><span class="kw">crate</span>::snapshotter::OngoingSnapshot;
     <span class="kw">use crate</span>::{
         initialize_dependencies,
@@ -1863,7 +1981,7 @@
     };
     <span class="kw">use </span>mithril_common::digesters::DumbImmutableFileObserver;
     <span class="kw">use </span>mithril_common::entities::{
-        Beacon, CertificatePending, Epoch, HexEncodedKey, ProtocolMessage, StakeDistribution,
+        Beacon, CertificatePending, HexEncodedKey, ProtocolMessage, StakeDistribution,
     };
     <span class="kw">use </span>mithril_common::test_utils::MithrilFixtureBuilder;
     <span class="kw">use </span>mithril_common::{
@@ -2188,7 +2306,6 @@
         )
         .<span class="kw">await</span>;
         <span class="kw">let </span>runner = AggregatorRunner::new(config, Arc::new(deps));
-        <span class="kw">let </span>total_certificates = <span class="number">5</span>;
         runner
             .update_message_in_multisigner(<span class="string">&quot;a digest&quot;</span>.to_string())
             .<span class="kw">await
@@ -2203,12 +2320,7 @@
             .create_new_working_certificate(<span class="kw-2">&amp;</span>certificate_pending)
             .<span class="kw">await</span>;
         <span class="macro">assert!</span>(certificate.is_err());
-        <span class="kw">let </span>err = certificate.unwrap_err();
-        <span class="macro">assert_eq!</span>(
-            RuntimeError::CertificateChainEpochGap(beacon.epoch, Epoch(total_certificates))
-                .to_string(),
-            err.to_string()
-        );
+        <span class="kw">let </span>_err = certificate.unwrap_err();
     }
 
     <span class="attr">#[tokio::test]
