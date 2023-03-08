@@ -211,6 +211,32 @@
 <a href="#211" id="211">211</a>
 <a href="#212" id="212">212</a>
 <a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
+<a href="#221" id="221">221</a>
+<a href="#222" id="222">222</a>
+<a href="#223" id="223">223</a>
+<a href="#224" id="224">224</a>
+<a href="#225" id="225">225</a>
+<a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
+<a href="#228" id="228">228</a>
+<a href="#229" id="229">229</a>
+<a href="#230" id="230">230</a>
+<a href="#231" id="231">231</a>
+<a href="#232" id="232">232</a>
+<a href="#233" id="233">233</a>
+<a href="#234" id="234">234</a>
+<a href="#235" id="235">235</a>
+<a href="#236" id="236">236</a>
+<a href="#237" id="237">237</a>
+<a href="#238" id="238">238</a>
+<a href="#239" id="239">239</a>
 </pre><pre class="rust"><code><span class="kw">use </span>serde::Serialize;
 <span class="kw">use </span>serde_json::Value;
 <span class="kw">use </span>std::{collections::HashMap, error::Error <span class="kw">as </span>StdError};
@@ -237,12 +263,11 @@
 </span><span class="kw">pub struct </span>TxDatum(<span class="kw">pub </span>String);
 
 <span class="kw">impl </span>TxDatum {
-    <span class="doccomment">/// Retrieves the nth field of the datum with given type
-    </span><span class="kw">pub fn </span>get_nth_field_by_type(
+    <span class="doccomment">/// Retrieves the fields of the datum with given type
+    </span><span class="kw">pub fn </span>get_fields_by_type(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         type_name: <span class="kw-2">&amp;</span>TxDatumFieldTypeName,
-        index: usize,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Value, Box&lt;<span class="kw">dyn </span>StdError&gt;&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;Value&gt;, Box&lt;<span class="kw">dyn </span>StdError&gt;&gt; {
         <span class="kw">let </span>tx_datum_raw = <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>;
         <span class="comment">// 1- Parse the Utxo raw data to a hashmap
         </span><span class="kw">let </span>v: HashMap&lt;String, Value&gt; = serde_json::from_str(tx_datum_raw).map_err(|e| {
@@ -261,22 +286,28 @@
             )
         })<span class="question-mark">?</span>;
         <span class="comment">// 3- Filter the vec (keep the ones that match the given type), and retrieve the nth entry of this filtered vec
-        </span><span class="kw">let </span>field_value = fields
+        </span><span class="prelude-val">Ok</span>(fields
             .iter()
             .filter(|<span class="kw-2">&amp;</span>field| field.get(type_name.to_string()).is_some())
-            .nth(index)
+            .map(|field| field.get(type_name.to_string()).unwrap().to_owned())
+            .collect::&lt;<span class="kw">_</span>&gt;())
+    }
+
+    <span class="doccomment">/// Retrieves the nth field of the datum with given type
+    </span><span class="kw">pub fn </span>get_nth_field_by_type(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        type_name: <span class="kw-2">&amp;</span>TxDatumFieldTypeName,
+        index: usize,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Value, Box&lt;<span class="kw">dyn </span>StdError&gt;&gt; {
+        <span class="prelude-val">Ok</span>(<span class="self">self
+            </span>.get_fields_by_type(type_name)<span class="question-mark">?
+            </span>.get(index)
             .ok_or_else(|| {
                 TxDatumError::InvalidContent(
-                    <span class="macro">format!</span>(
-                        <span class="string">&quot;Error: missing field at index {index}, tx datum was = &#39;{tx_datum_raw}&#39;&quot;
-                    </span>)
-                    .into(),
+                    <span class="macro">format!</span>(<span class="string">&quot;Error: missing field at index {index}&quot;</span>).into(),
                 )
             })<span class="question-mark">?
-            </span>.get(type_name.to_string())
-            .unwrap();
-
-        <span class="prelude-val">Ok</span>(field_value.to_owned())
+            </span>.to_owned())
     }
 }
 
@@ -314,9 +345,29 @@
 
     <span class="doccomment">/// Add a field to the builder
     </span><span class="kw">pub fn </span>add_field(<span class="kw-2">&amp;mut </span><span class="self">self</span>, field_value: TxDatumFieldValue) -&gt; <span class="kw-2">&amp;mut </span>TxDatumBuilder {
-        <span class="kw">let </span><span class="kw-2">mut </span>field = HashMap::new();
-        field.insert(TxDatumFieldTypeName::from(<span class="kw-2">&amp;</span>field_value), field_value);
-        <span class="self">self</span>.fields.push(field);
+        <span class="kw">match </span><span class="kw-2">&amp;</span>field_value {
+            TxDatumFieldValue::Bytes(datum_str) =&gt; {
+                <span class="comment">// TODO: Remove this chunking of the bytes fields once the cardano-cli 1.36.0+ is released
+                // The bytes fields are currently limited to 128 bytes and need to be chunked in multiple fields
+                </span><span class="kw">let </span>field_type = TxDatumFieldTypeName::from(<span class="kw-2">&amp;</span>field_value);
+                <span class="kw">let </span>field_value_chunks = datum_str.as_bytes().chunks(<span class="number">128</span>);
+                <span class="kw">for </span>field_value_chunk <span class="kw">in </span>field_value_chunks {
+                    <span class="kw">let </span><span class="kw-2">mut </span>field = HashMap::new();
+                    field.insert(
+                        field_type,
+                        TxDatumFieldValue::Bytes(
+                            std::str::from_utf8(field_value_chunk).unwrap().to_string(),
+                        ),
+                    );
+                    <span class="self">self</span>.fields.push(field);
+                }
+            }
+            <span class="kw">_ </span>=&gt; {
+                <span class="kw">let </span><span class="kw-2">mut </span>field = HashMap::new();
+                field.insert(TxDatumFieldTypeName::from(<span class="kw-2">&amp;</span>field_value), field_value);
+                <span class="self">self</span>.fields.push(field);
+            }
+        }
 
         <span class="self">self
     </span>}
@@ -348,6 +399,7 @@
             .add_field(TxDatumFieldValue::Bytes(<span class="string">&quot;bytes1&quot;</span>.to_string()))
             .add_field(TxDatumFieldValue::Bytes(<span class="string">&quot;bytes2&quot;</span>.to_string()))
             .add_field(TxDatumFieldValue::Int(<span class="number">2</span>))
+            .add_field(TxDatumFieldValue::Bytes(<span class="string">&quot;012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789&quot;</span>.to_string()))
             .build()
             .expect(<span class="string">&quot;tx_datum build should not fail&quot;</span>);
         tx_datum
@@ -356,7 +408,7 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_build_tx_datum() {
         <span class="kw">let </span>tx_datum = dummy_tx_datum();
-        <span class="kw">let </span>tx_datum_expected = TxDatum(<span class="string">r#&quot;{&quot;constructor&quot;:0,&quot;fields&quot;:[{&quot;bytes&quot;:&quot;bytes0&quot;},{&quot;int&quot;:0},{&quot;int&quot;:1},{&quot;bytes&quot;:&quot;bytes1&quot;},{&quot;bytes&quot;:&quot;bytes2&quot;},{&quot;int&quot;:2}]}&quot;#</span>.to_string());
+        <span class="kw">let </span>tx_datum_expected = TxDatum(<span class="string">r#&quot;{&quot;constructor&quot;:0,&quot;fields&quot;:[{&quot;bytes&quot;:&quot;bytes0&quot;},{&quot;int&quot;:0},{&quot;int&quot;:1},{&quot;bytes&quot;:&quot;bytes1&quot;},{&quot;bytes&quot;:&quot;bytes2&quot;},{&quot;int&quot;:2},{&quot;bytes&quot;:&quot;01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567&quot;},{&quot;bytes&quot;:&quot;8901234567890123456789&quot;}]}&quot;#</span>.to_string());
         <span class="macro">assert_eq!</span>(tx_datum_expected, tx_datum);
     }
 
