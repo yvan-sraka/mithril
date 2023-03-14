@@ -780,11 +780,29 @@
 <a href="#780" id="780">780</a>
 <a href="#781" id="781">781</a>
 <a href="#782" id="782">782</a>
+<a href="#783" id="783">783</a>
+<a href="#784" id="784">784</a>
+<a href="#785" id="785">785</a>
+<a href="#786" id="786">786</a>
+<a href="#787" id="787">787</a>
+<a href="#788" id="788">788</a>
+<a href="#789" id="789">789</a>
+<a href="#790" id="790">790</a>
+<a href="#791" id="791">791</a>
+<a href="#792" id="792">792</a>
+<a href="#793" id="793">793</a>
 </pre><pre class="rust"><code><span class="kw">use </span>clap::{Parser, Subcommand};
 <span class="kw">use </span>config::{builder::DefaultState, ConfigBuilder, Map, Source, Value, ValueKind};
 <span class="kw">use </span>slog::Level;
 <span class="kw">use </span>slog_scope::{crit, debug, info};
-<span class="kw">use </span>std::{error::Error, fs, net::IpAddr, path::PathBuf, sync::Arc};
+<span class="kw">use </span>sqlite::Connection;
+<span class="kw">use </span>std::{
+    error::Error,
+    fs,
+    net::IpAddr,
+    path::PathBuf,
+    sync::{Arc, Mutex},
+};
 <span class="kw">use </span>tokio::{
     sync::{oneshot, RwLock},
     task::JoinSet,
@@ -804,11 +822,12 @@
     },
     entities::{Epoch, HexEncodedEraMarkersSecretKey, HexEncodedGenesisSecretKey},
     era::{EraChecker, EraReader},
-    store::{adapter::SQLiteAdapter, StakeStore},
+    store::adapter::SQLiteAdapter,
     BeaconProvider, BeaconProviderImpl,
 };
 
 <span class="kw">use crate</span>::{
+    database::provider::StakePoolRepository,
     event_store::{<span class="self">self</span>, TransmitterService},
     http_server::routes::router,
     tools::{EraTools, GenesisTools, GenesisToolsDependency},
@@ -864,10 +883,9 @@
         )<span class="question-mark">?</span>),
         config.store_retention_limit,
     ));
-    <span class="kw">let </span>stake_store = Arc::new(StakeStore::new(
-        Box::new(SQLiteAdapter::new(<span class="string">&quot;stake&quot;</span>, sqlite_db_path.clone())<span class="question-mark">?</span>),
-        config.store_retention_limit,
-    ));
+    <span class="kw">let </span>stake_store = Arc::new(StakePoolRepository::new(Arc::new(Mutex::new(
+        Connection::open(sqlite_db_path.clone().unwrap())<span class="question-mark">?</span>,
+    ))));
     <span class="kw">let </span>single_signature_store = Arc::new(SingleSignatureStore::new(
         Box::new(SQLiteAdapter::new(<span class="string">&quot;single_signature&quot;</span>, sqlite_db_path)<span class="question-mark">?</span>),
         config.store_retention_limit,
@@ -928,12 +946,17 @@
 <span class="doccomment">/// Database version checker.
 /// This is the place where migrations are to be registered.
 </span><span class="kw">fn </span>check_database_migration(sql_file_path: PathBuf) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>Error&gt;&gt; {
-    DatabaseVersionChecker::new(
+    <span class="kw">let </span><span class="kw-2">mut </span>db_checker = DatabaseVersionChecker::new(
         slog_scope::logger(),
         ApplicationNodeType::Aggregator,
         sql_file_path,
-    )
-    .apply()
+    );
+
+    <span class="kw">for </span>migration <span class="kw">in </span><span class="kw">crate</span>::database::migration::get_migrations() {
+        db_checker.add_migration(migration);
+    }
+
+    db_checker.apply().map_err(|e| -&gt; Box&lt;<span class="kw">dyn </span>Error&gt; { e })
 }
 
 <span class="doccomment">/// Mithril Aggregator Node
@@ -1129,10 +1152,9 @@
             )<span class="question-mark">?</span>),
             config.store_retention_limit,
         ));
-        <span class="kw">let </span>stake_store = Arc::new(StakeStore::new(
-            Box::new(SQLiteAdapter::new(<span class="string">&quot;stake&quot;</span>, sqlite_db_path.clone())<span class="question-mark">?</span>),
-            config.store_retention_limit,
-        ));
+        <span class="kw">let </span>stake_store = Arc::new(StakePoolRepository::new(Arc::new(Mutex::new(
+            Connection::open(sqlite_db_path.clone().unwrap())<span class="question-mark">?</span>,
+        ))));
         <span class="kw">let </span>single_signature_store = Arc::new(SingleSignatureStore::new(
             Box::new(SQLiteAdapter::new(
                 <span class="string">&quot;single_signature&quot;</span>,

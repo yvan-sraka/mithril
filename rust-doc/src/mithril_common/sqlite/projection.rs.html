@@ -108,10 +108,7 @@
 <a href="#108" id="108">108</a>
 <a href="#109" id="109">109</a>
 <a href="#110" id="110">110</a>
-<a href="#111" id="111">111</a>
-<a href="#112" id="112">112</a>
-<a href="#113" id="113">113</a>
-</pre><pre class="rust"><code><span class="kw">use </span>std::collections::HashMap;
+</pre><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::SourceAlias;
 
 <span class="doccomment">/// Each projection field is defined by
 /// 1. a definition
@@ -179,7 +176,7 @@
     }
 
     <span class="doccomment">/// Turn the Projection into a string suitable for use in SQL queries.
-    </span><span class="kw">pub fn </span>expand(<span class="kw-2">&amp;</span><span class="self">self</span>, aliases: HashMap&lt;String, String&gt;) -&gt; String {
+    </span><span class="kw">pub fn </span>expand(<span class="kw-2">&amp;</span><span class="self">self</span>, aliases: SourceAlias) -&gt; String {
         <span class="kw">let </span><span class="kw-2">mut </span>fields: String = <span class="self">self
             </span>.get_fields()
             .iter()
@@ -187,8 +184,8 @@
             .collect::&lt;Vec&lt;String&gt;&gt;()
             .join(<span class="string">&quot;, &quot;</span>);
 
-        <span class="kw">for </span>(alias, source) <span class="kw">in </span>aliases {
-            fields = fields.replace(<span class="kw-2">&amp;</span>alias, <span class="kw-2">&amp;</span>source);
+        <span class="kw">for </span>(alias, source) <span class="kw">in </span>aliases.get_iterator() {
+            fields = fields.replace(alias, source);
         }
 
         fields
@@ -213,10 +210,7 @@
         projection.add_field(<span class="string">&quot;created_at&quot;</span>, <span class="string">&quot;{:test:}.created_at&quot;</span>, <span class="string">&quot;timestamp&quot;</span>);
         projection.add_field(<span class="string">&quot;thing_count&quot;</span>, <span class="string">&quot;count({:thing:}.*)&quot;</span>, <span class="string">&quot;integer&quot;</span>);
 
-        <span class="kw">let </span>aliases: HashMap&lt;String, String&gt; = [(<span class="string">&quot;{:test:}&quot;</span>, <span class="string">&quot;pika&quot;</span>), (<span class="string">&quot;{:thing:}&quot;</span>, <span class="string">&quot;thing_alias&quot;</span>)]
-            .into_iter()
-            .map(|(a, b)| (a.to_string(), b.to_string()))
-            .collect();
+        <span class="kw">let </span>aliases = SourceAlias::new(<span class="kw-2">&amp;</span>[(<span class="string">&quot;{:test:}&quot;</span>, <span class="string">&quot;pika&quot;</span>), (<span class="string">&quot;{:thing:}&quot;</span>, <span class="string">&quot;thing_alias&quot;</span>)]);
 
         <span class="macro">assert_eq!</span>(
             <span class="string">&quot;pika.test_id as test_id, pika.name as name, pika.created_at as created_at, count(thing_alias.*) as thing_count&quot;</span>.to_string(),

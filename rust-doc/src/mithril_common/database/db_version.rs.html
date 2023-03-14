@@ -267,32 +267,18 @@
 <a href="#267" id="267">267</a>
 <a href="#268" id="268">268</a>
 <a href="#269" id="269">269</a>
-<a href="#270" id="270">270</a>
-<a href="#271" id="271">271</a>
-<a href="#272" id="272">272</a>
-<a href="#273" id="273">273</a>
-<a href="#274" id="274">274</a>
-<a href="#275" id="275">275</a>
-<a href="#276" id="276">276</a>
-<a href="#277" id="277">277</a>
-<a href="#278" id="278">278</a>
-<a href="#279" id="279">279</a>
-<a href="#280" id="280">280</a>
-<a href="#281" id="281">281</a>
-<a href="#282" id="282">282</a>
-<a href="#283" id="283">283</a>
-<a href="#284" id="284">284</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::{
     cmp::Ordering,
-    collections::HashMap,
-    error::Error,
     fmt::{Debug, Display},
 };
 
 <span class="kw">use </span>chrono::NaiveDateTime;
 <span class="kw">use </span>sqlite::{Connection, Row, Value};
 
-<span class="kw">use </span><span class="kw">crate</span>::sqlite::{HydrationError, Projection, Provider, SqLiteEntity};
+<span class="kw">use </span><span class="kw">crate</span>::sqlite::{
+    HydrationError, Projection, Provider, SourceAlias, SqLiteEntity, WhereCondition,
+};
+<span class="kw">use </span><span class="kw">crate</span>::StdError;
 
 <span class="kw">use </span><span class="kw">super</span>::DbVersion;
 
@@ -308,7 +294,7 @@
 
 <span class="kw">impl </span>ApplicationNodeType {
     <span class="doccomment">/// [ApplicationNodeType] constructor.
-    </span><span class="kw">pub fn </span>new(node_type: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Box&lt;<span class="kw">dyn </span>Error&gt;&gt; {
+    </span><span class="kw">pub fn </span>new(node_type: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, StdError&gt; {
         <span class="kw">match </span>node_type {
             <span class="string">&quot;aggregator&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Aggregator),
             <span class="string">&quot;signer&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Signer),
@@ -381,16 +367,12 @@
 <span class="doccomment">/// Provider for the [DatabaseVersion] entities using the `DatabaseVersionProjection`.
 </span><span class="kw">pub struct </span>DatabaseVersionProvider&lt;<span class="lifetime">&#39;conn</span>&gt; {
     connection: <span class="kw-2">&amp;</span><span class="lifetime">&#39;conn </span>Connection,
-    projection: Projection,
 }
 
 <span class="kw">impl</span>&lt;<span class="lifetime">&#39;conn</span>&gt; DatabaseVersionProvider&lt;<span class="lifetime">&#39;conn</span>&gt; {
     <span class="doccomment">/// [DatabaseVersionProvider] constructor.
     </span><span class="kw">pub fn </span>new(connection: <span class="kw-2">&amp;</span><span class="lifetime">&#39;conn </span>Connection) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{
-            connection,
-            projection: DatabaseVersion::get_projection(),
-        }
+        <span class="self">Self </span>{ connection }
     }
 
     <span class="doccomment">/// Method to create the table at the beginning of the migration procedure.
@@ -398,7 +380,7 @@
     </span><span class="kw">pub fn </span>create_table_if_not_exists(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         application_type: <span class="kw-2">&amp;</span>ApplicationNodeType,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>Error&gt;&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), StdError&gt; {
         <span class="kw">let </span>connection = <span class="self">self</span>.get_connection();
         <span class="kw">let </span>sql = <span class="string">&quot;select exists(select name from sqlite_master where type=&#39;table&#39; and name=&#39;db_version&#39;) as table_exists&quot;</span>;
         <span class="kw">let </span>table_exists = connection
@@ -425,10 +407,12 @@ insert into db_version (application_type, version) values (&#39;{application_typ
     </span><span class="kw">pub fn </span>get_application_version(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         application_type: <span class="kw-2">&amp;</span>ApplicationNodeType,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;DatabaseVersion&gt;, Box&lt;<span class="kw">dyn </span>Error&gt;&gt; {
-        <span class="kw">let </span>condition = <span class="string">&quot;application_type = ?&quot;</span>;
-        <span class="kw">let </span>params = [Value::String(<span class="macro">format!</span>(<span class="string">&quot;{application_type}&quot;</span>))];
-        <span class="kw">let </span>result = <span class="self">self</span>.find(<span class="prelude-val">Some</span>(condition), <span class="kw-2">&amp;</span>params)<span class="question-mark">?</span>.next();
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;DatabaseVersion&gt;, StdError&gt; {
+        <span class="kw">let </span>filters = WhereCondition::new(
+            <span class="string">&quot;application_type = ?*&quot;</span>,
+            <span class="macro">vec!</span>[Value::String(<span class="macro">format!</span>(<span class="string">&quot;{application_type}&quot;</span>))],
+        );
+        <span class="kw">let </span>result = <span class="self">self</span>.find(filters)<span class="question-mark">?</span>.next();
 
         <span class="prelude-val">Ok</span>(result)
     }
@@ -437,25 +421,19 @@ insert into db_version (application_type, version) values (&#39;{application_typ
 <span class="kw">impl</span>&lt;<span class="lifetime">&#39;conn</span>&gt; Provider&lt;<span class="lifetime">&#39;conn</span>&gt; <span class="kw">for </span>DatabaseVersionProvider&lt;<span class="lifetime">&#39;conn</span>&gt; {
     <span class="kw">type </span>Entity = DatabaseVersion;
 
-    <span class="kw">fn </span>get_projection(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Projection {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.projection
-    }
-
     <span class="kw">fn </span>get_connection(<span class="kw-2">&amp;</span><span class="lifetime">&#39;conn </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Connection {
         <span class="self">self</span>.connection
     }
 
-    <span class="kw">fn </span>get_definition(<span class="kw-2">&amp;</span><span class="self">self</span>, condition: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;) -&gt; String {
-        <span class="kw">let </span>where_clause = condition.unwrap_or(<span class="string">&quot;true&quot;</span>);
-        <span class="kw">let </span><span class="kw-2">mut </span>aliases = HashMap::new();
-        <span class="kw">let _ </span>= aliases.insert(<span class="string">&quot;{:db_version:}&quot;</span>.to_string(), <span class="string">&quot;db_version&quot;</span>.to_string());
-        <span class="kw">let </span>projection = <span class="self">self</span>.get_projection().expand(aliases);
+    <span class="kw">fn </span>get_definition(<span class="kw-2">&amp;</span><span class="self">self</span>, condition: <span class="kw-2">&amp;</span>str) -&gt; String {
+        <span class="kw">let </span>aliases = SourceAlias::new(<span class="kw-2">&amp;</span>[(<span class="string">&quot;{:db_version:}&quot;</span>, <span class="string">&quot;db_version&quot;</span>)]);
+        <span class="kw">let </span>projection = <span class="self">Self</span>::Entity::get_projection().expand(aliases);
 
         <span class="macro">format!</span>(
             <span class="string">r#&quot;
 select {projection}
 from db_version
-where {where_clause}
+where {condition}
 &quot;#
         </span>)
     }
@@ -465,26 +443,25 @@ where {where_clause}
 /// This will perform an UPSERT and return the updated entity.
 </span><span class="kw">pub struct </span>DatabaseVersionUpdater&lt;<span class="lifetime">&#39;conn</span>&gt; {
     connection: <span class="kw-2">&amp;</span><span class="lifetime">&#39;conn </span>Connection,
-    projection: Projection,
 }
 
 <span class="kw">impl</span>&lt;<span class="lifetime">&#39;conn</span>&gt; DatabaseVersionUpdater&lt;<span class="lifetime">&#39;conn</span>&gt; {
     <span class="doccomment">/// [DatabaseVersionUpdater] constructor.
     </span><span class="kw">pub fn </span>new(connection: <span class="kw-2">&amp;</span><span class="lifetime">&#39;conn </span>Connection) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{
-            connection,
-            projection: DatabaseVersion::get_projection(),
-        }
+        <span class="self">Self </span>{ connection }
     }
 
     <span class="doccomment">/// Persist the given entity and return the projection of the saved entity.
-    </span><span class="kw">pub fn </span>save(<span class="kw-2">&amp;</span><span class="self">self</span>, version: DatabaseVersion) -&gt; <span class="prelude-ty">Result</span>&lt;DatabaseVersion, Box&lt;<span class="kw">dyn </span>Error&gt;&gt; {
-        <span class="kw">let </span>params = [
-            Value::String(<span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, version.application_type)),
-            Value::Integer(version.version),
-        ];
+    </span><span class="kw">pub fn </span>save(<span class="kw-2">&amp;</span><span class="self">self</span>, version: DatabaseVersion) -&gt; <span class="prelude-ty">Result</span>&lt;DatabaseVersion, StdError&gt; {
+        <span class="kw">let </span>filters = WhereCondition::new(
+            <span class="string">&quot;&quot;</span>,
+            <span class="macro">vec!</span>[
+                Value::String(<span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, version.application_type)),
+                Value::Integer(version.version),
+            ],
+        );
         <span class="kw">let </span>entity = <span class="self">self
-            </span>.find(<span class="prelude-val">None</span>, <span class="kw-2">&amp;</span>params)<span class="question-mark">?
+            </span>.find(filters)<span class="question-mark">?
             </span>.next()
             .ok_or(<span class="string">&quot;No data returned after insertion&quot;</span>)<span class="question-mark">?</span>;
 
@@ -495,19 +472,13 @@ where {where_clause}
 <span class="kw">impl</span>&lt;<span class="lifetime">&#39;conn</span>&gt; Provider&lt;<span class="lifetime">&#39;conn</span>&gt; <span class="kw">for </span>DatabaseVersionUpdater&lt;<span class="lifetime">&#39;conn</span>&gt; {
     <span class="kw">type </span>Entity = DatabaseVersion;
 
-    <span class="kw">fn </span>get_projection(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Projection {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.projection
-    }
-
     <span class="kw">fn </span>get_connection(<span class="kw-2">&amp;</span><span class="lifetime">&#39;conn </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Connection {
         <span class="self">self</span>.connection
     }
 
-    <span class="kw">fn </span>get_definition(<span class="kw-2">&amp;</span><span class="self">self</span>, condition: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;) -&gt; String {
-        <span class="kw">let </span>_where_clause = condition.unwrap_or(<span class="string">&quot;true&quot;</span>);
-        <span class="kw">let </span><span class="kw-2">mut </span>aliases = HashMap::new();
-        <span class="kw">let _ </span>= aliases.insert(<span class="string">&quot;{:db_version:}&quot;</span>.to_string(), <span class="string">&quot;db_version&quot;</span>.to_string());
-        <span class="kw">let </span>projection = <span class="self">self</span>.get_projection().expand(aliases);
+    <span class="kw">fn </span>get_definition(<span class="kw-2">&amp;</span><span class="self">self</span>, _condition: <span class="kw-2">&amp;</span>str) -&gt; String {
+        <span class="kw">let </span>aliases = SourceAlias::new(<span class="kw-2">&amp;</span>[(<span class="string">&quot;{:db_version:}&quot;</span>, <span class="string">&quot;db_version&quot;</span>)]);
+        <span class="kw">let </span>projection = <span class="self">Self</span>::Entity::get_projection().expand(aliases);
 
         <span class="macro">format!</span>(
             <span class="string">r#&quot;
@@ -526,8 +497,7 @@ returning {projection}
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_projection() {
         <span class="kw">let </span>projection = DatabaseVersion::get_projection();
-        <span class="kw">let </span><span class="kw-2">mut </span>aliases: HashMap&lt;String, String&gt; = HashMap::new();
-        <span class="kw">let _ </span>= aliases.insert(<span class="string">&quot;{:db_version:}&quot;</span>.to_string(), <span class="string">&quot;whatever&quot;</span>.to_string());
+        <span class="kw">let </span>aliases = SourceAlias::new(<span class="kw-2">&amp;</span>[(<span class="string">&quot;{:db_version:}&quot;</span>, <span class="string">&quot;whatever&quot;</span>)]);
 
         <span class="macro">assert_eq!</span>(
             <span class="string">&quot;whatever.version as version, whatever.application_type as application_type, whatever.updated_at as updated_at&quot;
@@ -547,7 +517,7 @@ select db_version.version as version, db_version.application_type as application
 from db_version
 where true
 &quot;#</span>,
-            provider.get_definition(<span class="prelude-val">None</span>)
+            provider.get_definition(<span class="string">&quot;true&quot;</span>)
         )
     }
 
@@ -562,7 +532,7 @@ insert into db_version (application_type, version) values (?, ?)
   on conflict (application_type) do update set version = excluded.version, updated_at = CURRENT_TIMESTAMP
 returning db_version.version as version, db_version.application_type as application_type, db_version.updated_at as updated_at
 &quot;#</span>,
-            provider.get_definition(<span class="prelude-val">None</span>)
+            provider.get_definition(<span class="string">&quot;true&quot;</span>)
         )
     }
 }
