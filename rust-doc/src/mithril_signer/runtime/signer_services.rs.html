@@ -301,16 +301,25 @@
 <a href="#301" id="301">301</a>
 <a href="#302" id="302">302</a>
 <a href="#303" id="303">303</a>
+<a href="#304" id="304">304</a>
+<a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
+<a href="#308" id="308">308</a>
 </pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
-<span class="kw">use </span>std::{fs, sync::Arc};
-
-<span class="kw">use </span>mithril_common::digesters::{
-    cache::{ImmutableFileDigestCacheProvider, JsonImmutableFileDigestCacheProviderBuilder},
-    ImmutableFileObserver,
+<span class="kw">use </span>sqlite::Connection;
+<span class="kw">use </span>std::{
+    fs,
+    sync::{Arc, Mutex},
 };
+
 <span class="kw">use </span>mithril_common::{
     chain_observer::{CardanoCliChainObserver, CardanoCliRunner, ChainObserver},
     crypto_helper::{OpCert, ProtocolPartyId, SerDeShelleyFileFormat},
+    digesters::{
+        cache::{ImmutableFileDigestCacheProvider, JsonImmutableFileDigestCacheProviderBuilder},
+        ImmutableFileObserver,
+    },
     digesters::{CardanoImmutableDigester, ImmutableDigester, ImmutableFileSystemObserver},
     era::{EraChecker, EraReader},
     store::{adapter::SQLiteAdapter, StakeStore},
@@ -441,11 +450,12 @@
                 .map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;Could not create data stores directory: {e:?}&quot;</span>))<span class="question-mark">?</span>;
         }
 
-        <span class="kw">let </span>sqlite_db_path = <span class="prelude-val">Some</span>(<span class="self">self</span>.config.get_sqlite_file());
+        <span class="kw">let </span>sqlite_db_path = <span class="self">self</span>.config.get_sqlite_file();
+        <span class="kw">let </span>sqlite_connection = Arc::new(Mutex::new(Connection::open(sqlite_db_path)<span class="question-mark">?</span>));
         <span class="kw">let </span>protocol_initializer_store = Arc::new(ProtocolInitializerStore::new(
             Box::new(SQLiteAdapter::new(
                 <span class="string">&quot;protocol_initializer&quot;</span>,
-                sqlite_db_path.clone(),
+                sqlite_connection.clone(),
             )<span class="question-mark">?</span>),
             <span class="self">self</span>.config.store_retention_limit,
         ));
@@ -459,7 +469,7 @@
             slog_scope::logger(),
         ));
         <span class="kw">let </span>stake_store = Arc::new(StakeStore::new(
-            Box::new(SQLiteAdapter::new(<span class="string">&quot;stake&quot;</span>, sqlite_db_path)<span class="question-mark">?</span>),
+            Box::new(SQLiteAdapter::new(<span class="string">&quot;stake&quot;</span>, sqlite_connection)<span class="question-mark">?</span>),
             <span class="self">self</span>.config.store_retention_limit,
         ));
         <span class="kw">let </span>chain_observer = {

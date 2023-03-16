@@ -558,13 +558,48 @@
 <a href="#558" id="558">558</a>
 <a href="#559" id="559">559</a>
 <a href="#560" id="560">560</a>
+<a href="#561" id="561">561</a>
+<a href="#562" id="562">562</a>
+<a href="#563" id="563">563</a>
+<a href="#564" id="564">564</a>
+<a href="#565" id="565">565</a>
+<a href="#566" id="566">566</a>
+<a href="#567" id="567">567</a>
+<a href="#568" id="568">568</a>
+<a href="#569" id="569">569</a>
+<a href="#570" id="570">570</a>
+<a href="#571" id="571">571</a>
+<a href="#572" id="572">572</a>
+<a href="#573" id="573">573</a>
+<a href="#574" id="574">574</a>
+<a href="#575" id="575">575</a>
+<a href="#576" id="576">576</a>
+<a href="#577" id="577">577</a>
+<a href="#578" id="578">578</a>
+<a href="#579" id="579">579</a>
+<a href="#580" id="580">580</a>
+<a href="#581" id="581">581</a>
+<a href="#582" id="582">582</a>
+<a href="#583" id="583">583</a>
+<a href="#584" id="584">584</a>
+<a href="#585" id="585">585</a>
+<a href="#586" id="586">586</a>
+<a href="#587" id="587">587</a>
+<a href="#588" id="588">588</a>
+<a href="#589" id="589">589</a>
+<a href="#590" id="590">590</a>
 </pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>serde::{de::DeserializeOwned, Serialize};
 <span class="kw">use </span>sha2::{Digest, Sha256};
 <span class="kw">use </span>sqlite::{Connection, State, Statement};
-<span class="kw">use </span>tokio::sync::{Mutex, MutexGuard};
 
-<span class="kw">use </span>std::{marker::PhantomData, path::PathBuf, sync::Arc, thread::sleep, time::Duration};
+<span class="kw">use </span>std::{
+    marker::PhantomData,
+    ops::Deref,
+    sync::{Arc, Mutex},
+    thread::sleep,
+    time::Duration,
+};
 
 <span class="kw">use super</span>::{AdapterError, StoreAdapter};
 
@@ -587,14 +622,13 @@
     V: DeserializeOwned,
 {
     <span class="doccomment">/// Create a new SQLiteAdapter instance.
-    </span><span class="kw">pub fn </span>new(table_name: <span class="kw-2">&amp;</span>str, file: <span class="prelude-ty">Option</span>&lt;PathBuf&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
-        <span class="kw">let </span>connection = <span class="kw">match </span>file {
-            <span class="prelude-val">Some</span>(filepath) =&gt; Connection::open(filepath),
-            <span class="prelude-val">None </span>=&gt; Connection::open(<span class="string">&quot;:memory:&quot;</span>),
+    </span><span class="kw">pub fn </span>new(table_name: <span class="kw-2">&amp;</span>str, connection: Arc&lt;Mutex&lt;Connection&gt;&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+        {
+            <span class="kw">let </span>conn = <span class="kw-2">&amp;*</span>connection.lock().map_err(|e| {
+                AdapterError::GeneralError(<span class="macro">format!</span>(<span class="string">&quot;SQLite adapter instanciation failed: &#39;{e}&#39;.&quot;</span>))
+            })<span class="question-mark">?</span>;
+            <span class="self">Self</span>::check_table_exists(conn, table_name)<span class="question-mark">?</span>;
         }
-        .map_err(|e| AdapterError::InitializationError(e.into()))<span class="question-mark">?</span>;
-        <span class="self">Self</span>::check_table_exists(<span class="kw-2">&amp;</span>connection, table_name)<span class="question-mark">?</span>;
-        <span class="kw">let </span>connection = Arc::new(Mutex::new(connection));
 
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
             connection,
@@ -652,9 +686,11 @@
         })
     }
 
-    <span class="kw">fn </span>get_statement_for_key&lt;<span class="lifetime">&#39;a</span>&gt;(
-        <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>,
-        connection: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>MutexGuard&lt;Connection&gt;,
+    <span class="comment">// Connection must be locked from the calling function to be able to return
+    // a Statement that references this connection.
+    </span><span class="kw">fn </span>get_statement_for_key&lt;<span class="lifetime">&#39;conn</span>&gt;(
+        <span class="kw-2">&amp;</span><span class="lifetime">&#39;conn </span><span class="self">self</span>,
+        connection: <span class="kw-2">&amp;</span><span class="lifetime">&#39;conn </span>Connection,
         sql: String,
         key: <span class="kw-2">&amp;</span>K,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Statement&gt; {
@@ -710,7 +746,11 @@
     <span class="kw">type </span>Record = V;
 
     <span class="kw">async fn </span>store_record(<span class="kw-2">&amp;mut </span><span class="self">self</span>, key: <span class="kw-2">&amp;</span><span class="self">Self</span>::Key, record: <span class="kw-2">&amp;</span><span class="self">Self</span>::Record) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">let </span>connection = <span class="self">self</span>.connection.lock().<span class="kw">await</span>;
+        <span class="kw">let </span>lock = <span class="self">self
+            </span>.connection
+            .lock()
+            .map_err(|e| AdapterError::GeneralError(<span class="macro">format!</span>(<span class="string">&quot;{e}&quot;</span>)))<span class="question-mark">?</span>;
+        <span class="kw">let </span>connection = lock.deref();
         <span class="kw">let </span>sql = <span class="macro">format!</span>(
             <span class="string">&quot;insert into {} (key_hash, key, value) values (?1, ?2, ?3) on conflict (key_hash) do update set value = excluded.value&quot;</span>,
             <span class="self">self</span>.table
@@ -740,20 +780,28 @@
     }
 
     <span class="kw">async fn </span>get_record(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span><span class="self">Self</span>::Key) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Record&gt;&gt; {
+        <span class="kw">let </span>lock = <span class="self">self
+            </span>.connection
+            .lock()
+            .map_err(|e| AdapterError::GeneralError(<span class="macro">format!</span>(<span class="string">&quot;{e}&quot;</span>)))<span class="question-mark">?</span>;
+        <span class="kw">let </span>connection = lock.deref();
         <span class="kw">let </span>sql = <span class="macro">format!</span>(<span class="string">&quot;select value from {} where key_hash = ?1&quot;</span>, <span class="self">self</span>.table);
-        <span class="kw">let </span>connection = <span class="self">self</span>.connection.lock().<span class="kw">await</span>;
-        <span class="kw">let </span>statement = <span class="self">self</span>.get_statement_for_key(<span class="kw-2">&amp;</span>connection, sql, key)<span class="question-mark">?</span>;
+        <span class="kw">let </span>statement = <span class="self">self</span>.get_statement_for_key(connection, sql, key)<span class="question-mark">?</span>;
 
         <span class="self">self</span>.fetch_maybe_one_value(statement)
     }
 
     <span class="kw">async fn </span>record_exists(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span><span class="self">Self</span>::Key) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
-        <span class="kw">let </span>connection = <span class="self">self</span>.connection.lock().<span class="kw">await</span>;
+        <span class="kw">let </span>lock = <span class="self">self
+            </span>.connection
+            .lock()
+            .map_err(|e| AdapterError::GeneralError(<span class="macro">format!</span>(<span class="string">&quot;{e}&quot;</span>)))<span class="question-mark">?</span>;
+        <span class="kw">let </span>connection = lock.deref();
         <span class="kw">let </span>sql = <span class="macro">format!</span>(
             <span class="string">&quot;select exists(select 1 from {} where key_hash = ?1) as record_exists&quot;</span>,
             <span class="self">self</span>.table
         );
-        <span class="kw">let </span><span class="kw-2">mut </span>statement = <span class="self">self</span>.get_statement_for_key(<span class="kw-2">&amp;</span>connection, sql, key)<span class="question-mark">?</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>statement = <span class="self">self</span>.get_statement_for_key(connection, sql, key)<span class="question-mark">?</span>;
         statement
             .next()
             .map_err(|e| AdapterError::QueryError(e.into()))<span class="question-mark">?</span>;
@@ -767,7 +815,11 @@
     }
 
     <span class="kw">async fn </span>get_last_n_records(<span class="kw-2">&amp;</span><span class="self">self</span>, how_many: usize) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;(<span class="self">Self</span>::Key, <span class="self">Self</span>::Record)&gt;&gt; {
-        <span class="kw">let </span>connection = <span class="self">self</span>.connection.lock().<span class="kw">await</span>;
+        <span class="kw">let </span>lock = <span class="self">self
+            </span>.connection
+            .lock()
+            .map_err(|e| AdapterError::GeneralError(<span class="macro">format!</span>(<span class="string">&quot;{e}&quot;</span>)))<span class="question-mark">?</span>;
+        <span class="kw">let </span>connection = lock.deref();
         <span class="kw">let </span>sql = <span class="macro">format!</span>(
             <span class="string">&quot;select cast(key as text) as key, cast(value as text) as value from {} order by ROWID desc limit ?1&quot;</span>,
             <span class="self">self</span>.table
@@ -798,14 +850,23 @@
             <span class="string">&quot;delete from {} where key_hash = ?1 returning value&quot;</span>,
             <span class="self">self</span>.table
         );
-        <span class="kw">let </span>connection = <span class="self">self</span>.connection.lock().<span class="kw">await</span>;
-        <span class="kw">let </span>statement = <span class="self">self</span>.get_statement_for_key(<span class="kw-2">&amp;</span>connection, sql, key)<span class="question-mark">?</span>;
+        <span class="kw">let </span>lock = <span class="self">self
+            </span>.connection
+            .lock()
+            .map_err(|e| AdapterError::GeneralError(<span class="macro">format!</span>(<span class="string">&quot;{e}&quot;</span>)))<span class="question-mark">?</span>;
+        <span class="kw">let </span>connection = lock.deref();
+        <span class="kw">let </span>statement = <span class="self">self</span>.get_statement_for_key(connection, sql, key)<span class="question-mark">?</span>;
 
         <span class="self">self</span>.fetch_maybe_one_value(statement)
     }
 
     <span class="kw">async fn </span>get_iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Box&lt;<span class="kw">dyn </span>Iterator&lt;Item = <span class="self">Self</span>::Record&gt; + <span class="lifetime">&#39;_</span>&gt;&gt; {
-        <span class="kw">let </span>iterator = SQLiteResultIterator::new(<span class="self">self</span>.connection.lock().<span class="kw">await</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.table)<span class="question-mark">?</span>;
+        <span class="kw">let </span>lock = <span class="self">self
+            </span>.connection
+            .lock()
+            .map_err(|e| AdapterError::GeneralError(<span class="macro">format!</span>(<span class="string">&quot;{e}&quot;</span>)))<span class="question-mark">?</span>;
+        <span class="kw">let </span>connection = lock.deref();
+        <span class="kw">let </span>iterator = SQLiteResultIterator::new(connection, <span class="kw-2">&amp;</span><span class="self">self</span>.table)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(Box::new(iterator))
     }
@@ -824,10 +885,7 @@
     </span>V: DeserializeOwned,
 {
     <span class="doccomment">/// Create a new instance of the iterator.
-    </span><span class="kw">pub fn </span>new(
-        connection: MutexGuard&lt;Connection&gt;,
-        table_name: <span class="kw-2">&amp;</span>str,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;SQLiteResultIterator&lt;V&gt;&gt; {
+    </span><span class="kw">pub fn </span>new(connection: <span class="kw-2">&amp;</span>Connection, table_name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;SQLiteResultIterator&lt;V&gt;&gt; {
         <span class="kw">let </span>sql = <span class="macro">format!</span>(<span class="string">&quot;select value from {table_name} order by ROWID asc&quot;</span>);
 
         <span class="kw">let </span>cursor = connection
@@ -862,6 +920,7 @@
     <span class="kw">use </span>std::{
         borrow::Borrow,
         fs::{create_dir_all, remove_file},
+        path::PathBuf,
     };
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
@@ -895,7 +954,8 @@
             });
         }
         <span class="kw">let </span>tablename = tablename.unwrap_or(TABLE_NAME);
-        SQLiteAdapter::new(tablename, <span class="prelude-val">Some</span>(filepath)).unwrap()
+        <span class="kw">let </span>connection = Arc::new(Mutex::new(Connection::open(filepath).unwrap()));
+        SQLiteAdapter::new(tablename, connection).unwrap()
     }
 
     <span class="attr">#[tokio::test]
