@@ -383,6 +383,13 @@
 <a href="#383" id="383">383</a>
 <a href="#384" id="384">384</a>
 <a href="#385" id="385">385</a>
+<a href="#386" id="386">386</a>
+<a href="#387" id="387">387</a>
+<a href="#388" id="388">388</a>
+<a href="#389" id="389">389</a>
+<a href="#390" id="390">390</a>
+<a href="#391" id="391">391</a>
+<a href="#392" id="392">392</a>
 </pre><pre class="rust"><code><span class="doccomment">//! API for mithril key certification.
 //! Includes the wrappers for StmInitializer and KeyReg, and ProtocolRegistrationErrorWrapper.
 //! These wrappers allows keeping mithril-stm agnostic to Cardano, while providing some
@@ -400,6 +407,7 @@
 <span class="kw">use </span>mithril_stm::stm::{Stake, StmInitializer, StmParameters, StmSigner, StmVerificationKeyPoP};
 <span class="kw">use </span>mithril_stm::RegisterError;
 
+<span class="kw">use </span><span class="kw">crate</span>::crypto_helper::cardano::Sum6KesBytes;
 <span class="kw">use </span>blake2::{
     digest::{consts::U32, FixedOutput},
     Blake2b, Digest,
@@ -508,8 +516,9 @@
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, ProtocolInitializerErrorWrapper&gt; {
         <span class="kw">let </span>stm_initializer = StmInitializer::setup(params, stake, rng);
         <span class="kw">let </span>kes_signature = <span class="kw">if let </span><span class="prelude-val">Some</span>(kes_sk_path) = kes_sk_path {
-            <span class="kw">let </span><span class="kw-2">mut </span>kes_sk: Sum6Kes = Sum6Kes::from_file(kes_sk_path)<span class="question-mark">?</span>;
-
+            <span class="kw">let </span><span class="kw-2">mut </span>kes_sk_bytes = Sum6KesBytes::from_file(kes_sk_path)<span class="question-mark">?</span>;
+            <span class="kw">let </span><span class="kw-2">mut </span>kes_sk = Sum6Kes::try_from(<span class="kw-2">&amp;mut </span>kes_sk_bytes)
+                .map_err(ProtocolInitializerErrorWrapper::Codec)<span class="question-mark">?</span>;
             <span class="kw">let </span>kes_sk_period = kes_sk.get_period();
             <span class="kw">let </span>provided_period = kes_period.unwrap_or_default();
             <span class="kw">if </span>kes_sk_period &gt; provided_period {
@@ -693,10 +702,15 @@
     <span class="kw">fn </span>create_cryptographic_material(party_idx: u64) -&gt; (ProtocolPartyId, PathBuf, PathBuf) {
         <span class="kw">let </span>temp_dir = setup_temp_directory();
         <span class="kw">let </span>keypair = ColdKeyGenerator::create_deterministic_keypair([party_idx <span class="kw">as </span>u8; <span class="number">32</span>]);
-        <span class="kw">let </span>(kes_secret_key, kes_verification_key) = Sum6Kes::keygen(<span class="kw-2">&amp;mut </span>[party_idx <span class="kw">as </span>u8; <span class="number">32</span>]);
+        <span class="kw">let </span><span class="kw-2">mut </span>dummy_buffer = [<span class="number">0u8</span>; Sum6Kes::SIZE + <span class="number">4</span>];
+        <span class="kw">let </span><span class="kw-2">mut </span>dummy_seed = [party_idx <span class="kw">as </span>u8; <span class="number">32</span>];
+        <span class="kw">let </span>(kes_secret_key, kes_verification_key) =
+            Sum6Kes::keygen(<span class="kw-2">&amp;mut </span>dummy_buffer, <span class="kw-2">&amp;mut </span>dummy_seed);
+        <span class="kw">let </span><span class="kw-2">mut </span>kes_bytes = Sum6KesBytes([<span class="number">0u8</span>; Sum6Kes::SIZE + <span class="number">4</span>]);
+        kes_bytes.<span class="number">0</span>.copy_from_slice(<span class="kw-2">&amp;</span>kes_secret_key.clone_sk());
         <span class="kw">let </span>operational_certificate = OpCert::new(kes_verification_key, <span class="number">0</span>, <span class="number">0</span>, keypair);
         <span class="kw">let </span>kes_secret_key_file = temp_dir.join(<span class="macro">format!</span>(<span class="string">&quot;kes{party_idx}.skey&quot;</span>));
-        kes_secret_key
+        kes_bytes
             .to_file(<span class="kw-2">&amp;</span>kes_secret_key_file)
             .expect(<span class="string">&quot;KES secret key file export should not fail&quot;</span>);
         <span class="kw">let </span>operational_certificate_file = temp_dir.join(<span class="macro">format!</span>(<span class="string">&quot;pool{party_idx}.cert&quot;</span>));

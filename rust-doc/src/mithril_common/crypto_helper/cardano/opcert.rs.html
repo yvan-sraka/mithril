@@ -209,6 +209,8 @@
 <a href="#209" id="209">209</a>
 <a href="#210" id="210">210</a>
 <a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Module to (de)serialise, OpCert using the same structure as used in Cardano.  
 
 </span><span class="kw">use </span><span class="kw">super</span>::SerDeShelleyFileFormat;
@@ -398,7 +400,9 @@
     </span><span class="kw">fn </span>test_vector_opcert() {
         <span class="kw">let </span>temp_dir = setup_temp_directory();
         <span class="kw">let </span>keypair = ColdKeyGenerator::create_deterministic_keypair([<span class="number">0u8</span>; <span class="number">32</span>]);
-        <span class="kw">let </span>(<span class="kw">_</span>, kes_verification_key) = Sum6Kes::keygen(<span class="kw-2">&amp;mut </span>[<span class="number">0u8</span>; <span class="number">32</span>]);
+        <span class="kw">let </span><span class="kw-2">mut </span>dummy_key_buffer = [<span class="number">0u8</span>; Sum6Kes::SIZE + <span class="number">4</span>];
+        <span class="kw">let </span><span class="kw-2">mut </span>dummy_seed = [<span class="number">0u8</span>; <span class="number">32</span>];
+        <span class="kw">let </span>(<span class="kw">_</span>, kes_verification_key) = Sum6Kes::keygen(<span class="kw-2">&amp;mut </span>dummy_key_buffer, <span class="kw-2">&amp;mut </span>dummy_seed);
         <span class="kw">let </span>operational_certificate = OpCert::new(kes_verification_key, <span class="number">0</span>, <span class="number">0</span>, keypair);
         <span class="macro">assert!</span>(operational_certificate.validate().is_ok());
 

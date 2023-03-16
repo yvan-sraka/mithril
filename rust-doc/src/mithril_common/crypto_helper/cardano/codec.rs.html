@@ -139,6 +139,29 @@
 <a href="#139" id="139">139</a>
 <a href="#140" id="140">140</a>
 <a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Module to provide functions to (de)serialise JSON data structures as used in Shelley,
 //! which have the following format:
 //! ```json
@@ -154,12 +177,23 @@
 
 </span><span class="kw">use </span>hex::FromHex;
 <span class="kw">use </span>kes_summed_ed25519::kes::Sum6Kes;
+<span class="kw">use </span>kes_summed_ed25519::traits::KesSk;
 <span class="kw">use </span>serde::de::DeserializeOwned;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
+<span class="kw">use </span>serde_with::{As, Bytes};
 <span class="kw">use </span>std::fs;
 <span class="kw">use </span>std::io::Write;
 <span class="kw">use </span>std::path::Path;
 <span class="kw">use </span>thiserror::Error;
+
+<span class="doccomment">/// We need to create this struct because the design of Sum6Kes takes
+/// a reference to a mutable pointer. It is therefore not possible to
+/// implement Ser/Deser using serde.
+</span><span class="comment">// We need this helper structure, because we are currently getting the key
+// from a file, instead of directly consuming a buffer.
+// todo: create the KES key directly from a buffer instead of deserialising from disk
+</span><span class="attr">#[derive(Clone, Serialize, Deserialize)]
+</span><span class="kw">pub struct </span>Sum6KesBytes(<span class="attr">#[serde(with = <span class="string">&quot;As::&lt;Bytes&gt;&quot;</span>)] </span><span class="kw">pub </span>[u8; <span class="number">612</span>]);
 
 <span class="doccomment">/// Parse error
 </span><span class="attr">#[derive(Error, Debug)]
@@ -175,6 +209,9 @@
 
     <span class="attr">#[error(<span class="string">&quot;CBOR parse error: `{0}`&quot;</span>)]
     </span>CborFormat(<span class="attr">#[from] </span>serde_cbor::Error),
+
+    <span class="attr">#[error(<span class="string">&quot;Invalid KES format&quot;</span>)]
+    </span>KesFormat,
 }
 
 <span class="doccomment">/// Fields for a shelley formatted file (holds for vkeys, skeys or certs)
@@ -226,7 +263,7 @@
     }
 }
 
-<span class="kw">impl </span>SerDeShelleyFileFormat <span class="kw">for </span>Sum6Kes {
+<span class="kw">impl </span>SerDeShelleyFileFormat <span class="kw">for </span>Sum6KesBytes {
     <span class="kw">const </span>TYPE: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str = <span class="string">&quot;KesSigningKey_ed25519_kes_2^6&quot;</span>;
     <span class="kw">const </span>DESCRIPTION: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str = <span class="string">&quot;KES Signing Key&quot;</span>;
 
@@ -251,6 +288,14 @@
     }
 }
 
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; TryFrom&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>Sum6KesBytes&gt; <span class="kw">for </span>Sum6Kes&lt;<span class="lifetime">&#39;a</span>&gt; {
+    <span class="kw">type </span>Error = ParseError;
+
+    <span class="kw">fn </span>try_from(value: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>Sum6KesBytes) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
+        <span class="self">Self</span>::from_bytes(<span class="kw-2">&amp;mut </span>value.<span class="number">0</span>).map_err(|<span class="kw">_</span>| ParseError::KesFormat)
+    }
+}
+
 <span class="attr">#[cfg(all(test))]
 </span><span class="kw">mod </span>test {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
@@ -263,8 +308,8 @@
         <span class="kw">let </span>cbor_string = <span class="string">&quot;590260fe77acdfa56281e4b05198f5136018057a65f425411f0990cac4aca0f2917aa00a3d51e191f6f425d870aca3c6a2a41833621f5729d7bc0e3dfc3ae77d057e5e1253b71def7a54157b9f98973ca3c49edd9f311e5f4b23ac268b56a6ac040c14c6d2217925492e42f00dc89a2a01ff363571df0ca0db5ba37001cee56790cc01cd69c6aa760fca55a65a110305ea3c11da0a27be345a589329a584ebfc499c43c55e8c6db5d9c0b014692533ee78abd7ac1e79f7ec9335c7551d31668369b4d5111db78072f010043e35e5ca7f11acc3c05b26b9c7fe56f02aa41544f00cb7685e87f34c73b617260ade3c7b8d8c4df46693694998f85ad80d2cbab0b575b6ccd65d90574e84368169578bff57f751bc94f7eec5c0d7055ec88891a69545eedbfbd3c5f1b1c1fe09c14099f6b052aa215efdc5cb6cdc84aa810db41dbe8cb7d28f7c4beb75cc53915d3ac75fc9d0bf1c734a46e401e15150c147d013a938b7e07cc4f25a582b914e94783d15896530409b8acbe31ef471de8a1988ac78dfb7510729eff008084885f07df870b65e4f382ca15908e1dcda77384b5c724350de90cec22b1dcbb1cdaed88da08bb4772a82266ec154f5887f89860d0920dba705c45957ef6d93e42f6c9509c966277d368dd0eefa67c8147aa15d40a222f7953a4f34616500b310d00aa1b5b73eb237dc4f76c0c16813d321b2fc5ac97039be25b22509d1201d61f4ccc11cd4ff40fffe39f0e937b4722074d8e073a775d7283b715d46f79ce128e3f1362f35615fa72364d20b6db841193d96e58d9d8e86b516bbd1f05e45b39823a93f6e9f29d9e01acf2c12c072d1c64e0afbbabf6903ef542e&quot;</span>.to_string();
 
         <span class="kw">let </span>file_format = ShelleyFileFormat {
-            file_type: Sum6Kes::TYPE.to_string(),
-            description: Sum6Kes::DESCRIPTION.to_string(),
+            file_type: Sum6KesBytes::TYPE.to_string(),
+            description: Sum6KesBytes::DESCRIPTION.to_string(),
             cbor_hex: cbor_string,
         };
 
@@ -275,9 +320,10 @@
 
         <span class="macro">write!</span>(file, <span class="string">&quot;{json_str}&quot;</span>).expect(<span class="string">&quot;Unexpected error writing to file.&quot;</span>);
 
-        <span class="kw">let </span>kes_sk = Sum6Kes::from_file(<span class="kw-2">&amp;</span>sk_dir);
+        <span class="kw">let </span><span class="kw-2">mut </span>kes_sk_bytes =
+            Sum6KesBytes::from_file(<span class="kw-2">&amp;</span>sk_dir).expect(<span class="string">&quot;Failure parsing Shelley file format.&quot;</span>);
 
-        <span class="macro">assert!</span>(kes_sk.is_ok(), <span class="string">&quot;Failure parsing Shelley file format.&quot;</span>);
+        <span class="macro">assert!</span>(Sum6Kes::try_from(<span class="kw-2">&amp;mut </span>kes_sk_bytes).is_ok());
     }
 }
 </code></pre></div>
