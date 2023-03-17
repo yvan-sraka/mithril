@@ -1,7 +1,10 @@
 //! Stake Pool manager for the Runners
 //!
 
-use std::{fmt::Display, sync::Arc};
+use std::{
+    fmt::Display,
+    sync::{Arc, RwLock},
+};
 
 use async_trait::async_trait;
 use mithril_common::{
@@ -10,6 +13,7 @@ use mithril_common::{
     store::StakeStorer,
     StdError,
 };
+use tokio::sync::{Mutex, MutexGuard};
 
 use crate::database::provider::StakePoolStore;
 
@@ -23,19 +27,15 @@ pub enum StakePoolDistributionServiceError {
         /// Eventual nested error
         error: Option<StdError>,
     },
-    /// Could not get the current Epoch
-    UndefinedCurrentEpoch,
-    /// The system is in the process of retrieving this stake distribution.
-    NotReadyYet(Epoch),
-    /// The stake distribution for the given Epoch is not available anymore.
-    Pruned(Epoch),
-    /// Cannot get stake distribution Epochs away from the futur.
-    EpochAhead(Epoch),
+    /// The stake distribution for the given Epoch is not available.
+    Unavailable(Epoch),
+    /// The stake distribution compute is in progress for this Epoch.
+    Busy(Epoch),
 }
 
 impl StakePoolDistributionServiceError {
     /// Simple way to nest technical errors
-    pub fn technical_susbystem(error: StdError) -> Box<Self> {
+    pub fn technical_subsystem(error: StdError) -> Box<Self> {
         Box::new(Self::Technical {
             message: "Stake pool service subsystem error occured.".to_string(),
             error: Some(error),
@@ -67,19 +67,16 @@ impl Display for StakePoolDistributionServiceError {
                     write!(f, "Critical error: {message}")
                 }
             }
-            Self::NotReadyYet(epoch) => {
-                write!(f, "The stake distribution for epoch {epoch:?} is still in process and is not available yet.")
-            }
-            Self::Pruned(epoch) => {
-                write!(f, "The stake distribution for epoch {epoch:?} is not available anymore, it has been removed from the archives.")
-            }
-            Self::UndefinedCurrentEpoch => {
-                write!(f, "Could not read the current Epoch from chain.")
-            }
-            Self::EpochAhead(epoch) => {
+            Self::Unavailable(epoch) => {
                 write!(
                     f,
-                    "Can not compute stake distribution {epoch:?} epochs from now."
+                    "The stake distribution for epoch {epoch:?} is not available."
+                )
+            }
+            Self::Busy(epoch) => {
+                write!(
+                    f,
+                    "The stake distribution for epoch {epoch:?} is actually processed."
                 )
             }
         }
@@ -96,14 +93,58 @@ pub trait StakeDistributionService {
         &self,
         epoch: Epoch,
     ) -> Result<StakeDistribution, Box<StakePoolDistributionServiceError>>;
+
+    /// This launches the stake distribution computation if not already started.
+    async fn update_stake_distribution(&self)
+        -> Result<(), Box<StakePoolDistributionServiceError>>;
 }
 
+/// Token to manage stake distribution update
+struct UpdateToken {
+    /// Stake distribution update semaphore
+    is_busy: Mutex<()>,
+    /// Last computed stake distribution
+    busy_on_epoch: RwLock<Epoch>,
+}
+
+impl Default for UpdateToken {
+    fn default() -> Self {
+        Self {
+            is_busy: Mutex::new(()),
+            busy_on_epoch: RwLock::new(Epoch(0)),
+        }
+    }
+}
+
+impl UpdateToken {
+    pub fn update(&self, epoch: Epoch) -> Result<MutexGuard<()>, StdError> {
+        let update_semaphore = self.is_busy.try_lock().map_err(|_| {
+            let last_updated_epoch = self.busy_on_epoch.read().unwrap();
+
+            StakePoolDistributionServiceError::Busy(*last_updated_epoch)
+        })?;
+        let mut last_updated_epoch = self.busy_on_epoch.write().unwrap();
+        *last_updated_epoch = epoch;
+
+        Ok(update_semaphore)
+    }
+
+    pub fn is_busy(&self) -> Option<Epoch> {
+        if self.is_busy.try_lock().is_err() {
+            Some(*self.busy_on_epoch.read().unwrap())
+        } else {
+            None
+        }
+    }
+}
 /// Implementation of the stake distribution service.
 pub struct MithrilStakeDistributionService {
     /// internal stake persistent layer
     stake_store: Arc<StakePoolStore>,
     /// Chain interaction subsystem
     chain_observer: Arc<dyn ChainObserver>,
+    /// Lock management for updates
+    update_token: UpdateToken,
 }
 
 impl MithrilStakeDistributionService {
@@ -112,6 +153,7 @@ impl MithrilStakeDistributionService {
         Self {
             stake_store,
             chain_observer,
+            update_token: UpdateToken::default(),
         }
     }
 }
@@ -122,23 +164,11 @@ impl StakeDistributionService for MithrilStakeDistributionService {
         &self,
         epoch: Epoch,
     ) -> Result<StakeDistribution, Box<StakePoolDistributionServiceError>> {
-        let current_epoch = self
-            .chain_observer
-            .get_current_epoch()
-            .await
-            .map_err(|e| StakePoolDistributionServiceError::technical_susbystem(e.into()))?
-            .ok_or_else(|| StakePoolDistributionServiceError::UndefinedCurrentEpoch)?;
-
-        if epoch > current_epoch {
-            return Err(
-                StakePoolDistributionServiceError::EpochAhead(epoch - current_epoch).into(),
-            );
-        }
         let stake_distribution = self
             .stake_store
             .get_stakes(epoch)
             .await
-            .map_err(|e| StakePoolDistributionServiceError::technical_susbystem(e.into()))?
+            .map_err(|e| StakePoolDistributionServiceError::technical_subsystem(e.into()))?
             .ok_or_else(|| StakePoolDistributionServiceError::Technical {
                 message: "The stake distribution should be at least an empty list.".to_string(),
                 error: None,
@@ -146,11 +176,51 @@ impl StakeDistributionService for MithrilStakeDistributionService {
 
         if !stake_distribution.is_empty() {
             Ok(stake_distribution)
-        } else if epoch == current_epoch {
-            Err(StakePoolDistributionServiceError::NotReadyYet(epoch).into())
+        } else if let Some(last_epoch) = self.update_token.is_busy() {
+            if last_epoch == epoch {
+                Err(StakePoolDistributionServiceError::Busy(epoch).into())
+            } else {
+                Err(StakePoolDistributionServiceError::Unavailable(epoch).into())
+            }
         } else {
-            Err(StakePoolDistributionServiceError::Pruned(epoch).into())
+            Err(StakePoolDistributionServiceError::Unavailable(epoch).into())
         }
+    }
+
+    async fn update_stake_distribution(
+        &self,
+    ) -> Result<(), Box<StakePoolDistributionServiceError>> {
+        let current_epoch = self
+            .chain_observer
+            .get_current_epoch()
+            .await
+            .map_err(|e| StakePoolDistributionServiceError::technical_subsystem(e.into()))?
+            .expect("Chain observer get_current_epoch should never return None.")
+            .offset_to_recording_epoch();
+
+        match self.get_stake_distribution(current_epoch).await {
+            Ok(_) => return Ok(()),
+            Err(e) if matches!(*e, StakePoolDistributionServiceError::Unavailable(_)) => (),
+            Err(e) => return Err(e),
+        };
+        let _mutex = self
+            .update_token
+            .update(current_epoch)
+            .map_err(|e| StakePoolDistributionServiceError::technical_subsystem(e))?;
+        let stake_distribution = self
+            .chain_observer
+            .get_current_stake_distribution()
+            .await
+            .map_err(|e| StakePoolDistributionServiceError::technical_subsystem(e.into()))?
+            .expect("ChainObserver get_current_stake_distribution should never return None.");
+
+        let _ = self
+            .stake_store
+            .save_stakes(current_epoch, stake_distribution)
+            .await
+            .map_err(|e| StakePoolDistributionServiceError::technical_subsystem(e.into()))?;
+
+        Ok(())
     }
 }
 
@@ -174,10 +244,7 @@ mod tests {
 
     #[tokio::test]
     async fn get_current_stake_distribution() {
-        let mut chain_observer = MockChainObserver::new();
-        chain_observer
-            .expect_get_current_epoch()
-            .return_once(|| Ok(Some(Epoch(3))));
+        let chain_observer = MockChainObserver::new();
         let service = get_service(chain_observer);
         let expected_stake_distribution: StakeDistribution =
             [("pool2", 1370), ("pool3", 1300), ("pool1", 1250)]
@@ -192,49 +259,95 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn get_futur_stake_distribution() {
-        let mut chain_observer = MockChainObserver::new();
-        chain_observer
-            .expect_get_current_epoch()
-            .return_once(|| Ok(Some(Epoch(3))));
+    async fn get_unavailable_stake_distribution() {
+        let chain_observer = MockChainObserver::new();
         let service = get_service(chain_observer);
         let result = service.get_stake_distribution(Epoch(5)).await.unwrap_err();
 
         assert!(matches!(
             *result,
-            StakePoolDistributionServiceError::EpochAhead(Epoch(x)) if x == 2
+            StakePoolDistributionServiceError::Unavailable(Epoch(x)) if x == 5
         ));
     }
 
     #[tokio::test]
-    async fn get_pruned_stake_distribution() {
+    async fn update_stake_distribution_ok() {
+        let expected_stake_distribution = StakeDistribution::from_iter(
+            [("pool1", 2000), ("pool2", 2000), ("pool3", 2000)]
+                .into_iter()
+                .map(|(p, s)| (p.to_string(), s as u64)),
+        );
+        let returned_stake_distribution = expected_stake_distribution.clone();
         let mut chain_observer = MockChainObserver::new();
         chain_observer
             .expect_get_current_epoch()
-            .return_once(|| Ok(Some(Epoch(3))));
+            .returning(|| Ok(Some(Epoch(3))));
+        chain_observer
+            .expect_get_current_stake_distribution()
+            .return_once(|| Ok(Some(returned_stake_distribution)));
         let service = get_service(chain_observer);
-        let result = service.get_stake_distribution(Epoch(0)).await.unwrap_err();
-        eprintln!("result = {result}");
+        service.update_stake_distribution().await.unwrap();
+        let sd = service.get_stake_distribution(Epoch(4)).await.unwrap();
 
-        assert!(matches!(
-            *result,
-            StakePoolDistributionServiceError::Pruned(Epoch(x)) if x == 0
-        ));
+        assert_eq!(expected_stake_distribution, sd);
     }
 
     #[tokio::test]
-    async fn get_ongoing_stake_distribution() {
+    async fn update_stake_distribution_already() {
         let mut chain_observer = MockChainObserver::new();
         chain_observer
             .expect_get_current_epoch()
-            .return_once(|| Ok(Some(Epoch(4))));
+            .returning(|| Ok(Some(Epoch(2))))
+            .times(1);
         let service = get_service(chain_observer);
+        service.update_stake_distribution().await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn get_not_ready_yet() {
+        let mut chain_observer = MockChainObserver::new();
+        chain_observer
+            .expect_get_current_epoch()
+            .returning(|| Ok(Some(Epoch(3))));
+        let service = get_service(chain_observer);
+        let _mutex = service.update_token.update(Epoch(4)).unwrap();
         let result = service.get_stake_distribution(Epoch(4)).await.unwrap_err();
-        eprintln!("result = {result}");
 
         assert!(matches!(
             *result,
-            StakePoolDistributionServiceError::NotReadyYet(Epoch(x)) if x == 4
+            StakePoolDistributionServiceError::Busy(Epoch(x)) if x == 4
+        ));
+    }
+
+    #[tokio::test]
+    async fn get_not_ready_but_unavailable() {
+        let mut chain_observer = MockChainObserver::new();
+        chain_observer
+            .expect_get_current_epoch()
+            .returning(|| Ok(Some(Epoch(3))));
+        let service = get_service(chain_observer);
+        let _mutex = service.update_token.update(Epoch(4)).unwrap();
+        let result = service.get_stake_distribution(Epoch(0)).await.unwrap_err();
+
+        assert!(matches!(
+            *result,
+            StakePoolDistributionServiceError::Unavailable(Epoch(x)) if x == 0
+        ));
+    }
+
+    #[tokio::test]
+    async fn update_but_busy() {
+        let mut chain_observer = MockChainObserver::new();
+        chain_observer
+            .expect_get_current_epoch()
+            .returning(|| Ok(Some(Epoch(3))));
+        let service = get_service(chain_observer);
+        let _mutex = service.update_token.update(Epoch(4)).unwrap();
+        let result = service.update_stake_distribution().await.unwrap_err();
+
+        assert!(matches!(
+            *result,
+            StakePoolDistributionServiceError::Busy(Epoch(x)) if x == 4
         ));
     }
 }
