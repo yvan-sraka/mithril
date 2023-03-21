@@ -272,6 +272,8 @@
 <a href="#272" id="272">272</a>
 <a href="#273" id="273">273</a>
 <a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::http_server::routes::middlewares;
 <span class="kw">use </span><span class="kw">crate</span>::DependencyManager;
 <span class="kw">use </span>std::sync::Arc;
@@ -390,8 +392,6 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
-    <span class="kw">const </span>API_SPEC_FILE: <span class="kw-2">&amp;</span>str = <span class="string">&quot;../openapi.yaml&quot;</span>;
-
     <span class="kw">use </span>mithril_common::crypto_helper::ProtocolRegistrationError;
     <span class="kw">use </span>mithril_common::messages::RegisterSignerMessage;
     <span class="kw">use </span>mithril_common::test_utils::apispec::APISpec;
@@ -439,13 +439,14 @@
             .reply(<span class="kw-2">&amp;</span>setup_router(Arc::new(dependency_manager)))
             .<span class="kw">await</span>;
 
-        APISpec::from_file(API_SPEC_FILE)
-            .method(method)
-            .path(path)
-            .validate_request(<span class="kw-2">&amp;</span>signer)
-            .unwrap()
-            .validate_response(<span class="kw-2">&amp;</span>response)
-            .expect(<span class="string">&quot;OpenAPI error&quot;</span>);
+        APISpec::verify_conformity(
+            APISpec::get_all_spec_files(),
+            method,
+            path,
+            <span class="string">&quot;application/json&quot;</span>,
+            <span class="kw-2">&amp;</span>signer,
+            <span class="kw-2">&amp;</span>response,
+        );
     }
 
     <span class="attr">#[tokio::test]
@@ -470,13 +471,14 @@
             .reply(<span class="kw-2">&amp;</span>setup_router(Arc::new(dependency_manager)))
             .<span class="kw">await</span>;
 
-        APISpec::from_file(API_SPEC_FILE)
-            .method(method)
-            .path(path)
-            .validate_request(<span class="kw-2">&amp;</span>signer)
-            .unwrap()
-            .validate_response(<span class="kw-2">&amp;</span>response)
-            .expect(<span class="string">&quot;OpenAPI error&quot;</span>);
+        APISpec::verify_conformity(
+            APISpec::get_all_spec_files(),
+            method,
+            path,
+            <span class="string">&quot;application/json&quot;</span>,
+            <span class="kw-2">&amp;</span>signer,
+            <span class="kw-2">&amp;</span>response,
+        );
     }
 
     <span class="attr">#[tokio::test]
@@ -504,13 +506,14 @@
             .reply(<span class="kw-2">&amp;</span>setup_router(Arc::new(dependency_manager)))
             .<span class="kw">await</span>;
 
-        APISpec::from_file(API_SPEC_FILE)
-            .method(method)
-            .path(path)
-            .validate_request(<span class="kw-2">&amp;</span>signer)
-            .unwrap()
-            .validate_response(<span class="kw-2">&amp;</span>response)
-            .expect(<span class="string">&quot;OpenAPI error&quot;</span>);
+        APISpec::verify_conformity(
+            APISpec::get_all_spec_files(),
+            method,
+            path,
+            <span class="string">&quot;application/json&quot;</span>,
+            <span class="kw-2">&amp;</span>signer,
+            <span class="kw-2">&amp;</span>response,
+        );
     }
 
     <span class="attr">#[tokio::test]
@@ -537,13 +540,14 @@
             .reply(<span class="kw-2">&amp;</span>setup_router(Arc::new(dependency_manager)))
             .<span class="kw">await</span>;
 
-        APISpec::from_file(API_SPEC_FILE)
-            .method(method)
-            .path(path)
-            .validate_request(<span class="kw-2">&amp;</span>signer)
-            .unwrap()
-            .validate_response(<span class="kw-2">&amp;</span>response)
-            .expect(<span class="string">&quot;OpenAPI error&quot;</span>);
+        APISpec::verify_conformity(
+            APISpec::get_all_spec_files(),
+            method,
+            path,
+            <span class="string">&quot;application/json&quot;</span>,
+            <span class="kw-2">&amp;</span>signer,
+            <span class="kw-2">&amp;</span>response,
+        );
     }
 }
 </code></pre></div>

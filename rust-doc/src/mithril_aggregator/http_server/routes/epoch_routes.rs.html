@@ -236,8 +236,6 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
-    <span class="kw">const </span>API_SPEC_FILE: <span class="kw-2">&amp;</span>str = <span class="string">&quot;../openapi.yaml&quot;</span>;
-
     <span class="kw">use </span><span class="kw">crate</span>::http_server::SERVER_BASE_PATH;
     <span class="kw">use </span>mithril_common::test_utils::apispec::APISpec;
     <span class="kw">use </span>serde_json::Value::Null;
@@ -272,13 +270,14 @@
             .reply(<span class="kw-2">&amp;</span>setup_router(Arc::new(dependency_manager)))
             .<span class="kw">await</span>;
 
-        APISpec::from_file(API_SPEC_FILE)
-            .method(method)
-            .path(path)
-            .validate_request(<span class="kw-2">&amp;</span>Null)
-            .unwrap()
-            .validate_response(<span class="kw-2">&amp;</span>response)
-            .expect(<span class="string">&quot;OpenAPI error&quot;</span>);
+        APISpec::verify_conformity(
+            APISpec::get_all_spec_files(),
+            method,
+            path,
+            <span class="string">&quot;application/json&quot;</span>,
+            <span class="kw-2">&amp;</span>Null,
+            <span class="kw-2">&amp;</span>response,
+        );
     }
 
     <span class="attr">#[tokio::test]
@@ -293,13 +292,14 @@
             .reply(<span class="kw-2">&amp;</span>setup_router(Arc::new(dependency_manager)))
             .<span class="kw">await</span>;
 
-        APISpec::from_file(API_SPEC_FILE)
-            .method(method)
-            .path(path)
-            .validate_request(<span class="kw-2">&amp;</span>Null)
-            .unwrap()
-            .validate_response(<span class="kw-2">&amp;</span>response)
-            .expect(<span class="string">&quot;OpenAPI error&quot;</span>);
+        APISpec::verify_conformity(
+            APISpec::get_all_spec_files(),
+            method,
+            path,
+            <span class="string">&quot;application/json&quot;</span>,
+            <span class="kw-2">&amp;</span>Null,
+            <span class="kw-2">&amp;</span>response,
+        );
     }
 }
 </code></pre></div>

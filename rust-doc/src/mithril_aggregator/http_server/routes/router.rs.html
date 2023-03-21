@@ -130,17 +130,56 @@
 <a href="#130" id="130">130</a>
 <a href="#131" id="131">131</a>
 <a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::http_server::routes::{
     certificate_routes, epoch_routes, signatures_routes, signer_routes, snapshot_routes,
 };
 <span class="kw">use </span><span class="kw">crate</span>::http_server::SERVER_BASE_PATH;
 <span class="kw">use </span><span class="kw">crate</span>::DependencyManager;
 
-<span class="kw">use </span>mithril_common::{
-    MITHRIL_API_VERSION, MITHRIL_API_VERSION_HEADER, MITHRIL_API_VERSION_REQUIREMENT,
-};
+<span class="kw">use </span>mithril_common::api_version::APIVersionProvider;
+<span class="kw">use </span>mithril_common::MITHRIL_API_VERSION_HEADER;
 
-<span class="kw">use </span>reqwest::header::{HeaderMap, HeaderValue};
 <span class="kw">use </span>reqwest::StatusCode;
 <span class="kw">use </span>slog_scope::warn;
 <span class="kw">use </span>std::sync::Arc;
@@ -166,42 +205,62 @@
         .allow_any_origin()
         .allow_headers(<span class="macro">vec!</span>[<span class="string">&quot;content-type&quot;</span>])
         .allow_methods(<span class="macro">vec!</span>[Method::GET, Method::POST, Method::OPTIONS]);
-    <span class="kw">let </span><span class="kw-2">mut </span>headers = HeaderMap::new();
-    headers.insert(
-        MITHRIL_API_VERSION_HEADER,
-        HeaderValue::from_static(MITHRIL_API_VERSION),
-    );
+
     warp::any()
-        .and(header_must_be())
+        .and(header_must_be(
+            dependency_manager.clone().api_version_provider.clone(),
+        ))
         .and(warp::path(SERVER_BASE_PATH))
         .and(
             certificate_routes::routes(dependency_manager.clone())
                 .or(snapshot_routes::routes(dependency_manager.clone()))
                 .or(signer_routes::routes(dependency_manager.clone()))
                 .or(signatures_routes::routes(dependency_manager.clone()))
-                .or(epoch_routes::routes(dependency_manager))
+                .or(epoch_routes::routes(dependency_manager.clone()))
                 .with(cors),
         )
         .recover(handle_custom)
-        .with(warp::reply::with::headers(headers))
+        .and(warp::any().map(<span class="kw">move </span>|| dependency_manager.clone().api_version_provider.clone()))
+        .map(|reply, api_version_provider: Arc&lt;APIVersionProvider&gt;| {
+            warp::reply::with_header(
+                reply,
+                MITHRIL_API_VERSION_HEADER,
+                <span class="kw-2">&amp;</span>api_version_provider
+                    .compute_current_version()
+                    .unwrap()
+                    .to_string(),
+            )
+        })
 }
 
 <span class="doccomment">/// API Version verification
-</span><span class="kw">fn </span>header_must_be() -&gt; <span class="kw">impl </span>Filter&lt;Extract = (), Error = Rejection&gt; + Copy {
+</span><span class="kw">fn </span>header_must_be(
+    api_version_provider: Arc&lt;APIVersionProvider&gt;,
+) -&gt; <span class="kw">impl </span>Filter&lt;Extract = (), Error = Rejection&gt; + Clone {
     warp::header::optional(MITHRIL_API_VERSION_HEADER)
-        .and_then(|maybe_header: <span class="prelude-ty">Option</span>&lt;String&gt;| <span class="kw">async move </span>{
-            <span class="kw">match </span>maybe_header {
-                <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Ok</span>(()),
-                <span class="prelude-val">Some</span>(version) =&gt; <span class="kw">match </span>semver::Version::parse(<span class="kw-2">&amp;</span>version) {
-                    <span class="prelude-val">Ok</span>(version) <span class="kw">if </span>MITHRIL_API_VERSION_REQUIREMENT.matches(<span class="kw-2">&amp;</span>version) =&gt; <span class="prelude-val">Ok</span>(()),
-                    <span class="prelude-val">Ok</span>(_version) =&gt; <span class="prelude-val">Err</span>(warp::reject::custom(VersionMismatchError)),
-                    <span class="prelude-val">Err</span>(err) =&gt; {
-                        <span class="macro">warn!</span>(<span class="string">&quot;⇄ HTTP SERVER::api_version_check::parse_error&quot;</span>; <span class="string">&quot;error&quot; </span>=&gt; <span class="question-mark">?</span>err);
-                        <span class="prelude-val">Err</span>(warp::reject::custom(VersionParseError))
-                    }
-                },
-            }
-        })
+        .and(warp::any().map(<span class="kw">move </span>|| api_version_provider.clone()))
+        .and_then(
+            <span class="kw">move </span>|maybe_header: <span class="prelude-ty">Option</span>&lt;String&gt;, api_version_provider: Arc&lt;APIVersionProvider&gt;| <span class="kw">async move </span>{
+                <span class="kw">match </span>maybe_header {
+                    <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Ok</span>(()),
+                    <span class="prelude-val">Some</span>(version) =&gt; <span class="kw">match </span>semver::Version::parse(<span class="kw-2">&amp;</span>version) {
+                        <span class="prelude-val">Ok</span>(version)
+                            <span class="kw">if </span>(api_version_provider
+                                .compute_current_version_requirement().unwrap()
+                                .matches(<span class="kw-2">&amp;</span>version))
+                            .to_owned() =&gt;
+                        {
+                            <span class="prelude-val">Ok</span>(())
+                        }
+                        <span class="prelude-val">Ok</span>(_version) =&gt; <span class="prelude-val">Err</span>(warp::reject::custom(VersionMismatchError)),
+                        <span class="prelude-val">Err</span>(err) =&gt; {
+                            <span class="macro">warn!</span>(<span class="string">&quot;⇄ HTTP SERVER::api_version_check::parse_error&quot;</span>; <span class="string">&quot;error&quot; </span>=&gt; <span class="question-mark">?</span>err);
+                            <span class="prelude-val">Err</span>(warp::reject::custom(VersionParseError))
+                        }
+                    },
+                }
+            },
+        )
         .untuple_one()
 }
 
@@ -215,11 +274,20 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
+    <span class="kw">use </span>std::collections::HashMap;
+
+    <span class="kw">use </span>mithril_common::{
+        entities::Epoch,
+        era::{EraChecker, SupportedEra},
+    };
+
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_no_version() {
-        <span class="kw">let </span>filters = header_must_be();
+        <span class="kw">let </span>era_checker = EraChecker::new(SupportedEra::dummy(), Epoch(<span class="number">1</span>));
+        <span class="kw">let </span>api_version_provider = Arc::new(APIVersionProvider::new(Arc::new(era_checker)));
+        <span class="kw">let </span>filters = header_must_be(api_version_provider);
         warp::test::request()
             .path(<span class="string">&quot;/aggregator/whatever&quot;</span>)
             .filter(<span class="kw-2">&amp;</span>filters)
@@ -229,7 +297,9 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_parse_version_error() {
-        <span class="kw">let </span>filters = header_must_be();
+        <span class="kw">let </span>era_checker = EraChecker::new(SupportedEra::dummy(), Epoch(<span class="number">1</span>));
+        <span class="kw">let </span>api_version_provider = Arc::new(APIVersionProvider::new(Arc::new(era_checker)));
+        <span class="kw">let </span>filters = header_must_be(api_version_provider);
         warp::test::request()
             .header(MITHRIL_API_VERSION_HEADER, <span class="string">&quot;not_a_version&quot;</span>)
             .path(<span class="string">&quot;/aggregator/whatever&quot;</span>)
@@ -242,7 +312,13 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_bad_version() {
-        <span class="kw">let </span>filters = header_must_be();
+        <span class="kw">let </span>era_checker = EraChecker::new(SupportedEra::dummy(), Epoch(<span class="number">1</span>));
+        <span class="kw">let </span><span class="kw-2">mut </span>version_provider = APIVersionProvider::new(Arc::new(era_checker));
+        <span class="kw">let </span><span class="kw-2">mut </span>open_api_versions = HashMap::new();
+        open_api_versions.insert(<span class="string">&quot;openapi.yaml&quot;</span>.to_string(), <span class="string">&quot;1.0.0&quot;</span>.to_string());
+        version_provider.update_open_api_versions(open_api_versions);
+        <span class="kw">let </span>api_version_provider = Arc::new(version_provider);
+        <span class="kw">let </span>filters = header_must_be(api_version_provider);
         warp::test::request()
             .header(MITHRIL_API_VERSION_HEADER, <span class="string">&quot;0.0.999&quot;</span>)
             .path(<span class="string">&quot;/aggregator/whatever&quot;</span>)
@@ -253,13 +329,19 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_good_version() {
-        <span class="kw">let </span>filters = header_must_be();
+        <span class="kw">let </span>era_checker = EraChecker::new(SupportedEra::dummy(), Epoch(<span class="number">1</span>));
+        <span class="kw">let </span><span class="kw-2">mut </span>version_provider = APIVersionProvider::new(Arc::new(era_checker));
+        <span class="kw">let </span><span class="kw-2">mut </span>open_api_versions = HashMap::new();
+        open_api_versions.insert(<span class="string">&quot;openapi.yaml&quot;</span>.to_string(), <span class="string">&quot;0.1.0&quot;</span>.to_string());
+        version_provider.update_open_api_versions(open_api_versions);
+        <span class="kw">let </span>api_version_provider = Arc::new(version_provider);
+        <span class="kw">let </span>filters = header_must_be(api_version_provider);
         warp::test::request()
-            .header(MITHRIL_API_VERSION_HEADER, MITHRIL_API_VERSION)
+            .header(MITHRIL_API_VERSION_HEADER, <span class="string">&quot;0.1.2&quot;</span>)
             .path(<span class="string">&quot;/aggregator/whatever&quot;</span>)
             .filter(<span class="kw-2">&amp;</span>filters)
             .<span class="kw">await
-            </span>.expect(<span class="string">&quot;request with the current api version should not be rejected&quot;</span>);
+            </span>.expect(<span class="string">r#&quot;request with the good version &quot;0.1.2&quot; should not be rejected&quot;#</span>);
     }
 }
 </code></pre></div>

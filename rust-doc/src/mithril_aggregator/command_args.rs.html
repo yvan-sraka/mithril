@@ -802,6 +802,10 @@
 <a href="#802" id="802">802</a>
 <a href="#803" id="803">803</a>
 <a href="#804" id="804">804</a>
+<a href="#805" id="805">805</a>
+<a href="#806" id="806">806</a>
+<a href="#807" id="807">807</a>
+<a href="#808" id="808">808</a>
 </pre><pre class="rust"><code><span class="kw">use </span>clap::{Parser, Subcommand};
 <span class="kw">use </span>config::{builder::DefaultState, ConfigBuilder, Map, Source, Value, ValueKind};
 <span class="kw">use </span>slog::Level;
@@ -822,6 +826,7 @@
 };
 
 <span class="kw">use </span>mithril_common::{
+    api_version::APIVersionProvider,
     certificate_chain::MithrilCertificateVerifier,
     chain_observer::{CardanoCliRunner, ChainObserver},
     crypto_helper::{
@@ -1250,6 +1255,8 @@
         <span class="kw">let </span>event_transmitter = Arc::new(TransmitterService::new(tx));
         <span class="kw">let </span><span class="kw-2">mut </span>event_store = event_store::EventStore::new(rx);
 
+        <span class="kw">let </span>api_version_provider = Arc::new(APIVersionProvider::new(era_checker.clone()));
+
         <span class="comment">// Init dependency manager
         </span><span class="kw">let </span>dependency_manager = DependencyManager {
             config: config.clone(),
@@ -1274,6 +1281,7 @@
             era_checker: era_checker.clone(),
             era_reader: era_reader.clone(),
             event_transmitter,
+            api_version_provider,
         };
         <span class="kw">let </span>dependency_manager = Arc::new(dependency_manager);
 

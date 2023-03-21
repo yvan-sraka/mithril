@@ -306,6 +306,14 @@
 <a href="#306" id="306">306</a>
 <a href="#307" id="307">307</a>
 <a href="#308" id="308">308</a>
+<a href="#309" id="309">309</a>
+<a href="#310" id="310">310</a>
+<a href="#311" id="311">311</a>
+<a href="#312" id="312">312</a>
+<a href="#313" id="313">313</a>
+<a href="#314" id="314">314</a>
+<a href="#315" id="315">315</a>
+<a href="#316" id="316">316</a>
 </pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>sqlite::Connection;
 <span class="kw">use </span>std::{
@@ -314,6 +322,7 @@
 };
 
 <span class="kw">use </span>mithril_common::{
+    api_version::APIVersionProvider,
     chain_observer::{CardanoCliChainObserver, CardanoCliRunner, ChainObserver},
     crypto_helper::{OpCert, ProtocolPartyId, SerDeShelleyFileFormat},
     digesters::{
@@ -460,9 +469,6 @@
             <span class="self">self</span>.config.store_retention_limit,
         ));
         <span class="kw">let </span>single_signer = Arc::new(MithrilSingleSigner::new(<span class="self">self</span>.compute_protocol_party_id()<span class="question-mark">?</span>));
-        <span class="kw">let </span>certificate_handler = Arc::new(CertificateHandlerHTTPClient::new(
-            <span class="self">self</span>.config.aggregator_endpoint.clone(),
-        ));
         <span class="kw">let </span>digester = Arc::new(CardanoImmutableDigester::new(
             <span class="self">self</span>.config.db_directory.clone(),
             <span class="self">self</span>.build_digester_cache_provider().<span class="kw">await</span><span class="question-mark">?</span>,
@@ -497,6 +503,12 @@
             era_epoch_token.get_current_epoch(),
         ));
 
+        <span class="kw">let </span>api_version_provider = Arc::new(APIVersionProvider::new(era_checker.clone()));
+        <span class="kw">let </span>certificate_handler = Arc::new(CertificateHandlerHTTPClient::new(
+            <span class="self">self</span>.config.aggregator_endpoint.clone(),
+            api_version_provider.clone(),
+        ));
+
         <span class="kw">let </span>services = SignerServices {
             beacon_provider,
             certificate_handler,
@@ -507,6 +519,7 @@
             protocol_initializer_store,
             era_checker,
             era_reader,
+            api_version_provider,
         };
 
         <span class="prelude-val">Ok</span>(services)
@@ -541,6 +554,9 @@
 
     <span class="doccomment">/// Era reader service
     </span><span class="kw">pub </span>era_reader: Arc&lt;EraReader&gt;,
+
+    <span class="doccomment">/// API version provider
+    </span><span class="kw">pub </span>api_version_provider: Arc&lt;APIVersionProvider&gt;,
 }
 
 <span class="attr">#[cfg(test)]

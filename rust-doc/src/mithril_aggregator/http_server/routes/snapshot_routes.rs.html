@@ -434,6 +434,11 @@
 <a href="#434" id="434">434</a>
 <a href="#435" id="435">435</a>
 <a href="#436" id="436">436</a>
+<a href="#437" id="437">437</a>
+<a href="#438" id="438">438</a>
+<a href="#439" id="439">439</a>
+<a href="#440" id="440">440</a>
+<a href="#441" id="441">441</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::http_server::routes::middlewares;
 <span class="kw">use </span><span class="kw">crate</span>::DependencyManager;
 <span class="kw">use </span>std::sync::Arc;
@@ -609,8 +614,6 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
-    <span class="kw">const </span>API_SPEC_FILE: <span class="kw-2">&amp;</span>str = <span class="string">&quot;../openapi.yaml&quot;</span>;
-
     <span class="kw">use </span><span class="kw">crate</span>::http_server::SERVER_BASE_PATH;
     <span class="kw">use </span>mithril_common::test_utils::apispec::APISpec;
     <span class="kw">use </span>mithril_common::test_utils::fake_data;
@@ -656,13 +659,14 @@
             .reply(<span class="kw-2">&amp;</span>setup_router(Arc::new(dependency_manager)))
             .<span class="kw">await</span>;
 
-        APISpec::from_file(API_SPEC_FILE)
-            .method(method)
-            .path(path)
-            .validate_request(<span class="kw-2">&amp;</span>Null)
-            .unwrap()
-            .validate_response(<span class="kw-2">&amp;</span>response)
-            .expect(<span class="string">&quot;OpenAPI error&quot;</span>);
+        APISpec::verify_conformity(
+            APISpec::get_all_spec_files(),
+            method,
+            path,
+            <span class="string">&quot;application/json&quot;</span>,
+            <span class="kw-2">&amp;</span>Null,
+            <span class="kw-2">&amp;</span>response,
+        );
     }
 
     <span class="attr">#[tokio::test]
@@ -686,13 +690,14 @@
             .reply(<span class="kw-2">&amp;</span>setup_router(Arc::new(dependency_manager)))
             .<span class="kw">await</span>;
 
-        APISpec::from_file(API_SPEC_FILE)
-            .method(method)
-            .path(path)
-            .validate_request(<span class="kw-2">&amp;</span>Null)
-            .unwrap()
-            .validate_response(<span class="kw-2">&amp;</span>response)
-            .expect(<span class="string">&quot;OpenAPI error&quot;</span>);
+        APISpec::verify_conformity(
+            APISpec::get_all_spec_files(),
+            method,
+            path,
+            <span class="string">&quot;application/json&quot;</span>,
+            <span class="kw-2">&amp;</span>Null,
+            <span class="kw-2">&amp;</span>response,
+        );
     }
 
     <span class="attr">#[tokio::test]
@@ -715,14 +720,14 @@
             .reply(<span class="kw-2">&amp;</span>setup_router(Arc::new(dependency_manager)))
             .<span class="kw">await</span>;
 
-        APISpec::from_file(API_SPEC_FILE)
-            .method(method)
-            .path(path)
-            .content_type(<span class="string">&quot;application/gzip&quot;</span>)
-            .validate_request(<span class="kw-2">&amp;</span>Null)
-            .unwrap()
-            .validate_response(<span class="kw-2">&amp;</span>response)
-            .expect(<span class="string">&quot;OpenAPI error&quot;</span>);
+        APISpec::verify_conformity(
+            APISpec::get_all_spec_files(),
+            method,
+            path,
+            <span class="string">&quot;application/gzip&quot;</span>,
+            <span class="kw-2">&amp;</span>Null,
+            <span class="kw-2">&amp;</span>response,
+        );
     }
 
     <span class="attr">#[tokio::test]
@@ -744,13 +749,14 @@
             .reply(<span class="kw-2">&amp;</span>setup_router(Arc::new(dependency_manager)))
             .<span class="kw">await</span>;
 
-        APISpec::from_file(API_SPEC_FILE)
-            .method(method)
-            .path(path)
-            .validate_request(<span class="kw-2">&amp;</span>Null)
-            .unwrap()
-            .validate_response(<span class="kw-2">&amp;</span>response)
-            .expect(<span class="string">&quot;OpenAPI error&quot;</span>);
+        APISpec::verify_conformity(
+            APISpec::get_all_spec_files(),
+            method,
+            path,
+            <span class="string">&quot;application/gzip&quot;</span>,
+            <span class="kw-2">&amp;</span>Null,
+            <span class="kw-2">&amp;</span>response,
+        );
     }
 
     <span class="attr">#[tokio::test]
@@ -774,13 +780,14 @@
             .reply(<span class="kw-2">&amp;</span>setup_router(Arc::new(dependency_manager)))
             .<span class="kw">await</span>;
 
-        APISpec::from_file(API_SPEC_FILE)
-            .method(method)
-            .path(path)
-            .validate_request(<span class="kw-2">&amp;</span>Null)
-            .unwrap()
-            .validate_response(<span class="kw-2">&amp;</span>response)
-            .expect(<span class="string">&quot;OpenAPI error&quot;</span>);
+        APISpec::verify_conformity(
+            APISpec::get_all_spec_files(),
+            method,
+            path,
+            <span class="string">&quot;application/json&quot;</span>,
+            <span class="kw-2">&amp;</span>Null,
+            <span class="kw-2">&amp;</span>response,
+        );
     }
 
     <span class="attr">#[tokio::test]
@@ -803,13 +810,14 @@
             .reply(<span class="kw-2">&amp;</span>setup_router(Arc::new(dependency_manager)))
             .<span class="kw">await</span>;
 
-        APISpec::from_file(API_SPEC_FILE)
-            .method(method)
-            .path(path)
-            .validate_request(<span class="kw-2">&amp;</span>Null)
-            .unwrap()
-            .validate_response(<span class="kw-2">&amp;</span>response)
-            .expect(<span class="string">&quot;OpenAPI error&quot;</span>);
+        APISpec::verify_conformity(
+            APISpec::get_all_spec_files(),
+            method,
+            path,
+            <span class="string">&quot;application/json&quot;</span>,
+            <span class="kw-2">&amp;</span>Null,
+            <span class="kw-2">&amp;</span>response,
+        );
     }
 
     <span class="attr">#[tokio::test]
@@ -831,13 +839,14 @@
             .reply(<span class="kw-2">&amp;</span>setup_router(Arc::new(dependency_manager)))
             .<span class="kw">await</span>;
 
-        APISpec::from_file(API_SPEC_FILE)
-            .method(method)
-            .path(path)
-            .validate_request(<span class="kw-2">&amp;</span>Null)
-            .unwrap()
-            .validate_response(<span class="kw-2">&amp;</span>response)
-            .expect(<span class="string">&quot;OpenAPI error&quot;</span>);
+        APISpec::verify_conformity(
+            APISpec::get_all_spec_files(),
+            method,
+            path,
+            <span class="string">&quot;application/json&quot;</span>,
+            <span class="kw-2">&amp;</span>Null,
+            <span class="kw-2">&amp;</span>response,
+        );
     }
 
     <span class="attr">#[tokio::test]
@@ -861,13 +870,14 @@
             .reply(<span class="kw-2">&amp;</span>setup_router(Arc::new(dependency_manager)))
             .<span class="kw">await</span>;
 
-        APISpec::from_file(API_SPEC_FILE)
-            .method(method)
-            .path(path)
-            .validate_request(<span class="kw-2">&amp;</span>Null)
-            .unwrap()
-            .validate_response(<span class="kw-2">&amp;</span>response)
-            .expect(<span class="string">&quot;OpenAPI error&quot;</span>);
+        APISpec::verify_conformity(
+            APISpec::get_all_spec_files(),
+            method,
+            path,
+            <span class="string">&quot;application/json&quot;</span>,
+            <span class="kw-2">&amp;</span>Null,
+            <span class="kw-2">&amp;</span>response,
+        );
     }
 }
 </code></pre></div>
