@@ -2,9 +2,9 @@ use async_trait::async_trait;
 use chrono::Utc;
 use mithril_common::entities::Epoch;
 use mithril_common::entities::PartyId;
+use mithril_common::entities::Signer;
 use slog_scope::{debug, info, warn};
 
-use mithril_common::crypto_helper::ProtocolStakeDistribution;
 use mithril_common::entities::{
     Beacon, Certificate, CertificatePending, ProtocolMessage, ProtocolMessagePartKey, Snapshot,
 };
@@ -21,7 +21,6 @@ use crate::snapshotter::OngoingSnapshot;
 use crate::store::SingleSignatureStorer;
 use crate::CertificateCreator;
 use crate::MithrilCertificateCreator;
-use crate::RuntimeError;
 use crate::{DependencyManager, ProtocolError, SnapshotError};
 
 #[cfg(test)]
@@ -308,51 +307,11 @@ impl AggregatorRunnerTrait for AggregatorRunner {
         new_beacon: &Beacon,
     ) -> Result<(), Box<dyn StdError + Sync + Send>> {
         debug!("RUNNER: update stake distribution"; "beacon" => #?new_beacon);
-        let exists_stake_distribution = !self
-            .dependencies
-            .stake_store
-            .get_stakes(
-                self.dependencies
-                    .multi_signer
-                    .read()
-                    .await
-                    .get_current_beacon()
-                    .await
-                    .ok_or_else(|| {
-                        RuntimeError::keep_state("Current beacon is not available", None)
-                    })?
-                    .epoch
-                    .offset_to_recording_epoch(),
-            )
-            .await?
-            .unwrap_or_default()
-            .is_empty();
-        if exists_stake_distribution {
-            return Ok(());
-        }
-
-        let stake_distribution = self
-            .dependencies
-            .chain_observer
-            .get_current_stake_distribution()
-            .await?
-            .ok_or_else(|| {
-                RunnerError::MissingStakeDistribution(format!(
-                    "Chain observer: no stake distribution for beacon {new_beacon:?}."
-                ))
-            })?;
-        let stake_distribution = stake_distribution
-            .iter()
-            .map(|(party_id, stake)| (party_id.to_owned(), *stake))
-            .collect::<ProtocolStakeDistribution>();
-
-        Ok(self
-            .dependencies
-            .multi_signer
-            .write()
+        self.dependencies
+            .stake_distribution_service
+            .update_stake_distribution()
             .await
-            .update_stake_distribution(&stake_distribution)
-            .await?)
+            .map_err(|e| e.into())
     }
 
     async fn open_signer_registration_round(
@@ -364,10 +323,9 @@ impl AggregatorRunnerTrait for AggregatorRunner {
 
         let stakes = self
             .dependencies
-            .stake_store
-            .get_stakes(registration_epoch)
-            .await?
-            .unwrap_or_default();
+            .stake_distribution_service
+            .get_stake_distribution(registration_epoch)
+            .await?;
 
         self.dependencies
             .signer_registration_round_opener
@@ -410,17 +368,51 @@ impl AggregatorRunnerTrait for AggregatorRunner {
         let mut multi_signer = self.dependencies.multi_signer.write().await;
         let mut protocol_message = ProtocolMessage::new();
         protocol_message.set_message_part(ProtocolMessagePartKey::SnapshotDigest, digest);
-        protocol_message.set_message_part(
-            ProtocolMessagePartKey::NextAggregateVerificationKey,
+        {
+            let epoch = multi_signer
+                .get_current_beacon()
+                .await
+                .ok_or_else(|| {
+                    RunnerError::EpochOutOfBounds("No beacon in multi-signer.".to_owned())
+                })?
+                .epoch
+                .offset_to_next_signer_retrieval_epoch();
+            let stake_distribution = self
+                .dependencies
+                .stake_distribution_service
+                .get_stake_distribution(epoch)
+                .await?;
+
+            protocol_message.set_message_part(
+                ProtocolMessagePartKey::NextAggregateVerificationKey,
+                multi_signer
+                    .compute_stake_distribution_aggregate_verification_key(
+                        epoch,
+                        &stake_distribution,
+                    )
+                    .await?
+                    .unwrap_or_default(),
+            );
+        }
+        {
+            let epoch = multi_signer
+                .get_current_beacon()
+                .await
+                .ok_or_else(|| {
+                    RunnerError::EpochOutOfBounds("No beacon in multi-signer.".to_owned())
+                })?
+                .epoch
+                .offset_to_signer_retrieval_epoch()?;
+            let stake_distribution = self
+                .dependencies
+                .stake_distribution_service
+                .get_stake_distribution(epoch)
+                .await?;
             multi_signer
-                .compute_next_stake_distribution_aggregate_verification_key()
-                .await?
-                .unwrap_or_default(),
-        );
-        multi_signer
-            .update_current_message(protocol_message)
-            .await
-            .map_err(|e| e.into())
+                .update_current_message(epoch, protocol_message, &stake_distribution)
+                .await
+                .map_err(|e| e.into())
+        }
     }
 
     async fn create_new_pending_certificate_from_multisigner(
@@ -429,16 +421,39 @@ impl AggregatorRunnerTrait for AggregatorRunner {
     ) -> Result<CertificatePending, Box<dyn StdError + Sync + Send>> {
         debug!("RUNNER: create new pending certificate from multisigner");
         let multi_signer = self.dependencies.multi_signer.read().await;
+        let signers = {
+            let epoch = beacon.epoch.offset_to_signer_retrieval_epoch()?;
+            let stake_distribution = self
+                .dependencies
+                .stake_distribution_service
+                .get_stake_distribution(epoch)
+                .await?;
 
-        let signers = match multi_signer.get_signers().await {
-            Ok(signers) => signers,
-            Err(ProtocolError::Beacon(_)) => vec![],
-            Err(e) => return Err(e.into()),
+            match multi_signer
+                .get_signers_with_stake(epoch, &stake_distribution)
+                .await
+            {
+                Ok(signers) => signers,
+                Err(ProtocolError::Beacon(_)) => vec![],
+                Err(e) => return Err(e.into()),
+            }
         };
-        let next_signers = match multi_signer.get_next_signers_with_stake().await {
-            Ok(signers) => signers,
-            Err(ProtocolError::Beacon(_)) => vec![],
-            Err(e) => return Err(e.into()),
+        let next_signers = {
+            let epoch = beacon.epoch.offset_to_next_signer_retrieval_epoch();
+            let stake_distribution = self
+                .dependencies
+                .stake_distribution_service
+                .get_stake_distribution(epoch)
+                .await?;
+
+            match multi_signer
+                .get_signers_with_stake(epoch, &stake_distribution)
+                .await
+            {
+                Ok(signers) => signers,
+                Err(ProtocolError::Beacon(_)) => vec![],
+                Err(e) => return Err(e.into()),
+            }
         };
 
         let protocol_parameters =
@@ -460,6 +475,8 @@ impl AggregatorRunnerTrait for AggregatorRunner {
                 ))
             })?;
 
+        let signers = signers.into_iter().map(Signer::from).collect();
+
         let pending_certificate = CertificatePending::new(
             beacon,
             protocol_parameters.into(),
@@ -477,8 +494,20 @@ impl AggregatorRunnerTrait for AggregatorRunner {
     ) -> Result<WorkingCertificate, Box<dyn StdError + Sync + Send>> {
         debug!("RUNNER: create new working certificate");
         let multi_signer = self.dependencies.multi_signer.read().await;
+        let epoch = certificate_pending
+            .beacon
+            .epoch
+            .offset_to_signer_retrieval_epoch()?;
+        let stake_distribution = self
+            .dependencies
+            .stake_distribution_service
+            .get_stake_distribution(epoch)
+            .await?;
 
-        let signers = match multi_signer.get_signers_with_stake().await {
+        let signers = match multi_signer
+            .get_signers_with_stake(epoch, &stake_distribution)
+            .await
+        {
             Ok(signers) => signers,
             Err(ProtocolError::Beacon(_)) => vec![],
             Err(e) => return Err(e.into()),
@@ -490,7 +519,7 @@ impl AggregatorRunnerTrait for AggregatorRunner {
             ))
         })?;
         let aggregate_verification_key = multi_signer
-            .compute_stake_distribution_aggregate_verification_key()
+            .compute_stake_distribution_aggregate_verification_key(epoch, &stake_distribution)
             .await?
             .ok_or_else(|| {
                 RunnerError::NoComputedMultiSignature(format!(
@@ -735,10 +764,12 @@ impl AggregatorRunnerTrait for AggregatorRunner {
 
 #[cfg(test)]
 pub mod tests {
+    use crate::database::provider::StakePoolStore;
     use crate::dependency::SimulateFromChainParams;
     use crate::multi_signer::MockMultiSigner;
     use crate::runtime::WorkingCertificate;
     use crate::snapshotter::OngoingSnapshot;
+    use crate::stake_distribution_service::MithrilStakeDistributionService;
     use crate::{
         initialize_dependencies,
         runtime::{AggregatorRunner, AggregatorRunnerTrait},
@@ -752,6 +783,7 @@ pub mod tests {
     use mithril_common::entities::{
         Beacon, CertificatePending, HexEncodedKey, ProtocolMessage, StakeDistribution,
     };
+    use mithril_common::store::StakeStorer;
     use mithril_common::test_utils::MithrilFixtureBuilder;
     use mithril_common::{entities::ProtocolMessagePartKey, test_utils::fake_data};
     use mithril_common::{BeaconProviderImpl, CardanoNetwork};
@@ -827,6 +859,10 @@ pub mod tests {
         let (mut deps, config) = initialize_dependencies().await;
         let chain_observer = Arc::new(FakeObserver::default());
         deps.chain_observer = chain_observer.clone();
+        let stake_store = Arc::new(StakePoolStore::new(deps.sqlite_connection.clone()));
+        let stake_service =
+            MithrilStakeDistributionService::new(stake_store.clone(), deps.chain_observer.clone());
+        deps.stake_distribution_service = Arc::new(stake_service);
         let deps = Arc::new(deps);
         let runner = AggregatorRunner::new(config, deps.clone());
         let beacon = runner.get_beacon_from_chain().await.unwrap();
@@ -845,8 +881,7 @@ pub mod tests {
             .await
             .expect("updating stake distribution should not return an error");
 
-        let saved_stake_distribution = deps
-            .stake_store
+        let saved_stake_distribution = stake_store
             .get_stakes(beacon.epoch.offset_to_recording_epoch())
             .await
             .unwrap()
@@ -868,7 +903,11 @@ pub mod tests {
             deps.verification_key_store.clone(),
         ));
         deps.signer_registration_round_opener = signer_registration_round_opener.clone();
-        let stake_store = deps.stake_store.clone();
+
+        let stake_store = Arc::new(StakePoolStore::new(deps.sqlite_connection.clone()));
+        let stake_service =
+            MithrilStakeDistributionService::new(stake_store.clone(), deps.chain_observer.clone());
+        deps.stake_distribution_service = Arc::new(stake_service);
         let deps = Arc::new(deps);
         let runner = AggregatorRunner::new(config, deps.clone());
 
@@ -906,10 +945,22 @@ pub mod tests {
             deps.verification_key_store.clone(),
         ));
         deps.signer_registration_round_opener = signer_registration_round_opener.clone();
+        let stake_store = Arc::new(StakePoolStore::new(deps.sqlite_connection.clone()));
+        let stake_service =
+            MithrilStakeDistributionService::new(stake_store.clone(), deps.chain_observer.clone());
+        deps.stake_distribution_service = Arc::new(stake_service);
         let deps = Arc::new(deps);
         let runner = AggregatorRunner::new(config, deps.clone());
 
         let beacon = fake_data::beacon();
+        let recording_epoch = beacon.epoch.offset_to_recording_epoch();
+        let stake_distribution: StakeDistribution =
+            StakeDistribution::from([("a".to_string(), 5), ("b".to_string(), 10)]);
+
+        stake_store
+            .save_stakes(recording_epoch, stake_distribution.clone())
+            .await
+            .expect("Save Stake distribution should not fail");
         runner
             .open_signer_registration_round(&beacon)
             .await
@@ -1027,9 +1078,12 @@ pub mod tests {
             .multi_signer
             .read()
             .await
-            .compute_stake_distribution_aggregate_verification_key()
+            .compute_stake_distribution_aggregate_verification_key(
+                beacon.epoch.offset_to_signer_retrieval_epoch().unwrap(),
+                &fixture.stake_distribution(),
+            )
             .await
-            .expect("")
+            .unwrap()
             .unwrap();
 
         let certificate_pending = runner

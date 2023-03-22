@@ -11,11 +11,17 @@ use mithril_common::{
 };
 use tokio::sync::RwLock;
 
-use crate::{CertificateStore, MultiSigner, ProtocolParametersStore, ProtocolParametersStorer};
+use crate::{
+    stake_distribution_service::StakeDistributionService, CertificateStore, MultiSigner,
+    ProtocolParametersStore, ProtocolParametersStorer,
+};
 
 type GenesisToolsResult<R> = Result<R, Box<dyn Error>>;
 
 pub struct GenesisToolsDependency {
+    /// StakeDistributionService
+    pub stake_distribution_service: Arc<dyn StakeDistributionService>,
+
     /// Multisigner service.
     pub multi_signer: Arc<RwLock<dyn MultiSigner>>,
 
@@ -75,14 +81,18 @@ impl GenesisTools {
         let certificate_verifier = dependencies.certificate_verifier.clone();
         let certificate_store = dependencies.certificate_store.clone();
         let protocol_parameters_store = dependencies.protocol_parameters_store.clone();
-
+        let next_epoch = beacon.epoch.offset_to_next_signer_retrieval_epoch();
+        let stake_distribution = dependencies
+            .stake_distribution_service
+            .get_stake_distribution(next_epoch)
+            .await?;
         let protocol_parameters = protocol_parameters_store
             .get_protocol_parameters(beacon.epoch.offset_to_signer_retrieval_epoch()?)
             .await?
             .ok_or_else(|| "Missing protocol parameters".to_string())?;
 
         let genesis_avk = multi_signer
-            .compute_next_stake_distribution_aggregate_verification_key()
+            .compute_stake_distribution_aggregate_verification_key(next_epoch, &stake_distribution)
             .await?
             .ok_or_else(|| "Genesis AVK computation failed".to_string())?;
         let genesis_avk: ProtocolAggregateVerificationKey = key_decode_hex(&genesis_avk)?;

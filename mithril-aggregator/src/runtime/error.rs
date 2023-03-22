@@ -66,10 +66,6 @@ pub enum RunnerError {
     #[error("Epoch out of bounds: '{0}'.")]
     EpochOutOfBounds(String),
 
-    /// No stack distribution found
-    #[error("Missing stack distribution: '{0}'.")]
-    MissingStakeDistribution(String),
-
     /// Missing protocol parameters
     #[error("Missing protocol parameters: '{0}'.")]
     MissingProtocolParameters(String),

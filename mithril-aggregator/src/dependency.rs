@@ -10,18 +10,22 @@ use mithril_common::{
     store::StakeStorer,
     BeaconProvider,
 };
+use sqlite::Connection;
 
 use std::{collections::HashMap, sync::Arc};
-use tokio::sync::RwLock;
+use tokio::sync::{Mutex, RwLock};
 
-use crate::snapshot_uploaders::SnapshotUploader;
 use crate::{
-    configuration::*, CertificatePendingStore, CertificateStore, ProtocolParametersStore,
-    ProtocolParametersStorer, SignerRegisterer, SignerRegistrationRoundOpener,
-    SingleSignatureStore, Snapshotter, VerificationKeyStore, VerificationKeyStorer,
+    configuration::*, database::provider::StakePoolStore, CertificatePendingStore,
+    CertificateStore, ProtocolParametersStore, ProtocolParametersStorer, SignerRegisterer,
+    SignerRegistrationRoundOpener, SingleSignatureStore, Snapshotter, VerificationKeyStore,
+    VerificationKeyStorer,
 };
 use crate::{event_store::EventMessage, snapshot_stores::SnapshotStore};
 use crate::{event_store::TransmitterService, multi_signer::MultiSigner};
+use crate::{
+    snapshot_uploaders::SnapshotUploader, stake_distribution_service::StakeDistributionService,
+};
 
 /// MultiSignerWrapper wraps a MultiSigner
 pub type MultiSignerWrapper = Arc<RwLock<dyn MultiSigner>>;
@@ -30,6 +34,15 @@ pub type MultiSignerWrapper = Arc<RwLock<dyn MultiSigner>>;
 pub struct DependencyManager {
     /// Configuration structure.
     pub config: Configuration,
+
+    /// SQLite database connection
+    /// This is not a real service but is is needed to instanciate all store
+    /// services. Shall be private dependency.
+    pub sqlite_connection: Arc<Mutex<Connection>>,
+
+    /// Stake Store used by the StakeDistributionService
+    /// It shall be a private dependency.
+    pub stake_store: Arc<StakePoolStore>,
 
     /// Snapshot store.
     pub snapshot_store: Arc<dyn SnapshotStore>,
@@ -48,9 +61,6 @@ pub struct DependencyManager {
 
     /// Verification key store.
     pub verification_key_store: Arc<VerificationKeyStore>,
-
-    /// Stake store.
-    pub stake_store: Arc<dyn StakeStorer>,
 
     /// Signer single signature store.
     pub single_signature_store: Arc<SingleSignatureStore>,
@@ -93,6 +103,9 @@ pub struct DependencyManager {
 
     /// Event Transmitter Service
     pub event_transmitter: Arc<TransmitterService<EventMessage>>,
+
+    /// Stake Distribution Service
+    pub stake_distribution_service: Arc<dyn StakeDistributionService>,
 }
 
 #[doc(hidden)]
@@ -163,7 +176,7 @@ impl DependencyManager {
 
         for (epoch, params) in parameters_per_epoch {
             self.fill_verification_key_store(epoch, &params.0).await;
-            self.fill_stakes_store(epoch, &params.0).await;
+            self.fill_stakes_store(epoch, params.0.to_vec()).await;
             self.protocol_parameters_store
                 .save_protocol_parameters(epoch, params.1)
                 .await
@@ -211,7 +224,7 @@ impl DependencyManager {
             (epoch_to_sign, second_epoch_signers),
         ] {
             self.fill_verification_key_store(epoch, &signers).await;
-            self.fill_stakes_store(epoch, &signers).await;
+            self.fill_stakes_store(epoch, signers).await;
         }
 
         self.init_protocol_parameter_store(genesis_protocol_parameters)
@@ -248,8 +261,9 @@ impl DependencyManager {
         }
     }
 
-    async fn fill_stakes_store(&self, target_epoch: Epoch, signers: &[SignerWithStake]) {
-        self.stake_store
+    async fn fill_stakes_store(&self, target_epoch: Epoch, signers: Vec<SignerWithStake>) {
+        let _ = self
+            .stake_store
             .save_stakes(
                 target_epoch,
                 signers
@@ -265,10 +279,13 @@ impl DependencyManager {
 #[cfg(test)]
 pub mod tests {
     use crate::{
-        event_store::TransmitterService, AggregatorConfig, CertificatePendingStore,
-        CertificateStore, Configuration, DependencyManager, DumbSnapshotUploader, DumbSnapshotter,
-        LocalSnapshotStore, MithrilSignerRegisterer, MultiSignerImpl, ProtocolParametersStore,
-        SingleSignatureStore, SnapshotUploaderType, VerificationKeyStore,
+        check_database_migration, database::provider::StakePoolStore,
+        event_store::TransmitterService,
+        stake_distribution_service::MithrilStakeDistributionService, AggregatorConfig,
+        CertificatePendingStore, CertificateStore, Configuration, DependencyManager,
+        DumbSnapshotUploader, DumbSnapshotter, LocalSnapshotStore, MithrilSignerRegisterer,
+        MultiSignerImpl, ProtocolParametersStore, SingleSignatureStore, SnapshotUploaderType,
+        VerificationKeyStore,
     };
     use mithril_common::{
         certificate_chain::MithrilCertificateVerifier,
@@ -279,14 +296,15 @@ pub mod tests {
             adapters::{EraReaderAdapterType, EraReaderBootstrapAdapter},
             EraChecker, EraReader,
         },
-        store::{adapter::MemoryAdapter, StakeStore},
+        store::adapter::MemoryAdapter,
         test_utils::fake_data,
         BeaconProvider, BeaconProviderImpl, CardanoNetwork,
     };
+    use sqlite::Connection;
     use std::{path::PathBuf, sync::Arc};
     use tokio::sync::{
         mpsc::{self},
-        RwLock,
+        Mutex, RwLock,
     };
 
     pub async fn initialize_dependencies() -> (DependencyManager, AggregatorConfig) {
@@ -314,6 +332,8 @@ pub mod tests {
             era_reader_adapter_type: EraReaderAdapterType::Bootstrap,
             era_reader_adapter_params: None,
         };
+        let connection = Arc::new(Mutex::new(Connection::open(":memory:").unwrap()));
+        check_database_migration(connection.clone()).await.unwrap();
         let snapshot_store = Arc::new(LocalSnapshotStore::new(
             Box::new(MemoryAdapter::new(None).unwrap()),
             20,
@@ -329,10 +349,6 @@ pub mod tests {
             Box::new(MemoryAdapter::new(None).unwrap()),
             config.store_retention_limit,
         ));
-        let stake_store = Arc::new(StakeStore::new(
-            Box::new(MemoryAdapter::new(None).unwrap()),
-            config.store_retention_limit,
-        ));
         let single_signature_store = Arc::new(SingleSignatureStore::new(
             Box::new(MemoryAdapter::new(None).unwrap()),
             config.store_retention_limit,
@@ -343,7 +359,6 @@ pub mod tests {
         ));
         let multi_signer = MultiSignerImpl::new(
             verification_key_store.clone(),
-            stake_store.clone(),
             single_signature_store.clone(),
             protocol_parameters_store.clone(),
         );
@@ -354,6 +369,11 @@ pub mod tests {
             chain_observer.clone(),
             immutable_file_observer.clone(),
             CardanoNetwork::TestNet(42),
+        ));
+        let stake_pool_store = Arc::new(StakePoolStore::new(connection.clone()));
+        let stake_distribution_service = Arc::new(MithrilStakeDistributionService::new(
+            stake_pool_store.clone(),
+            chain_observer.clone(),
         ));
         let certificate_verifier = Arc::new(MithrilCertificateVerifier::new(slog_scope::logger()));
         let signer_registerer = Arc::new(MithrilSignerRegisterer::new(
@@ -375,6 +395,8 @@ pub mod tests {
         };
 
         let dependency_manager = DependencyManager {
+            sqlite_connection: connection,
+            stake_store: stake_pool_store,
             config,
             snapshot_store,
             snapshot_uploader,
@@ -382,7 +404,6 @@ pub mod tests {
             certificate_pending_store,
             certificate_store,
             verification_key_store,
-            stake_store,
             single_signature_store,
             protocol_parameters_store,
             chain_observer,
@@ -397,6 +418,7 @@ pub mod tests {
             era_checker,
             era_reader,
             event_transmitter,
+            stake_distribution_service,
         };
 
         let config = AggregatorConfig::new(

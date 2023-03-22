@@ -1,4 +1,6 @@
+use mithril_aggregator::database::provider::StakePoolStore;
 use mithril_aggregator::event_store::{EventMessage, TransmitterService};
+use mithril_aggregator::stake_distribution_service::MithrilStakeDistributionService;
 use mithril_aggregator::{
     AggregatorConfig, CertificatePendingStore, CertificateStore, Configuration, DependencyManager,
     DumbSnapshotUploader, DumbSnapshotter, LocalSnapshotStore, MithrilSignerRegisterer,
@@ -14,12 +16,12 @@ use mithril_common::era::{
     adapters::EraReaderAdapterType, EraChecker, EraReader, EraReaderAdapter,
 };
 use mithril_common::store::adapter::MemoryAdapter;
-use mithril_common::store::StakeStore;
 use mithril_common::{BeaconProvider, BeaconProviderImpl, CardanoNetwork};
+use sqlite::Connection;
 use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::sync::mpsc::UnboundedReceiver;
-use tokio::sync::RwLock;
+use tokio::sync::{Mutex, RwLock};
 
 // TODO: remove this allow, create a real dependency injection builder.
 #[allow(clippy::too_many_arguments)]
@@ -60,6 +62,7 @@ pub async fn initialize_dependencies(
         era_reader_adapter_type: EraReaderAdapterType::Bootstrap,
         era_reader_adapter_params: None,
     };
+    let connection = Arc::new(Mutex::new(Connection::open(":memory:").unwrap()));
     let certificate_pending_store = Arc::new(CertificatePendingStore::new(Box::new(
         MemoryAdapter::new(None).unwrap(),
     )));
@@ -70,9 +73,10 @@ pub async fn initialize_dependencies(
         Box::new(MemoryAdapter::new(None).unwrap()),
         config.store_retention_limit,
     ));
-    let stake_store = Arc::new(StakeStore::new(
-        Box::new(MemoryAdapter::new(None).unwrap()),
-        config.store_retention_limit,
+    let stake_store = Arc::new(StakePoolStore::new(connection.clone()));
+    let stake_distribution_service = Arc::new(MithrilStakeDistributionService::new(
+        stake_store.clone(),
+        chain_observer.clone(),
     ));
     let single_signature_store = Arc::new(SingleSignatureStore::new(
         Box::new(MemoryAdapter::new(None).unwrap()),
@@ -84,7 +88,6 @@ pub async fn initialize_dependencies(
     ));
     let multi_signer = MultiSignerImpl::new(
         verification_key_store.clone(),
-        stake_store.clone(),
         single_signature_store.clone(),
         protocol_parameters_store.clone(),
     );
@@ -120,13 +123,14 @@ pub async fn initialize_dependencies(
 
     let dependency_manager = DependencyManager {
         config,
+        sqlite_connection: connection,
+        stake_store,
         snapshot_store,
         snapshot_uploader,
         multi_signer,
         certificate_pending_store,
         certificate_store,
         verification_key_store,
-        stake_store,
         single_signature_store,
         protocol_parameters_store,
         chain_observer,
@@ -141,6 +145,7 @@ pub async fn initialize_dependencies(
         era_checker,
         era_reader,
         event_transmitter,
+        stake_distribution_service,
     };
 
     let config = AggregatorConfig::new(

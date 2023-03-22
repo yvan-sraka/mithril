@@ -87,7 +87,7 @@ mod tests {
         let mut mock_multi_signer = MockMultiSigner::new();
         mock_multi_signer
             .expect_update_current_message()
-            .return_once(|_| Ok(()));
+            .return_once(|_, _, _| Ok(()));
         mock_multi_signer
             .expect_register_single_signature()
             .return_once(|_| Ok(()));
@@ -153,7 +153,7 @@ mod tests {
         let mut mock_multi_signer = MockMultiSigner::new();
         mock_multi_signer
             .expect_update_current_message()
-            .return_once(|_| Ok(()));
+            .return_once(|_, _, _| Ok(()));
         mock_multi_signer
             .expect_register_single_signature()
             .return_once(move |_| Err(ProtocolError::ExistingSingleSignature(party_id)));
@@ -184,7 +184,7 @@ mod tests {
         let mut mock_multi_signer = MockMultiSigner::new();
         mock_multi_signer
             .expect_update_current_message()
-            .return_once(|_| Ok(()));
+            .return_once(|_, _, _| Ok(()));
         mock_multi_signer
             .expect_register_single_signature()
             .return_once(|_| Err(ProtocolError::Core("an error occurred".to_string())));

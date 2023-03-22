@@ -9,11 +9,10 @@ use mithril_common::{
     crypto_helper::{
         key_decode_hex, key_encode_hex, ProtocolAggregateVerificationKey, ProtocolAggregationError,
         ProtocolClerk, ProtocolKeyRegistration, ProtocolMultiSignature, ProtocolParameters,
-        ProtocolPartyId, ProtocolRegistrationError, ProtocolSignerVerificationKey,
-        ProtocolSingleSignature, ProtocolStakeDistribution,
+        ProtocolRegistrationError, ProtocolSingleSignature, ProtocolStakeDistribution,
     },
     entities::{self, Epoch, SignerWithStake, StakeDistribution},
-    store::{StakeStorer, StoreError},
+    store::StoreError,
 };
 
 use crate::{
@@ -86,7 +85,9 @@ pub trait MultiSigner: Sync + Send {
     /// Update current message
     async fn update_current_message(
         &mut self,
+        epoch: Epoch,
         message: entities::ProtocolMessage,
+        stake_distribution: &StakeDistribution,
     ) -> Result<(), ProtocolError>;
 
     /// Get current beacon
@@ -112,20 +113,6 @@ pub trait MultiSigner: Sync + Send {
         &self,
     ) -> Result<Option<ProtocolParameters>, ProtocolError>;
 
-    /// Get stake distribution
-    async fn get_stake_distribution(&self) -> Result<ProtocolStakeDistribution, ProtocolError>;
-
-    /// Get next stake distribution
-    /// i.e. the stake distribution that will be used at the next epoch
-    async fn get_next_stake_distribution(&self)
-        -> Result<ProtocolStakeDistribution, ProtocolError>;
-
-    /// Update stake distribution
-    async fn update_stake_distribution(
-        &mut self,
-        stakes: &ProtocolStakeDistribution,
-    ) -> Result<(), ProtocolError>;
-
     /// Compute aggregate verification key from stake distribution
     async fn compute_aggregate_verification_key(
         &self,
@@ -136,8 +123,12 @@ pub trait MultiSigner: Sync + Send {
     /// Compute stake distribution aggregate verification key
     async fn compute_stake_distribution_aggregate_verification_key(
         &self,
+        epoch: Epoch,
+        stake_distribution: &StakeDistribution,
     ) -> Result<Option<String>, ProtocolError> {
-        let signers_with_stake = self.get_signers_with_stake().await?;
+        let signers_with_stake = self
+            .get_signers_with_stake(epoch, stake_distribution)
+            .await?;
         let protocol_parameters = self
             .get_protocol_parameters()
             .await?
@@ -151,46 +142,12 @@ pub trait MultiSigner: Sync + Send {
         }
     }
 
-    /// Compute next stake distribution aggregate verification key
-    async fn compute_next_stake_distribution_aggregate_verification_key(
-        &self,
-    ) -> Result<Option<String>, ProtocolError> {
-        let next_signers_with_stake = self.get_next_signers_with_stake().await?;
-        let protocol_parameters = self
-            .get_next_protocol_parameters()
-            .await?
-            .ok_or_else(ProtocolError::UnavailableProtocolParameters)?;
-        match self
-            .compute_aggregate_verification_key(&next_signers_with_stake, &protocol_parameters)
-            .await?
-        {
-            Some(avk) => Ok(Some(key_encode_hex(avk).map_err(ProtocolError::Codec)?)),
-            None => Ok(None),
-        }
-    }
-
-    /// Get signer
-    async fn get_signer_verification_key(
-        &self,
-        party_id: ProtocolPartyId,
-    ) -> Result<Option<ProtocolSignerVerificationKey>, ProtocolError>;
-
-    /// Get signers
-    async fn get_signers(&self) -> Result<Vec<entities::Signer>, ProtocolError> {
-        debug!("Get signers");
-        Ok(self
-            .get_signers_with_stake()
-            .await?
-            .into_iter()
-            .map(|signer| signer.into())
-            .collect::<Vec<entities::Signer>>())
-    }
-
     /// Get signers with stake
-    async fn get_signers_with_stake(&self) -> Result<Vec<SignerWithStake>, ProtocolError>;
-
-    /// Get signers for the next epoch with their stake
-    async fn get_next_signers_with_stake(&self) -> Result<Vec<SignerWithStake>, ProtocolError>;
+    async fn get_signers_with_stake(
+        &self,
+        epoch: Epoch,
+        stake_distribution: &StakeDistribution,
+    ) -> Result<Vec<SignerWithStake>, ProtocolError>;
 
     /// Registers a single signature
     async fn register_single_signature(
@@ -230,9 +187,6 @@ pub struct MultiSignerImpl {
     /// Verification key store
     verification_key_store: Arc<VerificationKeyStore>,
 
-    /// Stake store
-    stake_store: Arc<dyn StakeStorer>,
-
     /// Single signature store
     single_signature_store: Arc<SingleSignatureStore>,
 
@@ -244,7 +198,6 @@ impl MultiSignerImpl {
     /// MultiSignerImpl factory
     pub fn new(
         verification_key_store: Arc<VerificationKeyStore>,
-        stake_store: Arc<dyn StakeStorer>,
         single_signature_store: Arc<SingleSignatureStore>,
         protocol_parameters_store: Arc<ProtocolParametersStore>,
     ) -> Self {
@@ -257,7 +210,6 @@ impl MultiSignerImpl {
             multi_signature: None,
             avk: None,
             verification_key_store,
-            stake_store,
             single_signature_store,
             protocol_parameters_store,
         }
@@ -270,6 +222,8 @@ impl MultiSignerImpl {
         protocol_parameters: &ProtocolParameters,
     ) -> Result<Option<ProtocolClerk>, ProtocolError> {
         debug!("Create clerk");
+        println!("CREATE CLERK: signer with stakes = {signers_with_stake:?}");
+        println!("CREATE CLERK: protocole parameters = {protocol_parameters:?}");
         let stake_distribution = signers_with_stake
             .iter()
             .map(|s| s.into())
@@ -315,21 +269,6 @@ impl MultiSignerImpl {
         }
     }
 
-    /// Get the [stake distribution][ProtocolStakeDistribution] for the given `epoch`
-    async fn get_stake_distribution_at_epoch(
-        &self,
-        epoch: Epoch,
-    ) -> Result<ProtocolStakeDistribution, ProtocolError> {
-        debug!("Get stake distribution at epoch"; "epoch"=> #?epoch);
-
-        let stakes = self
-            .stake_store
-            .get_stakes(epoch)
-            .await?
-            .unwrap_or_default();
-        Ok(stakes.into_iter().collect::<ProtocolStakeDistribution>())
-    }
-
     /// Get the [protocol parameters][ProtocolParameters] for the given `epoch`
     async fn get_protocol_parameters_at_epoch(
         &self,
@@ -360,16 +299,21 @@ impl MultiSigner for MultiSignerImpl {
     /// Update current message
     async fn update_current_message(
         &mut self,
+        epoch: Epoch,
         message: entities::ProtocolMessage,
+        stake_distribution: &StakeDistribution,
     ) -> Result<(), ProtocolError> {
         debug!("Update current_message"; "protocol_message" =>  #?message, "signed message" => message.compute_hash().encode_hex::<String>());
-
+        let epoch = epoch.offset_to_signer_retrieval_epoch().unwrap();
         self.multi_signature = None;
-        let signers_with_stake = self.get_signers_with_stake().await?;
+        let signers_with_stake = self
+            .get_signers_with_stake(epoch, stake_distribution)
+            .await?;
         let protocol_parameters = self
             .get_protocol_parameters()
             .await?
             .ok_or_else(ProtocolError::UnavailableProtocolParameters)?;
+
         match self
             .create_clerk(&signers_with_stake, &protocol_parameters)
             .await
@@ -454,50 +398,6 @@ impl MultiSigner for MultiSignerImpl {
         self.get_protocol_parameters_at_epoch(epoch).await
     }
 
-    /// Get stake distribution
-    async fn get_stake_distribution(&self) -> Result<ProtocolStakeDistribution, ProtocolError> {
-        debug!("Get stake distribution");
-        let epoch = self
-            .current_beacon
-            .as_ref()
-            .ok_or_else(ProtocolError::UnavailableBeacon)?
-            .epoch
-            .offset_to_signer_retrieval_epoch()?;
-        self.get_stake_distribution_at_epoch(epoch).await
-    }
-
-    /// Get next stake distribution
-    async fn get_next_stake_distribution(
-        &self,
-    ) -> Result<ProtocolStakeDistribution, ProtocolError> {
-        debug!("Get next stake distribution");
-        let epoch = self
-            .current_beacon
-            .as_ref()
-            .ok_or_else(ProtocolError::UnavailableBeacon)?
-            .epoch
-            .offset_to_next_signer_retrieval_epoch();
-        self.get_stake_distribution_at_epoch(epoch).await
-    }
-
-    /// Update stake distribution
-    async fn update_stake_distribution(
-        &mut self,
-        stakes: &ProtocolStakeDistribution,
-    ) -> Result<(), ProtocolError> {
-        debug!("Update stake distribution"; "stakes" => #?stakes);
-        let epoch = self
-            .current_beacon
-            .as_ref()
-            .ok_or_else(ProtocolError::UnavailableBeacon)?
-            .epoch
-            .offset_to_recording_epoch();
-        let stakes = StakeDistribution::from_iter(stakes.iter().cloned());
-        self.stake_store.save_stakes(epoch, stakes).await?;
-
-        Ok(())
-    }
-
     /// Compute aggregate verification key from stake distribution
     async fn compute_aggregate_verification_key(
         &self,
@@ -513,93 +413,27 @@ impl MultiSigner for MultiSignerImpl {
         }
     }
 
-    /// Get signer verification key
-    async fn get_signer_verification_key(
+    async fn get_signers_with_stake(
         &self,
-        party_id: ProtocolPartyId,
-    ) -> Result<Option<ProtocolSignerVerificationKey>, ProtocolError> {
-        debug!("Get signer {}", party_id);
-        let epoch = self
-            .current_beacon
-            .as_ref()
-            .ok_or_else(ProtocolError::UnavailableBeacon)?
-            .epoch
-            .offset_to_signer_retrieval_epoch()?;
-        let signers = self
-            .verification_key_store
-            .get_verification_keys(epoch)
-            .await?
-            .unwrap_or_default();
-        match signers.get(&party_id) {
-            Some(signer) => Ok(Some(
-                key_decode_hex(&signer.verification_key).map_err(ProtocolError::Codec)?,
-            )),
-            _ => Ok(None),
-        }
-    }
-
-    async fn get_signers_with_stake(&self) -> Result<Vec<SignerWithStake>, ProtocolError> {
+        epoch: Epoch,
+        stake_distribution: &StakeDistribution,
+    ) -> Result<Vec<SignerWithStake>, ProtocolError> {
         debug!("Get signers with stake");
-        let epoch = self
-            .current_beacon
-            .as_ref()
-            .ok_or_else(ProtocolError::UnavailableBeacon)?
-            .epoch
-            .offset_to_signer_retrieval_epoch()?;
         let signers = self
             .verification_key_store
             .get_verification_keys(epoch)
             .await?
             .unwrap_or_default();
-        Ok(self
-            .get_stake_distribution()
-            .await?
+        let signers_with_stake = stake_distribution
             .iter()
             .filter_map(|(party_id, stake)| {
-                signers.get(party_id).map(|signer| {
-                    SignerWithStake::new(
-                        party_id.to_owned(),
-                        signer.verification_key.to_owned(),
-                        signer.verification_key_signature.to_owned(),
-                        signer.operational_certificate.to_owned(),
-                        signer.kes_period.to_owned(),
-                        *stake,
-                    )
-                })
+                signers
+                    .get(party_id)
+                    .map(|signer| SignerWithStake::from_signer(signer.clone(), *stake))
             })
-            .collect())
-    }
+            .collect();
 
-    async fn get_next_signers_with_stake(&self) -> Result<Vec<SignerWithStake>, ProtocolError> {
-        debug!("Get next signers with stake");
-        let epoch = self
-            .current_beacon
-            .as_ref()
-            .ok_or_else(ProtocolError::UnavailableBeacon)?
-            .epoch
-            .offset_to_next_signer_retrieval_epoch();
-        let signers = self
-            .verification_key_store
-            .get_verification_keys(epoch)
-            .await?
-            .unwrap_or_default();
-        Ok(self
-            .get_next_stake_distribution()
-            .await?
-            .iter()
-            .filter_map(|(party_id, stake)| {
-                signers.get(party_id).map(|signer| {
-                    SignerWithStake::new(
-                        party_id.to_owned(),
-                        signer.verification_key.to_owned(),
-                        signer.verification_key_signature.to_owned(),
-                        signer.operational_certificate.to_owned(),
-                        signer.kes_period.to_owned(),
-                        *stake,
-                    )
-                })
-            })
-            .collect())
+        Ok(signers_with_stake)
     }
 
     /// Registers a single signature
@@ -703,6 +537,7 @@ impl MultiSigner for MultiSignerImpl {
             .clerk
             .as_ref()
             .ok_or_else(ProtocolError::UnavailableClerk)?;
+
         match clerk.aggregate(&signatures, message.compute_hash().as_bytes()) {
             Ok(multi_signature) => {
                 self.avk = Some(clerk.compute_avk());
@@ -727,7 +562,7 @@ mod tests {
     };
     use mithril_common::{
         crypto_helper::tests_setup::*,
-        store::{adapter::MemoryAdapter, StakeStore},
+        store::adapter::MemoryAdapter,
         test_utils::{fake_data, MithrilFixtureBuilder},
     };
     use std::{collections::HashMap, sync::Arc};
@@ -739,10 +574,6 @@ mod tests {
                 MemoryAdapter::<Epoch, HashMap<entities::PartyId, entities::Signer>>::new(None)
                     .unwrap(),
             ),
-            None,
-        );
-        let stake_store = StakeStore::new(
-            Box::new(MemoryAdapter::<Epoch, StakeDistribution>::new(None).unwrap()),
             None,
         );
         let single_signature_store = SingleSignatureStore::new(
@@ -777,7 +608,6 @@ mod tests {
         );
         let mut multi_signer = MultiSignerImpl::new(
             Arc::new(verification_key_store),
-            Arc::new(stake_store),
             Arc::new(single_signature_store),
             Arc::new(protocol_parameters_store),
         );
@@ -819,10 +649,15 @@ mod tests {
     #[tokio::test]
     async fn test_multi_signer_current_message_ok() {
         let mut multi_signer = setup_multi_signer().await;
-
+        let fixture = MithrilFixtureBuilder::default().with_signers(5).build();
+        let stake_distribution = fixture.stake_distribution();
         let current_message_expected = setup_message();
         multi_signer
-            .update_current_message(current_message_expected.clone())
+            .update_current_message(
+                Epoch(1),
+                current_message_expected.clone(),
+                &stake_distribution,
+            )
             .await
             .expect("update current message failed");
 
@@ -860,45 +695,6 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_multi_signer_stake_distribution_ok() {
-        let mut multi_signer = setup_multi_signer().await;
-        let fixture = MithrilFixtureBuilder::default().with_signers(5).build();
-        let mut stake_distribution_expected = fixture.protocol_stake_distribution();
-
-        stake_distribution_expected.sort_by_key(|k| k.0.clone());
-        multi_signer
-            .update_stake_distribution(&stake_distribution_expected)
-            .await
-            .expect("update stake distribution failed");
-
-        offset_epoch(
-            &mut multi_signer,
-            Epoch::SIGNER_RECORDING_OFFSET as i64 - Epoch::SIGNER_RETRIEVAL_OFFSET,
-        )
-        .await;
-
-        let mut stake_distribution = multi_signer
-            .get_stake_distribution()
-            .await
-            .expect("get state distribution failed");
-        stake_distribution.sort_by_key(|k| k.0.clone());
-        let stake_distribution_next_expected = multi_signer
-            .get_next_stake_distribution()
-            .await
-            .expect("get next state distribution failed");
-        assert_eq!(stake_distribution_expected, stake_distribution);
-
-        offset_epoch(&mut multi_signer, 1).await;
-
-        let mut stake_distribution = multi_signer
-            .get_stake_distribution()
-            .await
-            .expect("get state distribution failed");
-        stake_distribution.sort_by_key(|k| k.0.clone());
-        assert_eq!(stake_distribution_next_expected, stake_distribution);
-    }
-
-    #[tokio::test]
     async fn test_multi_signer_multi_signature_ok() {
         let mut multi_signer = setup_multi_signer().await;
         let verification_key_store = multi_signer.verification_key_store.clone();
@@ -912,13 +708,8 @@ mod tests {
             .expect("update protocol parameters failed");
 
         let fixture = MithrilFixtureBuilder::default().with_signers(5).build();
+        let stake_distribution = fixture.stake_distribution();
 
-        let stake_distribution = fixture.protocol_stake_distribution();
-
-        multi_signer
-            .update_stake_distribution(&stake_distribution)
-            .await
-            .expect("update stake distribution failed");
         for signer_with_stake in &fixture.signers_with_stake() {
             verification_key_store
                 .save_verification_key(
@@ -928,6 +719,9 @@ mod tests {
                 .await
                 .expect("register should have succeeded");
         }
+        let epoch = start_epoch
+            .offset_by(Epoch::SIGNER_RECORDING_OFFSET as i64 - Epoch::SIGNER_RETRIEVAL_OFFSET)
+            .unwrap();
 
         offset_epoch(
             &mut multi_signer,
@@ -939,12 +733,12 @@ mod tests {
         // hence the multisigner be able to create a Clerk and being able to
         // register single signatures
         multi_signer
-            .update_current_message(message.clone())
+            .update_current_message(epoch, message.clone(), &stake_distribution)
             .await
             .expect("update current message failed");
         let mut signatures = Vec::new();
-
         let mut expected_certificate_signers: Vec<SignerWithStake> = Vec::new();
+
         for signer_fixture in fixture.signers_fixture() {
             if let Some(signature) = signer_fixture
                 .protocol_signer
