@@ -737,10 +737,19 @@
 <a href="#737" id="737">737</a>
 <a href="#738" id="738">738</a>
 <a href="#739" id="739">739</a>
+<a href="#740" id="740">740</a>
+<a href="#741" id="741">741</a>
+<a href="#742" id="742">742</a>
+<a href="#743" id="743">743</a>
+<a href="#744" id="744">744</a>
+<a href="#745" id="745">745</a>
 </pre><pre class="rust"><code><span class="kw">use </span>slog_scope::{crit, debug, error, info};
 <span class="kw">use </span>std::{fmt::Display, thread::sleep, time::Duration};
 
-<span class="kw">use </span>mithril_common::entities::{Beacon, CertificatePending, Epoch, EpochSettings, SignerWithStake};
+<span class="kw">use </span>mithril_common::{
+    crypto_helper::ProtocolInitializerError,
+    entities::{Beacon, CertificatePending, Epoch, EpochSettings, SignerWithStake},
+};
 
 <span class="kw">use super</span>::{Runner, RuntimeError};
 
@@ -1043,15 +1052,18 @@
             </span>.map_err(|e| RuntimeError::KeepState {
                 message: <span class="macro">format!</span>(<span class="string">&quot;Could not update stake distribution in &#39;unregistered → registered&#39; phase for epoch {:?}.&quot;</span>, beacon.epoch),
                 nested_error: <span class="prelude-val">Some</span>(e) })<span class="question-mark">?</span>;
-        <span class="self">self</span>.runner
-            .register_signer_to_aggregator(
-                epoch_settings.epoch,
-                <span class="kw-2">&amp;</span>epoch_settings.next_protocol_parameters,
-            )
-            .<span class="kw">await
-            </span>.map_err(|e| RuntimeError::KeepState {
-                message: <span class="macro">format!</span>(<span class="string">&quot;Could not register to aggregator in &#39;unregistered → registered&#39; phase for epoch {:?}.&quot;</span>, beacon.epoch),
-                nested_error: <span class="prelude-val">Some</span>(e) })<span class="question-mark">?</span>;
+
+        <span class="self">self</span>.runner. register_signer_to_aggregator(
+            epoch_settings.epoch,
+            <span class="kw-2">&amp;</span>epoch_settings.next_protocol_parameters,
+        )
+        .<span class="kw">await</span>.map_err(|e| {
+            <span class="kw">if </span>e.downcast_ref::&lt;ProtocolInitializerError&gt;().is_some(){
+                RuntimeError::Critical { message: <span class="macro">format!</span>(<span class="string">&quot;Could not register to aggregator in &#39;unregistered → registered&#39; phase for epoch {:?}.&quot;</span>, beacon.epoch), nested_error: <span class="prelude-val">Some</span>(e) }
+            }<span class="kw">else</span>{
+                RuntimeError::KeepState { message: <span class="macro">format!</span>(<span class="string">&quot;Could not register to aggregator in &#39;unregistered → registered&#39; phase for epoch {:?}.&quot;</span>, beacon.epoch), nested_error: <span class="prelude-val">Some</span>(e) }
+            }
+        })<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(SignerState::Registered { beacon })
     }
