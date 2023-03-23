@@ -356,12 +356,24 @@
 <a href="#356" id="356">356</a>
 <a href="#357" id="357">357</a>
 <a href="#358" id="358">358</a>
+<a href="#359" id="359">359</a>
+<a href="#360" id="360">360</a>
+<a href="#361" id="361">361</a>
+<a href="#362" id="362">362</a>
+<a href="#363" id="363">363</a>
+<a href="#364" id="364">364</a>
+<a href="#365" id="365">365</a>
+<a href="#366" id="366">366</a>
+<a href="#367" id="367">367</a>
 </pre><pre class="rust"><code><span class="kw">use </span>chrono::Local;
 <span class="kw">use </span>slog::{debug, error};
 <span class="kw">use </span>slog::{info, Logger};
 <span class="kw">use </span>sqlite::Connection;
+<span class="kw">use </span>tokio::sync::Mutex;
 
-<span class="kw">use </span>std::{cmp::Ordering, collections::BTreeSet, path::PathBuf};
+<span class="kw">use </span>std::ops::Deref;
+<span class="kw">use </span>std::sync::Arc;
+<span class="kw">use </span>std::{cmp::Ordering, collections::BTreeSet};
 
 <span class="kw">use </span><span class="kw">crate</span>::StdError;
 
@@ -371,10 +383,9 @@
 };
 
 <span class="doccomment">/// Struct to perform application version check in the database.
-</span><span class="attr">#[derive(Debug)]
 </span><span class="kw">pub struct </span>DatabaseVersionChecker {
     <span class="doccomment">/// Pathbuf to the SQLite3 file.
-    </span>sqlite_file_path: PathBuf,
+    </span>connection: Arc&lt;Mutex&lt;Connection&gt;&gt;,
 
     <span class="doccomment">/// Application type which vesion is verified.
     </span>application_type: ApplicationNodeType,
@@ -391,12 +402,12 @@
     </span><span class="kw">pub fn </span>new(
         logger: Logger,
         application_type: ApplicationNodeType,
-        sqlite_file_path: PathBuf,
+        connection: Arc&lt;Mutex&lt;Connection&gt;&gt;,
     ) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span>migrations = BTreeSet::new();
 
         <span class="self">Self </span>{
-            sqlite_file_path,
+            connection,
             application_type,
             logger,
             migrations,
@@ -410,18 +421,14 @@
         <span class="self">self
     </span>}
 
-    <span class="doccomment">/// Performs an actual version check in the database. This method creates a
-    /// connection to the SQLite3 file and drops it at the end.
-    </span><span class="kw">pub fn </span>apply(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), StdError&gt; {
-        <span class="macro">debug!</span>(
-            <span class="kw-2">&amp;</span><span class="self">self</span>.logger,
-            <span class="string">&quot;check database version, database file = &#39;{}&#39;&quot;</span>,
-            <span class="self">self</span>.sqlite_file_path.display()
-        );
-        <span class="kw">let </span>connection = Connection::open(<span class="kw-2">&amp;</span><span class="self">self</span>.sqlite_file_path)<span class="question-mark">?</span>;
-        <span class="kw">let </span>provider = DatabaseVersionProvider::new(<span class="kw-2">&amp;</span>connection);
+    <span class="doccomment">/// Apply migrations
+    </span><span class="kw">pub async fn </span>apply(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), StdError&gt; {
+        <span class="macro">debug!</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.logger, <span class="string">&quot;check database version&quot;</span>,);
+        <span class="kw">let </span>lock = <span class="self">self</span>.connection.lock().<span class="kw">await</span>;
+        <span class="kw">let </span>connection = lock.deref();
+        <span class="kw">let </span>provider = DatabaseVersionProvider::new(connection);
         provider.create_table_if_not_exists(<span class="kw-2">&amp;</span><span class="self">self</span>.application_type)<span class="question-mark">?</span>;
-        <span class="kw">let </span>updater = DatabaseVersionUpdater::new(<span class="kw-2">&amp;</span>connection);
+        <span class="kw">let </span>updater = DatabaseVersionUpdater::new(connection);
         <span class="kw">let </span>db_version = provider
             .get_application_version(<span class="kw-2">&amp;</span><span class="self">self</span>.application_type)<span class="question-mark">?
             </span>.unwrap(); <span class="comment">// At least a record exists.
@@ -438,7 +445,7 @@
                     <span class="string">&quot;Database needs upgrade from version &#39;{}&#39; to version &#39;{}&#39;, applying new migrations…&quot;</span>,
                     db_version.version, migration_version
                 );
-                <span class="self">self</span>.apply_migrations(<span class="kw-2">&amp;</span>db_version, <span class="kw-2">&amp;</span>updater, <span class="kw-2">&amp;</span>connection)<span class="question-mark">?</span>;
+                <span class="self">self</span>.apply_migrations(<span class="kw-2">&amp;</span>db_version, <span class="kw-2">&amp;</span>updater, connection)<span class="question-mark">?</span>;
                 <span class="macro">info!</span>(
                     <span class="kw-2">&amp;</span><span class="self">self</span>.logger,
                     <span class="string">&quot;database upgraded to version &#39;{}&#39;&quot;</span>, migration_version
@@ -529,11 +536,13 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
+    <span class="kw">use </span>std::path::PathBuf;
+
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
-    <span class="kw">fn </span>check_database_version(filepath: <span class="kw-2">&amp;</span>PathBuf, db_version: DbVersion) {
-        <span class="kw">let </span>connection = Connection::open(filepath).unwrap();
-        <span class="kw">let </span>provider = DatabaseVersionProvider::new(<span class="kw-2">&amp;</span>connection);
+    <span class="kw">async fn </span>check_database_version(connection: Arc&lt;Mutex&lt;Connection&gt;&gt;, db_version: DbVersion) {
+        <span class="kw">let </span>lock = connection.lock().<span class="kw">await</span>;
+        <span class="kw">let </span>provider = DatabaseVersionProvider::new(lock.deref());
         <span class="kw">let </span>version = provider
             .get_application_version(<span class="kw-2">&amp;</span>ApplicationNodeType::Aggregator)
             .unwrap()
@@ -542,7 +551,7 @@
         <span class="macro">assert_eq!</span>(db_version, version.version);
     }
 
-    <span class="kw">fn </span>create_sqlite_file(name: <span class="kw-2">&amp;</span>str) -&gt; PathBuf {
+    <span class="kw">fn </span>create_sqlite_file(name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;(PathBuf, Connection), StdError&gt; {
         <span class="kw">let </span>dirpath = std::env::temp_dir().join(<span class="string">&quot;mithril_test_database&quot;</span>);
         std::fs::create_dir_all(<span class="kw-2">&amp;</span>dirpath).unwrap();
         <span class="kw">let </span>filepath = dirpath.join(name);
@@ -551,11 +560,14 @@
             std::fs::remove_file(filepath.as_path()).unwrap();
         }
 
-        filepath
+        <span class="kw">let </span>connection = Connection::open(<span class="kw-2">&amp;</span>filepath).map_err(|e| -&gt; StdError { e.into() })<span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>((filepath, connection))
     }
 
-    <span class="kw">fn </span>get_table_whatever_column_count(filepath: <span class="kw-2">&amp;</span>PathBuf) -&gt; i64 {
-        <span class="kw">let </span>connection = Connection::open(filepath).unwrap();
+    <span class="kw">async fn </span>get_table_whatever_column_count(cnt_mutex: Arc&lt;Mutex&lt;Connection&gt;&gt;) -&gt; i64 {
+        <span class="kw">let </span>lock = cnt_mutex.lock().<span class="kw">await</span>;
+        <span class="kw">let </span>connection = lock.deref();
         <span class="kw">let </span>sql = <span class="string">&quot;select count(*) as column_count from pragma_table_info(&#39;whatever&#39;);&quot;</span>;
         <span class="kw">let </span>column_count = connection
             .prepare(sql)
@@ -571,20 +583,22 @@
         column_count
     }
 
-    <span class="attr">#[test]
-    </span><span class="kw">fn </span>test_upgrade_with_migration() {
-        <span class="kw">let </span>filepath = create_sqlite_file(<span class="string">&quot;test_upgrade_with_migration.sqlite3&quot;</span>);
+    <span class="attr">#[tokio::test]
+    </span><span class="kw">async fn </span>test_upgrade_with_migration() {
+        <span class="kw">let </span>(_filepath, connection) =
+            create_sqlite_file(<span class="string">&quot;test_upgrade_with_migration.sqlite3&quot;</span>).unwrap();
+        <span class="kw">let </span>connection = Arc::new(Mutex::new(connection));
         <span class="kw">let </span><span class="kw-2">mut </span>db_checker = DatabaseVersionChecker::new(
             slog_scope::logger(),
             ApplicationNodeType::Aggregator,
-            filepath.clone(),
+            connection.clone(),
         );
 
-        db_checker.apply().unwrap();
-        <span class="macro">assert_eq!</span>(<span class="number">0</span>, get_table_whatever_column_count(<span class="kw-2">&amp;</span>filepath));
+        db_checker.apply().<span class="kw">await</span>.unwrap();
+        <span class="macro">assert_eq!</span>(<span class="number">0</span>, get_table_whatever_column_count(connection.clone()).<span class="kw">await</span>);
 
-        db_checker.apply().unwrap();
-        <span class="macro">assert_eq!</span>(<span class="number">0</span>, get_table_whatever_column_count(<span class="kw-2">&amp;</span>filepath));
+        db_checker.apply().<span class="kw">await</span>.unwrap();
+        <span class="macro">assert_eq!</span>(<span class="number">0</span>, get_table_whatever_column_count(connection.clone()).<span class="kw">await</span>);
 
         <span class="kw">let </span>alterations = <span class="string">&quot;create table whatever (thing_id integer); insert into whatever (thing_id) values (1), (2), (3), (4);&quot;</span>;
         <span class="kw">let </span>migration = SqlMigration {
@@ -592,13 +606,13 @@
             alterations: alterations.to_string(),
         };
         db_checker.add_migration(migration);
-        db_checker.apply().unwrap();
-        <span class="macro">assert_eq!</span>(<span class="number">1</span>, get_table_whatever_column_count(<span class="kw-2">&amp;</span>filepath));
-        check_database_version(<span class="kw-2">&amp;</span>filepath, <span class="number">1</span>);
+        db_checker.apply().<span class="kw">await</span>.unwrap();
+        <span class="macro">assert_eq!</span>(<span class="number">1</span>, get_table_whatever_column_count(connection.clone()).<span class="kw">await</span>);
+        check_database_version(connection.clone(), <span class="number">1</span>).<span class="kw">await</span>;
 
-        db_checker.apply().unwrap();
-        <span class="macro">assert_eq!</span>(<span class="number">1</span>, get_table_whatever_column_count(<span class="kw-2">&amp;</span>filepath));
-        check_database_version(<span class="kw-2">&amp;</span>filepath, <span class="number">1</span>);
+        db_checker.apply().<span class="kw">await</span>.unwrap();
+        <span class="macro">assert_eq!</span>(<span class="number">1</span>, get_table_whatever_column_count(connection.clone()).<span class="kw">await</span>);
+        check_database_version(connection.clone(), <span class="number">1</span>).<span class="kw">await</span>;
 
         <span class="kw">let </span>alterations = <span class="string">&quot;alter table whatever add column thing_content text; update whatever set thing_content = &#39;some content&#39;&quot;</span>;
         <span class="kw">let </span>migration = SqlMigration {
@@ -606,9 +620,9 @@
             alterations: alterations.to_string(),
         };
         db_checker.add_migration(migration);
-        db_checker.apply().unwrap();
-        <span class="macro">assert_eq!</span>(<span class="number">2</span>, get_table_whatever_column_count(<span class="kw-2">&amp;</span>filepath));
-        check_database_version(<span class="kw-2">&amp;</span>filepath, <span class="number">2</span>);
+        db_checker.apply().<span class="kw">await</span>.unwrap();
+        <span class="macro">assert_eq!</span>(<span class="number">2</span>, get_table_whatever_column_count(connection.clone()).<span class="kw">await</span>);
+        check_database_version(connection.clone(), <span class="number">2</span>).<span class="kw">await</span>;
 
         <span class="comment">// in the test below both migrations are declared in reversed order to
         // ensure they are played in the right order. The last one depends on
@@ -625,18 +639,20 @@
             alterations: alterations.to_string(),
         };
         db_checker.add_migration(migration);
-        db_checker.apply().unwrap();
-        <span class="macro">assert_eq!</span>(<span class="number">4</span>, get_table_whatever_column_count(<span class="kw-2">&amp;</span>filepath));
-        check_database_version(<span class="kw-2">&amp;</span>filepath, <span class="number">4</span>);
+        db_checker.apply().<span class="kw">await</span>.unwrap();
+        <span class="macro">assert_eq!</span>(<span class="number">4</span>, get_table_whatever_column_count(connection.clone()).<span class="kw">await</span>);
+        check_database_version(connection, <span class="number">4</span>).<span class="kw">await</span>;
     }
 
-    <span class="attr">#[test]
-    </span><span class="kw">fn </span>starting_with_migration() {
-        <span class="kw">let </span>filepath = create_sqlite_file(<span class="string">&quot;starting_with_migration.sqlite3&quot;</span>);
+    <span class="attr">#[tokio::test]
+    </span><span class="kw">async fn </span>starting_with_migration() {
+        <span class="kw">let </span>(_filepath, connection) =
+            create_sqlite_file(<span class="string">&quot;starting_with_migration.sqlite3&quot;</span>).unwrap();
+        <span class="kw">let </span>connection = Arc::new(Mutex::new(connection));
         <span class="kw">let </span><span class="kw-2">mut </span>db_checker = DatabaseVersionChecker::new(
             slog_scope::logger(),
             ApplicationNodeType::Aggregator,
-            filepath.clone(),
+            connection.clone(),
         );
 
         <span class="kw">let </span>alterations = <span class="string">&quot;create table whatever (thing_id integer); insert into whatever (thing_id) values (1), (2), (3), (4);&quot;</span>;
@@ -645,21 +661,22 @@
             alterations: alterations.to_string(),
         };
         db_checker.add_migration(migration);
-        db_checker.apply().unwrap();
-        <span class="macro">assert_eq!</span>(<span class="number">1</span>, get_table_whatever_column_count(<span class="kw-2">&amp;</span>filepath));
-        check_database_version(<span class="kw-2">&amp;</span>filepath, <span class="number">1</span>);
+        db_checker.apply().<span class="kw">await</span>.unwrap();
+        <span class="macro">assert_eq!</span>(<span class="number">1</span>, get_table_whatever_column_count(connection.clone()).<span class="kw">await</span>);
+        check_database_version(connection, <span class="number">1</span>).<span class="kw">await</span>;
     }
 
-    <span class="attr">#[test]
+    <span class="attr">#[tokio::test]
     </span><span class="doccomment">/// This test case ensure that when multiple migrations are played and one fails:
     /// * previous migrations are ok and the database version is updated
     /// * further migrations are not played.
-    </span><span class="kw">fn </span>test_failing_migration() {
-        <span class="kw">let </span>filepath = create_sqlite_file(<span class="string">&quot;test_failing_migration.sqlite3&quot;</span>);
+    </span><span class="kw">async fn </span>test_failing_migration() {
+        <span class="kw">let </span>(_filepath, connection) = create_sqlite_file(<span class="string">&quot;test_failing_migration.sqlite3&quot;</span>).unwrap();
+        <span class="kw">let </span>connection = Arc::new(Mutex::new(connection));
         <span class="kw">let </span><span class="kw-2">mut </span>db_checker = DatabaseVersionChecker::new(
             slog_scope::logger(),
             ApplicationNodeType::Aggregator,
-            filepath.clone(),
+            connection.clone(),
         );
         <span class="comment">// Table whatever does not exist, this should fail with error.
         </span><span class="kw">let </span>alterations = <span class="string">&quot;create table whatever (thing_id integer); insert into whatever (thing_id) values (1), (2), (3), (4);&quot;</span>;
@@ -680,17 +697,18 @@
             alterations: alterations.to_string(),
         };
         db_checker.add_migration(migration);
-        db_checker.apply().unwrap_err();
-        check_database_version(<span class="kw-2">&amp;</span>filepath, <span class="number">1</span>);
+        db_checker.apply().<span class="kw">await</span>.unwrap_err();
+        check_database_version(connection, <span class="number">1</span>).<span class="kw">await</span>;
     }
 
-    <span class="attr">#[test]
-    </span><span class="kw">fn </span>test_fail_downgrading() {
-        <span class="kw">let </span>filepath = create_sqlite_file(<span class="string">&quot;test_fail_downgrading.sqlite3&quot;</span>);
+    <span class="attr">#[tokio::test]
+    </span><span class="kw">async fn </span>test_fail_downgrading() {
+        <span class="kw">let </span>(_filepath, connection) = create_sqlite_file(<span class="string">&quot;test_fail_downgrading.sqlite3&quot;</span>).unwrap();
+        <span class="kw">let </span>connection = Arc::new(Mutex::new(connection));
         <span class="kw">let </span><span class="kw-2">mut </span>db_checker = DatabaseVersionChecker::new(
             slog_scope::logger(),
             ApplicationNodeType::Aggregator,
-            filepath.clone(),
+            connection.clone(),
         );
         <span class="kw">let </span>alterations = <span class="string">&quot;create table whatever (thing_id integer); insert into whatever (thing_id) values (1), (2), (3), (4);&quot;</span>;
         <span class="kw">let </span>migration = SqlMigration {
@@ -698,20 +716,20 @@
             alterations: alterations.to_string(),
         };
         db_checker.add_migration(migration);
-        db_checker.apply().unwrap();
-        check_database_version(<span class="kw-2">&amp;</span>filepath, <span class="number">1</span>);
+        db_checker.apply().<span class="kw">await</span>.unwrap();
+        check_database_version(connection.clone(), <span class="number">1</span>).<span class="kw">await</span>;
 
         <span class="comment">// re instanciate a new checker with no migration registered (version 0).
         </span><span class="kw">let </span>db_checker = DatabaseVersionChecker::new(
             slog_scope::logger(),
             ApplicationNodeType::Aggregator,
-            filepath.clone(),
+            connection.clone(),
         );
         <span class="macro">assert!</span>(
-            db_checker.apply().is_err(),
+            db_checker.apply().<span class="kw">await</span>.is_err(),
             <span class="string">&quot;using an old version with an up to date database should fail&quot;
         </span>);
-        check_database_version(<span class="kw-2">&amp;</span>filepath, <span class="number">1</span>);
+        check_database_version(connection, <span class="number">1</span>).<span class="kw">await</span>;
     }
 }
 </code></pre></div>

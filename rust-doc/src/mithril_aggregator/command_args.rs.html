@@ -806,21 +806,24 @@
 <a href="#806" id="806">806</a>
 <a href="#807" id="807">807</a>
 <a href="#808" id="808">808</a>
+<a href="#809" id="809">809</a>
+<a href="#810" id="810">810</a>
+<a href="#811" id="811">811</a>
+<a href="#812" id="812">812</a>
+<a href="#813" id="813">813</a>
+<a href="#814" id="814">814</a>
+<a href="#815" id="815">815</a>
+<a href="#816" id="816">816</a>
+<a href="#817" id="817">817</a>
+<a href="#818" id="818">818</a>
 </pre><pre class="rust"><code><span class="kw">use </span>clap::{Parser, Subcommand};
 <span class="kw">use </span>config::{builder::DefaultState, ConfigBuilder, Map, Source, Value, ValueKind};
 <span class="kw">use </span>slog::Level;
 <span class="kw">use </span>slog_scope::{crit, debug, info};
 <span class="kw">use </span>sqlite::Connection;
-<span class="kw">use </span>std::{
-    error::Error,
-    ffi::OsStr,
-    fs,
-    net::IpAddr,
-    path::PathBuf,
-    sync::{Arc, Mutex},
-};
+<span class="kw">use </span>std::{error::Error, ffi::OsStr, fs, net::IpAddr, path::PathBuf, sync::Arc};
 <span class="kw">use </span>tokio::{
-    sync::{oneshot, RwLock},
+    sync::{oneshot, Mutex, RwLock},
     task::JoinSet,
     time::Duration,
 };
@@ -848,6 +851,7 @@
     database::provider::StakePoolStore,
     event_store::{<span class="self">self</span>, TransmitterService},
     http_server::routes::router,
+    stake_distribution_service::MithrilStakeDistributionService,
     tools::{EraTools, GenesisTools, GenesisToolsDependency},
     AggregatorConfig, AggregatorRunner, AggregatorRuntime, CertificatePendingStore,
     CertificateStore, Configuration, DefaultConfiguration, DependencyManager, GenesisConfiguration,
@@ -857,12 +861,10 @@
 
 <span class="kw">const </span>SQLITE_MONITORING_FILE: <span class="kw-2">&amp;</span>str = <span class="string">&quot;monitoring.sqlite3&quot;</span>;
 
-<span class="kw">fn </span>setup_genesis_dependencies(
+<span class="kw">async fn </span>setup_genesis_dependencies(
     config: <span class="kw-2">&amp;</span>GenesisConfiguration,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;GenesisToolsDependency, Box&lt;<span class="kw">dyn </span>std::error::Error&gt;&gt; {
     <span class="kw">let </span>sqlite_db_path = <span class="prelude-val">Some</span>(config.get_sqlite_file());
-    check_database_migration(config.get_sqlite_file())<span class="question-mark">?</span>;
-
     <span class="kw">let </span>chain_observer = Arc::new(
         mithril_common::chain_observer::CardanoCliChainObserver::new(Box::new(
             CardanoCliRunner::new(
@@ -878,6 +880,11 @@
             .map(|path| path.as_os_str())
             .unwrap_or(OsStr::new(<span class="string">&quot;:memory:&quot;</span>)),
     )<span class="question-mark">?</span>));
+
+    <span class="comment">// DATABASE MIGRATION
+    </span>check_database_migration(sqlite_connection.clone()).<span class="kw">await</span><span class="question-mark">?</span>;
+
+    <span class="kw">let </span>stake_store = Arc::new(StakePoolStore::new(sqlite_connection.clone()));
     <span class="kw">let </span>immutable_file_observer = Arc::new(ImmutableFileSystemObserver::new(<span class="kw-2">&amp;</span>config.db_directory));
     <span class="kw">let </span>beacon_provider = Arc::new(BeaconProviderImpl::new(
         chain_observer,
@@ -907,7 +914,6 @@
         )<span class="question-mark">?</span>),
         config.store_retention_limit,
     ));
-    <span class="kw">let </span>stake_store = Arc::new(StakePoolStore::new(sqlite_connection.clone()));
     <span class="kw">let </span>single_signature_store = Arc::new(SingleSignatureStore::new(
         Box::new(SQLiteAdapter::new(<span class="string">&quot;single_signature&quot;</span>, sqlite_connection)<span class="question-mark">?</span>),
         config.store_retention_limit,
@@ -967,18 +973,23 @@
 
 <span class="doccomment">/// Database version checker.
 /// This is the place where migrations are to be registered.
-</span><span class="kw">fn </span>check_database_migration(sql_file_path: PathBuf) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>Error&gt;&gt; {
+</span><span class="kw">pub async fn </span>check_database_migration(
+    connection: Arc&lt;Mutex&lt;Connection&gt;&gt;,
+) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>Error&gt;&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>db_checker = DatabaseVersionChecker::new(
         slog_scope::logger(),
         ApplicationNodeType::Aggregator,
-        sql_file_path,
+        connection,
     );
 
     <span class="kw">for </span>migration <span class="kw">in </span><span class="kw">crate</span>::database::migration::get_migrations() {
         db_checker.add_migration(migration);
     }
 
-    db_checker.apply().map_err(|e| -&gt; Box&lt;<span class="kw">dyn </span>Error&gt; { e })
+    db_checker
+        .apply()
+        .<span class="kw">await
+        </span>.map_err(|e| -&gt; Box&lt;<span class="kw">dyn </span>Error&gt; { e })
 }
 
 <span class="doccomment">/// Mithril Aggregator Node
@@ -1153,11 +1164,14 @@
             </span>.try_deserialize()
             .map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;configuration deserialize error: {e}&quot;</span>))<span class="question-mark">?</span>;
         <span class="macro">debug!</span>(<span class="string">&quot;SERVE command&quot;</span>; <span class="string">&quot;config&quot; </span>=&gt; <span class="macro">format!</span>(<span class="string">&quot;{config:?}&quot;</span>));
-        check_database_migration(config.get_sqlite_file())<span class="question-mark">?</span>;
 
         <span class="comment">// Init dependencies
         </span><span class="kw">let </span>sqlite_db_path = config.get_sqlite_file();
         <span class="kw">let </span>sqlite_connection = Arc::new(Mutex::new(Connection::open(sqlite_db_path)<span class="question-mark">?</span>));
+
+        <span class="comment">// DATABASE MIGRATION
+        </span>check_database_migration(sqlite_connection.clone()).<span class="kw">await</span><span class="question-mark">?</span>;
+
         <span class="kw">let </span>snapshot_store = Arc::new(LocalSnapshotStore::new(
             Box::new(SQLiteAdapter::new(<span class="string">&quot;snapshot&quot;</span>, sqlite_connection.clone())<span class="question-mark">?</span>),
             LIST_SNAPSHOTS_MAX_ITEMS,
@@ -1178,7 +1192,6 @@
             )<span class="question-mark">?</span>),
             config.store_retention_limit,
         ));
-        <span class="kw">let </span>stake_store = Arc::new(StakePoolStore::new(sqlite_connection.clone()));
         <span class="kw">let </span>single_signature_store = Arc::new(SingleSignatureStore::new(
             Box::new(SQLiteAdapter::new(
                 <span class="string">&quot;single_signature&quot;</span>,
@@ -1189,7 +1202,7 @@
         <span class="kw">let </span>protocol_parameters_store = Arc::new(ProtocolParametersStore::new(
             Box::new(SQLiteAdapter::new(
                 <span class="string">&quot;protocol_parameters&quot;</span>,
-                sqlite_connection,
+                sqlite_connection.clone(),
             )<span class="question-mark">?</span>),
             config.store_retention_limit,
         ));
@@ -1202,6 +1215,11 @@
                 ),
             )),
         );
+        <span class="kw">let </span>stake_store = Arc::new(StakePoolStore::new(sqlite_connection.clone()));
+        <span class="kw">let </span>stake_distribution_service = Arc::new(MithrilStakeDistributionService::new(
+            stake_store.clone(),
+            chain_observer.clone(),
+        ));
         <span class="kw">let </span>immutable_file_observer =
             Arc::new(ImmutableFileSystemObserver::new(<span class="kw-2">&amp;</span>config.db_directory));
         <span class="kw">let </span>beacon_provider = Arc::new(BeaconProviderImpl::new(
@@ -1260,13 +1278,14 @@
         <span class="comment">// Init dependency manager
         </span><span class="kw">let </span>dependency_manager = DependencyManager {
             config: config.clone(),
+            sqlite_connection,
+            stake_store,
             snapshot_store: snapshot_store.clone(),
             snapshot_uploader: snapshot_uploader.clone(),
             multi_signer: multi_signer.clone(),
             certificate_pending_store: certificate_pending_store.clone(),
             certificate_store: certificate_store.clone(),
             verification_key_store: verification_key_store.clone(),
-            stake_store: stake_store.clone(),
             single_signature_store: single_signature_store.clone(),
             protocol_parameters_store: protocol_parameters_store.clone(),
             chain_observer: chain_observer.clone(),
@@ -1282,6 +1301,7 @@
             era_reader: era_reader.clone(),
             event_transmitter,
             api_version_provider,
+            stake_distribution_service,
         };
         <span class="kw">let </span>dependency_manager = Arc::new(dependency_manager);
 
@@ -1441,7 +1461,7 @@
             <span class="string">&quot;Genesis export payload to sign to {}&quot;</span>,
             <span class="self">self</span>.target_path.display()
         );
-        <span class="kw">let </span>dependencies = setup_genesis_dependencies(<span class="kw-2">&amp;</span>config)<span class="question-mark">?</span>;
+        <span class="kw">let </span>dependencies = setup_genesis_dependencies(<span class="kw-2">&amp;</span>config).<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="kw">let </span>genesis_tools = GenesisTools::from_dependencies(dependencies).<span class="kw">await</span><span class="question-mark">?</span>;
         genesis_tools.export_payload_to_sign(<span class="kw-2">&amp;</span><span class="self">self</span>.target_path)
@@ -1470,7 +1490,7 @@
             <span class="string">&quot;Genesis import signed payload from {}&quot;</span>,
             <span class="self">self</span>.signed_payload_path.to_string_lossy()
         );
-        <span class="kw">let </span>dependencies = setup_genesis_dependencies(<span class="kw-2">&amp;</span>config)<span class="question-mark">?</span>;
+        <span class="kw">let </span>dependencies = setup_genesis_dependencies(<span class="kw-2">&amp;</span>config).<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="kw">let </span>genesis_tools = GenesisTools::from_dependencies(dependencies).<span class="kw">await</span><span class="question-mark">?</span>;
         genesis_tools
@@ -1498,7 +1518,7 @@
             .map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;configuration deserialize error: {e}&quot;</span>))<span class="question-mark">?</span>;
         <span class="macro">debug!</span>(<span class="string">&quot;BOOTSTRAP GENESIS command&quot;</span>; <span class="string">&quot;config&quot; </span>=&gt; <span class="macro">format!</span>(<span class="string">&quot;{config:?}&quot;</span>));
         <span class="macro">println!</span>(<span class="string">&quot;Genesis bootstrap for test only!&quot;</span>);
-        <span class="kw">let </span>dependencies = setup_genesis_dependencies(<span class="kw-2">&amp;</span>config)<span class="question-mark">?</span>;
+        <span class="kw">let </span>dependencies = setup_genesis_dependencies(<span class="kw-2">&amp;</span>config).<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="kw">let </span>genesis_tools = GenesisTools::from_dependencies(dependencies).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let </span>genesis_secret_key = key_decode_hex(<span class="kw-2">&amp;</span><span class="self">self</span>.genesis_secret_key)<span class="question-mark">?</span>;

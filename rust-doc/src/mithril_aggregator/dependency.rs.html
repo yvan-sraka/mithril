@@ -416,6 +416,29 @@
 <a href="#416" id="416">416</a>
 <a href="#417" id="417">417</a>
 <a href="#418" id="418">418</a>
+<a href="#419" id="419">419</a>
+<a href="#420" id="420">420</a>
+<a href="#421" id="421">421</a>
+<a href="#422" id="422">422</a>
+<a href="#423" id="423">423</a>
+<a href="#424" id="424">424</a>
+<a href="#425" id="425">425</a>
+<a href="#426" id="426">426</a>
+<a href="#427" id="427">427</a>
+<a href="#428" id="428">428</a>
+<a href="#429" id="429">429</a>
+<a href="#430" id="430">430</a>
+<a href="#431" id="431">431</a>
+<a href="#432" id="432">432</a>
+<a href="#433" id="433">433</a>
+<a href="#434" id="434">434</a>
+<a href="#435" id="435">435</a>
+<a href="#436" id="436">436</a>
+<a href="#437" id="437">437</a>
+<a href="#438" id="438">438</a>
+<a href="#439" id="439">439</a>
+<a href="#440" id="440">440</a>
+<a href="#441" id="441">441</a>
 </pre><pre class="rust"><code><span class="kw">use </span>mithril_common::{
     api_version::APIVersionProvider,
     certificate_chain::CertificateVerifier,
@@ -429,18 +452,22 @@
     store::StakeStorer,
     BeaconProvider,
 };
+<span class="kw">use </span>sqlite::Connection;
 
 <span class="kw">use </span>std::{collections::HashMap, sync::Arc};
-<span class="kw">use </span>tokio::sync::RwLock;
+<span class="kw">use </span>tokio::sync::{Mutex, RwLock};
 
-<span class="kw">use </span><span class="kw">crate</span>::snapshot_uploaders::SnapshotUploader;
 <span class="kw">use crate</span>::{
-    configuration::<span class="kw-2">*</span>, CertificatePendingStore, CertificateStore, ProtocolParametersStore,
-    ProtocolParametersStorer, SignerRegisterer, SignerRegistrationRoundOpener,
-    SingleSignatureStore, Snapshotter, VerificationKeyStore, VerificationKeyStorer,
+    configuration::<span class="kw-2">*</span>, database::provider::StakePoolStore, CertificatePendingStore,
+    CertificateStore, ProtocolParametersStore, ProtocolParametersStorer, SignerRegisterer,
+    SignerRegistrationRoundOpener, SingleSignatureStore, Snapshotter, VerificationKeyStore,
+    VerificationKeyStorer,
 };
 <span class="kw">use crate</span>::{event_store::EventMessage, snapshot_stores::SnapshotStore};
 <span class="kw">use crate</span>::{event_store::TransmitterService, multi_signer::MultiSigner};
+<span class="kw">use crate</span>::{
+    snapshot_uploaders::SnapshotUploader, stake_distribution_service::StakeDistributionService,
+};
 
 <span class="doccomment">/// MultiSignerWrapper wraps a MultiSigner
 </span><span class="kw">pub type </span>MultiSignerWrapper = Arc&lt;RwLock&lt;<span class="kw">dyn </span>MultiSigner&gt;&gt;;
@@ -449,6 +476,15 @@
 </span><span class="kw">pub struct </span>DependencyManager {
     <span class="doccomment">/// Configuration structure.
     </span><span class="kw">pub </span>config: Configuration,
+
+    <span class="doccomment">/// SQLite database connection
+    /// This is not a real service but is is needed to instanciate all store
+    /// services. Shall be private dependency.
+    </span><span class="kw">pub </span>sqlite_connection: Arc&lt;Mutex&lt;Connection&gt;&gt;,
+
+    <span class="doccomment">/// Stake Store used by the StakeDistributionService
+    /// It shall be a private dependency.
+    </span><span class="kw">pub </span>stake_store: Arc&lt;StakePoolStore&gt;,
 
     <span class="doccomment">/// Snapshot store.
     </span><span class="kw">pub </span>snapshot_store: Arc&lt;<span class="kw">dyn </span>SnapshotStore&gt;,
@@ -467,9 +503,6 @@
 
     <span class="doccomment">/// Verification key store.
     </span><span class="kw">pub </span>verification_key_store: Arc&lt;VerificationKeyStore&gt;,
-
-    <span class="doccomment">/// Stake store.
-    </span><span class="kw">pub </span>stake_store: Arc&lt;<span class="kw">dyn </span>StakeStorer&gt;,
 
     <span class="doccomment">/// Signer single signature store.
     </span><span class="kw">pub </span>single_signature_store: Arc&lt;SingleSignatureStore&gt;,
@@ -515,6 +548,9 @@
 
     <span class="doccomment">/// API Version provider
     </span><span class="kw">pub </span>api_version_provider: Arc&lt;APIVersionProvider&gt;,
+
+    <span class="doccomment">/// Stake Distribution Service
+    </span><span class="kw">pub </span>stake_distribution_service: Arc&lt;<span class="kw">dyn </span>StakeDistributionService&gt;,
 }
 
 <span class="attr">#[doc(hidden)]
@@ -585,7 +621,7 @@
 
         <span class="kw">for </span>(epoch, params) <span class="kw">in </span>parameters_per_epoch {
             <span class="self">self</span>.fill_verification_key_store(epoch, <span class="kw-2">&amp;</span>params.<span class="number">0</span>).<span class="kw">await</span>;
-            <span class="self">self</span>.fill_stakes_store(epoch, <span class="kw-2">&amp;</span>params.<span class="number">0</span>).<span class="kw">await</span>;
+            <span class="self">self</span>.fill_stakes_store(epoch, params.<span class="number">0</span>.to_vec()).<span class="kw">await</span>;
             <span class="self">self</span>.protocol_parameters_store
                 .save_protocol_parameters(epoch, params.<span class="number">1</span>)
                 .<span class="kw">await
@@ -633,7 +669,7 @@
             (epoch_to_sign, second_epoch_signers),
         ] {
             <span class="self">self</span>.fill_verification_key_store(epoch, <span class="kw-2">&amp;</span>signers).<span class="kw">await</span>;
-            <span class="self">self</span>.fill_stakes_store(epoch, <span class="kw-2">&amp;</span>signers).<span class="kw">await</span>;
+            <span class="self">self</span>.fill_stakes_store(epoch, signers).<span class="kw">await</span>;
         }
 
         <span class="self">self</span>.init_protocol_parameter_store(genesis_protocol_parameters)
@@ -670,8 +706,9 @@
         }
     }
 
-    <span class="kw">async fn </span>fill_stakes_store(<span class="kw-2">&amp;</span><span class="self">self</span>, target_epoch: Epoch, signers: <span class="kw-2">&amp;</span>[SignerWithStake]) {
-        <span class="self">self</span>.stake_store
+    <span class="kw">async fn </span>fill_stakes_store(<span class="kw-2">&amp;</span><span class="self">self</span>, target_epoch: Epoch, signers: Vec&lt;SignerWithStake&gt;) {
+        <span class="kw">let _ </span>= <span class="self">self
+            </span>.stake_store
             .save_stakes(
                 target_epoch,
                 signers
@@ -687,10 +724,13 @@
 <span class="attr">#[cfg(test)]
 </span><span class="kw">pub mod </span>tests {
     <span class="kw">use crate</span>::{
-        event_store::TransmitterService, AggregatorConfig, CertificatePendingStore,
-        CertificateStore, Configuration, DependencyManager, DumbSnapshotUploader, DumbSnapshotter,
-        LocalSnapshotStore, MithrilSignerRegisterer, MultiSignerImpl, ProtocolParametersStore,
-        SingleSignatureStore, SnapshotUploaderType, VerificationKeyStore,
+        check_database_migration, database::provider::StakePoolStore,
+        event_store::TransmitterService,
+        stake_distribution_service::MithrilStakeDistributionService, AggregatorConfig,
+        CertificatePendingStore, CertificateStore, Configuration, DependencyManager,
+        DumbSnapshotUploader, DumbSnapshotter, LocalSnapshotStore, MithrilSignerRegisterer,
+        MultiSignerImpl, ProtocolParametersStore, SingleSignatureStore, SnapshotUploaderType,
+        VerificationKeyStore,
     };
     <span class="kw">use </span>mithril_common::{
         api_version::APIVersionProvider,
@@ -702,14 +742,15 @@
             adapters::{EraReaderAdapterType, EraReaderBootstrapAdapter},
             EraChecker, EraReader,
         },
-        store::{adapter::MemoryAdapter, StakeStore},
+        store::adapter::MemoryAdapter,
         test_utils::fake_data,
         BeaconProvider, BeaconProviderImpl, CardanoNetwork,
     };
+    <span class="kw">use </span>sqlite::Connection;
     <span class="kw">use </span>std::{path::PathBuf, sync::Arc};
     <span class="kw">use </span>tokio::sync::{
         mpsc::{<span class="self">self</span>},
-        RwLock,
+        Mutex, RwLock,
     };
 
     <span class="kw">pub async fn </span>initialize_dependencies() -&gt; (DependencyManager, AggregatorConfig) {
@@ -737,6 +778,8 @@
             era_reader_adapter_type: EraReaderAdapterType::Bootstrap,
             era_reader_adapter_params: <span class="prelude-val">None</span>,
         };
+        <span class="kw">let </span>connection = Arc::new(Mutex::new(Connection::open(<span class="string">&quot;:memory:&quot;</span>).unwrap()));
+        check_database_migration(connection.clone()).<span class="kw">await</span>.unwrap();
         <span class="kw">let </span>snapshot_store = Arc::new(LocalSnapshotStore::new(
             Box::new(MemoryAdapter::new(<span class="prelude-val">None</span>).unwrap()),
             <span class="number">20</span>,
@@ -752,10 +795,6 @@
             Box::new(MemoryAdapter::new(<span class="prelude-val">None</span>).unwrap()),
             config.store_retention_limit,
         ));
-        <span class="kw">let </span>stake_store = Arc::new(StakeStore::new(
-            Box::new(MemoryAdapter::new(<span class="prelude-val">None</span>).unwrap()),
-            config.store_retention_limit,
-        ));
         <span class="kw">let </span>single_signature_store = Arc::new(SingleSignatureStore::new(
             Box::new(MemoryAdapter::new(<span class="prelude-val">None</span>).unwrap()),
             config.store_retention_limit,
@@ -764,9 +803,10 @@
             Box::new(MemoryAdapter::new(<span class="prelude-val">None</span>).unwrap()),
             <span class="prelude-val">None</span>,
         ));
+        <span class="kw">let </span>stake_pool_store = Arc::new(StakePoolStore::new(connection.clone()));
         <span class="kw">let </span>multi_signer = MultiSignerImpl::new(
             verification_key_store.clone(),
-            stake_store.clone(),
+            stake_pool_store.clone(),
             single_signature_store.clone(),
             protocol_parameters_store.clone(),
         );
@@ -777,6 +817,10 @@
             chain_observer.clone(),
             immutable_file_observer.clone(),
             CardanoNetwork::TestNet(<span class="number">42</span>),
+        ));
+        <span class="kw">let </span>stake_distribution_service = Arc::new(MithrilStakeDistributionService::new(
+            stake_pool_store.clone(),
+            chain_observer.clone(),
         ));
         <span class="kw">let </span>certificate_verifier = Arc::new(MithrilCertificateVerifier::new(slog_scope::logger()));
         <span class="kw">let </span>signer_registerer = Arc::new(MithrilSignerRegisterer::new(
@@ -800,6 +844,8 @@
         <span class="kw">let </span>api_version_provider = Arc::new(APIVersionProvider::new(era_checker.clone()));
 
         <span class="kw">let </span>dependency_manager = DependencyManager {
+            sqlite_connection: connection,
+            stake_store: stake_pool_store,
             config,
             snapshot_store,
             snapshot_uploader,
@@ -807,7 +853,6 @@
             certificate_pending_store,
             certificate_store,
             verification_key_store,
-            stake_store,
             single_signature_store,
             protocol_parameters_store,
             chain_observer,
@@ -823,6 +868,7 @@
             era_reader,
             event_transmitter,
             api_version_provider,
+            stake_distribution_service,
         };
 
         <span class="kw">let </span>config = AggregatorConfig::new(

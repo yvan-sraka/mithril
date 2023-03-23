@@ -314,17 +314,25 @@
 <a href="#314" id="314">314</a>
 <a href="#315" id="315">315</a>
 <a href="#316" id="316">316</a>
+<a href="#317" id="317">317</a>
+<a href="#318" id="318">318</a>
+<a href="#319" id="319">319</a>
+<a href="#320" id="320">320</a>
+<a href="#321" id="321">321</a>
+<a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
+<a href="#324" id="324">324</a>
+<a href="#325" id="325">325</a>
 </pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>sqlite::Connection;
-<span class="kw">use </span>std::{
-    fs,
-    sync::{Arc, Mutex},
-};
+<span class="kw">use </span>std::{fs, sync::Arc};
+<span class="kw">use </span>tokio::sync::Mutex;
 
 <span class="kw">use </span>mithril_common::{
     api_version::APIVersionProvider,
     chain_observer::{CardanoCliChainObserver, CardanoCliRunner, ChainObserver},
     crypto_helper::{OpCert, ProtocolPartyId, SerDeShelleyFileFormat},
+    database::{ApplicationNodeType, DatabaseVersionChecker},
     digesters::{
         cache::{ImmutableFileDigestCacheProvider, JsonImmutableFileDigestCacheProviderBuilder},
         ImmutableFileObserver,
@@ -461,6 +469,16 @@
 
         <span class="kw">let </span>sqlite_db_path = <span class="self">self</span>.config.get_sqlite_file();
         <span class="kw">let </span>sqlite_connection = Arc::new(Mutex::new(Connection::open(sqlite_db_path)<span class="question-mark">?</span>));
+        DatabaseVersionChecker::new(
+            slog_scope::logger(),
+            ApplicationNodeType::Signer,
+            sqlite_connection.clone(),
+        )
+        .apply()
+        .<span class="kw">await
+        </span>.map_err(|e| -&gt; Box&lt;<span class="kw">dyn </span>std::error::Error&gt; {
+            <span class="macro">format!</span>(<span class="string">&quot;Database migration error {e}&quot;</span>).into()
+        })<span class="question-mark">?</span>;
         <span class="kw">let </span>protocol_initializer_store = Arc::new(ProtocolInitializerStore::new(
             Box::new(SQLiteAdapter::new(
                 <span class="string">&quot;protocol_initializer&quot;</span>,
