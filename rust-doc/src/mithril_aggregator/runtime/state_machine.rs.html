@@ -726,6 +726,25 @@
 <a href="#726" id="726">726</a>
 <a href="#727" id="727">727</a>
 <a href="#728" id="728">728</a>
+<a href="#729" id="729">729</a>
+<a href="#730" id="730">730</a>
+<a href="#731" id="731">731</a>
+<a href="#732" id="732">732</a>
+<a href="#733" id="733">733</a>
+<a href="#734" id="734">734</a>
+<a href="#735" id="735">735</a>
+<a href="#736" id="736">736</a>
+<a href="#737" id="737">737</a>
+<a href="#738" id="738">738</a>
+<a href="#739" id="739">739</a>
+<a href="#740" id="740">740</a>
+<a href="#741" id="741">741</a>
+<a href="#742" id="742">742</a>
+<a href="#743" id="743">743</a>
+<a href="#744" id="744">744</a>
+<a href="#745" id="745">745</a>
+<a href="#746" id="746">746</a>
+<a href="#747" id="747">747</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::runtime::{AggregatorRunnerTrait, RuntimeError, WorkingCertificate};
 
 <span class="kw">use </span>mithril_common::entities::Beacon;
@@ -943,14 +962,12 @@
                         </span>.transition_from_signing_to_idle_new_beacon(state)
                         .<span class="kw">await</span><span class="question-mark">?</span>;
                     <span class="self">self</span>.state = AggregatorState::Idle(new_state);
-                } <span class="kw">else if </span><span class="self">self</span>.runner.is_multisig_created().<span class="kw">await</span><span class="question-mark">? </span>{
-                    <span class="macro">info!</span>(<span class="string">&quot;→ a multi-signature have been created, build a snapshot &amp; a certificate and transitioning back to IDLE&quot;</span>);
-                    <span class="kw">let </span>new_state = <span class="self">self
-                        </span>.transition_from_signing_to_idle_multisignature(state)
-                        .<span class="kw">await</span><span class="question-mark">?</span>;
-                    <span class="self">self</span>.state = AggregatorState::Idle(new_state);
                 } <span class="kw">else </span>{
-                    <span class="macro">info!</span>(<span class="string">&quot; ⋅ not enough signature yet to aggregate a multi-signature, waiting…&quot;</span>);
+                    <span class="kw">let </span>new_state = <span class="self">self
+                            </span>.transition_from_signing_to_idle_multisignature(state)
+                            .<span class="kw">await</span><span class="question-mark">?</span>;
+                        <span class="macro">info!</span>(<span class="string">&quot;→ a multi-signature have been created, build a snapshot &amp; a certificate and transitioning back to IDLE&quot;</span>);
+                        <span class="self">self</span>.state = AggregatorState::Idle(new_state);
                 }
             }
         }
@@ -998,6 +1015,18 @@
         state: SigningState,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;IdleState, RuntimeError&gt; {
         <span class="macro">trace!</span>(<span class="string">&quot;launching transition from SIGNING to IDLE state&quot;</span>);
+        <span class="kw">let </span>multi_signature = <span class="self">self</span>.runner.create_multi_signature().<span class="kw">await</span><span class="question-mark">?</span>;
+
+        <span class="kw">let </span>multi_signature = <span class="kw">if </span>multi_signature.is_none() {
+            <span class="kw">return </span><span class="prelude-val">Err</span>(RuntimeError::Critical {
+                message: <span class="string">&quot;not enough signature yet to aggregate a multi-signature, waiting…&quot;
+                    </span>.to_string(),
+                nested_error: <span class="prelude-val">None</span>,
+            });
+        } <span class="kw">else </span>{
+            multi_signature.unwrap()
+        };
+
         <span class="self">self</span>.runner.drop_pending_certificate().<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let </span>ongoing_snapshot = <span class="self">self
             </span>.runner
@@ -1009,7 +1038,7 @@
             .<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let </span>certificate = <span class="self">self
             </span>.runner
-            .create_and_save_certificate(<span class="kw-2">&amp;</span>state.working_certificate)
+            .create_and_save_certificate(<span class="kw-2">&amp;</span>state.working_certificate, multi_signature)
             .<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let _ </span>= <span class="self">self
             </span>.runner
@@ -1077,6 +1106,9 @@
     <span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::runner::MockAggregatorRunner;
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
+    <span class="kw">use </span>mithril_common::crypto_helper::tests_setup::setup_certificate_chain;
+    <span class="kw">use </span>mithril_common::crypto_helper::{key_decode_hex, ProtocolMultiSignature};
+    <span class="kw">use </span>mithril_common::entities::HexEncodedKey;
     <span class="kw">use </span>mithril_common::era::UnsupportedEraError;
     <span class="kw">use </span>mithril_common::test_utils::fake_data;
     <span class="kw">use </span>mockall::predicate;
@@ -1360,30 +1392,36 @@
             .once()
             .returning(|| <span class="prelude-val">Ok</span>(fake_data::beacon()));
         runner
-            .expect_is_multisig_created()
+            .expect_create_multi_signature()
             .once()
-            .returning(|| <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>));
+            .returning(|| <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>));
         <span class="kw">let </span>state = SigningState {
             current_beacon: fake_data::beacon(),
             working_certificate: WorkingCertificate::fake(),
         };
         <span class="kw">let </span><span class="kw-2">mut </span>runtime = init_runtime(<span class="prelude-val">Some</span>(AggregatorState::Signing(state)), runner).<span class="kw">await</span>;
-        runtime.cycle().<span class="kw">await</span>.unwrap();
+        runtime
+            .cycle()
+            .<span class="kw">await
+            </span>.expect_err(<span class="string">&quot;cycle should have returned an error&quot;</span>);
 
         <span class="macro">assert_eq!</span>(<span class="string">&quot;signing&quot;</span>.to_string(), runtime.get_state());
     }
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>signing_multisig_is_created() {
+        <span class="kw">let </span>(certificate_chain, <span class="kw">_</span>) = setup_certificate_chain(<span class="number">5</span>, <span class="number">1</span>);
+        <span class="kw">let </span>first_certificate = certificate_chain[<span class="number">0</span>].clone();
+        <span class="kw">let </span>multi_signature: ProtocolMultiSignature =
+            key_decode_hex(<span class="kw-2">&amp;</span>first_certificate.multi_signature <span class="kw">as </span><span class="kw-2">&amp;</span>HexEncodedKey).unwrap();
         <span class="kw">let </span><span class="kw-2">mut </span>runner = MockAggregatorRunner::new();
         runner
             .expect_get_beacon_from_chain()
             .once()
             .returning(|| <span class="prelude-val">Ok</span>(fake_data::beacon()));
         runner
-            .expect_is_multisig_created()
-            .once()
-            .returning(|| <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>));
+            .expect_create_multi_signature()
+            .return_once(<span class="kw">move </span>|| <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(multi_signature)));
         runner
             .expect_drop_pending_certificate()
             .once()
@@ -1404,7 +1442,7 @@
         runner
             .expect_create_and_save_certificate()
             .once()
-            .returning(|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(fake_data::certificate(<span class="string">&quot;whatever&quot;</span>.to_string())));
+            .returning(|<span class="kw">_</span>, <span class="kw">_</span>| <span class="prelude-val">Ok</span>(fake_data::certificate(<span class="string">&quot;whatever&quot;</span>.to_string())));
         runner
             .expect_create_and_save_snapshot()
             .once()

@@ -215,6 +215,24 @@
 <a href="#215" id="215">215</a>
 <a href="#216" id="216">216</a>
 <a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
+<a href="#221" id="221">221</a>
+<a href="#222" id="222">222</a>
+<a href="#223" id="223">223</a>
+<a href="#224" id="224">224</a>
+<a href="#225" id="225">225</a>
+<a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
+<a href="#228" id="228">228</a>
+<a href="#229" id="229">229</a>
+<a href="#230" id="230">230</a>
+<a href="#231" id="231">231</a>
+<a href="#232" id="232">232</a>
+<a href="#233" id="233">233</a>
+<a href="#234" id="234">234</a>
+<a href="#235" id="235">235</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::http_server::routes::middlewares;
 <span class="kw">use </span><span class="kw">crate</span>::DependencyManager;
 <span class="kw">use </span>std::sync::Arc;
@@ -243,6 +261,7 @@
     <span class="kw">use crate</span>::{
         dependency::MultiSignerWrapper, message_adapters::FromRegisterSingleSignatureAdapter,
     };
+    <span class="kw">use </span>mithril_common::entities::SingleSignatures;
     <span class="kw">use </span>mithril_common::messages::RegisterSignatureMessage;
     <span class="kw">use </span>slog_scope::{debug, warn};
     <span class="kw">use </span>std::convert::Infallible;
@@ -254,10 +273,23 @@
         multi_signer: MultiSignerWrapper,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw">impl </span>warp::Reply, Infallible&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;⇄ HTTP SERVER: register_signatures/{:?}&quot;</span>, message);
-        <span class="kw">let </span>signature = FromRegisterSingleSignatureAdapter::adapt(message);
 
-        <span class="kw">let </span><span class="kw-2">mut </span>multi_signer = multi_signer.write().<span class="kw">await</span>;
-        <span class="kw">match </span>multi_signer.register_single_signature(<span class="kw-2">&amp;</span>signature).<span class="kw">await </span>{
+        <span class="kw">async fn </span>register_single_signature(
+            multi_signer: MultiSignerWrapper,
+            signature: SingleSignatures,
+        ) -&gt; <span class="prelude-ty">Result</span>&lt;(), ProtocolError&gt; {
+            <span class="kw">let </span>multi_signer = multi_signer.write().<span class="kw">await</span>;
+            <span class="kw">let </span>message = multi_signer
+                .get_current_message()
+                .<span class="kw">await
+                </span>.ok_or_else(ProtocolError::UnavailableMessage)<span class="question-mark">?</span>;
+            multi_signer
+                .register_single_signature(<span class="kw-2">&amp;</span>message, <span class="kw-2">&amp;</span>signature)
+                .<span class="kw">await
+        </span>}
+
+        <span class="kw">let </span>signature = FromRegisterSingleSignatureAdapter::adapt(message);
+        <span class="kw">match </span>register_single_signature(multi_signer, signature).<span class="kw">await </span>{
             <span class="prelude-val">Err</span>(ProtocolError::ExistingSingleSignature(party_id)) =&gt; {
                 <span class="macro">debug!</span>(<span class="string">&quot;register_signatures::already_exist&quot;</span>; <span class="string">&quot;party_id&quot; </span>=&gt; <span class="question-mark">?</span>party_id);
                 <span class="prelude-val">Ok</span>(reply::empty(StatusCode::CONFLICT))
@@ -275,6 +307,7 @@
 </span><span class="kw">mod </span>tests {
 
     <span class="kw">use </span><span class="kw">crate</span>::http_server::SERVER_BASE_PATH;
+    <span class="kw">use </span>mithril_common::entities::ProtocolMessage;
     <span class="kw">use </span>mithril_common::messages::RegisterSignatureMessage;
     <span class="kw">use </span>mithril_common::test_utils::apispec::APISpec;
     <span class="kw">use </span>tokio::sync::RwLock;
@@ -302,11 +335,11 @@
     </span><span class="kw">async fn </span>test_register_signatures_post_ok() {
         <span class="kw">let </span><span class="kw-2">mut </span>mock_multi_signer = MockMultiSigner::new();
         mock_multi_signer
-            .expect_update_current_message()
-            .return_once(|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(()));
+            .expect_get_current_message()
+            .return_once(|| <span class="prelude-val">Some</span>(ProtocolMessage::new()));
         mock_multi_signer
             .expect_register_single_signature()
-            .return_once(|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(()));
+            .return_once(|<span class="kw">_</span>, <span class="kw">_</span>| <span class="prelude-val">Ok</span>(()));
         <span class="kw">let </span>(<span class="kw-2">mut </span>dependency_manager, <span class="kw">_</span>) = initialize_dependencies().<span class="kw">await</span>;
         dependency_manager.multi_signer = Arc::new(RwLock::new(mock_multi_signer));
 
@@ -336,8 +369,11 @@
     </span><span class="kw">async fn </span>test_register_signatures_post_ko_400() {
         <span class="kw">let </span><span class="kw-2">mut </span>mock_multi_signer = MockMultiSigner::new();
         mock_multi_signer
+            .expect_get_current_message()
+            .return_once(|| <span class="prelude-val">Some</span>(ProtocolMessage::new()));
+        mock_multi_signer
             .expect_register_single_signature()
-            .return_once(|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(()));
+            .return_once(|<span class="kw">_</span>, <span class="kw">_</span>| <span class="prelude-val">Ok</span>(()));
         <span class="kw">let </span>(<span class="kw-2">mut </span>dependency_manager, <span class="kw">_</span>) = initialize_dependencies().<span class="kw">await</span>;
         dependency_manager.multi_signer = Arc::new(RwLock::new(mock_multi_signer));
 
@@ -370,11 +406,11 @@
         <span class="kw">let </span>party_id = message.party_id.clone();
         <span class="kw">let </span><span class="kw-2">mut </span>mock_multi_signer = MockMultiSigner::new();
         mock_multi_signer
-            .expect_update_current_message()
-            .return_once(|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(()));
+            .expect_get_current_message()
+            .return_once(|| <span class="prelude-val">Some</span>(ProtocolMessage::new()));
         mock_multi_signer
             .expect_register_single_signature()
-            .return_once(<span class="kw">move </span>|<span class="kw">_</span>| <span class="prelude-val">Err</span>(ProtocolError::ExistingSingleSignature(party_id)));
+            .return_once(<span class="kw">move </span>|<span class="kw">_</span>, <span class="kw">_</span>| <span class="prelude-val">Err</span>(ProtocolError::ExistingSingleSignature(party_id)));
         <span class="kw">let </span>(<span class="kw-2">mut </span>dependency_manager, <span class="kw">_</span>) = initialize_dependencies().<span class="kw">await</span>;
         dependency_manager.multi_signer = Arc::new(RwLock::new(mock_multi_signer));
 
@@ -402,11 +438,11 @@
     </span><span class="kw">async fn </span>test_register_signatures_post_ko_500() {
         <span class="kw">let </span><span class="kw-2">mut </span>mock_multi_signer = MockMultiSigner::new();
         mock_multi_signer
-            .expect_update_current_message()
-            .return_once(|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(()));
+            .expect_get_current_message()
+            .return_once(|| <span class="prelude-val">Some</span>(ProtocolMessage::new()));
         mock_multi_signer
             .expect_register_single_signature()
-            .return_once(|<span class="kw">_</span>| <span class="prelude-val">Err</span>(ProtocolError::Core(<span class="string">&quot;an error occurred&quot;</span>.to_string())));
+            .return_once(|<span class="kw">_</span>, <span class="kw">_</span>| <span class="prelude-val">Err</span>(ProtocolError::Core(<span class="string">&quot;an error occurred&quot;</span>.to_string())));
         <span class="kw">let </span>(<span class="kw-2">mut </span>dependency_manager, <span class="kw">_</span>) = initialize_dependencies().<span class="kw">await</span>;
         dependency_manager.multi_signer = Arc::new(RwLock::new(mock_multi_signer));
 

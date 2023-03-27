@@ -1263,23 +1263,13 @@
 <a href="#1263" id="1263">1263</a>
 <a href="#1264" id="1264">1264</a>
 <a href="#1265" id="1265">1265</a>
-<a href="#1266" id="1266">1266</a>
-<a href="#1267" id="1267">1267</a>
-<a href="#1268" id="1268">1268</a>
-<a href="#1269" id="1269">1269</a>
-<a href="#1270" id="1270">1270</a>
-<a href="#1271" id="1271">1271</a>
-<a href="#1272" id="1272">1272</a>
-<a href="#1273" id="1273">1273</a>
-<a href="#1274" id="1274">1274</a>
-<a href="#1275" id="1275">1275</a>
-<a href="#1276" id="1276">1276</a>
 </pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>chrono::Utc;
+<span class="kw">use </span>mithril_common::crypto_helper::ProtocolMultiSignature;
 <span class="kw">use </span>mithril_common::entities::Epoch;
 <span class="kw">use </span>mithril_common::entities::PartyId;
 <span class="kw">use </span>mithril_common::store::StakeStorer;
-<span class="kw">use </span>slog_scope::{debug, info, warn};
+<span class="kw">use </span>slog_scope::{debug, warn};
 
 <span class="kw">use </span>mithril_common::crypto_helper::ProtocolStakeDistribution;
 <span class="kw">use </span>mithril_common::entities::{
@@ -1410,8 +1400,10 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;CertificatePending&gt;, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
 
-    <span class="doccomment">/// Check if the multisigner has issued a multi-signature.
-    </span><span class="kw">async fn </span>is_multisig_created(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;bool, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
+    <span class="doccomment">/// Create multi-signature.
+    </span><span class="kw">async fn </span>create_multi_signature(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;ProtocolMultiSignature&gt;, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
 
     <span class="doccomment">/// Create an archive of the cardano node db directory naming it after the given beacon.
     ///
@@ -1433,6 +1425,7 @@
     </span><span class="kw">async fn </span>create_and_save_certificate(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         working_certificate: <span class="kw-2">&amp;</span>WorkingCertificate,
+        multi_signature: ProtocolMultiSignature,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Certificate, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
 
     <span class="doccomment">/// Create a snapshot and save it to the given locations.
@@ -1822,25 +1815,18 @@
         <span class="prelude-val">Ok</span>(certificate_pending)
     }
 
-    <span class="doccomment">/// Is a multi-signature ready?
-    /// Can we create a multi-signature.
-    </span><span class="kw">async fn </span>is_multisig_created(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;bool, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
-        <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: check if we can create a multi-signature&quot;</span>);
-        <span class="kw">let </span>has_multisig = <span class="self">self
-            </span>.dependencies
-            .multi_signer
-            .write()
-            .<span class="kw">await
-            </span>.create_multi_signature()
-            .<span class="kw">await</span><span class="question-mark">?
-            </span>.is_some();
+    <span class="kw">async fn </span>create_multi_signature(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;ProtocolMultiSignature&gt;, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
+        <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: create multi-signature&quot;</span>);
 
-        <span class="kw">if </span>has_multisig {
-            <span class="macro">debug!</span>(<span class="string">&quot; &gt; new multi-signature created&quot;</span>);
-        } <span class="kw">else </span>{
-            <span class="macro">info!</span>(<span class="string">&quot; &gt; no multi-signature created&quot;</span>);
-        }
-        <span class="prelude-val">Ok</span>(has_multisig)
+        <span class="kw">let </span>multi_signer = <span class="self">self</span>.dependencies.multi_signer.read().<span class="kw">await</span>;
+        <span class="kw">let </span>message = multi_signer
+            .get_current_message()
+            .<span class="kw">await
+            </span>.ok_or_else(ProtocolError::UnavailableMessage)<span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(multi_signer.create_multi_signature(<span class="kw-2">&amp;</span>message).<span class="kw">await</span><span class="question-mark">?</span>)
     }
 
     <span class="kw">async fn </span>create_snapshot_archive(
@@ -1909,10 +1895,10 @@
     <span class="kw">async fn </span>create_and_save_certificate(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         working_certificate: <span class="kw-2">&amp;</span>WorkingCertificate,
+        multi_signature: ProtocolMultiSignature,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Certificate, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: create and save certificate&quot;</span>);
         <span class="kw">let </span>certificate_store = <span class="self">self</span>.dependencies.certificate_store.clone();
-        <span class="kw">let </span>multisigner = <span class="self">self</span>.dependencies.multi_signer.read().<span class="kw">await</span>;
         <span class="kw">let </span>signatures_party_ids: Vec&lt;PartyId&gt; = <span class="self">self
             </span>.dependencies
             .single_signature_store
@@ -1921,12 +1907,6 @@
             </span>.unwrap_or_default()
             .into_keys()
             .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-        <span class="kw">let </span>multi_signature = multisigner.get_multi_signature().<span class="kw">await</span><span class="question-mark">?</span>.ok_or_else(|| {
-            RunnerError::NoComputedMultiSignature(<span class="macro">format!</span>(
-                <span class="string">&quot;no multi signature generated for beacon {:?}&quot;</span>,
-                working_certificate.beacon
-            ))
-        })<span class="question-mark">?</span>;
 
         <span class="kw">let </span>certificate = MithrilCertificateCreator::create_certificate(
             working_certificate,
@@ -2459,6 +2439,7 @@
         <span class="kw">let </span>first_certificate = certificate_chain[<span class="number">0</span>].clone();
         <span class="kw">let </span>multi_signature: ProtocolMultiSignature =
             key_decode_hex(<span class="kw-2">&amp;</span>first_certificate.multi_signature <span class="kw">as </span><span class="kw-2">&amp;</span>HexEncodedKey).unwrap();
+        <span class="kw">let </span>multi_signature_clone = multi_signature.clone();
         <span class="kw">let </span>working_certificate = WorkingCertificate {
             beacon: first_certificate.beacon.clone(),
             signers: first_certificate.metadata.signers.clone(),
@@ -2469,16 +2450,13 @@
             ..WorkingCertificate::fake()
         };
         <span class="kw">let </span>(<span class="kw-2">mut </span>deps, config) = initialize_dependencies().<span class="kw">await</span>;
-        <span class="kw">let </span><span class="kw-2">mut </span>mock_multi_signer = MockMultiSigner::new();
-        mock_multi_signer
-            .expect_get_multi_signature()
-            .return_once(<span class="kw">move </span>|| <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(multi_signature)));
+        <span class="kw">let </span>mock_multi_signer = MockMultiSigner::new();
         deps.multi_signer = Arc::new(RwLock::new(mock_multi_signer));
         deps.init_state_from_chain(<span class="kw-2">&amp;</span>certificate_chain, <span class="macro">vec!</span>[]).<span class="kw">await</span>;
         <span class="kw">let </span>runner = AggregatorRunner::new(config, Arc::new(deps));
 
         <span class="kw">let </span>certificate = runner
-            .create_and_save_certificate(<span class="kw-2">&amp;</span>working_certificate)
+            .create_and_save_certificate(<span class="kw-2">&amp;</span>working_certificate, multi_signature_clone)
             .<span class="kw">await</span>;
         certificate.expect(<span class="string">&quot;a certificate should have been created and saved&quot;</span>);
     }
