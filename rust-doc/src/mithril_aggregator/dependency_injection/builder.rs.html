@@ -1076,14 +1076,6 @@
 <a href="#1076" id="1076">1076</a>
 <a href="#1077" id="1077">1077</a>
 <a href="#1078" id="1078">1078</a>
-<a href="#1079" id="1079">1079</a>
-<a href="#1080" id="1080">1080</a>
-<a href="#1081" id="1081">1081</a>
-<a href="#1082" id="1082">1082</a>
-<a href="#1083" id="1083">1083</a>
-<a href="#1084" id="1084">1084</a>
-<a href="#1085" id="1085">1085</a>
-<a href="#1086" id="1086">1086</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::{collections::HashMap, sync::Arc};
 
 <span class="kw">use </span>mithril_common::{
@@ -1122,7 +1114,7 @@
 
 <span class="kw">use crate</span>::{
     configuration::{ExecutionEnvironment, LIST_SNAPSHOTS_MAX_ITEMS},
-    database::provider::StakePoolStore,
+    database::provider::{EpochSettingStore, StakePoolStore},
     event_store::{EventMessage, EventStore, TransmitterService},
     http_server::routes::router,
     stake_distribution_service::{MithrilStakeDistributionService, StakeDistributionService},
@@ -1581,32 +1573,24 @@
     }
 
     <span class="kw">async fn </span>build_protocol_parameters_store(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;ProtocolParametersStore&gt;&gt; {
-        <span class="kw">let </span>adapter: Box&lt;<span class="kw">dyn </span>StoreAdapter&lt;Key = Epoch, Record = ProtocolParameters&gt;&gt; = <span class="kw">match </span><span class="self">self
-            </span>.configuration
-            .environment
-        {
-            ExecutionEnvironment::Production =&gt; {
-                <span class="kw">let </span>adapter =
-                    SQLiteAdapter::new(<span class="string">&quot;protocol_parameters&quot;</span>, <span class="self">self</span>.get_sqlite_connection().<span class="kw">await</span><span class="question-mark">?</span>)
-                        .map_err(|e| DependenciesBuilderError::Initialization {
-                            message: <span class="string">&quot;Cannot create SQLite adapter for ProtocolParametersStore.&quot;
+        <span class="kw">let </span>adapter: Box&lt;<span class="kw">dyn </span>StoreAdapter&lt;Key = Epoch, Record = ProtocolParameters&gt;&gt; =
+            <span class="kw">match </span><span class="self">self</span>.configuration.environment {
+                ExecutionEnvironment::Production =&gt; {
+                    <span class="kw">let </span>adapter = EpochSettingStore::new(<span class="self">self</span>.get_sqlite_connection().<span class="kw">await</span><span class="question-mark">?</span>);
+
+                    Box::new(adapter)
+                }
+                <span class="kw">_ </span>=&gt; {
+                    <span class="kw">let </span>adapter = MemoryAdapter::new(<span class="prelude-val">None</span>).map_err(|e| {
+                        DependenciesBuilderError::Initialization {
+                            message: <span class="string">&quot;Cannot create Memory adapter for ProtocolParametersStore.&quot;
                                 </span>.to_string(),
                             error: <span class="prelude-val">Some</span>(e.into()),
-                        })<span class="question-mark">?</span>;
-
-                Box::new(adapter)
-            }
-            <span class="kw">_ </span>=&gt; {
-                <span class="kw">let </span>adapter = MemoryAdapter::new(<span class="prelude-val">None</span>).map_err(|e| {
-                    DependenciesBuilderError::Initialization {
-                        message: <span class="string">&quot;Cannot create Memory adapter for ProtocolParametersStore.&quot;
-                            </span>.to_string(),
-                        error: <span class="prelude-val">Some</span>(e.into()),
-                    }
-                })<span class="question-mark">?</span>;
-                Box::new(adapter)
-            }
-        };
+                        }
+                    })<span class="question-mark">?</span>;
+                    Box::new(adapter)
+                }
+            };
 
         <span class="prelude-val">Ok</span>(Arc::new(ProtocolParametersStore::new(
             adapter,
