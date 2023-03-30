@@ -599,6 +599,9 @@
 <a href="#599" id="599">599</a>
 <a href="#600" id="600">600</a>
 <a href="#601" id="601">601</a>
+<a href="#602" id="602">602</a>
+<a href="#603" id="603">603</a>
+<a href="#604" id="604">604</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>async_trait::async_trait;
@@ -727,7 +730,7 @@
     <span class="kw">fn </span>get_definition(<span class="kw-2">&amp;</span><span class="self">self</span>, condition: <span class="kw-2">&amp;</span>str) -&gt; String {
         <span class="kw">let </span>aliases = SourceAlias::new(<span class="kw-2">&amp;</span>[(<span class="string">&quot;{:epoch_setting:}&quot;</span>, <span class="string">&quot;es&quot;</span>)]);
         <span class="kw">let </span>projection = <span class="self">Self</span>::Entity::get_projection().expand(aliases);
-        <span class="macro">format!</span>(<span class="string">&quot;select {projection} from epoch_setting as es where {condition} order by epoch_setting_id asc&quot;</span>)
+        <span class="macro">format!</span>(<span class="string">&quot;select {projection} from epoch_setting as es where {condition} order by epoch_setting_id desc&quot;</span>)
     }
 }
 
@@ -1197,6 +1200,9 @@
                 .get_last_n_records(epoch_settings.len())
                 .<span class="kw">await
                 </span>.unwrap()
+                .into_iter()
+                .rev()
+                .collect::&lt;Vec&lt;(Epoch, ProtocolParameters)&gt;&gt;()
         )
     }
 }
