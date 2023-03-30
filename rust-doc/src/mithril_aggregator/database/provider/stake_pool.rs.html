@@ -752,55 +752,55 @@
     }
 }
 
-<span class="attr">#[cfg(any(test, feature = <span class="string">&quot;test_only&quot;</span>))]
-</span><span class="kw">pub fn </span>setup_stake_db(connection: <span class="kw-2">&amp;</span>Connection) -&gt; <span class="prelude-ty">Result</span>&lt;(), StdError&gt; {
-    <span class="kw">use </span><span class="kw">crate</span>::database::migration::get_migrations;
-
-    <span class="kw">let </span>migrations = get_migrations();
-    <span class="kw">let </span>migration = migrations
-        .iter()
-        .find(|<span class="kw-2">&amp;</span>m| m.version == <span class="number">1</span>)
-        .ok_or_else(|| -&gt; StdError {
-            <span class="string">&quot;There should be a migration version 1&quot;</span>.to_string().into()
-        })<span class="question-mark">?</span>;
-    <span class="kw">let </span>query = {
-        <span class="comment">// leverage the expanded parameter from this provider which is unit
-        // tested on its own above.
-        </span><span class="kw">let </span>update_provider = UpdateStakePoolProvider::new(connection);
-        <span class="kw">let </span>(sql_values, <span class="kw">_</span>) = update_provider
-            .get_update_condition(<span class="string">&quot;pool_id&quot;</span>, Epoch(<span class="number">1</span>), <span class="number">1000</span>)
-            .expand();
-
-        connection.execute(<span class="kw-2">&amp;</span>migration.alterations)<span class="question-mark">?</span>;
-
-        <span class="macro">format!</span>(<span class="string">&quot;insert into stake_pool {sql_values}&quot;</span>)
-    };
-    <span class="kw">let </span>stake_distribution: <span class="kw-2">&amp;</span>[(<span class="kw-2">&amp;</span>str, i64, i64); <span class="number">9</span>] = <span class="kw-2">&amp;</span>[
-        (<span class="string">&quot;pool1&quot;</span>, <span class="number">1</span>, <span class="number">1000</span>),
-        (<span class="string">&quot;pool2&quot;</span>, <span class="number">1</span>, <span class="number">1100</span>),
-        (<span class="string">&quot;pool3&quot;</span>, <span class="number">1</span>, <span class="number">1300</span>),
-        (<span class="string">&quot;pool1&quot;</span>, <span class="number">2</span>, <span class="number">1230</span>),
-        (<span class="string">&quot;pool2&quot;</span>, <span class="number">2</span>, <span class="number">1090</span>),
-        (<span class="string">&quot;pool3&quot;</span>, <span class="number">2</span>, <span class="number">1300</span>),
-        (<span class="string">&quot;pool1&quot;</span>, <span class="number">3</span>, <span class="number">1250</span>),
-        (<span class="string">&quot;pool2&quot;</span>, <span class="number">3</span>, <span class="number">1370</span>),
-        (<span class="string">&quot;pool3&quot;</span>, <span class="number">3</span>, <span class="number">1300</span>),
-    ];
-    <span class="kw">for </span>(pool_id, epoch, stake) <span class="kw">in </span>stake_distribution {
-        <span class="kw">let </span><span class="kw-2">mut </span>statement = connection.prepare(<span class="kw-2">&amp;</span>query)<span class="question-mark">?</span>;
-
-        statement.bind(<span class="number">1</span>, <span class="kw-2">*</span>pool_id).unwrap();
-        statement.bind(<span class="number">2</span>, <span class="kw-2">*</span>epoch).unwrap();
-        statement.bind(<span class="number">3</span>, <span class="kw-2">*</span>stake).unwrap();
-        statement.next().unwrap();
-    }
-
-    <span class="prelude-val">Ok</span>(())
-}
-
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
+
+    <span class="kw">pub fn </span>setup_stake_db(connection: <span class="kw-2">&amp;</span>Connection) -&gt; <span class="prelude-ty">Result</span>&lt;(), StdError&gt; {
+        <span class="kw">use </span><span class="kw">crate</span>::database::migration::get_migrations;
+
+        <span class="kw">let </span>migrations = get_migrations();
+        <span class="kw">let </span>migration =
+            migrations
+                .iter()
+                .find(|<span class="kw-2">&amp;</span>m| m.version == <span class="number">1</span>)
+                .ok_or_else(|| -&gt; StdError {
+                    <span class="string">&quot;There should be a migration version 1&quot;</span>.to_string().into()
+                })<span class="question-mark">?</span>;
+        <span class="kw">let </span>query = {
+            <span class="comment">// leverage the expanded parameter from this provider which is unit
+            // tested on its own above.
+            </span><span class="kw">let </span>update_provider = UpdateStakePoolProvider::new(connection);
+            <span class="kw">let </span>(sql_values, <span class="kw">_</span>) = update_provider
+                .get_update_condition(<span class="string">&quot;pool_id&quot;</span>, Epoch(<span class="number">1</span>), <span class="number">1000</span>)
+                .expand();
+
+            connection.execute(<span class="kw-2">&amp;</span>migration.alterations)<span class="question-mark">?</span>;
+
+            <span class="macro">format!</span>(<span class="string">&quot;insert into stake_pool {sql_values}&quot;</span>)
+        };
+        <span class="kw">let </span>stake_distribution: <span class="kw-2">&amp;</span>[(<span class="kw-2">&amp;</span>str, i64, i64); <span class="number">9</span>] = <span class="kw-2">&amp;</span>[
+            (<span class="string">&quot;pool1&quot;</span>, <span class="number">1</span>, <span class="number">1000</span>),
+            (<span class="string">&quot;pool2&quot;</span>, <span class="number">1</span>, <span class="number">1100</span>),
+            (<span class="string">&quot;pool3&quot;</span>, <span class="number">1</span>, <span class="number">1300</span>),
+            (<span class="string">&quot;pool1&quot;</span>, <span class="number">2</span>, <span class="number">1230</span>),
+            (<span class="string">&quot;pool2&quot;</span>, <span class="number">2</span>, <span class="number">1090</span>),
+            (<span class="string">&quot;pool3&quot;</span>, <span class="number">2</span>, <span class="number">1300</span>),
+            (<span class="string">&quot;pool1&quot;</span>, <span class="number">3</span>, <span class="number">1250</span>),
+            (<span class="string">&quot;pool2&quot;</span>, <span class="number">3</span>, <span class="number">1370</span>),
+            (<span class="string">&quot;pool3&quot;</span>, <span class="number">3</span>, <span class="number">1300</span>),
+        ];
+        <span class="kw">for </span>(pool_id, epoch, stake) <span class="kw">in </span>stake_distribution {
+            <span class="kw">let </span><span class="kw-2">mut </span>statement = connection.prepare(<span class="kw-2">&amp;</span>query)<span class="question-mark">?</span>;
+
+            statement.bind(<span class="number">1</span>, <span class="kw-2">*</span>pool_id).unwrap();
+            statement.bind(<span class="number">2</span>, <span class="kw-2">*</span>epoch).unwrap();
+            statement.bind(<span class="number">3</span>, <span class="kw-2">*</span>stake).unwrap();
+            statement.next().unwrap();
+        }
+
+        <span class="prelude-val">Ok</span>(())
+    }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>projection() {
@@ -925,4 +925,4 @@
     }
 }
 </code></pre></div>
-</section></main><div id="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="mithril_aggregator" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.1 (8460ca823 2023-03-20)" data-search-js="search-98d53477a794af0b.js" data-settings-js="settings-c3c521c753752a1a.js" data-settings-css="settings-08ddfdda51b8ee2e.css" ></div></body></html>
+</section></main><div id="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="mithril_aggregator" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.2 (9eb3afe9e 2023-03-27)" data-search-js="search-98d53477a794af0b.js" data-settings-js="settings-c3c521c753752a1a.js" data-settings-css="settings-08ddfdda51b8ee2e.css" ></div></body></html>
