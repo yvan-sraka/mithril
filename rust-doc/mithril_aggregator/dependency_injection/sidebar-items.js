@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["DependenciesBuilderError","Error that can occure during dependencies initialization process."]],"struct":[["DependenciesBuilder","Dependencies container builder"]],"type":[["Result","Result with the [DependencyBuilderError] error."]]};
+window.SIDEBAR_ITEMS = {"enum":[["DependenciesBuilderError","Error that can occure during dependencies initialization process."]],"struct":[["DependenciesBuilder","Dependencies container builder"]],"type":[["Result","Result with the [DependenciesBuilderError] error."]]};

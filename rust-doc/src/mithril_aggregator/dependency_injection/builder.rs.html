@@ -1070,6 +1070,19 @@
 <a href="#1070" id="1070">1070</a>
 <a href="#1071" id="1071">1071</a>
 <a href="#1072" id="1072">1072</a>
+<a href="#1073" id="1073">1073</a>
+<a href="#1074" id="1074">1074</a>
+<a href="#1075" id="1075">1075</a>
+<a href="#1076" id="1076">1076</a>
+<a href="#1077" id="1077">1077</a>
+<a href="#1078" id="1078">1078</a>
+<a href="#1079" id="1079">1079</a>
+<a href="#1080" id="1080">1080</a>
+<a href="#1081" id="1081">1081</a>
+<a href="#1082" id="1082">1082</a>
+<a href="#1083" id="1083">1083</a>
+<a href="#1084" id="1084">1084</a>
+<a href="#1085" id="1085">1085</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::{collections::HashMap, sync::Arc};
 
 <span class="kw">use </span>mithril_common::{
@@ -1256,16 +1269,19 @@
     }
 
     <span class="kw">async fn </span>build_sqlite_connection(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;Mutex&lt;Connection&gt;&gt;&gt; {
-        <span class="kw">let </span>connection = <span class="kw">match </span><span class="self">self</span>.configuration.environment {
+        <span class="kw">let </span>path = <span class="kw">match </span><span class="self">self</span>.configuration.environment {
             ExecutionEnvironment::Production =&gt; {
-                Connection::open(<span class="self">self</span>.configuration.get_sqlite_dir().join(SQLITE_FILE))
+                <span class="self">self</span>.configuration.get_sqlite_dir().join(SQLITE_FILE)
             }
-            <span class="kw">_ </span>=&gt; Connection::open(<span class="string">&quot;:memory:&quot;</span>),
+            <span class="kw">_ </span>=&gt; <span class="string">&quot;:memory:&quot;</span>.into(),
         };
-        <span class="kw">let </span>connection = connection
-            .map(|conn| Arc::new(Mutex::new(conn)))
+        <span class="kw">let </span>connection = Connection::open(<span class="kw-2">&amp;</span>path)
+            .map(|c| Arc::new(Mutex::new(c)))
             .map_err(|e| DependenciesBuilderError::Initialization {
-                message: <span class="string">&quot;Could not initialize SQLite driver.&quot;</span>.to_string(),
+                message: <span class="macro">format!</span>(
+                    <span class="string">&quot;SQLite initialization: could not open connection with string &#39;{}&#39;.&quot;</span>,
+                    path.display()
+                ),
                 error: <span class="prelude-val">Some</span>(Box::new(e)),
             })<span class="question-mark">?</span>;
         <span class="comment">// Check database migrations
@@ -1278,6 +1294,16 @@
         <span class="kw">for </span>migration <span class="kw">in </span><span class="kw">crate</span>::database::migration::get_migrations() {
             db_checker.add_migration(migration);
         }
+
+        <span class="comment">// configure session
+        </span>connection
+            .lock()
+            .<span class="kw">await
+            </span>.execute(<span class="string">&quot;pragma foreign_keys=true&quot;</span>)
+            .map_err(|e| DependenciesBuilderError::Initialization {
+                message: <span class="string">&quot;SQLite initialization: could not enable FOREIGN KEY support.&quot;</span>.to_string(),
+                error: <span class="prelude-val">Some</span>(e.into()),
+            })<span class="question-mark">?</span>;
 
         db_checker.apply().<span class="kw">await</span><span class="question-mark">?</span>;
 
@@ -1299,7 +1325,7 @@
         <span class="prelude-val">Ok</span>(stake_pool_store)
     }
 
-    <span class="doccomment">/// Return a [StakeStore]
+    <span class="doccomment">/// Return a [StakePoolStore]
     </span><span class="kw">pub async fn </span>get_stake_store(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;StakePoolStore&gt;&gt; {
         <span class="kw">if </span><span class="self">self</span>.stake_store.is_none() {
             <span class="self">self</span>.stake_store = <span class="prelude-val">Some</span>(<span class="self">self</span>.build_stake_store().<span class="kw">await</span><span class="question-mark">?</span>);
@@ -1606,7 +1632,7 @@
         <span class="prelude-val">Ok</span>(chain_observer)
     }
 
-    <span class="doccomment">/// Return a [ChaineObserver]
+    <span class="doccomment">/// Return a [ChainObserver]
     </span><span class="kw">pub async fn </span>get_chain_observer(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;<span class="kw">dyn </span>ChainObserver&gt;&gt; {
         <span class="kw">if </span><span class="self">self</span>.chain_observer.is_none() {
             <span class="self">self</span>.chain_observer = <span class="prelude-val">Some</span>(<span class="self">self</span>.build_chain_observer().<span class="kw">await</span><span class="question-mark">?</span>);
@@ -1688,7 +1714,7 @@
         <span class="prelude-val">Ok</span>(Arc::new(cache_provider))
     }
 
-    <span class="doccomment">/// Get an [ImmutableCacheProvider]
+    <span class="doccomment">/// Get an [ImmutableFileDigestCacheProvider]
     </span><span class="kw">pub async fn </span>get_immutable_cache_provider(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;<span class="kw">dyn </span>ImmutableFileDigestCacheProvider&gt;&gt; {
@@ -1959,7 +1985,7 @@
         <span class="prelude-val">Ok</span>(event_transmitter)
     }
 
-    <span class="doccomment">/// [EventTransmitter] service
+    <span class="doccomment">/// [TransmitterService] service
     </span><span class="kw">pub async fn </span>get_event_transmitter(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;TransmitterService&lt;EventMessage&gt;&gt;&gt; {
         <span class="kw">if </span><span class="self">self</span>.event_transmitter.is_none() {
             <span class="self">self</span>.event_transmitter = <span class="prelude-val">Some</span>(<span class="self">self</span>.build_event_transmitter().<span class="kw">await</span><span class="question-mark">?</span>);
@@ -1974,7 +2000,7 @@
         <span class="prelude-val">Ok</span>(api_version_provider)
     }
 
-    <span class="doccomment">/// [ApiVersionprovider] service
+    <span class="doccomment">/// [APIVersionProvider] service
     </span><span class="kw">pub async fn </span>get_api_version_provider(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;APIVersionProvider&gt;&gt; {
         <span class="kw">if </span><span class="self">self</span>.api_version_provider.is_none() {
             <span class="self">self</span>.api_version_provider = <span class="prelude-val">Some</span>(<span class="self">self</span>.build_api_version_provider().<span class="kw">await</span><span class="question-mark">?</span>);
