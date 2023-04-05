@@ -1081,8 +1081,6 @@
 <a href="#1081" id="1081">1081</a>
 <a href="#1082" id="1082">1082</a>
 <a href="#1083" id="1083">1083</a>
-<a href="#1084" id="1084">1084</a>
-<a href="#1085" id="1085">1085</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::{collections::HashMap, sync::Arc};
 
 <span class="kw">use </span>mithril_common::{
@@ -1097,8 +1095,8 @@
         ImmutableFileObserver, ImmutableFileSystemObserver,
     },
     entities::{
-        Beacon, Certificate, CertificatePending, Epoch, PartyId, ProtocolParameters, Signer,
-        SingleSignatures,
+        Beacon, Certificate, CertificatePending, Epoch, PartyId, ProtocolParameters,
+        SignerWithStake, SingleSignatures,
     },
     era::{
         adapters::{EraReaderAdapterBuilder, EraReaderDummyAdapter},
@@ -1121,7 +1119,9 @@
 
 <span class="kw">use crate</span>::{
     configuration::{ExecutionEnvironment, LIST_SNAPSHOTS_MAX_ITEMS},
-    database::provider::{CertificateStoreAdapter, EpochSettingStore, StakePoolStore},
+    database::provider::{
+        CertificateStoreAdapter, EpochSettingStore, SignerRegistrationStoreAdapter, StakePoolStore,
+    },
     event_store::{EventMessage, EventStore, TransmitterService},
     http_server::routes::router,
     stake_distribution_service::{MithrilStakeDistributionService, StakeDistributionService},
@@ -1504,30 +1504,26 @@
     }
 
     <span class="kw">async fn </span>build_verification_key_store(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;VerificationKeyStore&gt;&gt; {
-        <span class="kw">let </span>adapter: Box&lt;<span class="kw">dyn </span>StoreAdapter&lt;Key = Epoch, Record = HashMap&lt;PartyId, Signer&gt;&gt;&gt; =
-            <span class="kw">match </span><span class="self">self</span>.configuration.environment {
-                ExecutionEnvironment::Production =&gt; {
-                    <span class="kw">let </span>adapter =
-                        SQLiteAdapter::new(<span class="string">&quot;verification_key&quot;</span>, <span class="self">self</span>.get_sqlite_connection().<span class="kw">await</span><span class="question-mark">?</span>)
-                            .map_err(|e| DependenciesBuilderError::Initialization {
-                                message: <span class="string">&quot;Cannot create SQLite adapter for VerificationKeyStore.&quot;
-                                    </span>.to_string(),
-                                error: <span class="prelude-val">Some</span>(e.into()),
-                            })<span class="question-mark">?</span>;
+        <span class="kw">let </span>adapter: Box&lt;
+            <span class="kw">dyn </span>StoreAdapter&lt;Key = Epoch, Record = HashMap&lt;PartyId, SignerWithStake&gt;&gt;,
+        &gt; = <span class="kw">match </span><span class="self">self</span>.configuration.environment {
+            ExecutionEnvironment::Production =&gt; {
+                <span class="kw">let </span>adapter =
+                    SignerRegistrationStoreAdapter::new(<span class="self">self</span>.get_sqlite_connection().<span class="kw">await</span><span class="question-mark">?</span>);
 
-                    Box::new(adapter)
-                }
-                <span class="kw">_ </span>=&gt; {
-                    <span class="kw">let </span>adapter = MemoryAdapter::new(<span class="prelude-val">None</span>).map_err(|e| {
-                        DependenciesBuilderError::Initialization {
-                            message: <span class="string">&quot;Cannot create Memory adapter for VerificationKeyStore.&quot;
-                                </span>.to_string(),
-                            error: <span class="prelude-val">Some</span>(e.into()),
-                        }
-                    })<span class="question-mark">?</span>;
-                    Box::new(adapter)
-                }
-            };
+                Box::new(adapter)
+            }
+            <span class="kw">_ </span>=&gt; {
+                <span class="kw">let </span>adapter = MemoryAdapter::new(<span class="prelude-val">None</span>).map_err(|e| {
+                    DependenciesBuilderError::Initialization {
+                        message: <span class="string">&quot;Cannot create Memory adapter for VerificationKeyStore.&quot;
+                            </span>.to_string(),
+                        error: <span class="prelude-val">Some</span>(e.into()),
+                    }
+                })<span class="question-mark">?</span>;
+                Box::new(adapter)
+            }
+        };
 
         <span class="prelude-val">Ok</span>(Arc::new(VerificationKeyStore::new(
             adapter,

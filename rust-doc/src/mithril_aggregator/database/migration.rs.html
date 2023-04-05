@@ -150,6 +150,47 @@
 <a href="#150" id="150">150</a>
 <a href="#151" id="151">151</a>
 <a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Migration module
 //!
 </span><span class="kw">use </span>mithril_common::database::SqlMigration;
@@ -298,6 +339,47 @@ create table open_message (
     foreign key (epoch_setting_id)     references epoch_setting (epoch_setting_id),
     foreign key (signed_entity_type_id) references signed_entity_type (signed_entity_type_id)
 );
+&quot;#</span>,
+        ),
+        <span class="comment">// Migration 6
+        // Add the `signer_registration` table and migration data from the previous
+        // `verification_key` JSON format.
+        // TODO: activate FK w/ signer table exists `foreign key (signer_id) references signer(signer_id)`
+        </span>SqlMigration::new(
+            <span class="number">6</span>,
+            <span class="string">r#&quot;
+create table signer_registration (
+    signer_id                   text        not null,
+    epoch_setting_id            integer     not null,
+    verification_key            text        not null,
+    verification_key_signature  text,
+    operational_certificate     text,
+    kes_period                  integer,
+    stake                       integer,
+    created_at                  text        not null default current_timestamp,
+    primary key (epoch_setting_id, signer_id)
+    foreign key (epoch_setting_id) references epoch_setting(epoch_setting_id)
+);
+create table if not exists verification_key (key_hash text primary key, key json not null, value json not null);
+insert into signer_registration (signer_id, 
+                                epoch_setting_id, 
+                                verification_key, 
+                                verification_key_signature,
+                                operational_certificate, 
+                                kes_period,
+                                stake) 
+    select 
+        verification_key_signer.key as signer_id,
+        verification_key.key as epoch_setting_id, 
+        json_extract(verification_key_signer.value, &#39;$.verification_key&#39;) as verification_key,
+        json_extract(verification_key_signer.value, &#39;$.verification_key_signature&#39;) as verification_key_signature,
+        json_extract(verification_key_signer.value, &#39;$.operational_certificate&#39;) as operational_certificate,
+        json_extract(verification_key_signer.value, &#39;$.kes_period&#39;) as kes_period,
+        stake_pool.stake as stake
+    from verification_key, json_each(verification_key.value) as verification_key_signer 
+    left join stake_pool on stake_pool.stake_pool_id = verification_key_signer.key and stake_pool.epoch = verification_key.key
+    order by verification_key.key, verification_key_signer.key asc;
+drop table verification_key;
 &quot;#</span>,
         ),
     ]

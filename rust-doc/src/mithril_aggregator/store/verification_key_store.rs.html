@@ -224,15 +224,20 @@
 <a href="#224" id="224">224</a>
 <a href="#225" id="225">225</a>
 <a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
+<a href="#228" id="228">228</a>
+<a href="#229" id="229">229</a>
+<a href="#230" id="230">230</a>
+<a href="#231" id="231">231</a>
 </pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>mithril_common::store::StorePruner;
 <span class="kw">use </span>std::collections::HashMap;
 <span class="kw">use </span>tokio::sync::RwLock;
 
-<span class="kw">use </span>mithril_common::entities::{Epoch, PartyId, Signer};
+<span class="kw">use </span>mithril_common::entities::{Epoch, PartyId, Signer, SignerWithStake};
 <span class="kw">use </span>mithril_common::store::{adapter::StoreAdapter, StoreError};
 
-<span class="kw">type </span>Adapter = Box&lt;<span class="kw">dyn </span>StoreAdapter&lt;Key = Epoch, Record = HashMap&lt;PartyId, Signer&gt;&gt;&gt;;
+<span class="kw">type </span>Adapter = Box&lt;<span class="kw">dyn </span>StoreAdapter&lt;Key = Epoch, Record = HashMap&lt;PartyId, SignerWithStake&gt;&gt;&gt;;
 
 <span class="doccomment">/// Mocking trait for `VerificationKeyStore`.
 </span><span class="attr">#[async_trait]
@@ -241,8 +246,8 @@
     </span><span class="kw">async fn </span>save_verification_key(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         epoch: Epoch,
-        signer: Signer,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Signer&gt;, StoreError&gt;;
+        signer: SignerWithStake,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;SignerWithStake&gt;, StoreError&gt;;
 
     <span class="doccomment">/// Returns a HashMap of [Signer] indexed by [PartyId] for the given `Beacon`.
     </span><span class="kw">async fn </span>get_verification_keys(
@@ -269,7 +274,7 @@
 <span class="attr">#[async_trait]
 </span><span class="kw">impl </span>StorePruner <span class="kw">for </span>VerificationKeyStore {
     <span class="kw">type </span>Key = Epoch;
-    <span class="kw">type </span>Record = HashMap&lt;PartyId, Signer&gt;;
+    <span class="kw">type </span>Record = HashMap&lt;PartyId, SignerWithStake&gt;;
 
     <span class="kw">fn </span>get_adapter(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
@@ -287,13 +292,13 @@
     <span class="kw">async fn </span>save_verification_key(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         epoch: Epoch,
-        signer: Signer,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Signer&gt;, StoreError&gt; {
+        signer: SignerWithStake,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;SignerWithStake&gt;, StoreError&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>signers = <span class="kw">match </span><span class="self">self</span>.adapter.read().<span class="kw">await</span>.get_record(<span class="kw-2">&amp;</span>epoch).<span class="kw">await</span><span class="question-mark">? </span>{
             <span class="prelude-val">Some</span>(s) =&gt; s,
             <span class="prelude-val">None </span>=&gt; HashMap::new(),
         };
-        <span class="kw">let </span>prev_signer = signers.insert(signer.party_id.to_owned(), signer);
+        <span class="kw">let </span>prev_signer = signers.insert(signer.party_id.to_owned(), signer.clone());
         <span class="self">self</span>.adapter
             .write()
             .<span class="kw">await
@@ -309,7 +314,7 @@
         epoch: Epoch,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;HashMap&lt;PartyId, Signer&gt;&gt;, StoreError&gt; {
         <span class="kw">let </span>record = <span class="self">self</span>.adapter.read().<span class="kw">await</span>.get_record(<span class="kw-2">&amp;</span>epoch).<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(record)
+        <span class="prelude-val">Ok</span>(record.map(|h| h.into_iter().map(|(k, v)| (k, v.into())).collect()))
     }
 }
 
@@ -324,21 +329,22 @@
         signers_per_epoch: u64,
         retention_limit: <span class="prelude-ty">Option</span>&lt;usize&gt;,
     ) -&gt; VerificationKeyStore {
-        <span class="kw">let </span><span class="kw-2">mut </span>values: Vec&lt;(Epoch, HashMap&lt;PartyId, Signer&gt;)&gt; = Vec::new();
+        <span class="kw">let </span><span class="kw-2">mut </span>values: Vec&lt;(Epoch, HashMap&lt;PartyId, SignerWithStake&gt;)&gt; = Vec::new();
 
         <span class="kw">for </span>epoch <span class="kw">in </span><span class="number">1</span>..=nb_epoch {
-            <span class="kw">let </span><span class="kw-2">mut </span>signers: HashMap&lt;PartyId, Signer&gt; = HashMap::new();
+            <span class="kw">let </span><span class="kw-2">mut </span>signers: HashMap&lt;PartyId, SignerWithStake&gt; = HashMap::new();
 
             <span class="kw">for </span>party_idx <span class="kw">in </span><span class="number">1</span>..=signers_per_epoch {
                 <span class="kw">let </span>party_id = <span class="macro">format!</span>(<span class="string">&quot;{party_idx}&quot;</span>);
                 signers.insert(
                     party_id.clone(),
-                    Signer {
+                    SignerWithStake {
                         party_id: party_id.clone(),
                         verification_key: <span class="macro">format!</span>(<span class="string">&quot;vkey {party_id}&quot;</span>),
                         verification_key_signature: <span class="prelude-val">None</span>,
                         operational_certificate: <span class="prelude-val">None</span>,
                         kes_period: <span class="prelude-val">None</span>,
+                        stake: <span class="number">10</span>,
                     },
                 );
             }
@@ -350,7 +356,7 @@
         } <span class="kw">else </span>{
             <span class="prelude-val">None
         </span>};
-        <span class="kw">let </span>adapter: MemoryAdapter&lt;Epoch, HashMap&lt;PartyId, Signer&gt;&gt; =
+        <span class="kw">let </span>adapter: MemoryAdapter&lt;Epoch, HashMap&lt;PartyId, SignerWithStake&gt;&gt; =
             MemoryAdapter::new(values).unwrap();
         VerificationKeyStore::new(Box::new(adapter), retention_limit)
     }
@@ -361,12 +367,13 @@
         <span class="kw">let </span>res = store
             .save_verification_key(
                 Epoch(<span class="number">0</span>),
-                Signer {
+                SignerWithStake {
                     party_id: <span class="string">&quot;0&quot;</span>.to_string(),
                     verification_key: <span class="string">&quot;OK&quot;</span>.to_string(),
                     verification_key_signature: <span class="prelude-val">None</span>,
                     operational_certificate: <span class="prelude-val">None</span>,
                     kes_period: <span class="prelude-val">None</span>,
+                    stake: <span class="number">10</span>,
                 },
             )
             .<span class="kw">await
@@ -381,12 +388,13 @@
         <span class="kw">let </span>res = store
             .save_verification_key(
                 Epoch(<span class="number">1</span>),
-                Signer {
+                SignerWithStake {
                     party_id: <span class="string">&quot;1&quot;</span>.to_string(),
                     verification_key: <span class="string">&quot;test&quot;</span>.to_string(),
                     verification_key_signature: <span class="prelude-val">None</span>,
                     operational_certificate: <span class="prelude-val">None</span>,
                     kes_period: <span class="prelude-val">None</span>,
+                    stake: <span class="number">10</span>,
                 },
             )
             .<span class="kw">await
@@ -394,12 +402,13 @@
 
         <span class="macro">assert!</span>(res.is_some());
         <span class="macro">assert_eq!</span>(
-            Signer {
+            SignerWithStake {
                 party_id: <span class="string">&quot;1&quot;</span>.to_string(),
                 verification_key: <span class="string">&quot;vkey 1&quot;</span>.to_string(),
                 verification_key_signature: <span class="prelude-val">None</span>,
                 operational_certificate: <span class="prelude-val">None</span>,
                 kes_period: <span class="prelude-val">None</span>,
+                stake: <span class="number">10</span>,
             },
             res.unwrap(),
         );
@@ -433,12 +442,13 @@
         <span class="kw">let _ </span>= store
             .save_verification_key(
                 Epoch(<span class="number">3</span>),
-                Signer {
+                SignerWithStake {
                     party_id: <span class="string">&quot;party_id&quot;</span>.to_string(),
                     verification_key: <span class="string">&quot;whatever&quot;</span>.to_string(),
                     verification_key_signature: <span class="prelude-val">None</span>,
                     operational_certificate: <span class="prelude-val">None</span>,
                     kes_period: <span class="prelude-val">None</span>,
+                    stake: <span class="number">10</span>,
                 },
             )
             .<span class="kw">await
