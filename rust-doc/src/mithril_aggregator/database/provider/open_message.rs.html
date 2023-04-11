@@ -468,21 +468,10 @@
 <a href="#468" id="468">468</a>
 <a href="#469" id="469">469</a>
 <a href="#470" id="470">470</a>
-<a href="#471" id="471">471</a>
-<a href="#472" id="472">472</a>
-<a href="#473" id="473">473</a>
-<a href="#474" id="474">474</a>
-<a href="#475" id="475">475</a>
-<a href="#476" id="476">476</a>
-<a href="#477" id="477">477</a>
-<a href="#478" id="478">478</a>
-<a href="#479" id="479">479</a>
-<a href="#480" id="480">480</a>
-<a href="#481" id="481">481</a>
 </pre><pre class="rust"><code><span class="kw">use </span>mithril_common::StdError;
 
 <span class="kw">use </span>mithril_common::{
-    entities::{Beacon, Epoch, SignedEntityType},
+    entities::{Epoch, SignedEntityType},
     sqlite::{HydrationError, Projection, SqLiteEntity, WhereCondition},
     sqlite::{Provider, SourceAlias},
 };
@@ -511,10 +500,6 @@
     <span class="doccomment">/// Epoch
     </span>epoch: Epoch,
 
-    <span class="doccomment">/// Beacon, this is the discriminant of this message type in the current
-    /// Epoch
-    </span>beacon: Beacon,
-
     <span class="doccomment">/// Type of message
     </span>signed_entity_type: SignedEntityType,
 
@@ -541,21 +526,13 @@
         <span class="kw">let </span>epoch_val = u64::try_from(epoch_setting_id)
             .map_err(|e| <span class="macro">panic!</span>(<span class="string">&quot;Integer field open_message.epoch_setting_id (value={epoch_setting_id}) is incompatible with u64 Epoch representation. Error = {e}&quot;</span>))<span class="question-mark">?</span>;
 
+        <span class="kw">let </span>beacon_str = row.get::&lt;String, <span class="kw">_</span>&gt;(<span class="number">2</span>);
         <span class="kw">let </span>signed_entity_type_id = usize::try_from(row.get::&lt;i64, <span class="kw">_</span>&gt;(<span class="number">3</span>)).map_err(|e| {
             <span class="macro">panic!</span>(
                 <span class="string">&quot;Integer field open_message.signed_entity_type_id cannot be turned into usize: {e}&quot;
             </span>)
         })<span class="question-mark">?</span>;
-        <span class="kw">let </span>signed_entity_type = SignedEntityType::from_repr(signed_entity_type_id)
-            .ok_or_else(|| HydrationError::InvalidData(<span class="macro">format!</span>(
-                <span class="string">&quot;Field open_message.signed_type_id can be either 0, 1 or 2, ({signed_entity_type_id} given).&quot;
-            </span>)))<span class="question-mark">?</span>;
-        <span class="kw">let </span>beacon_str = row.get::&lt;String, <span class="kw">_</span>&gt;(<span class="number">2</span>);
-        <span class="kw">let </span>beacon: Beacon = serde_json::from_str(<span class="kw-2">&amp;</span>beacon_str).map_err(|e| {
-            HydrationError::InvalidData(<span class="macro">format!</span>(
-                <span class="string">&quot;Invalid Beacon JSON in open_message.beacon: &#39;{beacon_str}&#39;. Error: {e}&quot;
-            </span>))
-        })<span class="question-mark">?</span>;
+        <span class="kw">let </span>signed_entity_type = SignedEntityType::hydrate(signed_entity_type_id, <span class="kw-2">&amp;</span>beacon_str)<span class="question-mark">?</span>;
         <span class="kw">let </span>datetime = <span class="kw-2">&amp;</span>row.get::&lt;String, <span class="kw">_</span>&gt;(<span class="number">5</span>);
         <span class="kw">let </span>created_at =
             NaiveDateTime::parse_from_str(datetime, <span class="string">&quot;%Y-%m-%d %H:%M:%S&quot;</span>).map_err(|e| {
@@ -567,7 +544,6 @@
         <span class="kw">let </span>open_message = <span class="self">Self </span>{
             open_message_id,
             epoch: Epoch(epoch_val),
-            beacon,
             signed_entity_type,
             message,
             created_at,
@@ -622,7 +598,7 @@
     ) -&gt; WhereCondition {
         WhereCondition::new(
             <span class="string">&quot;signed_entity_type_id = ?*&quot;</span>,
-            <span class="macro">vec!</span>[Value::Integer(<span class="kw-2">*</span>signed_entity_type <span class="kw">as </span>i64)],
+            <span class="macro">vec!</span>[Value::Integer(signed_entity_type.index() <span class="kw">as </span>i64)],
         )
     }
 
@@ -662,16 +638,16 @@
     <span class="kw">fn </span>get_insert_condition(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         epoch: Epoch,
-        beacon: <span class="kw-2">&amp;</span>Beacon,
         signed_entity_type: <span class="kw-2">&amp;</span>SignedEntityType,
         message: <span class="kw-2">&amp;</span>str,
     ) -&gt; StdResult&lt;WhereCondition&gt; {
         <span class="kw">let </span>expression = <span class="string">&quot;(open_message_id, epoch_setting_id, beacon, signed_entity_type_id, message) values (?*, ?*, ?*, ?*, ?*)&quot;</span>;
+        <span class="kw">let </span>beacon_str = signed_entity_type.get_json_beacon()<span class="question-mark">?</span>;
         <span class="kw">let </span>parameters = <span class="macro">vec!</span>[
             Value::String(Uuid::new_v4().to_string()),
             Value::Integer(epoch.<span class="number">0 </span><span class="kw">as </span>i64),
-            Value::String(serde_json::to_string(beacon)<span class="question-mark">?</span>),
-            Value::Integer(<span class="kw-2">*</span>signed_entity_type <span class="kw">as </span>i64),
+            Value::String(beacon_str),
+            Value::Integer(signed_entity_type.index() <span class="kw">as </span>i64),
             Value::String(message.to_string()),
         ];
 
@@ -760,13 +736,12 @@
     </span><span class="kw">pub async fn </span>create_open_message(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         epoch: Epoch,
-        beacon: <span class="kw-2">&amp;</span>Beacon,
         signed_entity_type: <span class="kw-2">&amp;</span>SignedEntityType,
         message: <span class="kw-2">&amp;</span>str,
     ) -&gt; StdResult&lt;OpenMessage&gt; {
         <span class="kw">let </span>lock = <span class="self">self</span>.connection.lock().<span class="kw">await</span>;
         <span class="kw">let </span>provider = InsertOpenMessageProvider::new(<span class="kw-2">&amp;</span>lock);
-        <span class="kw">let </span>filters = provider.get_insert_condition(epoch, beacon, signed_entity_type, message)<span class="question-mark">?</span>;
+        <span class="kw">let </span>filters = provider.get_insert_condition(epoch, signed_entity_type, message)<span class="question-mark">?</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>cursor = provider.find(filters)<span class="question-mark">?</span>;
 
         cursor
@@ -788,7 +763,7 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
-    <span class="kw">use </span>mithril_common::sqlite::SourceAlias;
+    <span class="kw">use </span>mithril_common::{entities::Beacon, sqlite::SourceAlias};
 
     <span class="kw">use crate</span>::{dependency_injection::DependenciesBuilder, Configuration};
 
@@ -819,8 +794,13 @@
     </span><span class="kw">fn </span>provider_message_type_condition() {
         <span class="kw">let </span>connection = Connection::open(<span class="string">&quot;:memory:&quot;</span>).unwrap();
         <span class="kw">let </span>provider = OpenMessageProvider::new(<span class="kw-2">&amp;</span>connection);
+        <span class="kw">let </span>beacon = Beacon {
+            network: <span class="string">&quot;whatever&quot;</span>.to_string(),
+            epoch: Epoch(<span class="number">4</span>),
+            immutable_file_number: <span class="number">400</span>,
+        };
         <span class="kw">let </span>(expr, params) = provider
-            .get_signed_entity_type_condition(<span class="kw-2">&amp;</span>SignedEntityType::CardanoImmutableFilesFull)
+            .get_signed_entity_type_condition(<span class="kw-2">&amp;</span>SignedEntityType::CardanoImmutableFilesFull(beacon))
             .expand();
 
         <span class="macro">assert_eq!</span>(<span class="string">&quot;signed_entity_type_id = ?1&quot;</span>.to_string(), expr);
@@ -848,11 +828,11 @@
     </span><span class="kw">fn </span>insert_provider_condition() {
         <span class="kw">let </span>connection = Connection::open(<span class="string">&quot;:memory:&quot;</span>).unwrap();
         <span class="kw">let </span>provider = InsertOpenMessageProvider::new(<span class="kw-2">&amp;</span>connection);
+        <span class="kw">let </span>epoch = Epoch(<span class="number">12</span>);
         <span class="kw">let </span>(expr, params) = provider
             .get_insert_condition(
-                Epoch(<span class="number">12</span>),
-                <span class="kw-2">&amp;</span>Beacon::default(),
-                <span class="kw-2">&amp;</span>SignedEntityType::CardanoStakeDistribution,
+                epoch,
+                <span class="kw-2">&amp;</span>SignedEntityType::CardanoImmutableFilesFull(Beacon::default()),
                 <span class="string">&quot;This is a message&quot;</span>,
             )
             .unwrap()
@@ -864,7 +844,7 @@
             Value::String(<span class="string">r#&quot;{&quot;network&quot;:&quot;&quot;,&quot;epoch&quot;:0,&quot;immutable_file_number&quot;:0}&quot;#</span>.to_string()),
             params[<span class="number">2</span>]
         );
-        <span class="macro">assert_eq!</span>(Value::Integer(<span class="number">1</span>), params[<span class="number">3</span>]);
+        <span class="macro">assert_eq!</span>(Value::Integer(<span class="number">2</span>), params[<span class="number">3</span>]);
         <span class="macro">assert_eq!</span>(Value::String(<span class="string">&quot;This is a message&quot;</span>.to_string()), params[<span class="number">4</span>]);
     }
 
@@ -894,11 +874,11 @@
     </span><span class="kw">async fn </span>repository_create_open_message() {
         <span class="kw">let </span>connection = get_connection().<span class="kw">await</span>;
         <span class="kw">let </span>repository = OpenMessageRepository::new(connection.clone());
+        <span class="kw">let </span>epoch = Epoch(<span class="number">1</span>);
         <span class="kw">let </span>open_message = repository
             .create_open_message(
-                Epoch(<span class="number">1</span>),
-                <span class="kw-2">&amp;</span>Beacon::default(),
-                <span class="kw-2">&amp;</span>SignedEntityType::CardanoImmutableFilesFull,
+                epoch,
+                <span class="kw-2">&amp;</span>SignedEntityType::CardanoImmutableFilesFull(Beacon::default()),
                 <span class="string">&quot;this is a message&quot;</span>,
             )
             .<span class="kw">await
@@ -907,7 +887,7 @@
         <span class="macro">assert_eq!</span>(Epoch(<span class="number">1</span>), open_message.epoch);
         <span class="macro">assert_eq!</span>(<span class="string">&quot;this is a message&quot;</span>.to_string(), open_message.message);
         <span class="macro">assert_eq!</span>(
-            SignedEntityType::CardanoImmutableFilesFull,
+            SignedEntityType::CardanoImmutableFilesFull(Beacon::default()),
             open_message.signed_entity_type
         );
 
@@ -940,8 +920,7 @@
         <span class="kw">let _ </span>= repository
             .create_open_message(
                 Epoch(<span class="number">1</span>),
-                <span class="kw-2">&amp;</span>Beacon::default(),
-                <span class="kw-2">&amp;</span>SignedEntityType::CardanoImmutableFilesFull,
+                <span class="kw-2">&amp;</span>SignedEntityType::CardanoImmutableFilesFull(Beacon::default()),
                 <span class="string">&quot;this is a message&quot;</span>,
             )
             .<span class="kw">await
@@ -949,8 +928,7 @@
         <span class="kw">let _ </span>= repository
             .create_open_message(
                 Epoch(<span class="number">1</span>),
-                <span class="kw-2">&amp;</span>Beacon::default(),
-                <span class="kw-2">&amp;</span>SignedEntityType::MithrilStakeDistribution,
+                <span class="kw-2">&amp;</span>SignedEntityType::CardanoImmutableFilesFull(Beacon::default()),
                 <span class="string">&quot;this is a stake distribution&quot;</span>,
             )
             .<span class="kw">await
