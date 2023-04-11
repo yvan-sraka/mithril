@@ -1078,9 +1078,6 @@
 <a href="#1078" id="1078">1078</a>
 <a href="#1079" id="1079">1079</a>
 <a href="#1080" id="1080">1080</a>
-<a href="#1081" id="1081">1081</a>
-<a href="#1082" id="1082">1082</a>
-<a href="#1083" id="1083">1083</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::{collections::HashMap, sync::Arc};
 
 <span class="kw">use </span>mithril_common::{
@@ -1120,7 +1117,8 @@
 <span class="kw">use crate</span>::{
     configuration::{ExecutionEnvironment, LIST_SNAPSHOTS_MAX_ITEMS},
     database::provider::{
-        CertificateStoreAdapter, EpochSettingStore, SignerRegistrationStoreAdapter, StakePoolStore,
+        CertificateStoreAdapter, EpochSettingStore, SignedEntityStoreAdapter,
+        SignerRegistrationStoreAdapter, StakePoolStore,
     },
     event_store::{EventMessage, EventStore, TransmitterService},
     http_server::routes::router,
@@ -1339,11 +1337,7 @@
             <span class="kw">dyn </span>StoreAdapter&lt;Key = String, Record = mithril_common::entities::Snapshot&gt;,
         &gt; = <span class="kw">match </span><span class="self">self</span>.configuration.environment {
             ExecutionEnvironment::Production =&gt; {
-                <span class="kw">let </span>adapter = SQLiteAdapter::new(<span class="string">&quot;snapshot&quot;</span>, <span class="self">self</span>.get_sqlite_connection().<span class="kw">await</span><span class="question-mark">?</span>)
-                    .map_err(|e| DependenciesBuilderError::Initialization {
-                    message: <span class="string">&quot;Cannot create SQLite adapter for Snapshot Store.&quot;</span>.to_string(),
-                    error: <span class="prelude-val">Some</span>(e.into()),
-                })<span class="question-mark">?</span>;
+                <span class="kw">let </span>adapter = SignedEntityStoreAdapter::new(<span class="self">self</span>.get_sqlite_connection().<span class="kw">await</span><span class="question-mark">?</span>);
 
                 Box::new(adapter)
             }
