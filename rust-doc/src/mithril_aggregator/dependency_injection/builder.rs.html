@@ -1078,6 +1078,33 @@
 <a href="#1078" id="1078">1078</a>
 <a href="#1079" id="1079">1079</a>
 <a href="#1080" id="1080">1080</a>
+<a href="#1081" id="1081">1081</a>
+<a href="#1082" id="1082">1082</a>
+<a href="#1083" id="1083">1083</a>
+<a href="#1084" id="1084">1084</a>
+<a href="#1085" id="1085">1085</a>
+<a href="#1086" id="1086">1086</a>
+<a href="#1087" id="1087">1087</a>
+<a href="#1088" id="1088">1088</a>
+<a href="#1089" id="1089">1089</a>
+<a href="#1090" id="1090">1090</a>
+<a href="#1091" id="1091">1091</a>
+<a href="#1092" id="1092">1092</a>
+<a href="#1093" id="1093">1093</a>
+<a href="#1094" id="1094">1094</a>
+<a href="#1095" id="1095">1095</a>
+<a href="#1096" id="1096">1096</a>
+<a href="#1097" id="1097">1097</a>
+<a href="#1098" id="1098">1098</a>
+<a href="#1099" id="1099">1099</a>
+<a href="#1100" id="1100">1100</a>
+<a href="#1101" id="1101">1101</a>
+<a href="#1102" id="1102">1102</a>
+<a href="#1103" id="1103">1103</a>
+<a href="#1104" id="1104">1104</a>
+<a href="#1105" id="1105">1105</a>
+<a href="#1106" id="1106">1106</a>
+<a href="#1107" id="1107">1107</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::{collections::HashMap, sync::Arc};
 
 <span class="kw">use </span>mithril_common::{
@@ -1123,6 +1150,7 @@
     event_store::{EventMessage, EventStore, TransmitterService},
     http_server::routes::router,
     stake_distribution_service::{MithrilStakeDistributionService, StakeDistributionService},
+    ticker_service::{MithrilTickerService, TickerService},
     tools::{GcpFileUploader, GenesisToolsDependency},
     AggregatorConfig, AggregatorRunner, AggregatorRuntime, CertificatePendingStore,
     CertificateStore, Configuration, DependencyManager, DumbSnapshotUploader, DumbSnapshotter,
@@ -1228,6 +1256,9 @@
 
     <span class="doccomment">/// Stake Distribution Service
     </span><span class="kw">pub </span>stake_distribution_service: <span class="prelude-ty">Option</span>&lt;Arc&lt;<span class="kw">dyn </span>StakeDistributionService&gt;&gt;,
+
+    <span class="doccomment">/// Ticker Service (TODO: remove BeaconProvider)
+    </span><span class="kw">pub </span>ticker_service: <span class="prelude-ty">Option</span>&lt;Arc&lt;<span class="kw">dyn </span>TickerService&gt;&gt;,
 }
 
 <span class="kw">impl </span>DependenciesBuilder {
@@ -1263,6 +1294,7 @@
             event_transmitter_channel: (<span class="prelude-val">None</span>, <span class="prelude-val">None</span>),
             api_version_provider: <span class="prelude-val">None</span>,
             stake_distribution_service: <span class="prelude-val">None</span>,
+            ticker_service: <span class="prelude-val">None</span>,
         }
     }
 
@@ -2156,6 +2188,28 @@
         };
 
         <span class="prelude-val">Ok</span>(dependencies)
+    }
+
+    <span class="doccomment">/// Create [TickerService] instance.
+    </span><span class="kw">pub async fn </span>build_ticker_service(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;<span class="kw">dyn </span>TickerService&gt;&gt; {
+        <span class="kw">let </span>network = <span class="self">self</span>.configuration.get_network()<span class="question-mark">?</span>;
+        <span class="kw">let </span>chain_observer = <span class="self">self</span>.get_chain_observer().<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>immutable_observer = <span class="self">self</span>.get_immutable_file_observer().<span class="kw">await</span><span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(Arc::new(MithrilTickerService::new(
+            chain_observer,
+            immutable_observer,
+            network,
+        )))
+    }
+
+    <span class="doccomment">/// [StakeDistributionService] service
+    </span><span class="kw">pub async fn </span>get_ticker_service(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;<span class="kw">dyn </span>TickerService&gt;&gt; {
+        <span class="kw">if </span><span class="self">self</span>.ticker_service.is_none() {
+            <span class="self">self</span>.ticker_service = <span class="prelude-val">Some</span>(<span class="self">self</span>.build_ticker_service().<span class="kw">await</span><span class="question-mark">?</span>);
+        }
+
+        <span class="prelude-val">Ok</span>(<span class="self">self</span>.ticker_service.as_ref().cloned().unwrap())
     }
 }
 </code></pre></div>
