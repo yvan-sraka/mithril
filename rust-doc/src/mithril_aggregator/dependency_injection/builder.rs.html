@@ -1105,6 +1105,28 @@
 <a href="#1105" id="1105">1105</a>
 <a href="#1106" id="1106">1106</a>
 <a href="#1107" id="1107">1107</a>
+<a href="#1108" id="1108">1108</a>
+<a href="#1109" id="1109">1109</a>
+<a href="#1110" id="1110">1110</a>
+<a href="#1111" id="1111">1111</a>
+<a href="#1112" id="1112">1112</a>
+<a href="#1113" id="1113">1113</a>
+<a href="#1114" id="1114">1114</a>
+<a href="#1115" id="1115">1115</a>
+<a href="#1116" id="1116">1116</a>
+<a href="#1117" id="1117">1117</a>
+<a href="#1118" id="1118">1118</a>
+<a href="#1119" id="1119">1119</a>
+<a href="#1120" id="1120">1120</a>
+<a href="#1121" id="1121">1121</a>
+<a href="#1122" id="1122">1122</a>
+<a href="#1123" id="1123">1123</a>
+<a href="#1124" id="1124">1124</a>
+<a href="#1125" id="1125">1125</a>
+<a href="#1126" id="1126">1126</a>
+<a href="#1127" id="1127">1127</a>
+<a href="#1128" id="1128">1128</a>
+<a href="#1129" id="1129">1129</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::{collections::HashMap, sync::Arc};
 
 <span class="kw">use </span>mithril_common::{
@@ -1145,10 +1167,11 @@
     configuration::{ExecutionEnvironment, LIST_SNAPSHOTS_MAX_ITEMS},
     database::provider::{
         CertificateStoreAdapter, EpochSettingStore, SignedEntityStoreAdapter,
-        SignerRegistrationStoreAdapter, StakePoolStore,
+        SignerRegistrationStoreAdapter, SignerStore, StakePoolStore,
     },
     event_store::{EventMessage, EventStore, TransmitterService},
     http_server::routes::router,
+    signer_registerer::SignerRecorder,
     stake_distribution_service::{MithrilStakeDistributionService, StakeDistributionService},
     ticker_service::{MithrilTickerService, TickerService},
     tools::{GcpFileUploader, GenesisToolsDependency},
@@ -1259,6 +1282,9 @@
 
     <span class="doccomment">/// Ticker Service (TODO: remove BeaconProvider)
     </span><span class="kw">pub </span>ticker_service: <span class="prelude-ty">Option</span>&lt;Arc&lt;<span class="kw">dyn </span>TickerService&gt;&gt;,
+
+    <span class="doccomment">/// Signer Recorder
+    </span><span class="kw">pub </span>signer_recorder: <span class="prelude-ty">Option</span>&lt;Arc&lt;<span class="kw">dyn </span>SignerRecorder&gt;&gt;,
 }
 
 <span class="kw">impl </span>DependenciesBuilder {
@@ -1295,6 +1321,7 @@
             api_version_provider: <span class="prelude-val">None</span>,
             stake_distribution_service: <span class="prelude-val">None</span>,
             ticker_service: <span class="prelude-val">None</span>,
+            signer_recorder: <span class="prelude-val">None</span>,
         }
     }
 
@@ -1870,6 +1897,7 @@
         <span class="kw">let </span>registerer = MithrilSignerRegisterer::new(
             <span class="self">self</span>.get_chain_observer().<span class="kw">await</span><span class="question-mark">?</span>,
             <span class="self">self</span>.get_verification_key_store().<span class="kw">await</span><span class="question-mark">?</span>,
+            <span class="self">self</span>.get_signer_recorder().<span class="kw">await</span><span class="question-mark">?</span>,
         );
 
         <span class="prelude-val">Ok</span>(Arc::new(registerer))
@@ -2053,6 +2081,21 @@
         <span class="prelude-val">Ok</span>(<span class="self">self</span>.stake_distribution_service.as_ref().cloned().unwrap())
     }
 
+    <span class="kw">async fn </span>build_signer_recorder(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;<span class="kw">dyn </span>SignerRecorder&gt;&gt; {
+        <span class="kw">let </span>signer_recorder = Arc::new(SignerStore::new(<span class="self">self</span>.get_sqlite_connection().<span class="kw">await</span><span class="question-mark">?</span>));
+
+        <span class="prelude-val">Ok</span>(signer_recorder)
+    }
+
+    <span class="doccomment">/// [SignerRecorder]
+    </span><span class="kw">pub async fn </span>get_signer_recorder(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;<span class="kw">dyn </span>SignerRecorder&gt;&gt; {
+        <span class="kw">if </span><span class="self">self</span>.signer_recorder.is_none() {
+            <span class="self">self</span>.signer_recorder = <span class="prelude-val">Some</span>(<span class="self">self</span>.build_signer_recorder().<span class="kw">await</span><span class="question-mark">?</span>);
+        }
+
+        <span class="prelude-val">Ok</span>(<span class="self">self</span>.signer_recorder.as_ref().cloned().unwrap())
+    }
+
     <span class="doccomment">/// Return an unconfigured [DependencyManager]
     </span><span class="kw">pub async fn </span>build_dependency_container(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;DependencyManager&gt; {
         <span class="kw">let </span>dependency_manager = DependencyManager {
@@ -2081,6 +2124,7 @@
             event_transmitter: <span class="self">self</span>.get_event_transmitter().<span class="kw">await</span><span class="question-mark">?</span>,
             api_version_provider: <span class="self">self</span>.get_api_version_provider().<span class="kw">await</span><span class="question-mark">?</span>,
             stake_distribution_service: <span class="self">self</span>.get_stake_distribution_service().<span class="kw">await</span><span class="question-mark">?</span>,
+            signer_recorder: <span class="self">self</span>.get_signer_recorder().<span class="kw">await</span><span class="question-mark">?</span>,
         };
 
         <span class="prelude-val">Ok</span>(dependency_manager)

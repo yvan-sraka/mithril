@@ -899,11 +899,25 @@
 <a href="#899" id="899">899</a>
 <a href="#900" id="900">900</a>
 <a href="#901" id="901">901</a>
+<a href="#902" id="902">902</a>
+<a href="#903" id="903">903</a>
+<a href="#904" id="904">904</a>
+<a href="#905" id="905">905</a>
+<a href="#906" id="906">906</a>
+<a href="#907" id="907">907</a>
+<a href="#908" id="908">908</a>
+<a href="#909" id="909">909</a>
+<a href="#910" id="910">910</a>
+<a href="#911" id="911">911</a>
+<a href="#912" id="912">912</a>
+<a href="#913" id="913">913</a>
+<a href="#914" id="914">914</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::{
     collections::{BTreeMap, HashMap},
     sync::Arc,
 };
 
+<span class="kw">use </span>chrono::Utc;
 <span class="kw">use </span>sqlite::{Connection, Value};
 
 <span class="kw">use </span>async_trait::async_trait;
@@ -962,7 +976,7 @@
             operational_certificate: other.operational_certificate,
             kes_period: other.kes_period,
             stake: <span class="prelude-val">Some</span>(other.stake),
-            created_at: <span class="string">&quot;&quot;</span>.to_string(),
+            created_at: <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, Utc::now()),
         }
     }
 }
@@ -1641,6 +1655,18 @@
 
         <span class="kw">let </span>provider = SignerRegistrationRecordProvider::new(<span class="kw-2">&amp;</span>connection);
 
+        <span class="kw">fn </span>reset_created_at(
+            signer_registration_records: Vec&lt;SignerRegistrationRecord&gt;,
+        ) -&gt; Vec&lt;SignerRegistrationRecord&gt; {
+            signer_registration_records
+                .into_iter()
+                .map(|<span class="kw-2">mut </span>sr| {
+                    sr.created_at = <span class="string">&quot;&quot;</span>.to_string();
+                    sr
+                })
+                .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
+        }
+
         <span class="kw">let </span>signer_registration_records: Vec&lt;SignerRegistrationRecord&gt; =
             provider.get_by_epoch(<span class="kw-2">&amp;</span>Epoch(<span class="number">1</span>)).unwrap().collect();
         <span class="kw">let </span>expected_signer_registration_records: Vec&lt;SignerRegistrationRecord&gt; =
@@ -1651,8 +1677,8 @@
                 .rev()
                 .collect();
         <span class="macro">assert_eq!</span>(
-            expected_signer_registration_records,
-            signer_registration_records
+            reset_created_at(expected_signer_registration_records),
+            reset_created_at(signer_registration_records)
         );
 
         <span class="kw">let </span>signer_registration_records: Vec&lt;SignerRegistrationRecord&gt; =
@@ -1665,8 +1691,8 @@
                 .rev()
                 .collect();
         <span class="macro">assert_eq!</span>(
-            expected_signer_registration_records,
-            signer_registration_records
+            reset_created_at(expected_signer_registration_records),
+            reset_created_at(signer_registration_records)
         );
 
         <span class="kw">let </span>cursor = provider.get_by_epoch(<span class="kw-2">&amp;</span>Epoch(<span class="number">5</span>)).unwrap();
@@ -1698,8 +1724,8 @@
                 .rev()
                 .collect();
         <span class="macro">assert_eq!</span>(
-            expected_signer_registration_records,
-            signer_registration_records
+            reset_created_at(expected_signer_registration_records),
+            reset_created_at(signer_registration_records)
         );
     }
 
