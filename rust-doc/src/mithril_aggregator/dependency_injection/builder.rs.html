@@ -1127,6 +1127,7 @@
 <a href="#1127" id="1127">1127</a>
 <a href="#1128" id="1128">1128</a>
 <a href="#1129" id="1129">1129</a>
+<a href="#1130" id="1130">1130</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::{collections::HashMap, sync::Arc};
 
 <span class="kw">use </span>mithril_common::{
@@ -1598,13 +1599,14 @@
             <span class="kw">dyn </span>StoreAdapter&lt;Key = Beacon, Record = HashMap&lt;PartyId, SingleSignatures&gt;&gt;,
         &gt; = <span class="kw">match </span><span class="self">self</span>.configuration.environment {
             ExecutionEnvironment::Production =&gt; {
-                <span class="kw">let </span>adapter =
-                    SQLiteAdapter::new(<span class="string">&quot;single_signature&quot;</span>, <span class="self">self</span>.get_sqlite_connection().<span class="kw">await</span><span class="question-mark">?</span>)
-                        .map_err(|e| DependenciesBuilderError::Initialization {
-                            message: <span class="string">&quot;Cannot create SQLite adapter for SingleSignatureStore.&quot;
-                                </span>.to_string(),
-                            error: <span class="prelude-val">Some</span>(e.into()),
-                        })<span class="question-mark">?</span>;
+                <span class="kw">let </span>adapter = SQLiteAdapter::new(
+                    <span class="string">&quot;single_signature_legacy&quot;</span>,
+                    <span class="self">self</span>.get_sqlite_connection().<span class="kw">await</span><span class="question-mark">?</span>,
+                )
+                .map_err(|e| DependenciesBuilderError::Initialization {
+                    message: <span class="string">&quot;Cannot create SQLite adapter for SingleSignatureStore.&quot;</span>.to_string(),
+                    error: <span class="prelude-val">Some</span>(e.into()),
+                })<span class="question-mark">?</span>;
 
                 Box::new(adapter)
             }
