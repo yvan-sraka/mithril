@@ -321,6 +321,15 @@
 <a href="#321" id="321">321</a>
 <a href="#322" id="322">322</a>
 <a href="#323" id="323">323</a>
+<a href="#324" id="324">324</a>
+<a href="#325" id="325">325</a>
+<a href="#326" id="326">326</a>
+<a href="#327" id="327">327</a>
+<a href="#328" id="328">328</a>
+<a href="#329" id="329">329</a>
+<a href="#330" id="330">330</a>
+<a href="#331" id="331">331</a>
+<a href="#332" id="332">332</a>
 </pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>sqlite::Connection;
 <span class="kw">use </span>std::{fs, sync::Arc};
@@ -337,14 +346,15 @@
     },
     digesters::{CardanoImmutableDigester, ImmutableDigester, ImmutableFileSystemObserver},
     era::{EraChecker, EraReader},
+    signable_builder::DummySignableBuilder,
     store::{adapter::SQLiteAdapter, StakeStore},
     BeaconProvider, BeaconProviderImpl, StdError,
 };
 
 <span class="kw">use crate</span>::{
-    certificate_handler::CertificateHandler, single_signer::SingleSigner,
-    CertificateHandlerHTTPClient, Configuration, MithrilSingleSigner, ProtocolInitializerStore,
-    ProtocolInitializerStorer,
+    certificate_handler::CertificateHandler, signable_builder::SignableBuilderService,
+    single_signer::SingleSigner, CertificateHandlerHTTPClient, Configuration, MithrilSingleSigner,
+    ProtocolInitializerStore, ProtocolInitializerStorer,
 };
 
 <span class="kw">type </span>StakeStoreService = Arc&lt;StakeStore&gt;;
@@ -523,6 +533,10 @@
             api_version_provider.clone(),
         ));
 
+        <span class="kw">let </span>dummy_signable_builder = DummySignableBuilder::new();
+        <span class="kw">let </span>signable_builder_service =
+            Arc::new(SignableBuilderService::new(dummy_signable_builder));
+
         <span class="kw">let </span>services = SignerServices {
             beacon_provider,
             certificate_handler,
@@ -534,6 +548,7 @@
             era_checker,
             era_reader,
             api_version_provider,
+            signable_builder_service,
         };
 
         <span class="prelude-val">Ok</span>(services)
@@ -571,6 +586,9 @@
 
     <span class="doccomment">/// API version provider
     </span><span class="kw">pub </span>api_version_provider: Arc&lt;APIVersionProvider&gt;,
+
+    <span class="doccomment">/// Signable Builder Service
+    </span><span class="kw">pub </span>signable_builder_service: Arc&lt;SignableBuilderService&gt;,
 }
 
 <span class="attr">#[cfg(test)]
