@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["DummyBeacon","Dummy beacon"],["DummySignable","Dummy signable"],["DummySignableBuilder","A [DummySignable] builder"]],"trait":[["Beacon","Beacon trait"],["Signable","Signable is a trait for types that can be converted to a protocol message"],["SignableBuilder","SignableBuilder is trait for building a signable for a beacon"]]};
+window.SIDEBAR_ITEMS = {"struct":["DummyBeacon","DummySignable","DummySignableBuilder"],"trait":["Beacon","Signable","SignableBuilder"]};

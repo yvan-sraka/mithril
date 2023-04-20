@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["StakePoolDistributionServiceError","Errors related to the [StakeDistributionService]."]],"struct":[["MithrilStakeDistributionService","Implementation of the stake distribution service."]],"trait":[["StakeDistributionService","Responsible of synchronizing with Cardano stake distribution."]]};
+window.SIDEBAR_ITEMS = {"enum":["StakePoolDistributionServiceError"],"struct":["MithrilStakeDistributionService"],"trait":["StakeDistributionService"]};

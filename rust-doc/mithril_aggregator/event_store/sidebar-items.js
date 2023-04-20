@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["Event","Event persisted in the Event Store."],["EventMessage","Event that is sent from a thread to be persisted."],["EventPersister","The EventPersister is the adapter to persist EventMessage turning them into Event."],["EventStore","EventMessage receiver service."],["TransmitterService","The transmitter service is used to allow inter process channel communication. This service is used to create multiple transmitters."]]};
+window.SIDEBAR_ITEMS = {"struct":["Event","EventMessage","EventPersister","EventStore","TransmitterService"]};

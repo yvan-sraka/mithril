@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["MithrilTickerService","MithrilTickerService"]],"trait":[["TickerService","Service trait with consistent business oriented API."]]};
+window.SIDEBAR_ITEMS = {"struct":["MithrilTickerService"],"trait":["TickerService"]};
