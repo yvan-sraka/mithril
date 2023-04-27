@@ -200,10 +200,25 @@
 <a href="#200" id="200">200</a>
 <a href="#201" id="201">201</a>
 <a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Fake data builders for testing.
 
 </span><span class="kw">use </span><span class="kw">crate</span>::entities::{
-    CertificateMetadata, LotteryIndex, ProtocolMessage, ProtocolMessagePartKey, SingleSignatures,
+    CertificateMetadata, LotteryIndex, ProtocolMessage, ProtocolMessagePartKey, SignedEntityType,
+    SingleSignatures,
 };
 <span class="kw">use crate</span>::{crypto_helper, entities};
 
@@ -255,6 +270,9 @@
     <span class="comment">// Beacon
     </span><span class="kw">let </span>beacon = beacon();
 
+    <span class="comment">// Signed entity type
+    </span><span class="kw">let </span>signed_entity_type = SignedEntityType::dummy();
+
     <span class="comment">// Protocol parameters
     </span><span class="kw">let </span>next_protocol_parameters = protocol_parameters();
     <span class="kw">let </span>protocol_parameters = protocol_parameters();
@@ -267,11 +285,21 @@
     <span class="comment">// Certificate pending
     </span>entities::CertificatePending::new(
         beacon,
+        signed_entity_type,
         protocol_parameters,
         next_protocol_parameters,
         current_signers,
         next_signers,
     )
+}
+
+<span class="doccomment">/// Fake Genesis Certificate
+</span><span class="kw">pub fn </span>genesis_certificate(certificate_hash: String) -&gt; entities::Certificate {
+    <span class="kw">let </span><span class="kw-2">mut </span>certificate = certificate(certificate_hash);
+    certificate.genesis_signature = certificate.multi_signature;
+    certificate.multi_signature = <span class="string">&quot;&quot;</span>.to_string();
+
+    certificate
 }
 
 <span class="doccomment">/// Fake Certificate

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["beacon","certificate","certificate_pending","digest","epoch_settings","protocol_parameters","signers","signers_with_stakes","single_signatures","snapshots"]};
+window.SIDEBAR_ITEMS = {"fn":["beacon","certificate","certificate_pending","digest","epoch_settings","genesis_certificate","protocol_parameters","signers","signers_with_stakes","single_signatures","snapshots"]};

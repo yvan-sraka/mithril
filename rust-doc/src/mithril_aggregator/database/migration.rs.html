@@ -283,6 +283,17 @@
 <a href="#283" id="283">283</a>
 <a href="#284" id="284">284</a>
 <a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a>
+<a href="#287" id="287">287</a>
+<a href="#288" id="288">288</a>
+<a href="#289" id="289">289</a>
+<a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
+<a href="#293" id="293">293</a>
+<a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Migration module
 //!
 </span><span class="kw">use </span>mithril_common::database::SqlMigration;
@@ -564,6 +575,17 @@ create table single_signature (
     foreign key (open_message_id) references open_message(open_message_id) on delete cascade
     foreign key (signer_id, registration_epoch_setting_id) references signer_registration(signer_id, epoch_setting_id)
 );
+&quot;#</span>,
+        ),
+        <span class="comment">// Migration 10
+        // Alter `open_message` table and drop `single_signature_legacy` table
+        </span>SqlMigration::new(
+            <span class="number">10</span>,
+            <span class="string">r#&quot;
+drop table single_signature_legacy;
+alter table open_message drop column message;
+alter table open_message add column protocol_message json not null;
+alter table open_message add column is_certified bool not null default false;
 &quot;#</span>,
         ),
     ]

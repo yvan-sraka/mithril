@@ -306,6 +306,35 @@
 <a href="#306" id="306">306</a>
 <a href="#307" id="307">307</a>
 <a href="#308" id="308">308</a>
+<a href="#309" id="309">309</a>
+<a href="#310" id="310">310</a>
+<a href="#311" id="311">311</a>
+<a href="#312" id="312">312</a>
+<a href="#313" id="313">313</a>
+<a href="#314" id="314">314</a>
+<a href="#315" id="315">315</a>
+<a href="#316" id="316">316</a>
+<a href="#317" id="317">317</a>
+<a href="#318" id="318">318</a>
+<a href="#319" id="319">319</a>
+<a href="#320" id="320">320</a>
+<a href="#321" id="321">321</a>
+<a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
+<a href="#324" id="324">324</a>
+<a href="#325" id="325">325</a>
+<a href="#326" id="326">326</a>
+<a href="#327" id="327">327</a>
+<a href="#328" id="328">328</a>
+<a href="#329" id="329">329</a>
+<a href="#330" id="330">330</a>
+<a href="#331" id="331">331</a>
+<a href="#332" id="332">332</a>
+<a href="#333" id="333">333</a>
+<a href="#334" id="334">334</a>
+<a href="#335" id="335">335</a>
+<a href="#336" id="336">336</a>
+<a href="#337" id="337">337</a>
 </pre><pre class="rust"><code><span class="kw">use </span>mithril_common::{
     api_version::APIVersionProvider,
     certificate_chain::CertificateVerifier,
@@ -315,6 +344,7 @@
     entities::{Certificate, Epoch, ProtocolParameters, SignerWithStake, StakeDistribution},
     era::{EraChecker, EraReader},
     store::StakeStorer,
+    test_utils::MithrilFixture,
     BeaconProvider,
 };
 <span class="kw">use </span>sqlite::Connection;
@@ -323,11 +353,12 @@
 <span class="kw">use </span>tokio::sync::{Mutex, RwLock};
 
 <span class="kw">use crate</span>::{
-    artifact_builder::ArtifactBuilderService, configuration::<span class="kw-2">*</span>, database::provider::StakePoolStore,
-    signable_builder::SignableBuilderService, signer_registerer::SignerRecorder,
-    CertificatePendingStore, CertificateStore, ProtocolParametersStore, ProtocolParametersStorer,
-    SignerRegisterer, SignerRegistrationRoundOpener, SingleSignatureStore, Snapshotter,
-    VerificationKeyStore, VerificationKeyStorer,
+    artifact_builder::ArtifactBuilderService, certifier_service::CertifierService,
+    configuration::<span class="kw-2">*</span>, database::provider::StakePoolStore, signable_builder::SignableBuilderService,
+    signer_registerer::SignerRecorder, ticker_service::TickerService, CertificatePendingStore,
+    CertificateStore, ProtocolParametersStore, ProtocolParametersStorer, SignerRegisterer,
+    SignerRegistrationRoundOpener, SingleSignatureStore, Snapshotter, VerificationKeyStore,
+    VerificationKeyStorer,
 };
 <span class="kw">use crate</span>::{event_store::EventMessage, snapshot_stores::SnapshotStore};
 <span class="kw">use crate</span>::{event_store::TransmitterService, multi_signer::MultiSigner};
@@ -344,7 +375,7 @@
     </span><span class="kw">pub </span>config: Configuration,
 
     <span class="doccomment">/// SQLite database connection
-    /// This is not a real service but is is needed to instanciate all store
+    /// This is not a real service but is is needed to instantiate all store
     /// services. Shall be private dependency.
     </span><span class="kw">pub </span>sqlite_connection: Arc&lt;Mutex&lt;Connection&gt;&gt;,
 
@@ -426,6 +457,12 @@
 
     <span class="doccomment">/// Artifact Builder Service
     </span><span class="kw">pub </span>artifact_builder_service: Arc&lt;ArtifactBuilderService&gt;,
+
+    <span class="doccomment">/// Certifier Service
+    </span><span class="kw">pub </span>certifier_service: Arc&lt;<span class="kw">dyn </span>CertifierService&gt;,
+
+    <span class="doccomment">/// Ticker Service
+    </span><span class="kw">pub </span>ticker_service: Arc&lt;<span class="kw">dyn </span>TickerService&gt;,
 }
 
 <span class="attr">#[doc(hidden)]
@@ -451,6 +488,23 @@
         <span class="kw">let </span>epoch_to_sign = current_epoch.offset_to_next_signer_retrieval_epoch();
 
         (work_epoch, epoch_to_sign)
+    }
+
+    <span class="doccomment">/// `TEST METHOD ONLY`
+    ///
+    /// Fill the stores of a [DependencyManager] in a way to simulate an aggregator state
+    /// using the data from a precomputed fixture.
+    </span><span class="kw">pub async fn </span>init_state_from_fixture(<span class="kw-2">&amp;</span><span class="self">self</span>, fixture: <span class="kw-2">&amp;</span>MithrilFixture, target_epochs: <span class="kw-2">&amp;</span>[Epoch]) {
+        <span class="kw">for </span>epoch <span class="kw">in </span>target_epochs {
+            <span class="self">self</span>.protocol_parameters_store
+                .save_protocol_parameters(<span class="kw-2">*</span>epoch, fixture.protocol_parameters())
+                .<span class="kw">await
+                </span>.expect(<span class="string">&quot;save_protocol_parameters should not fail&quot;</span>);
+            <span class="self">self</span>.fill_verification_key_store(<span class="kw-2">*</span>epoch, <span class="kw-2">&amp;</span>fixture.signers_with_stake())
+                .<span class="kw">await</span>;
+            <span class="self">self</span>.fill_stakes_store(<span class="kw-2">*</span>epoch, fixture.signers_with_stake())
+                .<span class="kw">await</span>;
+        }
     }
 
     <span class="doccomment">/// `TEST METHOD ONLY`
@@ -495,12 +549,12 @@
         }
 
         <span class="kw">for </span>(epoch, params) <span class="kw">in </span>parameters_per_epoch {
-            <span class="self">self</span>.fill_verification_key_store(epoch, <span class="kw-2">&amp;</span>params.<span class="number">0</span>).<span class="kw">await</span>;
-            <span class="self">self</span>.fill_stakes_store(epoch, params.<span class="number">0</span>.to_vec()).<span class="kw">await</span>;
             <span class="self">self</span>.protocol_parameters_store
                 .save_protocol_parameters(epoch, params.<span class="number">1</span>)
                 .<span class="kw">await
                 </span>.expect(<span class="string">&quot;save_protocol_parameters should not fail&quot;</span>);
+            <span class="self">self</span>.fill_verification_key_store(epoch, <span class="kw-2">&amp;</span>params.<span class="number">0</span>).<span class="kw">await</span>;
+            <span class="self">self</span>.fill_stakes_store(epoch, params.<span class="number">0</span>.to_vec()).<span class="kw">await</span>;
         }
 
         <span class="kw">for </span>certificate <span class="kw">in </span>certificate_chain {
@@ -538,6 +592,9 @@
         second_epoch_signers: Vec&lt;SignerWithStake&gt;,
         genesis_protocol_parameters: <span class="kw-2">&amp;</span>ProtocolParameters,
     ) {
+        <span class="self">self</span>.init_protocol_parameter_store(genesis_protocol_parameters)
+            .<span class="kw">await</span>;
+
         <span class="kw">let </span>(work_epoch, epoch_to_sign) = <span class="self">self</span>.get_genesis_epochs().<span class="kw">await</span>;
         <span class="kw">for </span>(epoch, signers) <span class="kw">in </span>[
             (work_epoch, genesis_signers),
@@ -546,9 +603,6 @@
             <span class="self">self</span>.fill_verification_key_store(epoch, <span class="kw-2">&amp;</span>signers).<span class="kw">await</span>;
             <span class="self">self</span>.fill_stakes_store(epoch, signers).<span class="kw">await</span>;
         }
-
-        <span class="self">self</span>.init_protocol_parameter_store(genesis_protocol_parameters)
-            .<span class="kw">await</span>;
     }
 
     <span class="doccomment">/// `TEST METHOD ONLY`
@@ -570,6 +624,10 @@
 
     <span class="kw">async fn </span>fill_verification_key_store(<span class="kw-2">&amp;</span><span class="self">self</span>, target_epoch: Epoch, signers: <span class="kw-2">&amp;</span>[SignerWithStake]) {
         <span class="kw">for </span>signer <span class="kw">in </span>signers {
+            <span class="self">self</span>.signer_recorder
+                .record_signer_id(signer.party_id.clone())
+                .<span class="kw">await
+                </span>.expect(<span class="string">&quot;record_signer_id should not fail&quot;</span>);
             <span class="self">self</span>.verification_key_store
                 .save_verification_key(target_epoch, signer.clone())
                 .<span class="kw">await

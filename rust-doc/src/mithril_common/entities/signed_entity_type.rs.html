@@ -95,7 +95,16 @@
 <a href="#95" id="95">95</a>
 <a href="#96" id="96">96</a>
 <a href="#97" id="97">97</a>
-</pre><pre class="rust"><code><span class="kw">use </span>strum_macros::Display;
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
+</pre><pre class="rust"><code><span class="kw">use </span>serde::{Deserialize, Serialize};
+<span class="kw">use </span>strum_macros::Display;
 
 <span class="kw">use crate</span>::{sqlite::HydrationError, StdError};
 
@@ -116,7 +125,7 @@
 /// are identified by their discriminant (i.e. index in the enum), thus the
 /// modification of this type should only ever consist of appending new
 /// variants.
-</span><span class="attr">#[derive(Display, Debug, Clone, PartialEq, Eq)]
+</span><span class="attr">#[derive(Display, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[strum(serialize_all = <span class="string">&quot;PascalCase&quot;</span>)]
 </span><span class="kw">pub enum </span>SignedEntityType {
     <span class="doccomment">/// Mithril stake distribution
@@ -135,6 +144,13 @@
         <span class="self">Self</span>::MithrilStakeDistribution(Epoch(<span class="number">5</span>))
     }
 
+    <span class="doccomment">/// Return the epoch from the intern beacon.
+    </span><span class="kw">pub fn </span>get_epoch(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Epoch {
+        <span class="kw">match </span><span class="self">self </span>{
+            <span class="self">Self</span>::CardanoImmutableFilesFull(b) =&gt; b.epoch,
+            <span class="self">Self</span>::CardanoStakeDistribution(e) | <span class="self">Self</span>::MithrilStakeDistribution(e) =&gt; <span class="kw-2">*</span>e,
+        }
+    }
     <span class="doccomment">/// Create an instance from data coming from the database
     </span><span class="kw">pub fn </span>hydrate(signed_entity_type_id: usize, beacon_str: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, HydrationError&gt; {
         <span class="kw">let </span>myself = <span class="kw">match </span>signed_entity_type_id {
