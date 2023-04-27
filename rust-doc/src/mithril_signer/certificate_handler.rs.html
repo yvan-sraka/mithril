@@ -714,6 +714,29 @@
 <a href="#714" id="714">714</a>
 <a href="#715" id="715">715</a>
 <a href="#716" id="716">716</a>
+<a href="#717" id="717">717</a>
+<a href="#718" id="718">718</a>
+<a href="#719" id="719">719</a>
+<a href="#720" id="720">720</a>
+<a href="#721" id="721">721</a>
+<a href="#722" id="722">722</a>
+<a href="#723" id="723">723</a>
+<a href="#724" id="724">724</a>
+<a href="#725" id="725">725</a>
+<a href="#726" id="726">726</a>
+<a href="#727" id="727">727</a>
+<a href="#728" id="728">728</a>
+<a href="#729" id="729">729</a>
+<a href="#730" id="730">730</a>
+<a href="#731" id="731">731</a>
+<a href="#732" id="732">732</a>
+<a href="#733" id="733">733</a>
+<a href="#734" id="734">734</a>
+<a href="#735" id="735">735</a>
+<a href="#736" id="736">736</a>
+<a href="#737" id="737">737</a>
+<a href="#738" id="738">738</a>
+<a href="#739" id="739">739</a>
 </pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>reqwest::{<span class="self">self</span>, Client, RequestBuilder, Response, StatusCode};
 <span class="kw">use </span>slog_scope::debug;
@@ -722,7 +745,7 @@
 
 <span class="kw">use </span>mithril_common::{
     api_version::APIVersionProvider,
-    entities::{CertificatePending, EpochSettings, Signer, SingleSignatures},
+    entities::{CertificatePending, Epoch, EpochSettings, Signer, SingleSignatures},
     messages::{CertificatePendingMessage, EpochSettingsMessage},
     MITHRIL_API_VERSION_HEADER, MITHRIL_SIGNER_VERSION_HEADER,
 };
@@ -786,7 +809,11 @@
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;CertificatePending&gt;, CertificateHandlerError&gt;;
 
     <span class="doccomment">/// Registers signer with the aggregator.
-    </span><span class="kw">async fn </span>register_signer(<span class="kw-2">&amp;</span><span class="self">self</span>, signer: <span class="kw-2">&amp;</span>Signer) -&gt; <span class="prelude-ty">Result</span>&lt;(), CertificateHandlerError&gt;;
+    </span><span class="kw">async fn </span>register_signer(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        epoch: Epoch,
+        signer: <span class="kw-2">&amp;</span>Signer,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), CertificateHandlerError&gt;;
 
     <span class="doccomment">/// Registers single signatures with the aggregator.
     </span><span class="kw">async fn </span>register_signatures(
@@ -898,10 +925,15 @@
         }
     }
 
-    <span class="kw">async fn </span>register_signer(<span class="kw-2">&amp;</span><span class="self">self</span>, signer: <span class="kw-2">&amp;</span>Signer) -&gt; <span class="prelude-ty">Result</span>&lt;(), CertificateHandlerError&gt; {
+    <span class="kw">async fn </span>register_signer(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        epoch: Epoch,
+        signer: <span class="kw-2">&amp;</span>Signer,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), CertificateHandlerError&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;Register signer&quot;</span>);
         <span class="kw">let </span>url = <span class="macro">format!</span>(<span class="string">&quot;{}/register-signer&quot;</span>, <span class="self">self</span>.aggregator_endpoint);
-        <span class="kw">let </span>register_signer_message = ToRegisterSignerMessageAdapter::adapt(signer.to_owned());
+        <span class="kw">let </span>register_signer_message =
+            ToRegisterSignerMessageAdapter::adapt(epoch, signer.to_owned());
         <span class="kw">let </span>response = <span class="self">self
             </span>.prepare_request_builder(Client::new().post(url.clone()))
             .json(<span class="kw-2">&amp;</span>register_signer_message)
@@ -1038,7 +1070,11 @@
         }
 
         <span class="doccomment">/// Registers signer with the aggregator
-        </span><span class="kw">async fn </span>register_signer(<span class="kw-2">&amp;</span><span class="self">self</span>, signer: <span class="kw-2">&amp;</span>Signer) -&gt; <span class="prelude-ty">Result</span>&lt;(), CertificateHandlerError&gt; {
+        </span><span class="kw">async fn </span>register_signer(
+            <span class="kw-2">&amp;</span><span class="self">self</span>,
+            _epoch: Epoch,
+            signer: <span class="kw-2">&amp;</span>Signer,
+        ) -&gt; <span class="prelude-ty">Result</span>&lt;(), CertificateHandlerError&gt; {
             <span class="kw">let </span><span class="kw-2">mut </span>last_registered_signer = <span class="self">self</span>.last_registered_signer.write().<span class="kw">await</span>;
             <span class="kw">let </span>signer = signer.clone();
             <span class="kw-2">*</span>last_registered_signer = <span class="prelude-val">Some</span>(signer);
@@ -1228,6 +1264,7 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_register_signer_ok_201() {
+        <span class="kw">let </span>epoch = Epoch(<span class="number">1</span>);
         <span class="kw">let </span>single_signers = fake_data::signers(<span class="number">1</span>);
         <span class="kw">let </span>single_signer = single_signers.first().unwrap();
         <span class="kw">let </span>(server, config, api_version_provider) = setup_test();
@@ -1239,12 +1276,15 @@
             config.aggregator_endpoint,
             Arc::new(api_version_provider),
         );
-        <span class="kw">let </span>register_signer = certificate_handler.register_signer(single_signer).<span class="kw">await</span>;
+        <span class="kw">let </span>register_signer = certificate_handler
+            .register_signer(epoch, single_signer)
+            .<span class="kw">await</span>;
         register_signer.expect(<span class="string">&quot;unexpected error&quot;</span>);
     }
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_register_signer_ko_412() {
+        <span class="kw">let </span>epoch = Epoch(<span class="number">1</span>);
         <span class="kw">let </span>(server, config, api_version_provider) = setup_test();
         <span class="kw">let </span>_snapshots_mock = server.mock(|when, then| {
             when.method(POST).path(<span class="string">&quot;/register-signer&quot;</span>);
@@ -1258,7 +1298,7 @@
             Arc::new(api_version_provider),
         );
         <span class="kw">let </span>error = certificate_handler
-            .register_signer(single_signer)
+            .register_signer(epoch, single_signer)
             .<span class="kw">await
             </span>.unwrap_err();
 
@@ -1267,6 +1307,7 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_register_signer_ko_400() {
+        <span class="kw">let </span>epoch = Epoch(<span class="number">1</span>);
         <span class="kw">let </span>single_signers = fake_data::signers(<span class="number">1</span>);
         <span class="kw">let </span>single_signer = single_signers.first().unwrap();
         <span class="kw">let </span>(server, config, api_version_provider) = setup_test();
@@ -1284,7 +1325,9 @@
             config.aggregator_endpoint,
             Arc::new(api_version_provider),
         );
-        <span class="kw">let </span>register_signer = certificate_handler.register_signer(single_signer).<span class="kw">await</span>;
+        <span class="kw">let </span>register_signer = certificate_handler
+            .register_signer(epoch, single_signer)
+            .<span class="kw">await</span>;
         <span class="macro">assert_eq!</span>(
             CertificateHandlerError::RemoteServerLogical(
                 <span class="string">&quot;bad request: {\&quot;label\&quot;:\&quot;error\&quot;,\&quot;message\&quot;:\&quot;an error\&quot;}&quot;</span>.to_string()
@@ -1296,6 +1339,7 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_register_signer_ko_500() {
+        <span class="kw">let </span>epoch = Epoch(<span class="number">1</span>);
         <span class="kw">let </span>single_signers = fake_data::signers(<span class="number">1</span>);
         <span class="kw">let </span>single_signer = single_signers.first().unwrap();
         <span class="kw">let </span>(server, config, api_version_provider) = setup_test();
@@ -1307,7 +1351,9 @@
             config.aggregator_endpoint,
             Arc::new(api_version_provider),
         );
-        <span class="kw">let </span>register_signer = certificate_handler.register_signer(single_signer).<span class="kw">await</span>;
+        <span class="kw">let </span>register_signer = certificate_handler
+            .register_signer(epoch, single_signer)
+            .<span class="kw">await</span>;
         <span class="macro">assert_eq!</span>(
             CertificateHandlerError::RemoteServerTechnical(<span class="string">&quot;an error occurred&quot;</span>.to_string())
                 .to_string(),

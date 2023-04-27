@@ -382,6 +382,33 @@
 <a href="#382" id="382">382</a>
 <a href="#383" id="383">383</a>
 <a href="#384" id="384">384</a>
+<a href="#385" id="385">385</a>
+<a href="#386" id="386">386</a>
+<a href="#387" id="387">387</a>
+<a href="#388" id="388">388</a>
+<a href="#389" id="389">389</a>
+<a href="#390" id="390">390</a>
+<a href="#391" id="391">391</a>
+<a href="#392" id="392">392</a>
+<a href="#393" id="393">393</a>
+<a href="#394" id="394">394</a>
+<a href="#395" id="395">395</a>
+<a href="#396" id="396">396</a>
+<a href="#397" id="397">397</a>
+<a href="#398" id="398">398</a>
+<a href="#399" id="399">399</a>
+<a href="#400" id="400">400</a>
+<a href="#401" id="401">401</a>
+<a href="#402" id="402">402</a>
+<a href="#403" id="403">403</a>
+<a href="#404" id="404">404</a>
+<a href="#405" id="405">405</a>
+<a href="#406" id="406">406</a>
+<a href="#407" id="407">407</a>
+<a href="#408" id="408">408</a>
+<a href="#409" id="409">409</a>
+<a href="#410" id="410">410</a>
+<a href="#411" id="411">411</a>
 </pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>thiserror::Error;
@@ -407,6 +434,15 @@
     <span class="doccomment">/// No signer registration round opened yet
     </span><span class="attr">#[error(<span class="string">&quot;a signer registration round has not yet to be opened&quot;</span>)]
     </span>RegistrationRoundNotYetOpened,
+
+    <span class="doccomment">/// Registration round for unexpected epoch
+    </span><span class="attr">#[error(<span class="string">&quot;unexpected signer registration round epoch: current_round_epoch: {current_round_epoch}, received_epoch: {received_epoch}&quot;</span>)]
+    </span>RegistrationRoundUnexpectedEpoch {
+        <span class="doccomment">/// Epoch of the current round
+        </span>current_round_epoch: Epoch,
+        <span class="doccomment">/// Epoch of the received signer registration
+        </span>received_epoch: Epoch,
+    },
 
     <span class="doccomment">/// Codec error.
     </span><span class="attr">#[error(<span class="string">&quot;codec error: &#39;{0}&#39;&quot;</span>)]
@@ -436,7 +472,9 @@
 <span class="doccomment">/// Represents the information needed to handle a signer registration round
 </span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq)]
 </span><span class="kw">pub struct </span>SignerRegistrationRound {
-    epoch: Epoch,
+    <span class="doccomment">/// Registration round epoch
+    </span><span class="kw">pub </span>epoch: Epoch,
+
     stake_distribution: StakeDistribution,
 }
 
@@ -457,8 +495,12 @@
     <span class="doccomment">/// Register a signer
     </span><span class="kw">async fn </span>register_signer(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
+        epoch: Epoch,
         signer: <span class="kw-2">&amp;</span>Signer,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;SignerWithStake, SignerRegistrationError&gt;;
+
+    <span class="doccomment">/// Get current open round if exists
+    </span><span class="kw">async fn </span>get_current_round(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;SignerRegistrationRound&gt;;
 }
 
 <span class="doccomment">/// Trait to open a signer registration round
@@ -555,12 +597,19 @@
 </span><span class="kw">impl </span>SignerRegisterer <span class="kw">for </span>MithrilSignerRegisterer {
     <span class="kw">async fn </span>register_signer(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
+        epoch: Epoch,
         signer: <span class="kw-2">&amp;</span>Signer,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;SignerWithStake, SignerRegistrationError&gt; {
         <span class="kw">let </span>registration_round = <span class="self">self</span>.current_round.read().<span class="kw">await</span>;
         <span class="kw">let </span>registration_round = registration_round
             .as_ref()
             .ok_or(SignerRegistrationError::RegistrationRoundNotYetOpened)<span class="question-mark">?</span>;
+        <span class="kw">if </span>registration_round.epoch != epoch {
+            <span class="kw">return </span><span class="prelude-val">Err</span>(SignerRegistrationError::RegistrationRoundUnexpectedEpoch {
+                current_round_epoch: registration_round.epoch,
+                received_epoch: epoch,
+            });
+        }
 
         <span class="kw">let </span><span class="kw-2">mut </span>key_registration = ProtocolKeyRegistration::init(
             <span class="kw-2">&amp;</span>registration_round
@@ -629,6 +678,10 @@
             <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Ok</span>(signer_save),
         }
     }
+
+    <span class="kw">async fn </span>get_current_round(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;SignerRegistrationRound&gt; {
+        <span class="self">self</span>.current_round.read().<span class="kw">await</span>.as_ref().cloned()
+    }
 }
 
 <span class="attr">#[cfg(test)]
@@ -677,7 +730,7 @@
             </span>.expect(<span class="string">&quot;signer registration round opening should not fail&quot;</span>);
 
         signer_registerer
-            .register_signer(<span class="kw-2">&amp;</span>signer_to_register)
+            .register_signer(registration_epoch, <span class="kw-2">&amp;</span>signer_to_register)
             .<span class="kw">await
             </span>.expect(<span class="string">&quot;signer registration should not fail&quot;</span>);
 
@@ -726,7 +779,7 @@
             </span>.expect(<span class="string">&quot;signer registration round opening should not fail&quot;</span>);
 
         signer_registerer
-            .register_signer(<span class="kw-2">&amp;</span>signer_to_register)
+            .register_signer(registration_epoch, <span class="kw-2">&amp;</span>signer_to_register)
             .<span class="kw">await
             </span>.expect(<span class="string">&quot;signer registration should not fail&quot;</span>);
 
@@ -757,11 +810,12 @@
             verification_key_store.clone(),
             Arc::new(signer_recorder),
         );
+        <span class="kw">let </span>registration_epoch = Epoch(<span class="number">1</span>);
         <span class="kw">let </span>fixture = MithrilFixtureBuilder::default().with_signers(<span class="number">5</span>).build();
         <span class="kw">let </span>signer_to_register: Signer = fixture.signers()[<span class="number">0</span>].to_owned();
 
         signer_registerer
-            .register_signer(<span class="kw-2">&amp;</span>signer_to_register)
+            .register_signer(registration_epoch, <span class="kw-2">&amp;</span>signer_to_register)
             .<span class="kw">await
             </span>.expect_err(<span class="string">&quot;signer registration should fail if no round opened&quot;</span>);
     }

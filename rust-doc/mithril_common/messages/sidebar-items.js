@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["CertificateMessage","CertificatePendingMessage","EpochSettingsMessage","RegisterSignatureMessage","SignerMessage","SnapshotListItemMessage","SnapshotMessage"],"type":["RegisterSignerMessage","SnapshotListMessage"]};
+window.SIDEBAR_ITEMS = {"struct":["CertificateMessage","CertificatePendingMessage","EpochSettingsMessage","RegisterSignatureMessage","RegisterSignerMessage","SignerMessage","SnapshotListItemMessage","SnapshotMessage"],"type":["SnapshotListMessage"]};
