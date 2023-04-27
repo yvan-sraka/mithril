@@ -843,9 +843,6 @@
 <a href="#843" id="843">843</a>
 <a href="#844" id="844">844</a>
 <a href="#845" id="845">845</a>
-<a href="#846" id="846">846</a>
-<a href="#847" id="847">847</a>
-<a href="#848" id="848">848</a>
 </pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>slog_scope::{debug, warn};
 <span class="kw">use </span>std::sync::Arc;
@@ -862,8 +859,8 @@
 };
 
 <span class="kw">use crate</span>::{
-    database::provider::OpenMessageWithSingleSignatures, store::VerificationKeyStorer,
-    ProtocolParametersStore, ProtocolParametersStorer, VerificationKeyStore,
+    entities::OpenMessage, store::VerificationKeyStorer, ProtocolParametersStore,
+    ProtocolParametersStorer, VerificationKeyStore,
 };
 
 <span class="attr">#[cfg(test)]
@@ -1032,7 +1029,7 @@
     <span class="doccomment">/// Creates a multi signature from single signatures
     </span><span class="kw">async fn </span>create_multi_signature(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        open_message: <span class="kw-2">&amp;</span>OpenMessageWithSingleSignatures,
+        open_message: <span class="kw-2">&amp;</span>OpenMessage,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;ProtocolMultiSignature&gt;, ProtocolError&gt;;
 }
 
@@ -1387,7 +1384,7 @@
     <span class="doccomment">/// Creates a multi signature from single signatures
     </span><span class="kw">async fn </span>create_multi_signature(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        open_message: <span class="kw-2">&amp;</span>OpenMessageWithSingleSignatures,
+        open_message: <span class="kw-2">&amp;</span>OpenMessage,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;ProtocolMultiSignature&gt;, ProtocolError&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;MultiSigner:create_multi_signature({open_message:?})&quot;</span>);
         <span class="kw">let </span>protocol_parameters = <span class="self">self
@@ -1430,7 +1427,6 @@
 </span><span class="kw">mod </span>tests {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use crate</span>::{store::VerificationKeyStore, ProtocolParametersStore};
-    <span class="kw">use </span>chrono::Local;
     <span class="kw">use </span>mithril_common::{
         crypto_helper::tests_setup::<span class="kw-2">*</span>,
         entities::SignedEntityType,
@@ -1438,7 +1434,6 @@
         test_utils::{fake_data, MithrilFixtureBuilder},
     };
     <span class="kw">use </span>std::{collections::HashMap, sync::Arc};
-    <span class="kw">use </span>uuid::Uuid;
 
     <span class="kw">async fn </span>setup_multi_signer() -&gt; MultiSignerImpl {
         <span class="kw">let </span>beacon = fake_data::beacon();
@@ -1653,8 +1648,7 @@
             <span class="string">&quot;they should be at least one signature that can be registered without reaching the quorum&quot;
         </span>);
 
-        <span class="kw">let </span><span class="kw-2">mut </span>open_message = OpenMessageWithSingleSignatures {
-            open_message_id: Uuid::parse_str(<span class="string">&quot;193d1442-e89b-43cf-9519-04d8db9a12ff&quot;</span>).unwrap(),
+        <span class="kw">let </span><span class="kw-2">mut </span>open_message = OpenMessage {
             epoch: start_epoch,
             signed_entity_type: SignedEntityType::CardanoImmutableFilesFull(
                 multi_signer.current_beacon.clone().unwrap(),
@@ -1662,7 +1656,7 @@
             protocol_message: message.clone(),
             is_certified: <span class="bool-val">false</span>,
             single_signatures: Vec::new(),
-            created_at: Local::now().naive_local(),
+            ..OpenMessage::dummy()
         };
 
         <span class="comment">// No signatures registered: multi-signer can&#39;t create the multi-signature

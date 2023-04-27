@@ -870,16 +870,9 @@
 <a href="#870" id="870">870</a>
 <a href="#871" id="871">871</a>
 <a href="#872" id="872">872</a>
-<a href="#873" id="873">873</a>
-<a href="#874" id="874">874</a>
-<a href="#875" id="875">875</a>
-<a href="#876" id="876">876</a>
-<a href="#877" id="877">877</a>
-<a href="#878" id="878">878</a>
-<a href="#879" id="879">879</a>
 </pre><pre class="rust"><code><span class="kw">use </span>mithril_common::StdError;
 
-<span class="kw">use </span>mithril_common::entities::{PartyId, ProtocolMessage, SingleSignatures};
+<span class="kw">use </span>mithril_common::entities::{ProtocolMessage, SingleSignatures};
 <span class="kw">use </span>mithril_common::{
     entities::{Epoch, SignedEntityType},
     sqlite::{HydrationError, Projection, SqLiteEntity, WhereCondition},
@@ -904,7 +897,7 @@
 /// generated if possible.
 </span><span class="attr">#[allow(dead_code)]
 #[derive(Debug, Clone, PartialEq, Eq)]
-</span><span class="kw">pub struct </span>OpenMessage {
+</span><span class="kw">pub struct </span>OpenMessageRecord {
     <span class="doccomment">/// OpenMessage unique identifier
     </span><span class="kw">pub </span>open_message_id: Uuid,
 
@@ -924,7 +917,7 @@
     </span><span class="kw">pub </span>created_at: NaiveDateTime,
 }
 
-<span class="kw">impl </span>OpenMessage {
+<span class="kw">impl </span>OpenMessageRecord {
     <span class="attr">#[cfg(test)]
     </span><span class="doccomment">/// Create a dumb OpenMessage instance mainly for test purposes
     </span><span class="kw">pub fn </span>dummy() -&gt; <span class="self">Self </span>{
@@ -943,8 +936,8 @@
     }
 }
 
-<span class="kw">impl </span>From&lt;OpenMessageWithSingleSignatures&gt; <span class="kw">for </span>OpenMessage {
-    <span class="kw">fn </span>from(value: OpenMessageWithSingleSignatures) -&gt; <span class="self">Self </span>{
+<span class="kw">impl </span>From&lt;OpenMessageWithSingleSignaturesRecord&gt; <span class="kw">for </span>OpenMessageRecord {
+    <span class="kw">fn </span>from(value: OpenMessageWithSingleSignaturesRecord) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             open_message_id: value.open_message_id,
             epoch: value.epoch,
@@ -956,7 +949,7 @@
     }
 }
 
-<span class="kw">impl </span>SqLiteEntity <span class="kw">for </span>OpenMessage {
+<span class="kw">impl </span>SqLiteEntity <span class="kw">for </span>OpenMessageRecord {
     <span class="kw">fn </span>hydrate(row: Row) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, HydrationError&gt;
     <span class="kw">where
         </span><span class="self">Self</span>: Sized,
@@ -1078,7 +1071,7 @@
 }
 
 <span class="kw">impl</span>&lt;<span class="lifetime">&#39;client</span>&gt; Provider&lt;<span class="lifetime">&#39;client</span>&gt; <span class="kw">for </span>OpenMessageProvider&lt;<span class="lifetime">&#39;client</span>&gt; {
-    <span class="kw">type </span>Entity = OpenMessage;
+    <span class="kw">type </span>Entity = OpenMessageRecord;
 
     <span class="kw">fn </span>get_definition(<span class="kw-2">&amp;</span><span class="self">self</span>, condition: <span class="kw-2">&amp;</span>str) -&gt; String {
         <span class="kw">let </span>aliases = SourceAlias::new(<span class="kw-2">&amp;</span>[
@@ -1124,7 +1117,7 @@
 }
 
 <span class="kw">impl</span>&lt;<span class="lifetime">&#39;client</span>&gt; Provider&lt;<span class="lifetime">&#39;client</span>&gt; <span class="kw">for </span>InsertOpenMessageProvider&lt;<span class="lifetime">&#39;client</span>&gt; {
-    <span class="kw">type </span>Entity = OpenMessage;
+    <span class="kw">type </span>Entity = OpenMessageRecord;
 
     <span class="kw">fn </span>get_connection(<span class="kw-2">&amp;</span><span class="lifetime">&#39;client </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;client </span>Connection {
         <span class="self">self</span>.connection
@@ -1146,7 +1139,7 @@
         <span class="self">Self </span>{ connection }
     }
 
-    <span class="kw">fn </span>get_update_condition(<span class="kw-2">&amp;</span><span class="self">self</span>, open_message: <span class="kw-2">&amp;</span>OpenMessage) -&gt; StdResult&lt;WhereCondition&gt; {
+    <span class="kw">fn </span>get_update_condition(<span class="kw-2">&amp;</span><span class="self">self</span>, open_message: <span class="kw-2">&amp;</span>OpenMessageRecord) -&gt; StdResult&lt;WhereCondition&gt; {
         <span class="kw">let </span>expression = <span class="string">&quot;(open_message_id, epoch_setting_id, beacon, signed_entity_type_id, protocol_message, is_certified) values (?*, ?*, ?*, ?*, ?*, ?*)&quot;</span>;
         <span class="kw">let </span>beacon_str = open_message.signed_entity_type.get_json_beacon()<span class="question-mark">?</span>;
         <span class="kw">let </span>parameters = <span class="macro">vec!</span>[
@@ -1163,7 +1156,7 @@
 }
 
 <span class="kw">impl</span>&lt;<span class="lifetime">&#39;client</span>&gt; Provider&lt;<span class="lifetime">&#39;client</span>&gt; <span class="kw">for </span>UpdateOpenMessageProvider&lt;<span class="lifetime">&#39;client</span>&gt; {
-    <span class="kw">type </span>Entity = OpenMessage;
+    <span class="kw">type </span>Entity = OpenMessageRecord;
 
     <span class="kw">fn </span>get_connection(<span class="kw-2">&amp;</span><span class="lifetime">&#39;client </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;client </span>Connection {
         <span class="self">self</span>.connection
@@ -1195,7 +1188,7 @@
 }
 
 <span class="kw">impl</span>&lt;<span class="lifetime">&#39;client</span>&gt; Provider&lt;<span class="lifetime">&#39;client</span>&gt; <span class="kw">for </span>DeleteOpenMessageProvider&lt;<span class="lifetime">&#39;client</span>&gt; {
-    <span class="kw">type </span>Entity = OpenMessage;
+    <span class="kw">type </span>Entity = OpenMessageRecord;
 
     <span class="kw">fn </span>get_connection(<span class="kw-2">&amp;</span><span class="lifetime">&#39;client </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;client </span>Connection {
         <span class="self">self</span>.connection
@@ -1211,7 +1204,7 @@
 
 <span class="doccomment">/// Open Message with associated single signatures if any.
 </span><span class="attr">#[derive(Debug, Clone)]
-</span><span class="kw">pub struct </span>OpenMessageWithSingleSignatures {
+</span><span class="kw">pub struct </span>OpenMessageWithSingleSignaturesRecord {
     <span class="doccomment">/// OpenMessage unique identifier
     </span><span class="kw">pub </span>open_message_id: Uuid,
 
@@ -1234,17 +1227,7 @@
     </span><span class="kw">pub </span>created_at: NaiveDateTime,
 }
 
-<span class="kw">impl </span>OpenMessageWithSingleSignatures {
-    <span class="doccomment">/// Gather all signers party_id for this open message
-    </span><span class="kw">pub fn </span>get_signers_id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;PartyId&gt; {
-        <span class="self">self</span>.single_signatures
-            .iter()
-            .map(|sig| sig.party_id.to_owned())
-            .collect()
-    }
-}
-
-<span class="kw">impl </span>SqLiteEntity <span class="kw">for </span>OpenMessageWithSingleSignatures {
+<span class="kw">impl </span>SqLiteEntity <span class="kw">for </span>OpenMessageWithSingleSignaturesRecord {
     <span class="kw">fn </span>hydrate(row: Row) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, HydrationError&gt;
     <span class="kw">where
         </span><span class="self">Self</span>: Sized,
@@ -1257,7 +1240,7 @@
                 </span>))
             })<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>open_message = OpenMessage::hydrate(row)<span class="question-mark">?</span>;
+        <span class="kw">let </span>open_message = OpenMessageRecord::hydrate(row)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>open_message = <span class="self">Self </span>{
             open_message_id: open_message.open_message_id,
@@ -1319,7 +1302,7 @@
 }
 
 <span class="kw">impl</span>&lt;<span class="lifetime">&#39;client</span>&gt; Provider&lt;<span class="lifetime">&#39;client</span>&gt; <span class="kw">for </span>OpenMessageWithSingleSignaturesProvider&lt;<span class="lifetime">&#39;client</span>&gt; {
-    <span class="kw">type </span>Entity = OpenMessageWithSingleSignatures;
+    <span class="kw">type </span>Entity = OpenMessageWithSingleSignaturesRecord;
 
     <span class="kw">fn </span>get_definition(<span class="kw-2">&amp;</span><span class="self">self</span>, condition: <span class="kw-2">&amp;</span>str) -&gt; String {
         <span class="kw">let </span>aliases = SourceAlias::new(<span class="kw-2">&amp;</span>[
@@ -1364,7 +1347,7 @@ order by open_message.created_at desc, open_message.rowid desc
     </span><span class="kw">pub async fn </span>get_open_message(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         signed_entity_type: <span class="kw-2">&amp;</span>SignedEntityType,
-    ) -&gt; StdResult&lt;<span class="prelude-ty">Option</span>&lt;OpenMessage&gt;&gt; {
+    ) -&gt; StdResult&lt;<span class="prelude-ty">Option</span>&lt;OpenMessageRecord&gt;&gt; {
         <span class="kw">let </span>lock = <span class="self">self</span>.connection.lock().<span class="kw">await</span>;
         <span class="kw">let </span>provider = OpenMessageProvider::new(<span class="kw-2">&amp;</span>lock);
         <span class="kw">let </span>filters = provider
@@ -1381,7 +1364,7 @@ order by open_message.created_at desc, open_message.rowid desc
         epoch: Epoch,
         signed_entity_type: <span class="kw-2">&amp;</span>SignedEntityType,
         protocol_message: <span class="kw-2">&amp;</span>ProtocolMessage,
-    ) -&gt; StdResult&lt;OpenMessage&gt; {
+    ) -&gt; StdResult&lt;OpenMessageRecord&gt; {
         <span class="kw">let </span>lock = <span class="self">self</span>.connection.lock().<span class="kw">await</span>;
         <span class="kw">let </span>provider = InsertOpenMessageProvider::new(<span class="kw-2">&amp;</span>lock);
         <span class="kw">let </span>filters = provider.get_insert_condition(epoch, signed_entity_type, protocol_message)<span class="question-mark">?</span>;
@@ -1393,7 +1376,10 @@ order by open_message.created_at desc, open_message.rowid desc
     }
 
     <span class="doccomment">/// Updates an [OpenMessage] in the database.
-    </span><span class="kw">pub async fn </span>update_open_message(<span class="kw-2">&amp;</span><span class="self">self</span>, open_message: <span class="kw-2">&amp;</span>OpenMessage) -&gt; StdResult&lt;OpenMessage&gt; {
+    </span><span class="kw">pub async fn </span>update_open_message(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        open_message: <span class="kw-2">&amp;</span>OpenMessageRecord,
+    ) -&gt; StdResult&lt;OpenMessageRecord&gt; {
         <span class="kw">let </span>lock = <span class="self">self</span>.connection.lock().<span class="kw">await</span>;
         <span class="kw">let </span>provider = UpdateOpenMessageProvider::new(<span class="kw-2">&amp;</span>lock);
         <span class="kw">let </span>filters = provider.get_update_condition(open_message)<span class="question-mark">?</span>;
@@ -1419,7 +1405,7 @@ order by open_message.created_at desc, open_message.rowid desc
     </span><span class="kw">pub async fn </span>get_open_message_with_single_signatures(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         signed_entity_type: <span class="kw-2">&amp;</span>SignedEntityType,
-    ) -&gt; StdResult&lt;<span class="prelude-ty">Option</span>&lt;OpenMessageWithSingleSignatures&gt;&gt; {
+    ) -&gt; StdResult&lt;<span class="prelude-ty">Option</span>&lt;OpenMessageWithSingleSignaturesRecord&gt;&gt; {
         <span class="kw">let </span>lock = <span class="self">self</span>.connection.lock().<span class="kw">await</span>;
         <span class="kw">let </span>provider = OpenMessageWithSingleSignaturesProvider::new(<span class="kw-2">&amp;</span>lock);
         <span class="kw">let </span>filters = provider.get_signed_entity_type_condition(signed_entity_type);
@@ -1443,7 +1429,7 @@ order by open_message.created_at desc, open_message.rowid desc
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>open_message_with_single_signature_projection() {
-        <span class="kw">let </span>projection = OpenMessageWithSingleSignatures::get_projection();
+        <span class="kw">let </span>projection = OpenMessageWithSingleSignaturesRecord::get_projection();
         <span class="kw">let </span>aliases = SourceAlias::new(<span class="kw-2">&amp;</span>[
             (<span class="string">&quot;{:open_message:}&quot;</span>, <span class="string">&quot;open_message&quot;</span>),
             (<span class="string">&quot;{:single_signature:}&quot;</span>, <span class="string">&quot;single_signature&quot;</span>),
@@ -1457,7 +1443,7 @@ order by open_message.created_at desc, open_message.rowid desc
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>open_message_projection() {
-        <span class="kw">let </span>projection = OpenMessage::get_projection();
+        <span class="kw">let </span>projection = OpenMessageRecord::get_projection();
         <span class="kw">let </span>aliases = SourceAlias::new(<span class="kw-2">&amp;</span>[(<span class="string">&quot;{:open_message:}&quot;</span>, <span class="string">&quot;open_message&quot;</span>)]);
 
         <span class="macro">assert_eq!</span>(
@@ -1538,7 +1524,7 @@ order by open_message.created_at desc, open_message.rowid desc
     </span><span class="kw">fn </span>update_provider_condition() {
         <span class="kw">let </span>connection = Connection::open(<span class="string">&quot;:memory:&quot;</span>).unwrap();
         <span class="kw">let </span>provider = UpdateOpenMessageProvider::new(<span class="kw-2">&amp;</span>connection);
-        <span class="kw">let </span>open_message = OpenMessage {
+        <span class="kw">let </span>open_message = OpenMessageRecord {
             open_message_id: Uuid::new_v4(),
             epoch: Epoch(<span class="number">12</span>),
             signed_entity_type: SignedEntityType::dummy(),
@@ -1715,7 +1701,7 @@ order by open_message.created_at desc, open_message.rowid desc
         setup_single_signature_db(<span class="kw-2">&amp;</span>connection, single_signature_records.clone()).unwrap();
         <span class="kw">let </span>repository = OpenMessageRepository::new(Arc::new(Mutex::new(connection)));
 
-        <span class="kw">let </span><span class="kw-2">mut </span>open_message = OpenMessage::dummy();
+        <span class="kw">let </span><span class="kw-2">mut </span>open_message = OpenMessageRecord::dummy();
         open_message.open_message_id = single_signature_records[<span class="number">0</span>].open_message_id;
         repository.update_open_message(<span class="kw-2">&amp;</span>open_message).<span class="kw">await</span>.unwrap();
 
@@ -1736,7 +1722,7 @@ order by open_message.created_at desc, open_message.rowid desc
         setup_single_signature_db(<span class="kw-2">&amp;</span>connection, Vec::new()).unwrap();
         <span class="kw">let </span>repository = OpenMessageRepository::new(Arc::new(Mutex::new(connection)));
 
-        <span class="kw">let </span>open_message = OpenMessage::dummy();
+        <span class="kw">let </span>open_message = OpenMessageRecord::dummy();
         repository
             .create_open_message(
                 open_message.epoch,
