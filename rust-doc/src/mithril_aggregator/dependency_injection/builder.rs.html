@@ -1106,6 +1106,8 @@
 <a href="#1106" id="1106">1106</a>
 <a href="#1107" id="1107">1107</a>
 <a href="#1108" id="1108">1108</a>
+<a href="#1109" id="1109">1109</a>
+<a href="#1110" id="1110">1110</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>mithril_common::{
@@ -1124,7 +1126,6 @@
         adapters::{EraReaderAdapterBuilder, EraReaderDummyAdapter},
         EraChecker, EraMarker, EraReader, EraReaderAdapter, SupportedEra,
     },
-    signable_builder::DummySignableBuilder,
     store::adapter::{MemoryAdapter, SQLiteAdapter, StoreAdapter},
     BeaconProvider, BeaconProviderImpl,
 };
@@ -1151,7 +1152,7 @@
     },
     event_store::{EventMessage, EventStore, TransmitterService},
     http_server::routes::router,
-    signable_builder::SignableBuilderService,
+    signable_builder::{MithrilStakeDistributionSignableBuilder, SignableBuilderService},
     signer_registerer::SignerRecorder,
     stake_distribution_service::{MithrilStakeDistributionService, StakeDistributionService},
     ticker_service::{MithrilTickerService, TickerService},
@@ -1981,9 +1982,12 @@
     }
 
     <span class="kw">async fn </span>build_signable_builder_service(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;SignableBuilderService&gt;&gt; {
-        <span class="kw">let </span>dummy_signable_builder = DummySignableBuilder::new();
-        <span class="kw">let </span>signable_builder_service =
-            Arc::new(SignableBuilderService::new(dummy_signable_builder));
+        <span class="kw">let </span>multi_signer = <span class="self">self</span>.get_multi_signer().<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>mithril_stake_distribution_builder =
+            MithrilStakeDistributionSignableBuilder::new(multi_signer);
+        <span class="kw">let </span>signable_builder_service = Arc::new(SignableBuilderService::new(
+            mithril_stake_distribution_builder,
+        ));
 
         <span class="prelude-val">Ok</span>(signable_builder_service)
     }

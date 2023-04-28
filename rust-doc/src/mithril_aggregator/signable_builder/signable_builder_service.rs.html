@@ -42,25 +42,31 @@
 <a href="#42" id="42">42</a>
 <a href="#43" id="43">43</a>
 <a href="#44" id="44">44</a>
+<a href="#45" id="45">45</a>
+<a href="#46" id="46">46</a>
+<a href="#47" id="47">47</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>mithril_common::{
     entities::SignedEntityType,
-    signable_builder::{DummyBeacon, DummySignableBuilder, Signable, SignableBuilder},
+    signable_builder::{Signable, SignableBuilder},
     StdResult,
 };
 
+<span class="kw">use </span><span class="kw">super</span>::MithrilStakeDistributionSignableBuilder;
+
 <span class="doccomment">/// SignableBuilder Service
-</span><span class="comment">// TODO: temporary implementation
 </span><span class="kw">pub struct </span>SignableBuilderService {
-    dummy_signable_builder: DummySignableBuilder,
+    mithril_stake_distribution_builder: MithrilStakeDistributionSignableBuilder,
 }
 
 <span class="kw">impl </span>SignableBuilderService {
     <span class="doccomment">/// SignableBuilderService factory
-    </span><span class="kw">pub fn </span>new(dummy_signable_builder: DummySignableBuilder) -&gt; <span class="self">Self </span>{
+    </span><span class="kw">pub fn </span>new(
+        mithril_stake_distribution_builder: MithrilStakeDistributionSignableBuilder,
+    ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
-            dummy_signable_builder,
+            mithril_stake_distribution_builder,
         }
     }
 }
@@ -73,8 +79,8 @@
     ) -&gt; StdResult&lt;Arc&lt;<span class="kw">dyn </span>Signable&gt;&gt; {
         <span class="kw">let </span>signable: Arc&lt;<span class="kw">dyn </span>Signable&gt; = <span class="kw">match </span>signed_entity_type {
             SignedEntityType::MithrilStakeDistribution(e) =&gt; Arc::new(
-                <span class="self">self</span>.dummy_signable_builder
-                    .compute_signable(DummyBeacon { epoch: e })
+                <span class="self">self</span>.mithril_stake_distribution_builder
+                    .compute_signable(e)
                     .<span class="kw">await</span><span class="question-mark">?</span>,
             ),
             <span class="kw">_ </span>=&gt; <span class="macro">todo!</span>(),
