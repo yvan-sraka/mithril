@@ -45,6 +45,14 @@
 <a href="#45" id="45">45</a>
 <a href="#46" id="46">46</a>
 <a href="#47" id="47">47</a>
+<a href="#48" id="48">48</a>
+<a href="#49" id="49">49</a>
+<a href="#50" id="50">50</a>
+<a href="#51" id="51">51</a>
+<a href="#52" id="52">52</a>
+<a href="#53" id="53">53</a>
+<a href="#54" id="54">54</a>
+<a href="#55" id="55">55</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>mithril_common::{
@@ -53,20 +61,23 @@
     StdResult,
 };
 
-<span class="kw">use </span><span class="kw">super</span>::MithrilStakeDistributionSignableBuilder;
+<span class="kw">use super</span>::{ImmutableSignableBuilder, MithrilStakeDistributionSignableBuilder};
 
 <span class="doccomment">/// SignableBuilder Service
 </span><span class="kw">pub struct </span>SignableBuilderService {
     mithril_stake_distribution_builder: MithrilStakeDistributionSignableBuilder,
+    immutable_signable_builder: ImmutableSignableBuilder,
 }
 
 <span class="kw">impl </span>SignableBuilderService {
     <span class="doccomment">/// SignableBuilderService factory
     </span><span class="kw">pub fn </span>new(
         mithril_stake_distribution_builder: MithrilStakeDistributionSignableBuilder,
+        immutable_signable_builder: ImmutableSignableBuilder,
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             mithril_stake_distribution_builder,
+            immutable_signable_builder,
         }
     }
 }
@@ -81,6 +92,11 @@
             SignedEntityType::MithrilStakeDistribution(e) =&gt; Arc::new(
                 <span class="self">self</span>.mithril_stake_distribution_builder
                     .compute_signable(e)
+                    .<span class="kw">await</span><span class="question-mark">?</span>,
+            ),
+            SignedEntityType::CardanoImmutableFilesFull(beacon) =&gt; Arc::new(
+                <span class="self">self</span>.immutable_signable_builder
+                    .compute_signable(beacon)
                     .<span class="kw">await</span><span class="question-mark">?</span>,
             ),
             <span class="kw">_ </span>=&gt; <span class="macro">todo!</span>(),

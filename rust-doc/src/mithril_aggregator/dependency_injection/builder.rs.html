@@ -1108,6 +1108,11 @@
 <a href="#1108" id="1108">1108</a>
 <a href="#1109" id="1109">1109</a>
 <a href="#1110" id="1110">1110</a>
+<a href="#1111" id="1111">1111</a>
+<a href="#1112" id="1112">1112</a>
+<a href="#1113" id="1113">1113</a>
+<a href="#1114" id="1114">1114</a>
+<a href="#1115" id="1115">1115</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>mithril_common::{
@@ -1152,7 +1157,9 @@
     },
     event_store::{EventMessage, EventStore, TransmitterService},
     http_server::routes::router,
-    signable_builder::{MithrilStakeDistributionSignableBuilder, SignableBuilderService},
+    signable_builder::{
+        ImmutableSignableBuilder, MithrilStakeDistributionSignableBuilder, SignableBuilderService,
+    },
     signer_registerer::SignerRecorder,
     stake_distribution_service::{MithrilStakeDistributionService, StakeDistributionService},
     ticker_service::{MithrilTickerService, TickerService},
@@ -1985,8 +1992,11 @@
         <span class="kw">let </span>multi_signer = <span class="self">self</span>.get_multi_signer().<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let </span>mithril_stake_distribution_builder =
             MithrilStakeDistributionSignableBuilder::new(multi_signer);
+        <span class="kw">let </span>immutable_signable_builder =
+            ImmutableSignableBuilder::new(<span class="self">self</span>.get_immutable_digester().<span class="kw">await</span><span class="question-mark">?</span>);
         <span class="kw">let </span>signable_builder_service = Arc::new(SignableBuilderService::new(
             mithril_stake_distribution_builder,
+            immutable_signable_builder,
         ));
 
         <span class="prelude-val">Ok</span>(signable_builder_service)
