@@ -330,6 +330,7 @@
 <a href="#330" id="330">330</a>
 <a href="#331" id="331">331</a>
 <a href="#332" id="332">332</a>
+<a href="#333" id="333">333</a>
 </pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>sqlite::Connection;
 <span class="kw">use </span>std::{fs, sync::Arc};
@@ -346,15 +347,15 @@
     },
     digesters::{CardanoImmutableDigester, ImmutableDigester, ImmutableFileSystemObserver},
     era::{EraChecker, EraReader},
-    signable_builder::DummySignableBuilder,
+    signable_builder::CardanoImmutableFilesFullSignableBuilder,
     store::{adapter::SQLiteAdapter, StakeStore},
     BeaconProvider, BeaconProviderImpl, StdError,
 };
 
 <span class="kw">use crate</span>::{
-    certificate_handler::CertificateHandler, signable_builder::SignableBuilderService,
-    single_signer::SingleSigner, CertificateHandlerHTTPClient, Configuration, MithrilSingleSigner,
-    ProtocolInitializerStore, ProtocolInitializerStorer,
+    certificate_handler::CertificateHandler, single_signer::SingleSigner,
+    CertificateHandlerHTTPClient, Configuration, MithrilSingleSigner, ProtocolInitializerStore,
+    ProtocolInitializerStorer, SignableBuilderService,
 };
 
 <span class="kw">type </span>StakeStoreService = Arc&lt;StakeStore&gt;;
@@ -533,7 +534,8 @@
             api_version_provider.clone(),
         ));
 
-        <span class="kw">let </span>dummy_signable_builder = DummySignableBuilder::new();
+        <span class="kw">let </span>dummy_signable_builder =
+            CardanoImmutableFilesFullSignableBuilder::new(digester.clone(), slog_scope::logger());
         <span class="kw">let </span>signable_builder_service =
             Arc::new(SignableBuilderService::new(dummy_signable_builder));
 

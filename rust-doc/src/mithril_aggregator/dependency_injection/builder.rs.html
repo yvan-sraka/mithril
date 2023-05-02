@@ -1116,6 +1116,7 @@
 <a href="#1116" id="1116">1116</a>
 <a href="#1117" id="1117">1117</a>
 <a href="#1118" id="1118">1118</a>
+<a href="#1119" id="1119">1119</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>mithril_common::{
@@ -1134,6 +1135,7 @@
         adapters::{EraReaderAdapterBuilder, EraReaderDummyAdapter},
         EraChecker, EraMarker, EraReader, EraReaderAdapter, SupportedEra,
     },
+    signable_builder::CardanoImmutableFilesFullSignableBuilder,
     store::adapter::{MemoryAdapter, SQLiteAdapter, StoreAdapter},
     BeaconProvider, BeaconProviderImpl,
 };
@@ -1160,9 +1162,7 @@
     },
     event_store::{EventMessage, EventStore, TransmitterService},
     http_server::routes::router,
-    signable_builder::{
-        ImmutableSignableBuilder, MithrilStakeDistributionSignableBuilder, SignableBuilderService,
-    },
+    signable_builder::{MithrilStakeDistributionSignableBuilder, SignableBuilderService},
     signer_registerer::SignerRecorder,
     stake_distribution_service::{MithrilStakeDistributionService, StakeDistributionService},
     ticker_service::{MithrilTickerService, TickerService},
@@ -1995,8 +1995,10 @@
         <span class="kw">let </span>multi_signer = <span class="self">self</span>.get_multi_signer().<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let </span>mithril_stake_distribution_builder =
             MithrilStakeDistributionSignableBuilder::new(multi_signer);
-        <span class="kw">let </span>immutable_signable_builder =
-            ImmutableSignableBuilder::new(<span class="self">self</span>.get_immutable_digester().<span class="kw">await</span><span class="question-mark">?</span>);
+        <span class="kw">let </span>immutable_signable_builder = CardanoImmutableFilesFullSignableBuilder::new(
+            <span class="self">self</span>.get_immutable_digester().<span class="kw">await</span><span class="question-mark">?</span>,
+            <span class="self">self</span>.get_logger().<span class="kw">await</span><span class="question-mark">?</span>,
+        );
         <span class="kw">let </span>signable_builder_service = Arc::new(SignableBuilderService::new(
             mithril_stake_distribution_builder,
             immutable_signable_builder,

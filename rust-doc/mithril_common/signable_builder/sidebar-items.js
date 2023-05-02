@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["DummyBeacon","DummySignable","DummySignableBuilder"],"trait":["Artifact","Beacon","Signable","SignableBuilder"]};
+window.SIDEBAR_ITEMS = {"struct":["CardanoImmutableFilesFullSignableBuilder","DummyBeacon","DummySignable","DummySignableBuilder"],"trait":["Artifact","Beacon","Signable","SignableBuilder"]};
