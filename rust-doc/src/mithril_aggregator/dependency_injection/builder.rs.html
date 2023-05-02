@@ -1117,6 +1117,11 @@
 <a href="#1117" id="1117">1117</a>
 <a href="#1118" id="1118">1118</a>
 <a href="#1119" id="1119">1119</a>
+<a href="#1120" id="1120">1120</a>
+<a href="#1121" id="1121">1121</a>
+<a href="#1122" id="1122">1122</a>
+<a href="#1123" id="1123">1123</a>
+<a href="#1124" id="1124">1124</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>mithril_common::{
@@ -1152,7 +1157,10 @@
 <span class="kw">use </span>warp::Filter;
 
 <span class="kw">use crate</span>::{
-    artifact_builder::{ArtifactBuilderService, MithrilStakeDistributionArtifactBuilder},
+    artifact_builder::{
+        ArtifactBuilderService, MithrilArtifactBuilderService,
+        MithrilStakeDistributionArtifactBuilder,
+    },
     certifier_service::{CertifierService, MithrilCertifierService},
     configuration::{ExecutionEnvironment, LIST_SNAPSHOTS_MAX_ITEMS},
     database::provider::{
@@ -1289,7 +1297,7 @@
     </span><span class="kw">pub </span>signable_builder_service: <span class="prelude-ty">Option</span>&lt;Arc&lt;SignableBuilderService&gt;&gt;,
 
     <span class="doccomment">/// Artifact Builder Service
-    </span><span class="kw">pub </span>artifact_builder_service: <span class="prelude-ty">Option</span>&lt;Arc&lt;ArtifactBuilderService&gt;&gt;,
+    </span><span class="kw">pub </span>artifact_builder_service: <span class="prelude-ty">Option</span>&lt;Arc&lt;<span class="kw">dyn </span>ArtifactBuilderService&gt;&gt;,
 
     <span class="doccomment">/// Certifier service
     </span><span class="kw">pub </span>certifier_service: <span class="prelude-ty">Option</span>&lt;Arc&lt;<span class="kw">dyn </span>CertifierService&gt;&gt;,
@@ -2016,11 +2024,11 @@
         <span class="prelude-val">Ok</span>(<span class="self">self</span>.signable_builder_service.as_ref().cloned().unwrap())
     }
 
-    <span class="kw">async fn </span>build_artifact_builder_service(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;ArtifactBuilderService&gt;&gt; {
+    <span class="kw">async fn </span>build_artifact_builder_service(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;<span class="kw">dyn </span>ArtifactBuilderService&gt;&gt; {
         <span class="kw">let </span>multi_signer = <span class="self">self</span>.get_multi_signer().<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let </span>mithril_stake_distribution_artifact_builder =
             Arc::new(MithrilStakeDistributionArtifactBuilder::new(multi_signer));
-        <span class="kw">let </span>artifact_builder_service = Arc::new(ArtifactBuilderService::new(
+        <span class="kw">let </span>artifact_builder_service = Arc::new(MithrilArtifactBuilderService::new(
             mithril_stake_distribution_artifact_builder,
         ));
 
@@ -2028,7 +2036,9 @@
     }
 
     <span class="doccomment">/// [ArtifactBuilderService] service
-    </span><span class="kw">pub async fn </span>get_artifact_builder_service(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;ArtifactBuilderService&gt;&gt; {
+    </span><span class="kw">pub async fn </span>get_artifact_builder_service(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;<span class="kw">dyn </span>ArtifactBuilderService&gt;&gt; {
         <span class="kw">if </span><span class="self">self</span>.artifact_builder_service.is_none() {
             <span class="self">self</span>.artifact_builder_service = <span class="prelude-val">Some</span>(<span class="self">self</span>.build_artifact_builder_service().<span class="kw">await</span><span class="question-mark">?</span>);
         }
