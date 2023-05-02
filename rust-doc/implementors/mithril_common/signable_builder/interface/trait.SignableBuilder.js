@@ -1,3 +1,4 @@
 (function() {var implementors = {
+"mithril_aggregator":[["impl SignableBuilder&lt;Beacon, ProtocolMessage&gt; for <a class=\"struct\" href=\"mithril_aggregator/struct.ImmutableSignableBuilder.html\" title=\"struct mithril_aggregator::ImmutableSignableBuilder\">ImmutableSignableBuilder</a>"],["impl SignableBuilder&lt;Epoch, ProtocolMessage&gt; for <a class=\"struct\" href=\"mithril_aggregator/struct.MithrilStakeDistributionSignableBuilder.html\" title=\"struct mithril_aggregator::MithrilStakeDistributionSignableBuilder\">MithrilStakeDistributionSignableBuilder</a>"]],
 "mithril_common":[]
 };if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
