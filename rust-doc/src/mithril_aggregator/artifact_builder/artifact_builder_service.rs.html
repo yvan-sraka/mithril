@@ -85,32 +85,34 @@
 <a href="#85" id="85">85</a>
 <a href="#86" id="86">86</a>
 <a href="#87" id="87">87</a>
-<a href="#88" id="88">88</a>
-<a href="#89" id="89">89</a>
-<a href="#90" id="90">90</a>
-<a href="#91" id="91">91</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>mithril_common::{
-    entities::{Certificate, SignedEntityType},
-    signable_builder::{Artifact, DummyBeacon},
+    entities::{Certificate, Epoch, SignedEntityType},
+    signable_builder::Artifact,
     StdResult,
 };
 
-<span class="kw">use </span><span class="kw">crate</span>::artifact_builder::{ArtifactBuilder, DummyArtifactBuilder};
+<span class="kw">use </span><span class="kw">crate</span>::artifact_builder::ArtifactBuilder;
+
+<span class="kw">use </span><span class="kw">super</span>::MithrilStakeDistribution;
 
 <span class="doccomment">/// ArtifactBuilder Service
-</span><span class="comment">// TODO: temporary implementation
 </span><span class="kw">pub struct </span>ArtifactBuilderService {
-    dummy_artifact_builder: DummyArtifactBuilder,
+    mithril_stake_distribution_artifact_builder:
+        Arc&lt;<span class="kw">dyn </span>ArtifactBuilder&lt;Epoch, MithrilStakeDistribution&gt;&gt;,
 }
 
 <span class="kw">impl </span>ArtifactBuilderService {
     <span class="doccomment">/// ArtifactBuilderService factory
     </span><span class="attr">#[allow(dead_code)]
-    </span><span class="kw">pub fn </span>new(dummy_artifact_builder: DummyArtifactBuilder) -&gt; <span class="self">Self </span>{
+    </span><span class="kw">pub fn </span>new(
+        mithril_stake_distribution_artifact_builder: Arc&lt;
+            <span class="kw">dyn </span>ArtifactBuilder&lt;Epoch, MithrilStakeDistribution&gt;,
+        &gt;,
+    ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
-            dummy_artifact_builder,
+            mithril_stake_distribution_artifact_builder,
         }
     }
 }
@@ -124,20 +126,11 @@
     ) -&gt; StdResult&lt;Arc&lt;<span class="kw">impl </span>Artifact&gt;&gt; {
         <span class="kw">let </span>artifact = <span class="kw">match </span>signed_entity_type {
             SignedEntityType::MithrilStakeDistribution(e) =&gt; Arc::new(
-                <span class="self">self</span>.dummy_artifact_builder
-                    .compute_artifact(DummyBeacon { epoch: e }, certificate)
+                <span class="self">self</span>.mithril_stake_distribution_artifact_builder
+                    .compute_artifact(e, certificate)
                     .<span class="kw">await</span><span class="question-mark">?</span>,
             ),
-            SignedEntityType::CardanoStakeDistribution(e) =&gt; Arc::new(
-                <span class="self">self</span>.dummy_artifact_builder
-                    .compute_artifact(DummyBeacon { epoch: e }, certificate)
-                    .<span class="kw">await</span><span class="question-mark">?</span>,
-            ),
-            SignedEntityType::CardanoImmutableFilesFull(b) =&gt; Arc::new(
-                <span class="self">self</span>.dummy_artifact_builder
-                    .compute_artifact(DummyBeacon { epoch: b.epoch }, certificate)
-                    .<span class="kw">await</span><span class="question-mark">?</span>,
-            ),
+            <span class="kw">_ </span>=&gt; <span class="macro">todo!</span>(),
         };
 
         <span class="prelude-val">Ok</span>(artifact)
@@ -146,38 +139,37 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
-    <span class="kw">use </span>mithril_common::entities::{Beacon, Epoch};
+    <span class="kw">use </span>mithril_common::{entities::Epoch, test_utils::fake_data};
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
-    <span class="comment">// TODO: temporary test
-    </span><span class="attr">#[tokio::test]
-    </span><span class="kw">async fn </span>test_artifact_builder_service() {
-        <span class="kw">let </span>dummy_artifact_builder = DummyArtifactBuilder::default();
-        <span class="kw">let </span>artifact_builder_service = ArtifactBuilderService::new(dummy_artifact_builder);
+    <span class="kw">use </span><span class="kw">crate</span>::artifact_builder::MockArtifactBuilder;
+
+    <span class="attr">#[tokio::test]
+    </span><span class="kw">async fn </span>test_artifact_builder_service_mithril_stake_distribution() {
+        <span class="kw">let </span>signers_with_stake = fake_data::signers_with_stakes(<span class="number">5</span>);
+        <span class="kw">let </span>mithril_stake_distribution_expected = MithrilStakeDistribution::new(signers_with_stake);
+        <span class="kw">let </span>mithril_stake_distribution_clone = mithril_stake_distribution_expected.clone();
+        <span class="kw">let </span><span class="kw-2">mut </span>mock_mithril_stake_distribution_artifact_builder =
+            MockArtifactBuilder::&lt;Epoch, MithrilStakeDistribution&gt;::new();
+        mock_mithril_stake_distribution_artifact_builder
+            .expect_compute_artifact()
+            .once()
+            .return_once(<span class="kw">move </span>|<span class="kw">_</span>, <span class="kw">_</span>| <span class="prelude-val">Ok</span>(mithril_stake_distribution_clone));
+
+        <span class="kw">let </span>artifact_builder_service =
+            ArtifactBuilderService::new(Arc::new(mock_mithril_stake_distribution_artifact_builder));
         <span class="kw">let </span>certificate = Certificate::default();
 
-        <span class="kw">let </span>signed_entity_type_1 = SignedEntityType::MithrilStakeDistribution(Epoch(<span class="number">1</span>));
-        <span class="kw">let </span>artifact_1 = artifact_builder_service
-            .compute_artifact(signed_entity_type_1, <span class="kw-2">&amp;</span>certificate)
+        <span class="kw">let </span>signed_entity_type = SignedEntityType::MithrilStakeDistribution(Epoch(<span class="number">1</span>));
+        <span class="kw">let </span>artifact = artifact_builder_service
+            .compute_artifact(signed_entity_type, <span class="kw-2">&amp;</span>certificate)
             .<span class="kw">await
             </span>.unwrap();
-
-        <span class="kw">let </span>signed_entity_type_2 = SignedEntityType::CardanoStakeDistribution(Epoch(<span class="number">0</span>));
-        <span class="kw">let </span>artifact_2 = artifact_builder_service
-            .compute_artifact(signed_entity_type_2, <span class="kw-2">&amp;</span>certificate)
-            .<span class="kw">await
-            </span>.unwrap();
-
-        <span class="kw">let </span>signed_entity_type_3 = SignedEntityType::CardanoImmutableFilesFull(Beacon::default());
-        <span class="kw">let </span>artifact_3 = artifact_builder_service
-            .compute_artifact(signed_entity_type_3, <span class="kw-2">&amp;</span>certificate)
-            .<span class="kw">await
-            </span>.unwrap();
-
-        <span class="macro">assert_ne!</span>(artifact_1, artifact_2);
-        <span class="macro">assert_ne!</span>(artifact_1, artifact_3);
-        <span class="macro">assert_eq!</span>(artifact_2, artifact_3);
+        <span class="macro">assert_eq!</span>(
+            serde_json::to_string(<span class="kw-2">&amp;</span>mithril_stake_distribution_expected).unwrap(),
+            serde_json::to_string(<span class="kw-2">&amp;</span>artifact).unwrap()
+        );
     }
 }
 </code></pre></div>
