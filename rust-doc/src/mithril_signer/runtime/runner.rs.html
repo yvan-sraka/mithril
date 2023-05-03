@@ -882,6 +882,12 @@
 <a href="#882" id="882">882</a>
 <a href="#883" id="883">883</a>
 <a href="#884" id="884">884</a>
+<a href="#885" id="885">885</a>
+<a href="#886" id="886">886</a>
+<a href="#887" id="887">887</a>
+<a href="#888" id="888">888</a>
+<a href="#889" id="889">889</a>
+<a href="#890" id="890">890</a>
 </pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>slog_scope::{debug, info, trace, warn};
 <span class="kw">use </span>std::error::Error <span class="kw">as </span>StdError;
@@ -1369,7 +1375,9 @@
             adapters::{EraReaderAdapterType, EraReaderBootstrapAdapter},
             EraChecker, EraReader,
         },
-        signable_builder::CardanoImmutableFilesFullSignableBuilder,
+        signable_builder::{
+            CardanoImmutableFilesFullSignableBuilder, MithrilStakeDistributionSignableBuilder,
+        },
         store::{
             adapter::{DumbStoreAdapter, MemoryAdapter},
             StakeStore, StakeStorer,
@@ -1418,10 +1426,14 @@
 
         <span class="kw">let </span>api_version_provider = Arc::new(APIVersionProvider::new(era_checker.clone()));
         <span class="kw">let </span>digester = Arc::new(DumbImmutableDigester::new(DIGESTER_RESULT, <span class="bool-val">true</span>));
-        <span class="kw">let </span>signable_builder =
+        <span class="kw">let </span>immutable_signable_builder =
             CardanoImmutableFilesFullSignableBuilder::new(digester.clone(), slog_scope::logger());
-
-        <span class="kw">let </span>signable_builder_service = Arc::new(SignableBuilderService::new(signable_builder));
+        <span class="kw">let </span>mithril_stake_distribution_signable_builder =
+            MithrilStakeDistributionSignableBuilder::default();
+        <span class="kw">let </span>signable_builder_service = Arc::new(SignableBuilderService::new(
+            immutable_signable_builder,
+            mithril_stake_distribution_signable_builder,
+        ));
 
         SignerServices {
             stake_store: Arc::new(StakeStore::new(Box::new(DumbStoreAdapter::new()), <span class="prelude-val">None</span>)),

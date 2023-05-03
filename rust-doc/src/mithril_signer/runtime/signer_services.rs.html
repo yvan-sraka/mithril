@@ -331,6 +331,12 @@
 <a href="#331" id="331">331</a>
 <a href="#332" id="332">332</a>
 <a href="#333" id="333">333</a>
+<a href="#334" id="334">334</a>
+<a href="#335" id="335">335</a>
+<a href="#336" id="336">336</a>
+<a href="#337" id="337">337</a>
+<a href="#338" id="338">338</a>
+<a href="#339" id="339">339</a>
 </pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>sqlite::Connection;
 <span class="kw">use </span>std::{fs, sync::Arc};
@@ -347,7 +353,9 @@
     },
     digesters::{CardanoImmutableDigester, ImmutableDigester, ImmutableFileSystemObserver},
     era::{EraChecker, EraReader},
-    signable_builder::CardanoImmutableFilesFullSignableBuilder,
+    signable_builder::{
+        CardanoImmutableFilesFullSignableBuilder, MithrilStakeDistributionSignableBuilder,
+    },
     store::{adapter::SQLiteAdapter, StakeStore},
     BeaconProvider, BeaconProviderImpl, StdError,
 };
@@ -534,10 +542,14 @@
             api_version_provider.clone(),
         ));
 
-        <span class="kw">let </span>dummy_signable_builder =
+        <span class="kw">let </span>immutable_snapshot_builder =
             CardanoImmutableFilesFullSignableBuilder::new(digester.clone(), slog_scope::logger());
-        <span class="kw">let </span>signable_builder_service =
-            Arc::new(SignableBuilderService::new(dummy_signable_builder));
+        <span class="kw">let </span>mithril_stake_distribution_signable_builder =
+            MithrilStakeDistributionSignableBuilder::default();
+        <span class="kw">let </span>signable_builder_service = Arc::new(SignableBuilderService::new(
+            immutable_snapshot_builder,
+            mithril_stake_distribution_signable_builder,
+        ));
 
         <span class="kw">let </span>services = SignerServices {
             beacon_provider,
