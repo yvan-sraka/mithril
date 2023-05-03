@@ -1122,6 +1122,12 @@
 <a href="#1122" id="1122">1122</a>
 <a href="#1123" id="1123">1123</a>
 <a href="#1124" id="1124">1124</a>
+<a href="#1125" id="1125">1125</a>
+<a href="#1126" id="1126">1126</a>
+<a href="#1127" id="1127">1127</a>
+<a href="#1128" id="1128">1128</a>
+<a href="#1129" id="1129">1129</a>
+<a href="#1130" id="1130">1130</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>mithril_common::{
@@ -1160,8 +1166,8 @@
 
 <span class="kw">use crate</span>::{
     artifact_builder::{
-        ArtifactBuilderService, MithrilArtifactBuilderService,
-        MithrilStakeDistributionArtifactBuilder,
+        ArtifactBuilderService, CardanoImmutableFilesFullArtifactBuilder,
+        MithrilArtifactBuilderService, MithrilStakeDistributionArtifactBuilder,
     },
     certifier_service::{CertifierService, MithrilCertifierService},
     configuration::{ExecutionEnvironment, LIST_SNAPSHOTS_MAX_ITEMS},
@@ -2028,8 +2034,14 @@
         <span class="kw">let </span>multi_signer = <span class="self">self</span>.get_multi_signer().<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let </span>mithril_stake_distribution_artifact_builder =
             Arc::new(MithrilStakeDistributionArtifactBuilder::new(multi_signer));
+        <span class="kw">let </span>snapshotter = <span class="self">self</span>.build_snapshotter().<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>snapshot_uploader = <span class="self">self</span>.build_snapshot_uploader().<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>cardano_immutable_files_full_artifact_builder = Arc::new(
+            CardanoImmutableFilesFullArtifactBuilder::new(snapshotter, snapshot_uploader),
+        );
         <span class="kw">let </span>artifact_builder_service = Arc::new(MithrilArtifactBuilderService::new(
             mithril_stake_distribution_artifact_builder,
+            cardano_immutable_files_full_artifact_builder,
         ));
 
         <span class="prelude-val">Ok</span>(artifact_builder_service)

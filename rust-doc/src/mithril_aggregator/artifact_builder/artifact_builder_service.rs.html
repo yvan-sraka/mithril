@@ -106,12 +106,56 @@
 <a href="#106" id="106">106</a>
 <a href="#107" id="107">107</a>
 <a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
 </pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 
 <span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>mithril_common::{
-    entities::{Certificate, Epoch, SignedEntityType},
+    entities::{Beacon, Certificate, Epoch, SignedEntityType, Snapshot},
     signable_builder::Artifact,
     StdResult,
 };
@@ -139,6 +183,7 @@
 </span><span class="kw">pub struct </span>MithrilArtifactBuilderService {
     mithril_stake_distribution_artifact_builder:
         Arc&lt;<span class="kw">dyn </span>ArtifactBuilder&lt;Epoch, MithrilStakeDistribution&gt;&gt;,
+    cardano_immutable_files_full_artifact_builder: Arc&lt;<span class="kw">dyn </span>ArtifactBuilder&lt;Beacon, Snapshot&gt;&gt;,
 }
 
 <span class="kw">impl </span>MithrilArtifactBuilderService {
@@ -148,9 +193,11 @@
         mithril_stake_distribution_artifact_builder: Arc&lt;
             <span class="kw">dyn </span>ArtifactBuilder&lt;Epoch, MithrilStakeDistribution&gt;,
         &gt;,
+        cardano_immutable_files_full_artifact_builder: Arc&lt;<span class="kw">dyn </span>ArtifactBuilder&lt;Beacon, Snapshot&gt;&gt;,
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             mithril_stake_distribution_artifact_builder,
+            cardano_immutable_files_full_artifact_builder,
         }
     }
 }
@@ -163,16 +210,19 @@
         signed_entity_type: SignedEntityType,
         certificate: <span class="kw-2">&amp;</span>Certificate,
     ) -&gt; StdResult&lt;Arc&lt;<span class="kw">dyn </span>Artifact&gt;&gt; {
-        <span class="kw">let </span>artifact = <span class="kw">match </span>signed_entity_type {
-            SignedEntityType::MithrilStakeDistribution(e) =&gt; Arc::new(
+        <span class="kw">match </span>signed_entity_type {
+            SignedEntityType::MithrilStakeDistribution(epoch) =&gt; <span class="prelude-val">Ok</span>(Arc::new(
                 <span class="self">self</span>.mithril_stake_distribution_artifact_builder
-                    .compute_artifact(e, certificate)
+                    .compute_artifact(epoch, certificate)
                     .<span class="kw">await</span><span class="question-mark">?</span>,
-            ),
+            )),
+            SignedEntityType::CardanoImmutableFilesFull(beacon) =&gt; <span class="prelude-val">Ok</span>(Arc::new(
+                <span class="self">self</span>.cardano_immutable_files_full_artifact_builder
+                    .compute_artifact(beacon, certificate)
+                    .<span class="kw">await</span><span class="question-mark">?</span>,
+            )),
             <span class="kw">_ </span>=&gt; <span class="macro">todo!</span>(),
-        };
-
-        <span class="prelude-val">Ok</span>(artifact)
+        }
     }
 }
 
@@ -185,7 +235,8 @@
     <span class="kw">use </span><span class="kw">crate</span>::artifact_builder::MockArtifactBuilder;
 
     <span class="attr">#[tokio::test]
-    </span><span class="kw">async fn </span>test_artifact_builder_service_mithril_stake_distribution() {
+    </span><span class="kw">async fn </span>build_mithril_stake_distribution_artifact_when_given_mithril_stake_distribution_entity_type(
+    ) {
         <span class="kw">let </span>signers_with_stake = fake_data::signers_with_stakes(<span class="number">5</span>);
         <span class="kw">let </span>mithril_stake_distribution_expected = MithrilStakeDistribution::new(signers_with_stake);
         <span class="kw">let </span>mithril_stake_distribution_clone = mithril_stake_distribution_expected.clone();
@@ -196,9 +247,13 @@
             .once()
             .return_once(<span class="kw">move </span>|<span class="kw">_</span>, <span class="kw">_</span>| <span class="prelude-val">Ok</span>(mithril_stake_distribution_clone));
 
-        <span class="kw">let </span>artifact_builder_service = MithrilArtifactBuilderService::new(Arc::new(
-            mock_mithril_stake_distribution_artifact_builder,
-        ));
+        <span class="kw">let </span>mock_cardano_immutable_files_full_artifact_builder =
+            MockArtifactBuilder::&lt;Beacon, Snapshot&gt;::new();
+
+        <span class="kw">let </span>artifact_builder_service = MithrilArtifactBuilderService::new(
+            Arc::new(mock_mithril_stake_distribution_artifact_builder),
+            Arc::new(mock_cardano_immutable_files_full_artifact_builder),
+        );
         <span class="kw">let </span>certificate = Certificate::default();
 
         <span class="kw">let </span>signed_entity_type = SignedEntityType::MithrilStakeDistribution(Epoch(<span class="number">1</span>));
@@ -211,6 +266,39 @@
         <span class="macro">assert_eq!</span>(
             serde_json::to_string(<span class="kw-2">&amp;</span>mithril_stake_distribution_expected).unwrap(),
             serde_json::to_string(<span class="kw-2">&amp;</span>mithril_stake_distribution_computed).unwrap()
+        );
+    }
+
+    <span class="attr">#[tokio::test]
+    </span><span class="kw">async fn </span>build_snapshot_artifact_when_given_cardano_immutable_files_full_entity_type() {
+        <span class="kw">let </span>snapshot_expected = fake_data::snapshots(<span class="number">1</span>).first().unwrap().to_owned();
+        <span class="kw">let </span>snapshot_expected_clone = snapshot_expected.clone();
+        <span class="kw">let </span>mock_mithril_stake_distribution_artifact_builder =
+            MockArtifactBuilder::&lt;Epoch, MithrilStakeDistribution&gt;::new();
+
+        <span class="kw">let </span><span class="kw-2">mut </span>mock_cardano_immutable_files_full_artifact_builder =
+            MockArtifactBuilder::&lt;Beacon, Snapshot&gt;::new();
+        mock_cardano_immutable_files_full_artifact_builder
+            .expect_compute_artifact()
+            .once()
+            .return_once(<span class="kw">move </span>|<span class="kw">_</span>, <span class="kw">_</span>| <span class="prelude-val">Ok</span>(snapshot_expected_clone));
+
+        <span class="kw">let </span>artifact_builder_service = MithrilArtifactBuilderService::new(
+            Arc::new(mock_mithril_stake_distribution_artifact_builder),
+            Arc::new(mock_cardano_immutable_files_full_artifact_builder),
+        );
+        <span class="kw">let </span>certificate = Certificate::default();
+
+        <span class="kw">let </span>signed_entity_type = SignedEntityType::CardanoImmutableFilesFull(Beacon::default());
+        <span class="kw">let </span>artifact = artifact_builder_service
+            .compute_artifact(signed_entity_type, <span class="kw-2">&amp;</span>certificate)
+            .<span class="kw">await
+            </span>.unwrap();
+        <span class="kw">let </span>snapshot_computed: Snapshot =
+            serde_json::from_str(<span class="kw-2">&amp;</span>serde_json::to_string(<span class="kw-2">&amp;</span>artifact).unwrap()).unwrap();
+        <span class="macro">assert_eq!</span>(
+            serde_json::to_string(<span class="kw-2">&amp;</span>snapshot_expected).unwrap(),
+            serde_json::to_string(<span class="kw-2">&amp;</span>snapshot_computed).unwrap()
         );
     }
 }
