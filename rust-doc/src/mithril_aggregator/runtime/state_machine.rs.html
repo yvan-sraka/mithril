@@ -746,13 +746,6 @@
 <a href="#746" id="746">746</a>
 <a href="#747" id="747">747</a>
 <a href="#748" id="748">748</a>
-<a href="#749" id="749">749</a>
-<a href="#750" id="750">750</a>
-<a href="#751" id="751">751</a>
-<a href="#752" id="752">752</a>
-<a href="#753" id="753">753</a>
-<a href="#754" id="754">754</a>
-<a href="#755" id="755">755</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::runtime::{AggregatorRunnerTrait, RuntimeError};
 
 <span class="kw">use </span>mithril_common::entities::{Beacon, ProtocolMessage, SignedEntityType};
@@ -1081,10 +1074,9 @@
         </span><span class="kw">let </span>signed_entity_type = SignedEntityType::CardanoImmutableFilesFull(new_beacon.clone());
         <span class="self">self</span>.runner.update_beacon(<span class="kw-2">&amp;</span>new_beacon).<span class="kw">await</span><span class="question-mark">?</span>;
 
-        <span class="kw">let </span>digester_result = <span class="self">self</span>.runner.compute_digest(<span class="kw-2">&amp;</span>new_beacon).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let </span>protocol_message = <span class="self">self
             </span>.runner
-            .compute_protocol_message(digester_result)
+            .compute_protocol_message(<span class="kw-2">&amp;</span>signed_entity_type)
             .<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="self">self</span>.runner
             .create_open_message(<span class="kw-2">&amp;</span>signed_entity_type, <span class="kw-2">&amp;</span>protocol_message)
@@ -1337,23 +1329,17 @@
             .once()
             .returning(|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>));
         runner
-            .expect_compute_digest()
-            .once()
-            .returning(|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(<span class="string">&quot;whatever&quot;</span>.to_string()));
-        runner
             .expect_update_beacon()
             .with(predicate::eq(fake_data::beacon()))
             .once()
             .returning(|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(()));
         runner
             .expect_compute_protocol_message()
-            .with(predicate::eq(<span class="string">&quot;whatever&quot;</span>.to_string()))
             .once()
             .returning(|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(ProtocolMessage::new()));
         runner
             .expect_create_new_pending_certificate_from_multisigner()
-            <span class="comment">//.with(predicate::eq(fake_data::beacon()))
-            </span>.once()
+            .once()
             .returning(|<span class="kw">_</span>, <span class="kw">_</span>| <span class="prelude-val">Ok</span>(fake_data::certificate_pending()));
         runner
             .expect_save_pending_certificate()

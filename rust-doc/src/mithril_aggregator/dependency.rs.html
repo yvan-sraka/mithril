@@ -320,17 +320,6 @@
 <a href="#320" id="320">320</a>
 <a href="#321" id="321">321</a>
 <a href="#322" id="322">322</a>
-<a href="#323" id="323">323</a>
-<a href="#324" id="324">324</a>
-<a href="#325" id="325">325</a>
-<a href="#326" id="326">326</a>
-<a href="#327" id="327">327</a>
-<a href="#328" id="328">328</a>
-<a href="#329" id="329">329</a>
-<a href="#330" id="330">330</a>
-<a href="#331" id="331">331</a>
-<a href="#332" id="332">332</a>
-<a href="#333" id="333">333</a>
 </pre><pre class="rust"><code><span class="kw">use </span>mithril_common::{
     api_version::APIVersionProvider,
     certificate_chain::CertificateVerifier,
@@ -445,7 +434,7 @@
     </span><span class="kw">pub </span>signer_recorder: Arc&lt;<span class="kw">dyn </span>SignerRecorder&gt;,
 
     <span class="doccomment">/// Signable Builder Service
-    </span><span class="kw">pub </span>signable_builder_service: Arc&lt;SignableBuilderService&gt;,
+    </span><span class="kw">pub </span>signable_builder_service: Arc&lt;<span class="kw">dyn </span>SignableBuilderService&gt;,
 
     <span class="doccomment">/// Artifact Builder Service
     </span><span class="kw">pub </span>artifact_builder_service: Arc&lt;<span class="kw">dyn </span>ArtifactBuilderService&gt;,
@@ -644,24 +633,13 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">pub mod </span>tests {
-    <span class="kw">use crate</span>::{
-        dependency_injection::DependenciesBuilder, AggregatorConfig, Configuration,
-        DependencyManager,
-    };
-    <span class="kw">use </span>mithril_common::CardanoNetwork;
+    <span class="kw">use crate</span>::{dependency_injection::DependenciesBuilder, Configuration, DependencyManager};
 
-    <span class="kw">pub async fn </span>initialize_dependencies() -&gt; (DependencyManager, AggregatorConfig) {
+    <span class="kw">pub async fn </span>initialize_dependencies() -&gt; DependencyManager {
         <span class="kw">let </span>config = Configuration::new_sample();
         <span class="kw">let </span><span class="kw-2">mut </span>builder = DependenciesBuilder::new(config);
-        <span class="kw">let </span>dependency_manager = builder.build_dependency_container().<span class="kw">await</span>.unwrap();
 
-        <span class="kw">let </span>config = AggregatorConfig::new(
-            dependency_manager.config.run_interval,
-            CardanoNetwork::TestNet(<span class="number">42</span>),
-            dependency_manager.config.db_directory.as_path(),
-        );
-
-        (dependency_manager, config)
+        builder.build_dependency_container().<span class="kw">await</span>.unwrap()
     }
 }
 </code></pre></div>

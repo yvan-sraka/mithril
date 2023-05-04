@@ -52,15 +52,11 @@
 <a href="#52" id="52">52</a>
 <a href="#53" id="53">53</a>
 <a href="#54" id="54">54</a>
-<a href="#55" id="55">55</a>
-<a href="#56" id="56">56</a>
-</pre><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
-
-<span class="kw">use </span>mithril_common::{
-    entities::SignedEntityType,
+</pre><pre class="rust"><code><span class="kw">use </span>mithril_common::{
+    entities::{ProtocolMessage, SignedEntityType},
     signable_builder::{
         CardanoImmutableFilesFullSignableBuilder, MithrilStakeDistributionSignableBuilder,
-        Signable, SignableBuilder,
+        SignableBuilder,
     },
     StdResult,
 };
@@ -89,22 +85,22 @@
     </span><span class="kw">async fn </span>compute_signable(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         signed_entity_type: SignedEntityType,
-    ) -&gt; StdResult&lt;Arc&lt;<span class="kw">dyn </span>Signable&gt;&gt; {
-        <span class="kw">let </span>signable: Arc&lt;<span class="kw">dyn </span>Signable&gt; = <span class="kw">match </span>signed_entity_type {
-            SignedEntityType::CardanoImmutableFilesFull(beacon) =&gt; Arc::new(
+    ) -&gt; StdResult&lt;ProtocolMessage&gt; {
+        <span class="kw">let </span>protocol_message = <span class="kw">match </span>signed_entity_type {
+            SignedEntityType::CardanoImmutableFilesFull(beacon) =&gt; {
                 <span class="self">self</span>.immutable_signable_builder
-                    .compute_signable(beacon)
-                    .<span class="kw">await</span><span class="question-mark">?</span>,
-            ),
-            SignedEntityType::MithrilStakeDistribution(epoch) =&gt; Arc::new(
+                    .compute_protocol_message(beacon)
+                    .<span class="kw">await</span><span class="question-mark">?
+            </span>}
+            SignedEntityType::MithrilStakeDistribution(epoch) =&gt; {
                 <span class="self">self</span>.mithril_stake_distribution_builder
-                    .compute_signable(epoch)
-                    .<span class="kw">await</span><span class="question-mark">?</span>,
-            ),
-            <span class="kw">_ </span>=&gt; <span class="macro">todo!</span>(),
+                    .compute_protocol_message(epoch)
+                    .<span class="kw">await</span><span class="question-mark">?
+            </span>}
+            SignedEntityType::CardanoStakeDistribution(<span class="kw">_</span>) =&gt; <span class="macro">todo!</span>(),
         };
 
-        <span class="prelude-val">Ok</span>(signable)
+        <span class="prelude-val">Ok</span>(protocol_message)
     }
 }
 

@@ -1128,6 +1128,9 @@
 <a href="#1128" id="1128">1128</a>
 <a href="#1129" id="1129">1129</a>
 <a href="#1130" id="1130">1130</a>
+<a href="#1131" id="1131">1131</a>
+<a href="#1132" id="1132">1132</a>
+<a href="#1133" id="1133">1133</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>mithril_common::{
@@ -1178,7 +1181,7 @@
     },
     event_store::{EventMessage, EventStore, TransmitterService},
     http_server::routes::router,
-    signable_builder::SignableBuilderService,
+    signable_builder::{MithrilSignableBuilderService, SignableBuilderService},
     signer_registerer::SignerRecorder,
     stake_distribution_service::{MithrilStakeDistributionService, StakeDistributionService},
     ticker_service::{MithrilTickerService, TickerService},
@@ -1302,7 +1305,7 @@
     </span><span class="kw">pub </span>signer_recorder: <span class="prelude-ty">Option</span>&lt;Arc&lt;<span class="kw">dyn </span>SignerRecorder&gt;&gt;,
 
     <span class="doccomment">/// Signable Builder Service
-    </span><span class="kw">pub </span>signable_builder_service: <span class="prelude-ty">Option</span>&lt;Arc&lt;SignableBuilderService&gt;&gt;,
+    </span><span class="kw">pub </span>signable_builder_service: <span class="prelude-ty">Option</span>&lt;Arc&lt;<span class="kw">dyn </span>SignableBuilderService&gt;&gt;,
 
     <span class="doccomment">/// Artifact Builder Service
     </span><span class="kw">pub </span>artifact_builder_service: <span class="prelude-ty">Option</span>&lt;Arc&lt;<span class="kw">dyn </span>ArtifactBuilderService&gt;&gt;,
@@ -2007,13 +2010,14 @@
         <span class="prelude-val">Ok</span>(<span class="self">self</span>.signer_recorder.as_ref().cloned().unwrap())
     }
 
-    <span class="kw">async fn </span>build_signable_builder_service(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;SignableBuilderService&gt;&gt; {
-        <span class="kw">let </span>mithril_stake_distribution_builder = MithrilStakeDistributionSignableBuilder::default();
-        <span class="kw">let </span>immutable_signable_builder = CardanoImmutableFilesFullSignableBuilder::new(
+    <span class="kw">async fn </span>build_signable_builder_service(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;<span class="kw">dyn </span>SignableBuilderService&gt;&gt; {
+        <span class="kw">let </span>mithril_stake_distribution_builder =
+            Arc::new(MithrilStakeDistributionSignableBuilder::default());
+        <span class="kw">let </span>immutable_signable_builder = Arc::new(CardanoImmutableFilesFullSignableBuilder::new(
             <span class="self">self</span>.get_immutable_digester().<span class="kw">await</span><span class="question-mark">?</span>,
             <span class="self">self</span>.get_logger().<span class="kw">await</span><span class="question-mark">?</span>,
-        );
-        <span class="kw">let </span>signable_builder_service = Arc::new(SignableBuilderService::new(
+        ));
+        <span class="kw">let </span>signable_builder_service = Arc::new(MithrilSignableBuilderService::new(
             mithril_stake_distribution_builder,
             immutable_signable_builder,
         ));
@@ -2022,7 +2026,9 @@
     }
 
     <span class="doccomment">/// [SignableBuilderService] service
-    </span><span class="kw">pub async fn </span>get_signable_builder_service(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;SignableBuilderService&gt;&gt; {
+    </span><span class="kw">pub async fn </span>get_signable_builder_service(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;<span class="kw">dyn </span>SignableBuilderService&gt;&gt; {
         <span class="kw">if </span><span class="self">self</span>.signable_builder_service.is_none() {
             <span class="self">self</span>.signable_builder_service = <span class="prelude-val">Some</span>(<span class="self">self</span>.build_signable_builder_service().<span class="kw">await</span><span class="question-mark">?</span>);
         }
@@ -2165,7 +2171,7 @@
         <span class="kw">let </span>runtime = AggregatorRuntime::new(
             Duration::from_millis(config.interval),
             <span class="prelude-val">None</span>,
-            Arc::new(AggregatorRunner::new(config, dependency_container)),
+            Arc::new(AggregatorRunner::new(dependency_container)),
         )
         .<span class="kw">await
         </span>.map_err(|e| DependenciesBuilderError::Initialization {
