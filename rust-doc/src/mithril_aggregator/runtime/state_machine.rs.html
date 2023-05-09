@@ -720,32 +720,6 @@
 <a href="#720" id="720">720</a>
 <a href="#721" id="721">721</a>
 <a href="#722" id="722">722</a>
-<a href="#723" id="723">723</a>
-<a href="#724" id="724">724</a>
-<a href="#725" id="725">725</a>
-<a href="#726" id="726">726</a>
-<a href="#727" id="727">727</a>
-<a href="#728" id="728">728</a>
-<a href="#729" id="729">729</a>
-<a href="#730" id="730">730</a>
-<a href="#731" id="731">731</a>
-<a href="#732" id="732">732</a>
-<a href="#733" id="733">733</a>
-<a href="#734" id="734">734</a>
-<a href="#735" id="735">735</a>
-<a href="#736" id="736">736</a>
-<a href="#737" id="737">737</a>
-<a href="#738" id="738">738</a>
-<a href="#739" id="739">739</a>
-<a href="#740" id="740">740</a>
-<a href="#741" id="741">741</a>
-<a href="#742" id="742">742</a>
-<a href="#743" id="743">743</a>
-<a href="#744" id="744">744</a>
-<a href="#745" id="745">745</a>
-<a href="#746" id="746">746</a>
-<a href="#747" id="747">747</a>
-<a href="#748" id="748">748</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::runtime::{AggregatorRunnerTrait, RuntimeError};
 
 <span class="kw">use </span>mithril_common::entities::{Beacon, ProtocolMessage, SignedEntityType};
@@ -1030,18 +1004,8 @@
             })<span class="question-mark">?</span>;
 
         <span class="self">self</span>.runner.drop_pending_certificate().<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="kw">let </span>ongoing_snapshot = <span class="self">self
-            </span>.runner
-            .create_snapshot_archive(<span class="kw-2">&amp;</span>state.current_beacon, <span class="kw-2">&amp;</span>state.protocol_message)
-            .<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="kw">let </span>locations = <span class="self">self
-            </span>.runner
-            .upload_snapshot_archive(<span class="kw-2">&amp;</span>ongoing_snapshot)
-            .<span class="kw">await</span><span class="question-mark">?</span>;
-
-        <span class="kw">let _ </span>= <span class="self">self
-            </span>.runner
-            .create_and_save_snapshot(certificate, <span class="kw-2">&amp;</span>ongoing_snapshot, locations)
+        <span class="self">self</span>.runner
+            .create_artifact(<span class="kw-2">&amp;</span>state.signed_entity_type, <span class="kw-2">&amp;</span>certificate)
             .<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(IdleState {
@@ -1104,10 +1068,7 @@
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
 
-    <span class="kw">use </span>std::path::Path;
-
     <span class="kw">use </span><span class="kw">crate</span>::entities::OpenMessage;
-    <span class="kw">use </span><span class="kw">crate</span>::snapshotter::OngoingSnapshot;
 
     <span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::runner::MockAggregatorRunner;
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
@@ -1432,22 +1393,9 @@
             .once()
             .returning(|| <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(fake_data::certificate_pending())));
         runner
-            .expect_create_snapshot_archive()
+            .expect_create_artifact()
             .once()
-            .returning(|<span class="kw">_</span>, <span class="kw">_</span>| {
-                <span class="prelude-val">Ok</span>(OngoingSnapshot::new(
-                    Path::new(<span class="string">&quot;/tmp/archive.zip&quot;</span>).to_path_buf(),
-                    <span class="number">1234</span>,
-                ))
-            });
-        runner
-            .expect_upload_snapshot_archive()
-            .once()
-            .returning(|_path| <span class="prelude-val">Ok</span>(<span class="macro">vec!</span>[<span class="string">&quot;locA&quot;</span>.to_string(), <span class="string">&quot;locB&quot;</span>.to_string()]));
-        runner
-            .expect_create_and_save_snapshot()
-            .once()
-            .returning(|<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>| <span class="prelude-val">Ok</span>(fake_data::snapshots(<span class="number">1</span>)[<span class="number">0</span>].clone()));
+            .returning(|<span class="kw">_</span>, <span class="kw">_</span>| <span class="prelude-val">Ok</span>(()));
 
         <span class="kw">let </span>state = SigningState {
             current_beacon: fake_data::beacon(),

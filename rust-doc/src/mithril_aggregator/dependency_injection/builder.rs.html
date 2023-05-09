@@ -1131,6 +1131,30 @@
 <a href="#1131" id="1131">1131</a>
 <a href="#1132" id="1132">1132</a>
 <a href="#1133" id="1133">1133</a>
+<a href="#1134" id="1134">1134</a>
+<a href="#1135" id="1135">1135</a>
+<a href="#1136" id="1136">1136</a>
+<a href="#1137" id="1137">1137</a>
+<a href="#1138" id="1138">1138</a>
+<a href="#1139" id="1139">1139</a>
+<a href="#1140" id="1140">1140</a>
+<a href="#1141" id="1141">1141</a>
+<a href="#1142" id="1142">1142</a>
+<a href="#1143" id="1143">1143</a>
+<a href="#1144" id="1144">1144</a>
+<a href="#1145" id="1145">1145</a>
+<a href="#1146" id="1146">1146</a>
+<a href="#1147" id="1147">1147</a>
+<a href="#1148" id="1148">1148</a>
+<a href="#1149" id="1149">1149</a>
+<a href="#1150" id="1150">1150</a>
+<a href="#1151" id="1151">1151</a>
+<a href="#1152" id="1152">1152</a>
+<a href="#1153" id="1153">1153</a>
+<a href="#1154" id="1154">1154</a>
+<a href="#1155" id="1155">1155</a>
+<a href="#1156" id="1156">1156</a>
+<a href="#1157" id="1157">1157</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>mithril_common::{
@@ -1177,7 +1201,7 @@
     configuration::{ExecutionEnvironment, LIST_SNAPSHOTS_MAX_ITEMS},
     database::provider::{
         CertificateRepository, CertificateStoreAdapter, EpochSettingStore, OpenMessageRepository,
-        SignedEntityStoreAdapter, SignerRegistrationStoreAdapter, SignerStore,
+        SignedEntityStoreAdapter, SignedEntityStorer, SignerRegistrationStoreAdapter, SignerStore,
         SingleSignatureRepository, StakePoolStore,
     },
     event_store::{EventMessage, EventStore, TransmitterService},
@@ -1312,6 +1336,9 @@
 
     <span class="doccomment">/// Certifier service
     </span><span class="kw">pub </span>certifier_service: <span class="prelude-ty">Option</span>&lt;Arc&lt;<span class="kw">dyn </span>CertifierService&gt;&gt;,
+
+    <span class="doccomment">/// Signed Entity storer
+    </span><span class="kw">pub </span>signed_entity_storer: <span class="prelude-ty">Option</span>&lt;Arc&lt;<span class="kw">dyn </span>SignedEntityStorer&gt;&gt;,
 }
 
 <span class="kw">impl </span>DependenciesBuilder {
@@ -1351,6 +1378,7 @@
             signable_builder_service: <span class="prelude-val">None</span>,
             artifact_builder_service: <span class="prelude-val">None</span>,
             certifier_service: <span class="prelude-val">None</span>,
+            signed_entity_storer: <span class="prelude-val">None</span>,
         }
     }
 
@@ -2037,6 +2065,7 @@
     }
 
     <span class="kw">async fn </span>build_artifact_builder_service(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;<span class="kw">dyn </span>ArtifactBuilderService&gt;&gt; {
+        <span class="kw">let </span>signed_entity_storer = <span class="self">self</span>.build_signed_entity_storer().<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let </span>multi_signer = <span class="self">self</span>.get_multi_signer().<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let </span>mithril_stake_distribution_artifact_builder =
             Arc::new(MithrilStakeDistributionArtifactBuilder::new(multi_signer));
@@ -2046,6 +2075,7 @@
             CardanoImmutableFilesFullArtifactBuilder::new(snapshotter, snapshot_uploader),
         );
         <span class="kw">let </span>artifact_builder_service = Arc::new(MithrilArtifactBuilderService::new(
+            signed_entity_storer,
             mithril_stake_distribution_artifact_builder,
             cardano_immutable_files_full_artifact_builder,
         ));
@@ -2062,6 +2092,23 @@
         }
 
         <span class="prelude-val">Ok</span>(<span class="self">self</span>.artifact_builder_service.as_ref().cloned().unwrap())
+    }
+
+    <span class="kw">async fn </span>build_signed_entity_storer(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;<span class="kw">dyn </span>SignedEntityStorer&gt;&gt; {
+        <span class="kw">let </span>signed_entity_storer = Arc::new(SignedEntityStoreAdapter::new(
+            <span class="self">self</span>.get_sqlite_connection().<span class="kw">await</span><span class="question-mark">?</span>,
+        ));
+
+        <span class="prelude-val">Ok</span>(signed_entity_storer)
+    }
+
+    <span class="doccomment">/// [SignedEntityStorer] service
+    </span><span class="kw">pub async fn </span>get_signed_entity_storer(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;<span class="kw">dyn </span>SignedEntityStorer&gt;&gt; {
+        <span class="kw">if </span><span class="self">self</span>.signed_entity_storer.is_none() {
+            <span class="self">self</span>.signed_entity_storer = <span class="prelude-val">Some</span>(<span class="self">self</span>.build_signed_entity_storer().<span class="kw">await</span><span class="question-mark">?</span>);
+        }
+
+        <span class="prelude-val">Ok</span>(<span class="self">self</span>.signed_entity_storer.as_ref().cloned().unwrap())
     }
 
     <span class="doccomment">/// Return an unconfigured [DependencyManager]
@@ -2096,6 +2143,7 @@
             artifact_builder_service: <span class="self">self</span>.get_artifact_builder_service().<span class="kw">await</span><span class="question-mark">?</span>,
             certifier_service: <span class="self">self</span>.get_certifier_service().<span class="kw">await</span><span class="question-mark">?</span>,
             ticker_service: <span class="self">self</span>.get_ticker_service().<span class="kw">await</span><span class="question-mark">?</span>,
+            signed_entity_storer: <span class="self">self</span>.get_signed_entity_storer().<span class="kw">await</span><span class="question-mark">?</span>,
         };
 
         <span class="prelude-val">Ok</span>(dependency_manager)
