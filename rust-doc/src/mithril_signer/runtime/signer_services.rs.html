@@ -337,6 +337,8 @@
 <a href="#337" id="337">337</a>
 <a href="#338" id="338">338</a>
 <a href="#339" id="339">339</a>
+<a href="#340" id="340">340</a>
+<a href="#341" id="341">341</a>
 </pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>sqlite::Connection;
 <span class="kw">use </span>std::{fs, sync::Arc};
@@ -354,7 +356,8 @@
     digesters::{CardanoImmutableDigester, ImmutableDigester, ImmutableFileSystemObserver},
     era::{EraChecker, EraReader},
     signable_builder::{
-        CardanoImmutableFilesFullSignableBuilder, MithrilStakeDistributionSignableBuilder,
+        CardanoImmutableFilesFullSignableBuilder, MithrilSignableBuilderService,
+        MithrilStakeDistributionSignableBuilder, SignableBuilderService,
     },
     store::{adapter::SQLiteAdapter, StakeStore},
     BeaconProvider, BeaconProviderImpl, StdError,
@@ -363,7 +366,7 @@
 <span class="kw">use crate</span>::{
     certificate_handler::CertificateHandler, single_signer::SingleSigner,
     CertificateHandlerHTTPClient, Configuration, MithrilSingleSigner, ProtocolInitializerStore,
-    ProtocolInitializerStorer, SignableBuilderService,
+    ProtocolInitializerStorer,
 };
 
 <span class="kw">type </span>StakeStoreService = Arc&lt;StakeStore&gt;;
@@ -542,13 +545,14 @@
             api_version_provider.clone(),
         ));
 
-        <span class="kw">let </span>immutable_snapshot_builder =
-            CardanoImmutableFilesFullSignableBuilder::new(digester.clone(), slog_scope::logger());
+        <span class="kw">let </span>cardano_immutable_snapshot_builder = Arc::new(
+            CardanoImmutableFilesFullSignableBuilder::new(digester.clone(), slog_scope::logger()),
+        );
         <span class="kw">let </span>mithril_stake_distribution_signable_builder =
-            MithrilStakeDistributionSignableBuilder::default();
-        <span class="kw">let </span>signable_builder_service = Arc::new(SignableBuilderService::new(
-            immutable_snapshot_builder,
+            Arc::new(MithrilStakeDistributionSignableBuilder::default());
+        <span class="kw">let </span>signable_builder_service = Arc::new(MithrilSignableBuilderService::new(
             mithril_stake_distribution_signable_builder,
+            cardano_immutable_snapshot_builder,
         ));
 
         <span class="kw">let </span>services = SignerServices {
@@ -602,7 +606,7 @@
     </span><span class="kw">pub </span>api_version_provider: Arc&lt;APIVersionProvider&gt;,
 
     <span class="doccomment">/// Signable Builder Service
-    </span><span class="kw">pub </span>signable_builder_service: Arc&lt;SignableBuilderService&gt;,
+    </span><span class="kw">pub </span>signable_builder_service: Arc&lt;<span class="kw">dyn </span>SignableBuilderService&gt;,
 }
 
 <span class="attr">#[cfg(test)]

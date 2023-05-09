@@ -888,6 +888,16 @@
 <a href="#888" id="888">888</a>
 <a href="#889" id="889">889</a>
 <a href="#890" id="890">890</a>
+<a href="#891" id="891">891</a>
+<a href="#892" id="892">892</a>
+<a href="#893" id="893">893</a>
+<a href="#894" id="894">894</a>
+<a href="#895" id="895">895</a>
+<a href="#896" id="896">896</a>
+<a href="#897" id="897">897</a>
+<a href="#898" id="898">898</a>
+<a href="#899" id="899">899</a>
+<a href="#900" id="900">900</a>
 </pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>slog_scope::{debug, info, trace, warn};
 <span class="kw">use </span>std::error::Error <span class="kw">as </span>StdError;
@@ -899,7 +909,7 @@
 <span class="kw">use </span>mithril_common::crypto_helper::{
     key_decode_hex, KESPeriod, OpCert, ProtocolSignerVerificationKey, SerDeShelleyFileFormat,
 };
-<span class="kw">use </span>mithril_common::entities::{PartyId, ProtocolParameters};
+<span class="kw">use </span>mithril_common::entities::{PartyId, ProtocolParameters, SignedEntityType};
 <span class="kw">use </span>mithril_common::{
     crypto_helper::key_encode_hex,
     entities::{
@@ -959,7 +969,7 @@
     <span class="doccomment">/// Create the message to be signed with the single signature.
     </span><span class="kw">async fn </span>compute_message(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        beacon: <span class="kw-2">&amp;</span>Beacon,
+        signed_entity_type: <span class="kw-2">&amp;</span>SignedEntityType,
         next_signers: <span class="kw-2">&amp;</span>[SignerWithStake],
     ) -&gt; <span class="prelude-ty">Result</span>&lt;ProtocolMessage, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
 
@@ -1242,19 +1252,25 @@
 
     <span class="kw">async fn </span>compute_message(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        beacon: <span class="kw-2">&amp;</span>Beacon,
+        signed_entity_type: <span class="kw-2">&amp;</span>SignedEntityType,
         next_signers: <span class="kw-2">&amp;</span>[SignerWithStake],
     ) -&gt; <span class="prelude-ty">Result</span>&lt;ProtocolMessage, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: compute_message&quot;</span>);
 
-        <span class="kw">let </span><span class="kw-2">mut </span>message = ProtocolMessage::new();
-        <span class="comment">// 1 set the digest in the message
-        </span><span class="kw">let </span>digest = <span class="self">self</span>.services.digester.compute_digest(beacon).<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="macro">info!</span>(<span class="string">&quot; &gt; set message digest: {}&quot;</span>, digest);
-        message.set_message_part(ProtocolMessagePartKey::SnapshotDigest, digest);
+        <span class="comment">// 1 compute the signed entity type part of the message
+        </span><span class="kw">let </span><span class="kw-2">mut </span>message = <span class="self">self
+            </span>.services
+            .signable_builder_service
+            .compute_protocol_message(signed_entity_type.to_owned())
+            .<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="comment">// 2 set the next signers keys and stakes in the message
-        </span><span class="kw">let </span>next_signer_retrieval_epoch = beacon.epoch.offset_to_next_signer_retrieval_epoch();
+        </span><span class="kw">let </span>epoch = <span class="kw">match </span>signed_entity_type {
+            SignedEntityType::MithrilStakeDistribution(epoch) =&gt; epoch,
+            SignedEntityType::CardanoImmutableFilesFull(beacon) =&gt; <span class="kw-2">&amp;</span>beacon.epoch,
+            SignedEntityType::CardanoStakeDistribution(epoch) =&gt; epoch,
+        };
+        <span class="kw">let </span>next_signer_retrieval_epoch = epoch.offset_to_next_signer_retrieval_epoch();
         <span class="kw">let </span>next_protocol_initializer = <span class="self">self
             </span>.services
             .protocol_initializer_store
@@ -1376,7 +1392,8 @@
             EraChecker, EraReader,
         },
         signable_builder::{
-            CardanoImmutableFilesFullSignableBuilder, MithrilStakeDistributionSignableBuilder,
+            CardanoImmutableFilesFullSignableBuilder, MithrilSignableBuilderService,
+            MithrilStakeDistributionSignableBuilder,
         },
         store::{
             adapter::{DumbStoreAdapter, MemoryAdapter},
@@ -1389,8 +1406,8 @@
     <span class="kw">use </span>std::{path::PathBuf, sync::Arc};
 
     <span class="kw">use crate</span>::{
-        signable_builder::SignableBuilderService, CertificateHandler, DumbCertificateHandler,
-        MithrilSingleSigner, MockCertificateHandler, ProtocolInitializerStore, SingleSigner,
+        CertificateHandler, DumbCertificateHandler, MithrilSingleSigner, MockCertificateHandler,
+        ProtocolInitializerStore, SingleSigner,
     };
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
@@ -1426,13 +1443,14 @@
 
         <span class="kw">let </span>api_version_provider = Arc::new(APIVersionProvider::new(era_checker.clone()));
         <span class="kw">let </span>digester = Arc::new(DumbImmutableDigester::new(DIGESTER_RESULT, <span class="bool-val">true</span>));
-        <span class="kw">let </span>immutable_signable_builder =
-            CardanoImmutableFilesFullSignableBuilder::new(digester.clone(), slog_scope::logger());
+        <span class="kw">let </span>cardano_immutable_signable_builder = Arc::new(
+            CardanoImmutableFilesFullSignableBuilder::new(digester.clone(), slog_scope::logger()),
+        );
         <span class="kw">let </span>mithril_stake_distribution_signable_builder =
-            MithrilStakeDistributionSignableBuilder::default();
-        <span class="kw">let </span>signable_builder_service = Arc::new(SignableBuilderService::new(
-            immutable_signable_builder,
+            Arc::new(MithrilStakeDistributionSignableBuilder::default());
+        <span class="kw">let </span>signable_builder_service = Arc::new(MithrilSignableBuilderService::new(
             mithril_stake_distribution_signable_builder,
+            cardano_immutable_signable_builder,
         ));
 
         SignerServices {
@@ -1658,6 +1676,8 @@
             .get_current_beacon()
             .<span class="kw">await
             </span>.expect(<span class="string">&quot;get_current_beacon should not fail&quot;</span>);
+        <span class="kw">let </span>signed_entity_type =
+            SignedEntityType::CardanoImmutableFilesFull(current_beacon.clone());
         <span class="kw">let </span>fixture = MithrilFixtureBuilder::default().with_signers(<span class="number">5</span>).build();
         <span class="kw">let </span>signer_with_stake = fixture.signers_fixture()[<span class="number">0</span>].signer_with_stake.clone();
         <span class="kw">let </span>protocol_initializer = fixture.signers_fixture()[<span class="number">0</span>].protocol_initializer.clone();
@@ -1689,7 +1709,7 @@
 
         <span class="kw">let </span>runner = init_runner(<span class="prelude-val">Some</span>(services), <span class="prelude-val">None</span>).<span class="kw">await</span>;
         <span class="kw">let </span>message = runner
-            .compute_message(<span class="kw-2">&amp;</span>current_beacon, <span class="kw-2">&amp;</span>next_signers)
+            .compute_message(<span class="kw-2">&amp;</span>signed_entity_type, <span class="kw-2">&amp;</span>next_signers)
             .<span class="kw">await
             </span>.expect(<span class="string">&quot;compute_message should not fail&quot;</span>);
 
