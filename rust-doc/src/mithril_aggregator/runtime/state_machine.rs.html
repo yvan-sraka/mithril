@@ -708,21 +708,12 @@
 <a href="#708" id="708">708</a>
 <a href="#709" id="709">709</a>
 <a href="#710" id="710">710</a>
-<a href="#711" id="711">711</a>
-<a href="#712" id="712">712</a>
-<a href="#713" id="713">713</a>
-<a href="#714" id="714">714</a>
-<a href="#715" id="715">715</a>
-<a href="#716" id="716">716</a>
-<a href="#717" id="717">717</a>
-<a href="#718" id="718">718</a>
-<a href="#719" id="719">719</a>
-<a href="#720" id="720">720</a>
-<a href="#721" id="721">721</a>
-<a href="#722" id="722">722</a>
-</pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::runtime::{AggregatorRunnerTrait, RuntimeError};
+</pre><pre class="rust"><code><span class="kw">use crate</span>::{
+    entities::OpenMessage,
+    runtime::{AggregatorRunnerTrait, RuntimeError},
+};
 
-<span class="kw">use </span>mithril_common::entities::{Beacon, ProtocolMessage, SignedEntityType};
+<span class="kw">use </span>mithril_common::entities::Beacon;
 <span class="kw">use </span>slog_scope::{crit, info, trace, warn};
 <span class="kw">use </span>std::fmt::Display;
 <span class="kw">use </span>std::sync::Arc;
@@ -741,8 +732,7 @@
 <span class="attr">#[derive(Clone, Debug, PartialEq)]
 </span><span class="kw">pub struct </span>SigningState {
     current_beacon: Beacon,
-    signed_entity_type: SignedEntityType,
-    protocol_message: ProtocolMessage,
+    open_message: OpenMessage,
 }
 
 <span class="attr">#[derive(Clone, Debug, PartialEq)]
@@ -901,11 +891,18 @@
                     <span class="self">self</span>.state = AggregatorState::Idle(IdleState {
                         current_beacon: <span class="prelude-val">Some</span>(state.current_beacon),
                     });
-                } <span class="kw">else if </span><span class="self">self
+                } <span class="kw">else if let </span><span class="prelude-val">Some</span>(open_message) = <span class="self">self
                     </span>.runner
-                    .does_certificate_exist_for_beacon(<span class="kw-2">&amp;</span>state.current_beacon)
+                    .get_current_non_certified_open_message()
                     .<span class="kw">await</span><span class="question-mark">?
                 </span>{
+                    <span class="comment">// transition READY &gt; SIGNING
+                    </span><span class="macro">info!</span>(<span class="string">&quot;→ transitioning to SIGNING&quot;</span>);
+                    <span class="kw">let </span>new_state = <span class="self">self
+                        </span>.transition_from_ready_to_signing(state.current_beacon, open_message)
+                        .<span class="kw">await</span><span class="question-mark">?</span>;
+                    <span class="self">self</span>.state = AggregatorState::Signing(new_state);
+                } <span class="kw">else </span>{
                     <span class="comment">// READY &gt; READY
                     </span><span class="macro">info!</span>(
                         <span class="string">&quot; ⋅ a certificate already exists for this beacon, waiting…&quot;</span>;
@@ -914,13 +911,6 @@
                     <span class="self">self</span>.state = AggregatorState::Ready(ReadyState {
                         current_beacon: chain_beacon,
                     });
-                } <span class="kw">else </span>{
-                    <span class="comment">// transition READY &gt; SIGNING
-                    </span><span class="macro">info!</span>(<span class="string">&quot;→ transitioning to SIGNING&quot;</span>);
-                    <span class="kw">let </span>new_state = <span class="self">self
-                        </span>.transition_from_ready_to_signing(state.current_beacon)
-                        .<span class="kw">await</span><span class="question-mark">?</span>;
-                    <span class="self">self</span>.state = AggregatorState::Signing(new_state);
                 }
             }
             AggregatorState::Signing(state) =&gt; {
@@ -996,7 +986,7 @@
         <span class="macro">trace!</span>(<span class="string">&quot;launching transition from SIGNING to IDLE state&quot;</span>);
         <span class="kw">let </span>certificate = <span class="self">self
             </span>.runner
-            .create_certificate(<span class="kw-2">&amp;</span>state.signed_entity_type)
+            .create_certificate(<span class="kw-2">&amp;</span>state.open_message.signed_entity_type)
             .<span class="kw">await</span><span class="question-mark">?
             </span>.ok_or_else(|| RuntimeError::KeepState {
                 message: <span class="string">&quot;not enough signature yet to create a certificate, waiting…&quot;</span>.to_string(),
@@ -1005,7 +995,7 @@
 
         <span class="self">self</span>.runner.drop_pending_certificate().<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="self">self</span>.runner
-            .create_artifact(<span class="kw-2">&amp;</span>state.signed_entity_type, <span class="kw-2">&amp;</span>certificate)
+            .create_artifact(<span class="kw-2">&amp;</span>state.open_message.signed_entity_type, <span class="kw-2">&amp;</span>certificate)
             .<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(IdleState {
@@ -1032,24 +1022,16 @@
     </span><span class="kw">async fn </span>transition_from_ready_to_signing(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         new_beacon: Beacon,
+        open_message: OpenMessage,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;SigningState, RuntimeError&gt; {
         <span class="macro">trace!</span>(<span class="string">&quot;launching transition from READY to SIGNING state&quot;</span>);
-        <span class="comment">// TODO: Temporary, we need to compute the signed entity type for other types than Cardano immutable files
-        </span><span class="kw">let </span>signed_entity_type = SignedEntityType::CardanoImmutableFilesFull(new_beacon.clone());
         <span class="self">self</span>.runner.update_beacon(<span class="kw-2">&amp;</span>new_beacon).<span class="kw">await</span><span class="question-mark">?</span>;
 
-        <span class="kw">let </span>protocol_message = <span class="self">self
-            </span>.runner
-            .compute_protocol_message(<span class="kw-2">&amp;</span>signed_entity_type)
-            .<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="self">self</span>.runner
-            .create_open_message(<span class="kw-2">&amp;</span>signed_entity_type, <span class="kw-2">&amp;</span>protocol_message)
-            .<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let </span>certificate_pending = <span class="self">self
             </span>.runner
             .create_new_pending_certificate_from_multisigner(
                 new_beacon.clone(),
-                <span class="kw-2">&amp;</span>signed_entity_type,
+                <span class="kw-2">&amp;</span>open_message.signed_entity_type,
             )
             .<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="self">self</span>.runner
@@ -1057,8 +1039,7 @@
             .<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let </span>state = SigningState {
             current_beacon: new_beacon,
-            signed_entity_type,
-            protocol_message,
+            open_message,
         };
 
         <span class="prelude-val">Ok</span>(state)
@@ -1244,7 +1225,7 @@
     }
 
     <span class="attr">#[tokio::test]
-    </span><span class="kw">pub async fn </span>ready_certificate_already_exist_for_beacon() {
+    </span><span class="kw">pub async fn </span>ready_open_message_not_exist() {
         <span class="kw">let </span><span class="kw-2">mut </span>runner = MockAggregatorRunner::new();
         <span class="kw">let </span>beacon = fake_data::beacon();
         <span class="kw">let </span>next_beacon = Beacon {
@@ -1257,9 +1238,9 @@
             .once()
             .returning(<span class="kw">move </span>|| <span class="prelude-val">Ok</span>(next_beacon.clone()));
         runner
-            .expect_does_certificate_exist_for_beacon()
+            .expect_get_current_non_certified_open_message()
             .once()
-            .returning(|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>));
+            .returning(|| <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>));
         <span class="kw">let </span><span class="kw-2">mut </span>runtime = init_runtime(
             <span class="prelude-val">Some</span>(AggregatorState::Ready(ReadyState {
                 current_beacon: beacon.clone(),
@@ -1286,18 +1267,20 @@
             .once()
             .returning(|| <span class="prelude-val">Ok</span>(fake_data::beacon()));
         runner
-            .expect_does_certificate_exist_for_beacon()
+            .expect_get_current_non_certified_open_message()
             .once()
-            .returning(|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>));
+            .returning(|| {
+                <span class="kw">let </span>open_message = OpenMessage {
+                    is_certified: <span class="bool-val">false</span>,
+                    ..OpenMessage::dummy()
+                };
+                <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(open_message))
+            });
         runner
             .expect_update_beacon()
             .with(predicate::eq(fake_data::beacon()))
             .once()
             .returning(|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(()));
-        runner
-            .expect_compute_protocol_message()
-            .once()
-            .returning(|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(ProtocolMessage::new()));
         runner
             .expect_create_new_pending_certificate_from_multisigner()
             .once()
@@ -1306,10 +1289,6 @@
             .expect_save_pending_certificate()
             .once()
             .returning(|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(()));
-        runner
-            .expect_create_open_message()
-            .once()
-            .returning(|<span class="kw">_</span>, <span class="kw">_</span>| <span class="prelude-val">Ok</span>(OpenMessage::dummy()));
 
         <span class="kw">let </span><span class="kw-2">mut </span>runtime = init_runtime(
             <span class="prelude-val">Some</span>(AggregatorState::Ready(ReadyState {
@@ -1344,8 +1323,7 @@
 
                 beacon
             },
-            signed_entity_type: SignedEntityType::dummy(),
-            protocol_message: ProtocolMessage::default(),
+            open_message: OpenMessage::dummy(),
         };
         <span class="kw">let </span><span class="kw-2">mut </span>runtime = init_runtime(<span class="prelude-val">Some</span>(AggregatorState::Signing(state)), runner).<span class="kw">await</span>;
         runtime.cycle().<span class="kw">await</span>.unwrap();
@@ -1366,8 +1344,7 @@
             .returning(|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>));
         <span class="kw">let </span>state = SigningState {
             current_beacon: fake_data::beacon(),
-            signed_entity_type: SignedEntityType::dummy(),
-            protocol_message: ProtocolMessage::default(),
+            open_message: OpenMessage::dummy(),
         };
         <span class="kw">let </span><span class="kw-2">mut </span>runtime = init_runtime(<span class="prelude-val">Some</span>(AggregatorState::Signing(state)), runner).<span class="kw">await</span>;
         runtime
@@ -1399,8 +1376,7 @@
 
         <span class="kw">let </span>state = SigningState {
             current_beacon: fake_data::beacon(),
-            signed_entity_type: SignedEntityType::dummy(),
-            protocol_message: ProtocolMessage::default(),
+            open_message: OpenMessage::dummy(),
         };
         <span class="kw">let </span><span class="kw-2">mut </span>runtime = init_runtime(<span class="prelude-val">Some</span>(AggregatorState::Signing(state)), runner).<span class="kw">await</span>;
         runtime.cycle().<span class="kw">await</span>.unwrap();

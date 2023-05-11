@@ -737,6 +737,13 @@
 <a href="#737" id="737">737</a>
 <a href="#738" id="738">738</a>
 <a href="#739" id="739">739</a>
+<a href="#740" id="740">740</a>
+<a href="#741" id="741">741</a>
+<a href="#742" id="742">742</a>
+<a href="#743" id="743">743</a>
+<a href="#744" id="744">744</a>
+<a href="#745" id="745">745</a>
+<a href="#746" id="746">746</a>
 </pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>reqwest::{<span class="self">self</span>, Client, RequestBuilder, Response, StatusCode};
 <span class="kw">use </span>slog_scope::debug;
@@ -745,7 +752,9 @@
 
 <span class="kw">use </span>mithril_common::{
     api_version::APIVersionProvider,
-    entities::{CertificatePending, Epoch, EpochSettings, Signer, SingleSignatures},
+    entities::{
+        CertificatePending, Epoch, EpochSettings, SignedEntityType, Signer, SingleSignatures,
+    },
     messages::{CertificatePendingMessage, EpochSettingsMessage},
     MITHRIL_API_VERSION_HEADER, MITHRIL_SIGNER_VERSION_HEADER,
 };
@@ -818,6 +827,7 @@
     <span class="doccomment">/// Registers single signatures with the aggregator.
     </span><span class="kw">async fn </span>register_signatures(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
+        signed_entity_type: <span class="kw-2">&amp;</span>SignedEntityType,
         signatures: <span class="kw-2">&amp;</span>SingleSignatures,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), CertificateHandlerError&gt;;
 }
@@ -959,12 +969,15 @@
 
     <span class="kw">async fn </span>register_signatures(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
+        signed_entity_type: <span class="kw-2">&amp;</span>SignedEntityType,
         signatures: <span class="kw-2">&amp;</span>SingleSignatures,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), CertificateHandlerError&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;Register signatures&quot;</span>);
         <span class="kw">let </span>url = <span class="macro">format!</span>(<span class="string">&quot;{}/register-signatures&quot;</span>, <span class="self">self</span>.aggregator_endpoint);
-        <span class="kw">let </span>register_single_signature_message =
-            ToRegisterSignatureMessageAdapter::adapt(signatures.to_owned());
+        <span class="kw">let </span>register_single_signature_message = ToRegisterSignatureMessageAdapter::adapt(
+            signed_entity_type.to_owned(),
+            signatures.to_owned(),
+        );
         <span class="kw">let </span>response = <span class="self">self
             </span>.prepare_request_builder(Client::new().post(url.clone()))
             .json(<span class="kw-2">&amp;</span>register_single_signature_message)
@@ -1085,6 +1098,7 @@
         <span class="doccomment">/// Registers single signatures with the aggregator
         </span><span class="kw">async fn </span>register_signatures(
             <span class="kw-2">&amp;</span><span class="self">self</span>,
+            _signed_entity_type: <span class="kw-2">&amp;</span>SignedEntityType,
             _signatures: <span class="kw-2">&amp;</span>SingleSignatures,
         ) -&gt; <span class="prelude-ty">Result</span>&lt;(), CertificateHandlerError&gt; {
             <span class="prelude-val">Ok</span>(())
@@ -1374,7 +1388,7 @@
             Arc::new(api_version_provider),
         );
         <span class="kw">let </span>register_signatures = certificate_handler
-            .register_signatures(<span class="kw-2">&amp;</span>single_signatures)
+            .register_signatures(<span class="kw-2">&amp;</span>SignedEntityType::dummy(), <span class="kw-2">&amp;</span>single_signatures)
             .<span class="kw">await</span>;
         register_signatures.expect(<span class="string">&quot;unexpected error&quot;</span>);
     }
@@ -1393,7 +1407,7 @@
             Arc::new(api_version_provider),
         );
         <span class="kw">let </span>error = certificate_handler
-            .register_signatures(<span class="kw-2">&amp;</span>single_signatures)
+            .register_signatures(<span class="kw-2">&amp;</span>SignedEntityType::dummy(), <span class="kw-2">&amp;</span>single_signatures)
             .<span class="kw">await
             </span>.unwrap_err();
 
@@ -1419,7 +1433,7 @@
             Arc::new(api_version_provider),
         );
         <span class="kw">let </span>register_signatures = certificate_handler
-            .register_signatures(<span class="kw-2">&amp;</span>single_signatures)
+            .register_signatures(<span class="kw-2">&amp;</span>SignedEntityType::dummy(), <span class="kw-2">&amp;</span>single_signatures)
             .<span class="kw">await</span>;
         <span class="macro">assert_eq!</span>(
             CertificateHandlerError::RemoteServerLogical(
@@ -1443,7 +1457,7 @@
             Arc::new(api_version_provider),
         );
         <span class="kw">let </span>register_signatures = certificate_handler
-            .register_signatures(<span class="kw-2">&amp;</span>single_signatures)
+            .register_signatures(<span class="kw-2">&amp;</span>SignedEntityType::dummy(), <span class="kw-2">&amp;</span>single_signatures)
             .<span class="kw">await</span>;
         <span class="macro">assert_eq!</span>(
             CertificateHandlerError::RemoteServerLogical(
@@ -1467,7 +1481,7 @@
             Arc::new(api_version_provider),
         );
         <span class="kw">let </span>register_signatures = certificate_handler
-            .register_signatures(<span class="kw-2">&amp;</span>single_signatures)
+            .register_signatures(<span class="kw-2">&amp;</span>SignedEntityType::dummy(), <span class="kw-2">&amp;</span>single_signatures)
             .<span class="kw">await</span>;
         <span class="macro">assert_eq!</span>(
             CertificateHandlerError::RemoteServerTechnical(<span class="string">&quot;an error occurred&quot;</span>.to_string())

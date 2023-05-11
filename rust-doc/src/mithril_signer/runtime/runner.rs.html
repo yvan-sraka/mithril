@@ -898,6 +898,11 @@
 <a href="#898" id="898">898</a>
 <a href="#899" id="899">899</a>
 <a href="#900" id="900">900</a>
+<a href="#901" id="901">901</a>
+<a href="#902" id="902">902</a>
+<a href="#903" id="903">903</a>
+<a href="#904" id="904">904</a>
+<a href="#905" id="905">905</a>
 </pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>slog_scope::{debug, info, trace, warn};
 <span class="kw">use </span>std::error::Error <span class="kw">as </span>StdError;
@@ -984,6 +989,7 @@
     <span class="doccomment">/// Send the single signature to the aggregator in order to be aggregated.
     </span><span class="kw">async fn </span>send_single_signature(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
+        signed_entity_type: <span class="kw-2">&amp;</span>SignedEntityType,
         maybe_signature: <span class="prelude-ty">Option</span>&lt;SingleSignatures&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
 
@@ -1330,6 +1336,7 @@
 
     <span class="kw">async fn </span>send_single_signature(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
+        signed_entity_type: <span class="kw-2">&amp;</span>SignedEntityType,
         maybe_signature: <span class="prelude-ty">Option</span>&lt;SingleSignatures&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: send_single_signature&quot;</span>);
@@ -1338,7 +1345,7 @@
             <span class="macro">debug!</span>(<span class="string">&quot; &gt; there is a single signature to send&quot;</span>);
             <span class="self">self</span>.services
                 .certificate_handler
-                .register_signatures(<span class="kw-2">&amp;</span>single_signatures)
+                .register_signatures(signed_entity_type, <span class="kw-2">&amp;</span>single_signatures)
                 .<span class="kw">await
                 </span>.map_err(|e| e.into())
         } <span class="kw">else </span>{
@@ -1773,12 +1780,15 @@
         certificate_handler
             .expect_register_signatures()
             .once()
-            .returning(|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(()));
+            .returning(|<span class="kw">_</span>, <span class="kw">_</span>| <span class="prelude-val">Ok</span>(()));
         services.certificate_handler = Arc::new(certificate_handler);
         <span class="kw">let </span>runner = init_runner(<span class="prelude-val">Some</span>(services), <span class="prelude-val">None</span>).<span class="kw">await</span>;
 
         runner
-            .send_single_signature(<span class="prelude-val">Some</span>(fake_data::single_signatures(<span class="macro">vec!</span>[<span class="number">2</span>, <span class="number">5</span>, <span class="number">12</span>])))
+            .send_single_signature(
+                <span class="kw-2">&amp;</span>SignedEntityType::dummy(),
+                <span class="prelude-val">Some</span>(fake_data::single_signatures(<span class="macro">vec!</span>[<span class="number">2</span>, <span class="number">5</span>, <span class="number">12</span>])),
+            )
             .<span class="kw">await
             </span>.expect(<span class="string">&quot;send_single_signature should not fail&quot;</span>);
     }

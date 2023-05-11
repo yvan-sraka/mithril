@@ -1113,13 +1113,13 @@
             })<span class="question-mark">?</span>;
         <span class="kw">let </span>single_signatures = <span class="self">self
             </span>.runner
-            .compute_single_signature(current_beacon.epoch, <span class="kw-2">&amp;</span>message, <span class="kw-2">&amp;</span>signers)
+            .compute_single_signature( current_beacon.epoch, <span class="kw-2">&amp;</span>message, <span class="kw-2">&amp;</span>signers)
             .<span class="kw">await
             </span>.map_err(|e| RuntimeError::KeepState {
                 message: <span class="macro">format!</span>(<span class="string">&quot;Could not compute single signature during &#39;registered → signed&#39; phase (current beacon {current_beacon:?})&quot;</span>),
                 nested_error: <span class="prelude-val">Some</span>(e)
             })<span class="question-mark">?</span>;
-        <span class="self">self</span>.runner.send_single_signature(single_signatures).<span class="kw">await
+        <span class="self">self</span>.runner.send_single_signature(<span class="kw-2">&amp;</span>pending_certificate.signed_entity_type, single_signatures).<span class="kw">await
             </span>.map_err(|e| RuntimeError::KeepState {
                 message: <span class="macro">format!</span>(<span class="string">&quot;Could not send single signature during &#39;registered → signed&#39; phase (current beacon {current_beacon:?})&quot;</span>),
                 nested_error: <span class="prelude-val">Some</span>(e)
@@ -1391,7 +1391,7 @@
         runner
             .expect_send_single_signature()
             .once()
-            .returning(|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(()));
+            .returning(|<span class="kw">_</span>, <span class="kw">_</span>| <span class="prelude-val">Ok</span>(()));
 
         <span class="kw">let </span><span class="kw-2">mut </span>state_machine = init_state_machine(state, runner);
         state_machine

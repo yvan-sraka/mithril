@@ -869,6 +869,32 @@
 <a href="#869" id="869">869</a>
 <a href="#870" id="870">870</a>
 <a href="#871" id="871">871</a>
+<a href="#872" id="872">872</a>
+<a href="#873" id="873">873</a>
+<a href="#874" id="874">874</a>
+<a href="#875" id="875">875</a>
+<a href="#876" id="876">876</a>
+<a href="#877" id="877">877</a>
+<a href="#878" id="878">878</a>
+<a href="#879" id="879">879</a>
+<a href="#880" id="880">880</a>
+<a href="#881" id="881">881</a>
+<a href="#882" id="882">882</a>
+<a href="#883" id="883">883</a>
+<a href="#884" id="884">884</a>
+<a href="#885" id="885">885</a>
+<a href="#886" id="886">886</a>
+<a href="#887" id="887">887</a>
+<a href="#888" id="888">888</a>
+<a href="#889" id="889">889</a>
+<a href="#890" id="890">890</a>
+<a href="#891" id="891">891</a>
+<a href="#892" id="892">892</a>
+<a href="#893" id="893">893</a>
+<a href="#894" id="894">894</a>
+<a href="#895" id="895">895</a>
+<a href="#896" id="896">896</a>
+<a href="#897" id="897">897</a>
 </pre><pre class="rust"><code><span class="kw">use </span>mithril_common::StdError;
 
 <span class="kw">use </span>mithril_common::entities::{ProtocolMessage, SingleSignatures};
@@ -1053,8 +1079,12 @@
         signed_entity_type: <span class="kw-2">&amp;</span>SignedEntityType,
     ) -&gt; WhereCondition {
         WhereCondition::new(
-            <span class="string">&quot;signed_entity_type_id = ?*&quot;</span>,
-            <span class="macro">vec!</span>[Value::Integer(signed_entity_type.index() <span class="kw">as </span>i64)],
+            <span class="string">&quot;signed_entity_type_id = ?* and beacon = ?*&quot;</span>,
+            <span class="macro">vec!</span>[
+                Value::Integer(signed_entity_type.index() <span class="kw">as </span>i64),
+                <span class="comment">// TODO!: Remove this ugly unwrap, should this method returns a result ?
+                </span>Value::String(signed_entity_type.get_json_beacon().unwrap()),
+            ],
         )
     }
 
@@ -1071,6 +1101,10 @@
 <span class="kw">impl</span>&lt;<span class="lifetime">&#39;client</span>&gt; Provider&lt;<span class="lifetime">&#39;client</span>&gt; <span class="kw">for </span>OpenMessageProvider&lt;<span class="lifetime">&#39;client</span>&gt; {
     <span class="kw">type </span>Entity = OpenMessageRecord;
 
+    <span class="kw">fn </span>get_connection(<span class="kw-2">&amp;</span><span class="lifetime">&#39;client </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;client </span>Connection {
+        <span class="self">self</span>.connection
+    }
+
     <span class="kw">fn </span>get_definition(<span class="kw-2">&amp;</span><span class="self">self</span>, condition: <span class="kw-2">&amp;</span>str) -&gt; String {
         <span class="kw">let </span>aliases = SourceAlias::new(<span class="kw-2">&amp;</span>[
             (<span class="string">&quot;{:open_message:}&quot;</span>, <span class="string">&quot;open_message&quot;</span>),
@@ -1079,10 +1113,6 @@
         <span class="kw">let </span>projection = <span class="self">Self</span>::Entity::get_projection().expand(aliases);
 
         <span class="macro">format!</span>(<span class="string">&quot;select {projection} from open_message where {condition} order by created_at desc&quot;</span>)
-    }
-
-    <span class="kw">fn </span>get_connection(<span class="kw-2">&amp;</span><span class="lifetime">&#39;client </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;client </span>Connection {
-        <span class="self">self</span>.connection
     }
 }
 
@@ -1293,14 +1323,22 @@
         signed_entity_type: <span class="kw-2">&amp;</span>SignedEntityType,
     ) -&gt; WhereCondition {
         WhereCondition::new(
-            <span class="string">&quot;signed_entity_type_id = ?*&quot;</span>,
-            <span class="macro">vec!</span>[Value::Integer(signed_entity_type.index() <span class="kw">as </span>i64)],
+            <span class="string">&quot;signed_entity_type_id = ?* and beacon = ?*&quot;</span>,
+            <span class="macro">vec!</span>[
+                Value::Integer(signed_entity_type.index() <span class="kw">as </span>i64),
+                <span class="comment">// TODO!: Remove this ugly unwrap, should this method returns a result ?
+                </span>Value::String(signed_entity_type.get_json_beacon().unwrap()),
+            ],
         )
     }
 }
 
 <span class="kw">impl</span>&lt;<span class="lifetime">&#39;client</span>&gt; Provider&lt;<span class="lifetime">&#39;client</span>&gt; <span class="kw">for </span>OpenMessageWithSingleSignaturesProvider&lt;<span class="lifetime">&#39;client</span>&gt; {
     <span class="kw">type </span>Entity = OpenMessageWithSingleSignaturesRecord;
+
+    <span class="kw">fn </span>get_connection(<span class="kw-2">&amp;</span><span class="lifetime">&#39;client </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;client </span>Connection {
+        <span class="self">self</span>.connection
+    }
 
     <span class="kw">fn </span>get_definition(<span class="kw-2">&amp;</span><span class="self">self</span>, condition: <span class="kw-2">&amp;</span>str) -&gt; String {
         <span class="kw">let </span>aliases = SourceAlias::new(<span class="kw-2">&amp;</span>[
@@ -1320,10 +1358,6 @@ group by open_message.open_message_id
 order by open_message.created_at desc, open_message.rowid desc
 &quot;#
         </span>)
-    }
-
-    <span class="kw">fn </span>get_connection(<span class="kw-2">&amp;</span><span class="lifetime">&#39;client </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;client </span>Connection {
-        <span class="self">self</span>.connection
     }
 }
 
@@ -1351,6 +1385,19 @@ order by open_message.created_at desc, open_message.rowid desc
         <span class="kw">let </span>filters = provider
             .get_epoch_condition(signed_entity_type.get_epoch())
             .and_where(provider.get_signed_entity_type_condition(signed_entity_type));
+        <span class="kw">let </span><span class="kw-2">mut </span>messages = provider.find(filters)<span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(messages.next())
+    }
+
+    <span class="doccomment">/// Return an open message with its associated single signatures if any.
+    </span><span class="kw">pub async fn </span>get_open_message_with_single_signatures(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        signed_entity_type: <span class="kw-2">&amp;</span>SignedEntityType,
+    ) -&gt; StdResult&lt;<span class="prelude-ty">Option</span>&lt;OpenMessageWithSingleSignaturesRecord&gt;&gt; {
+        <span class="kw">let </span>lock = <span class="self">self</span>.connection.lock().<span class="kw">await</span>;
+        <span class="kw">let </span>provider = OpenMessageWithSingleSignaturesProvider::new(<span class="kw-2">&amp;</span>lock);
+        <span class="kw">let </span>filters = provider.get_signed_entity_type_condition(signed_entity_type);
         <span class="kw">let </span><span class="kw-2">mut </span>messages = provider.find(filters)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(messages.next())
@@ -1397,19 +1444,6 @@ order by open_message.created_at desc, open_message.rowid desc
         <span class="kw">let </span>cursor = provider.find(filters)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(cursor.count())
-    }
-
-    <span class="doccomment">/// Return an open message with its associated single signatures if any.
-    </span><span class="kw">pub async fn </span>get_open_message_with_single_signatures(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        signed_entity_type: <span class="kw-2">&amp;</span>SignedEntityType,
-    ) -&gt; StdResult&lt;<span class="prelude-ty">Option</span>&lt;OpenMessageWithSingleSignaturesRecord&gt;&gt; {
-        <span class="kw">let </span>lock = <span class="self">self</span>.connection.lock().<span class="kw">await</span>;
-        <span class="kw">let </span>provider = OpenMessageWithSingleSignaturesProvider::new(<span class="kw-2">&amp;</span>lock);
-        <span class="kw">let </span>filters = provider.get_signed_entity_type_condition(signed_entity_type);
-        <span class="kw">let </span><span class="kw-2">mut </span>messages = provider.find(filters)<span class="question-mark">?</span>;
-
-        <span class="prelude-val">Ok</span>(messages.next())
     }
 }
 
@@ -1470,11 +1504,22 @@ order by open_message.created_at desc, open_message.rowid desc
             immutable_file_number: <span class="number">400</span>,
         };
         <span class="kw">let </span>(expr, params) = provider
-            .get_signed_entity_type_condition(<span class="kw-2">&amp;</span>SignedEntityType::CardanoImmutableFilesFull(beacon))
+            .get_signed_entity_type_condition(<span class="kw-2">&amp;</span>SignedEntityType::CardanoImmutableFilesFull(
+                beacon.clone(),
+            ))
             .expand();
 
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;signed_entity_type_id = ?1&quot;</span>.to_string(), expr);
-        <span class="macro">assert_eq!</span>(<span class="macro">vec!</span>[Value::Integer(<span class="number">2</span>)], params,);
+        <span class="macro">assert_eq!</span>(
+            <span class="string">&quot;signed_entity_type_id = ?1 and beacon = ?2&quot;</span>.to_string(),
+            expr
+        );
+        <span class="macro">assert_eq!</span>(
+            <span class="macro">vec!</span>[
+                Value::Integer(<span class="number">2</span>),
+                Value::String(serde_json::to_string(<span class="kw-2">&amp;</span>beacon).unwrap())
+            ],
+            params,
+        );
     }
 
     <span class="attr">#[test]
@@ -1670,18 +1715,25 @@ order by open_message.created_at desc, open_message.rowid desc
     </span><span class="kw">async fn </span>repository_clean_open_message() {
         <span class="kw">let </span>connection = get_connection().<span class="kw">await</span>;
         <span class="kw">let </span>repository = OpenMessageRepository::new(connection.clone());
+        <span class="kw">let </span>beacon = Beacon {
+            epoch: Epoch(<span class="number">1</span>),
+            ..Beacon::default()
+        };
         <span class="kw">let _ </span>= repository
             .create_open_message(
-                Epoch(<span class="number">2</span>),
-                <span class="kw-2">&amp;</span>SignedEntityType::CardanoImmutableFilesFull(Beacon::default()),
+                beacon.epoch,
+                <span class="kw-2">&amp;</span>SignedEntityType::CardanoImmutableFilesFull(beacon.clone()),
                 <span class="kw-2">&amp;</span>ProtocolMessage::new(),
             )
             .<span class="kw">await
             </span>.unwrap();
         <span class="kw">let _ </span>= repository
             .create_open_message(
-                Epoch(<span class="number">1</span>),
-                <span class="kw-2">&amp;</span>SignedEntityType::CardanoImmutableFilesFull(Beacon::default()),
+                beacon.epoch,
+                <span class="kw-2">&amp;</span>SignedEntityType::CardanoImmutableFilesFull(Beacon {
+                    epoch: Epoch(<span class="number">2</span>),
+                    ..beacon
+                }),
                 <span class="kw-2">&amp;</span>ProtocolMessage::new(),
             )
             .<span class="kw">await

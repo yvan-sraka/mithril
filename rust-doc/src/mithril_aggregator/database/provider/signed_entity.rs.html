@@ -629,6 +629,21 @@
 <a href="#629" id="629">629</a>
 <a href="#630" id="630">630</a>
 <a href="#631" id="631">631</a>
+<a href="#632" id="632">632</a>
+<a href="#633" id="633">633</a>
+<a href="#634" id="634">634</a>
+<a href="#635" id="635">635</a>
+<a href="#636" id="636">636</a>
+<a href="#637" id="637">637</a>
+<a href="#638" id="638">638</a>
+<a href="#639" id="639">639</a>
+<a href="#640" id="640">640</a>
+<a href="#641" id="641">641</a>
+<a href="#642" id="642">642</a>
+<a href="#643" id="643">643</a>
+<a href="#644" id="644">644</a>
+<a href="#645" id="645">645</a>
+<a href="#646" id="646">646</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>sqlite::{Connection, Value};
@@ -636,7 +651,7 @@
 <span class="kw">use </span>async_trait::async_trait;
 
 <span class="kw">use </span>mithril_common::{
-    entities::{SignedEntityType, Snapshot},
+    entities::{Beacon, SignedEntityType, Snapshot},
     sqlite::{
         EntityCursor, HydrationError, Projection, Provider, SourceAlias, SqLiteEntity,
         WhereCondition,
@@ -697,7 +712,13 @@
         <span class="kw">let </span>signed_entity_id = row.get::&lt;String, <span class="kw">_</span>&gt;(<span class="number">0</span>);
         <span class="kw">let </span>signed_entity_type_id_int = row.get::&lt;i64, <span class="kw">_</span>&gt;(<span class="number">1</span>);
         <span class="kw">let </span>certificate_id = row.get::&lt;String, <span class="kw">_</span>&gt;(<span class="number">2</span>);
-        <span class="kw">let </span>beacon_str = row.get::&lt;String, <span class="kw">_</span>&gt;(<span class="number">3</span>);
+        <span class="comment">// TODO: We need to check first that the cell can be read as a string first
+        // (e.g. when beacon json is &#39;{&quot;network&quot;: &quot;dev&quot;, &quot;epoch&quot;: 1, &quot;immutable_file_number&quot;: 2}&#39;).
+        // If it fails, we fallback on readign the cell as an integer (e.g. when beacon json is &#39;5&#39;).
+        // Maybe there is a better way of doing this.
+        </span><span class="kw">let </span>beacon_str = row
+            .try_get::&lt;String, <span class="kw">_</span>&gt;(<span class="number">3</span>)
+            .unwrap_or_else(|<span class="kw">_</span>| (row.get::&lt;i64, <span class="kw">_</span>&gt;(<span class="number">3</span>)).to_string());
         <span class="kw">let </span>artifact_str = row.get::&lt;String, <span class="kw">_</span>&gt;(<span class="number">4</span>);
         <span class="kw">let </span>created_at = row.get::&lt;String, <span class="kw">_</span>&gt;(<span class="number">5</span>);
 
@@ -928,7 +949,8 @@
     }
 }
 
-<span class="attr">#[async_trait]
+<span class="comment">// TODO: this StoreAdapter implementation is temporary and concerns only the snapshots for the CardanoImmutableFilesFull signed entity type
+</span><span class="attr">#[async_trait]
 </span><span class="kw">impl </span>StoreAdapter <span class="kw">for </span>SignedEntityStoreAdapter {
     <span class="kw">type </span>Key = String;
     <span class="kw">type </span>Record = Snapshot;
@@ -955,7 +977,13 @@
             .map_err(|e| AdapterError::GeneralError(<span class="macro">format!</span>(<span class="string">&quot;{e}&quot;</span>)))<span class="question-mark">?</span>;
         <span class="kw">let </span>signed_entity = cursor
             .next()
-            .map(|signed_entity_record| signed_entity_record.into());
+            .filter(|record| {
+                <span class="macro">matches!</span>(
+                    record.signed_entity_type,
+                    SignedEntityType::CardanoImmutableFilesFull(<span class="kw">_</span>)
+                )
+            })
+            .map(|record| record.into());
 
         <span class="prelude-val">Ok</span>(signed_entity)
     }
@@ -984,7 +1012,9 @@
         <span class="kw">let </span>connection = <span class="kw-2">&amp;*</span><span class="self">self</span>.connection.lock().<span class="kw">await</span>;
         <span class="kw">let </span>provider = SignedEntityRecordProvider::new(connection);
         <span class="kw">let </span>cursor = provider
-            .get_all()
+            .get_by_signed_entity_type(SignedEntityType::CardanoImmutableFilesFull(
+                Beacon::default(),
+            ))
             .map_err(|e| AdapterError::GeneralError(<span class="macro">format!</span>(<span class="string">&quot;{e}&quot;</span>)))<span class="question-mark">?</span>;
         <span class="kw">let </span>signed_entities: Vec&lt;Snapshot&gt; = cursor.map(|se| se.into()).collect();
         <span class="prelude-val">Ok</span>(Box::new(signed_entities.into_iter()))
