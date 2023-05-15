@@ -86,24 +86,28 @@
 <a href="#86" id="86">86</a>
 <a href="#87" id="87">87</a>
 <a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::certifier_service::CertifierService;
+<span class="kw">use </span><span class="kw">crate</span>::database::provider::SignedEntityStorer;
 <span class="kw">use </span><span class="kw">crate</span>::event_store::{EventMessage, TransmitterService};
 <span class="kw">use </span><span class="kw">crate</span>::ticker_service::TickerService;
 <span class="kw">use crate</span>::{
     dependency::MultiSignerWrapper, CertificatePendingStore, CertificateStore, Configuration,
-    DependencyManager, ProtocolParametersStore, SignerRegisterer, SnapshotStore,
+    DependencyManager, ProtocolParametersStore, SignerRegisterer,
 };
+<span class="kw">use </span>mithril_common::entities::SignedEntityType;
 <span class="kw">use </span>mithril_common::BeaconProvider;
 <span class="kw">use </span>std::convert::Infallible;
 <span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>warp::Filter;
-
-<span class="doccomment">/// With snapshot store middleware
-</span><span class="kw">pub fn </span>with_snapshot_store(
-    dependency_manager: Arc&lt;DependencyManager&gt;,
-) -&gt; <span class="kw">impl </span>Filter&lt;Extract = (Arc&lt;<span class="kw">dyn </span>SnapshotStore&gt;,), Error = Infallible&gt; + Clone {
-    warp::any().map(<span class="kw">move </span>|| dependency_manager.snapshot_store.clone())
-}
 
 <span class="doccomment">/// With certificate store middleware
 </span><span class="kw">pub fn </span>with_certificate_store(
@@ -173,6 +177,20 @@
     dependency_manager: Arc&lt;DependencyManager&gt;,
 ) -&gt; <span class="kw">impl </span>Filter&lt;Extract = (Arc&lt;<span class="kw">dyn </span>TickerService&gt;,), Error = Infallible&gt; + Clone {
     warp::any().map(<span class="kw">move </span>|| dependency_manager.ticker_service.clone())
+}
+
+<span class="doccomment">/// With signed entity storer
+</span><span class="kw">pub fn </span>with_signed_entity_storer(
+    dependency_manager: Arc&lt;DependencyManager&gt;,
+) -&gt; <span class="kw">impl </span>Filter&lt;Extract = (Arc&lt;<span class="kw">dyn </span>SignedEntityStorer&gt;,), Error = Infallible&gt; + Clone {
+    warp::any().map(<span class="kw">move </span>|| dependency_manager.signed_entity_storer.clone())
+}
+
+<span class="doccomment">/// With signed entity type
+</span><span class="kw">pub fn </span>with_signed_entity_type(
+    signed_entity_type: SignedEntityType,
+) -&gt; <span class="kw">impl </span>Filter&lt;Extract = (SignedEntityType,), Error = Infallible&gt; + Clone {
+    warp::any().map(<span class="kw">move </span>|| signed_entity_type.clone())
 }
 </code></pre></div>
 </section></main><div id="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="mithril_aggregator" data-themes="" data-resource-suffix="" data-rustdoc-version="1.69.0 (84c898d65 2023-04-16)" data-search-js="search-8a59a8356673ec1f.js" data-settings-js="settings-f0c5c39777a9a2f6.js" data-settings-css="settings-0bcba95ff279c1db.css" ></div></body></html>

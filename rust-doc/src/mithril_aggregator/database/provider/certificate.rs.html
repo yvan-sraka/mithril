@@ -1141,6 +1141,8 @@
 <a href="#1141" id="1141">1141</a>
 <a href="#1142" id="1142">1142</a>
 <a href="#1143" id="1143">1143</a>
+<a href="#1144" id="1144">1144</a>
+<a href="#1145" id="1145">1145</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>sqlite::{Connection, Value};
@@ -1886,11 +1888,13 @@ group by certificate.epoch order by certificate.epoch desc, certificate.ROWID as
     </span><span class="kw">fn </span>get_certificate_record_by_certificate_id() {
         <span class="kw">let </span>connection = Connection::open(<span class="string">&quot;:memory:&quot;</span>).unwrap();
         <span class="kw">let </span>provider = CertificateRecordProvider::new(<span class="kw-2">&amp;</span>connection);
-        <span class="kw">let </span>condition = provider.condition_by_certificate_id(<span class="string">&quot;cert-123&quot;</span>).unwrap();
+        <span class="kw">let </span>condition = provider
+            .condition_by_certificate_id(<span class="string">&quot;certificate-123&quot;</span>)
+            .unwrap();
         <span class="kw">let </span>(filter, values) = condition.expand();
 
         <span class="macro">assert_eq!</span>(<span class="string">&quot;certificate_id = ?1&quot;</span>.to_string(), filter);
-        <span class="macro">assert_eq!</span>(<span class="macro">vec!</span>[Value::String(<span class="string">&quot;cert-123&quot;</span>.to_string())], values);
+        <span class="macro">assert_eq!</span>(<span class="macro">vec!</span>[Value::String(<span class="string">&quot;certificate-123&quot;</span>.to_string())], values);
     }
 
     <span class="attr">#[test]

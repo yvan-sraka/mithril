@@ -1066,7 +1066,7 @@
     <span class="doccomment">/// List snapshots
     </span><span class="kw">async fn </span>list_snapshots(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;Snapshot&gt;, AggregatorHandlerError&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;List snapshots&quot;</span>);
-        <span class="kw">let </span>url = <span class="macro">format!</span>(<span class="string">&quot;{}/snapshots&quot;</span>, <span class="self">self</span>.aggregator_endpoint);
+        <span class="kw">let </span>url = <span class="macro">format!</span>(<span class="string">&quot;{}/artifact/snapshots&quot;</span>, <span class="self">self</span>.aggregator_endpoint);
         <span class="kw">let </span>response = <span class="self">self
             </span>.prepare_request_builder(Client::new().get(url.clone()))
             .<span class="kw">await
@@ -1100,7 +1100,7 @@
     <span class="doccomment">/// Get snapshot details
     </span><span class="kw">async fn </span>get_snapshot_details(<span class="kw-2">&amp;</span><span class="self">self</span>, digest: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;Snapshot, AggregatorHandlerError&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;Details snapshot {}&quot;</span>, digest);
-        <span class="kw">let </span>url = <span class="macro">format!</span>(<span class="string">&quot;{}/snapshot/{}&quot;</span>, <span class="self">self</span>.aggregator_endpoint, digest);
+        <span class="kw">let </span>url = <span class="macro">format!</span>(<span class="string">&quot;{}/artifact/snapshot/{}&quot;</span>, <span class="self">self</span>.aggregator_endpoint, digest);
         <span class="kw">let </span>response = <span class="self">self
             </span>.prepare_request_builder(Client::new().get(url.clone()))
             .<span class="kw">await
@@ -1300,7 +1300,7 @@
         <span class="kw">let </span>(server, config) = setup_test();
         <span class="kw">let </span>snapshots_expected = fake_data::snapshots(<span class="number">5</span>);
         <span class="kw">let </span>_snapshots_mock = server.mock(|when, then| {
-            when.path(<span class="string">&quot;/snapshots&quot;</span>);
+            when.path(<span class="string">&quot;/artifact/snapshots&quot;</span>);
             then.status(<span class="number">200</span>).body(<span class="macro">json!</span>(snapshots_expected).to_string());
         });
         <span class="kw">let </span>aggregator_client = AggregatorHTTPClient::new(
@@ -1317,7 +1317,7 @@
     </span><span class="kw">async fn </span>test_list_snapshots_ko_412() {
         <span class="kw">let </span>(server, config) = setup_test();
         <span class="kw">let </span>_snapshots_mock = server.mock(|when, then| {
-            when.path(<span class="string">&quot;/snapshots&quot;</span>);
+            when.path(<span class="string">&quot;/artifact/snapshots&quot;</span>);
             then.status(<span class="number">412</span>).header(
                 MITHRIL_API_VERSION_HEADER,
                 APIVersionProvider::compute_all_versions_sorted()
@@ -1342,7 +1342,7 @@
     </span><span class="kw">async fn </span>test_list_snapshots_ko_500() {
         <span class="kw">let </span>(server, config) = setup_test();
         <span class="kw">let </span>_snapshots_mock = server.mock(|when, then| {
-            when.path(<span class="string">&quot;/snapshots&quot;</span>);
+            when.path(<span class="string">&quot;/artifact/snapshots&quot;</span>);
             then.status(<span class="number">500</span>);
         });
         <span class="kw">let </span>aggregator_client = AggregatorHTTPClient::new(
@@ -1372,7 +1372,7 @@
         <span class="kw">let </span>(server, config) = setup_test();
         <span class="kw">let </span>snapshot_expected = fake_data::snapshots(<span class="number">1</span>).first().unwrap().to_owned();
         <span class="kw">let </span>_snapshots_mock = server.mock(|when, then| {
-            when.path(<span class="macro">format!</span>(<span class="string">&quot;/snapshot/{digest}&quot;</span>));
+            when.path(<span class="macro">format!</span>(<span class="string">&quot;/artifact/snapshot/{digest}&quot;</span>));
             then.status(<span class="number">200</span>).body(<span class="macro">json!</span>(snapshot_expected).to_string());
         });
         <span class="kw">let </span>aggregator_client = AggregatorHTTPClient::new(
@@ -1390,7 +1390,7 @@
         <span class="kw">let </span>digest = <span class="string">&quot;digest123&quot;</span>;
         <span class="kw">let </span>(server, config) = setup_test();
         <span class="kw">let </span>_snapshots_mock = server.mock(|when, then| {
-            when.path(<span class="macro">format!</span>(<span class="string">&quot;/snapshot/{digest}&quot;</span>));
+            when.path(<span class="macro">format!</span>(<span class="string">&quot;/artifact/snapshot/{digest}&quot;</span>));
             then.status(<span class="number">404</span>);
         });
         <span class="kw">let </span>aggregator_client = AggregatorHTTPClient::new(
@@ -1407,7 +1407,7 @@
         <span class="kw">let </span>(server, config) = setup_test();
         <span class="kw">let </span>digest = <span class="string">&quot;digest123&quot;</span>;
         <span class="kw">let </span>_snapshots_mock = server.mock(|when, then| {
-            when.path(<span class="macro">format!</span>(<span class="string">&quot;/snapshot/{digest}&quot;</span>));
+            when.path(<span class="macro">format!</span>(<span class="string">&quot;/artifact/snapshot/{digest}&quot;</span>));
             then.status(<span class="number">412</span>)
                 .header(MITHRIL_API_VERSION_HEADER, <span class="string">&quot;0.0.999&quot;</span>);
         });
@@ -1429,7 +1429,7 @@
         <span class="kw">let </span>digest = <span class="string">&quot;digest123&quot;</span>;
         <span class="kw">let </span>(server, config) = setup_test();
         <span class="kw">let </span>_snapshots_mock = server.mock(|when, then| {
-            when.path(<span class="macro">format!</span>(<span class="string">&quot;/snapshot/{digest}&quot;</span>));
+            when.path(<span class="macro">format!</span>(<span class="string">&quot;/artifact/snapshot/{digest}&quot;</span>));
             then.status(<span class="number">500</span>);
         });
         <span class="kw">let </span>aggregator_client = AggregatorHTTPClient::new(

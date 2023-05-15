@@ -196,13 +196,14 @@
 <a href="#196" id="196">196</a>
 <a href="#197" id="197">197</a>
 <a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
 </pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>chrono::Utc;
 <span class="kw">use </span>slog_scope::info;
 <span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>mithril_common::{
-    entities::{Beacon, Certificate, Epoch, SignedEntityType, Snapshot},
+    entities::{Beacon, Certificate, Epoch, MithrilStakeDistribution, SignedEntityType, Snapshot},
     signable_builder::Artifact,
     StdResult,
 };
@@ -211,8 +212,6 @@
     artifact_builder::ArtifactBuilder,
     database::provider::{SignedEntityRecord, SignedEntityStorer},
 };
-
-<span class="kw">use </span><span class="kw">super</span>::MithrilStakeDistribution;
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">use </span>mockall::automock;
@@ -321,8 +320,11 @@
     </span><span class="kw">async fn </span>build_mithril_stake_distribution_artifact_when_given_mithril_stake_distribution_entity_type(
     ) {
         <span class="kw">let </span>signers_with_stake = fake_data::signers_with_stakes(<span class="number">5</span>);
-        <span class="kw">let </span>mithril_stake_distribution_expected =
-            MithrilStakeDistribution::new(Epoch(<span class="number">1</span>), signers_with_stake);
+        <span class="kw">let </span>mithril_stake_distribution_expected = MithrilStakeDistribution::new(
+            Epoch(<span class="number">1</span>),
+            signers_with_stake,
+            <span class="string">&quot;certificate-123&quot;</span>.to_string(),
+        );
         <span class="kw">let </span>mithril_stake_distribution_clone = mithril_stake_distribution_expected.clone();
 
         <span class="kw">let </span>mock_signed_entity_storer = MockSignedEntityStorer::new();

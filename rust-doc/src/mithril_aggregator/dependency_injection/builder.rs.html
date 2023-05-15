@@ -1131,30 +1131,6 @@
 <a href="#1131" id="1131">1131</a>
 <a href="#1132" id="1132">1132</a>
 <a href="#1133" id="1133">1133</a>
-<a href="#1134" id="1134">1134</a>
-<a href="#1135" id="1135">1135</a>
-<a href="#1136" id="1136">1136</a>
-<a href="#1137" id="1137">1137</a>
-<a href="#1138" id="1138">1138</a>
-<a href="#1139" id="1139">1139</a>
-<a href="#1140" id="1140">1140</a>
-<a href="#1141" id="1141">1141</a>
-<a href="#1142" id="1142">1142</a>
-<a href="#1143" id="1143">1143</a>
-<a href="#1144" id="1144">1144</a>
-<a href="#1145" id="1145">1145</a>
-<a href="#1146" id="1146">1146</a>
-<a href="#1147" id="1147">1147</a>
-<a href="#1148" id="1148">1148</a>
-<a href="#1149" id="1149">1149</a>
-<a href="#1150" id="1150">1150</a>
-<a href="#1151" id="1151">1151</a>
-<a href="#1152" id="1152">1152</a>
-<a href="#1153" id="1153">1153</a>
-<a href="#1154" id="1154">1154</a>
-<a href="#1155" id="1155">1155</a>
-<a href="#1156" id="1156">1156</a>
-<a href="#1157" id="1157">1157</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>mithril_common::{
@@ -1198,7 +1174,7 @@
         MithrilArtifactBuilderService, MithrilStakeDistributionArtifactBuilder,
     },
     certifier_service::{CertifierService, MithrilCertifierService},
-    configuration::{ExecutionEnvironment, LIST_SNAPSHOTS_MAX_ITEMS},
+    configuration::ExecutionEnvironment,
     database::provider::{
         CertificateRepository, CertificateStoreAdapter, EpochSettingStore, OpenMessageRepository,
         SignedEntityStoreAdapter, SignedEntityStorer, SignerRegistrationStoreAdapter, SignerStore,
@@ -1212,10 +1188,9 @@
     tools::{GcpFileUploader, GenesisToolsDependency},
     AggregatorConfig, AggregatorRunner, AggregatorRuntime, CertificatePendingStore,
     CertificateStore, Configuration, DependencyManager, DumbSnapshotUploader, DumbSnapshotter,
-    GzipSnapshotter, LocalSnapshotStore, LocalSnapshotUploader, MithrilSignerRegisterer,
-    MultiSigner, MultiSignerImpl, ProtocolParametersStore, ProtocolParametersStorer,
-    RemoteSnapshotUploader, SnapshotStore, SnapshotUploader, SnapshotUploaderType, Snapshotter,
-    VerificationKeyStore,
+    GzipSnapshotter, LocalSnapshotUploader, MithrilSignerRegisterer, MultiSigner, MultiSignerImpl,
+    ProtocolParametersStore, ProtocolParametersStorer, RemoteSnapshotUploader, SnapshotUploader,
+    SnapshotUploaderType, Snapshotter, VerificationKeyStore,
 };
 
 <span class="kw">use super</span>::{DependenciesBuilderError, <span class="prelude-ty">Result</span>};
@@ -1243,9 +1218,6 @@
     <span class="doccomment">/// Stake Store used by the StakeDistributionService
     /// It shall be a private dependency.
     </span><span class="kw">pub </span>stake_store: <span class="prelude-ty">Option</span>&lt;Arc&lt;StakePoolStore&gt;&gt;,
-
-    <span class="doccomment">/// Snapshot store.
-    </span><span class="kw">pub </span>snapshot_store: <span class="prelude-ty">Option</span>&lt;Arc&lt;<span class="kw">dyn </span>SnapshotStore&gt;&gt;,
 
     <span class="doccomment">/// Snapshot uploader service.
     </span><span class="kw">pub </span>snapshot_uploader: <span class="prelude-ty">Option</span>&lt;Arc&lt;<span class="kw">dyn </span>SnapshotUploader&gt;&gt;,
@@ -1348,7 +1320,6 @@
             configuration,
             sqlite_connection: <span class="prelude-val">None</span>,
             stake_store: <span class="prelude-val">None</span>,
-            snapshot_store: <span class="prelude-val">None</span>,
             snapshot_uploader: <span class="prelude-val">None</span>,
             multi_signer: <span class="prelude-val">None</span>,
             certificate_pending_store: <span class="prelude-val">None</span>,
@@ -1446,24 +1417,6 @@
         }
 
         <span class="prelude-val">Ok</span>(<span class="self">self</span>.stake_store.as_ref().cloned().unwrap())
-    }
-
-    <span class="kw">async fn </span>build_snapshot_store(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;<span class="kw">dyn </span>SnapshotStore&gt;&gt; {
-        <span class="prelude-val">Ok</span>(Arc::new(LocalSnapshotStore::new(
-            Box::new(SignedEntityStoreAdapter::new(
-                <span class="self">self</span>.get_sqlite_connection().<span class="kw">await</span><span class="question-mark">?</span>,
-            )),
-            LIST_SNAPSHOTS_MAX_ITEMS,
-        )))
-    }
-
-    <span class="doccomment">/// Return a configured [SnapshotStore]
-    </span><span class="kw">pub async fn </span>get_snapshot_store(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;<span class="kw">dyn </span>SnapshotStore&gt;&gt; {
-        <span class="kw">if </span><span class="self">self</span>.snapshot_store.is_none() {
-            <span class="self">self</span>.snapshot_store = <span class="prelude-val">Some</span>(<span class="self">self</span>.build_snapshot_store().<span class="kw">await</span><span class="question-mark">?</span>);
-        }
-
-        <span class="prelude-val">Ok</span>(<span class="self">self</span>.snapshot_store.as_ref().cloned().unwrap())
     }
 
     <span class="kw">async fn </span>build_snapshot_uploader(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;<span class="kw">dyn </span>SnapshotUploader&gt;&gt; {
@@ -2117,7 +2070,6 @@
             config: <span class="self">self</span>.configuration.clone(),
             sqlite_connection: <span class="self">self</span>.get_sqlite_connection().<span class="kw">await</span><span class="question-mark">?</span>,
             stake_store: <span class="self">self</span>.get_stake_store().<span class="kw">await</span><span class="question-mark">?</span>,
-            snapshot_store: <span class="self">self</span>.get_snapshot_store().<span class="kw">await</span><span class="question-mark">?</span>,
             snapshot_uploader: <span class="self">self</span>.get_snapshot_uploader().<span class="kw">await</span><span class="question-mark">?</span>,
             multi_signer: <span class="self">self</span>.get_multi_signer().<span class="kw">await</span><span class="question-mark">?</span>,
             certificate_pending_store: <span class="self">self</span>.get_certificate_pending_store().<span class="kw">await</span><span class="question-mark">?</span>,

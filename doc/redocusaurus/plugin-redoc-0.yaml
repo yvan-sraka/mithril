@@ -1,6 +1,6 @@
 openapi: 3.0.0
 info:
-  version: 0.1.4
+  version: 0.2.0
   title: Mithril Aggregator Server
   description: |
     The REST API provided by a Mithril Aggregator Node in a Mithril network.
@@ -98,7 +98,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  /snapshots:
+  /artifact/snapshots:
     get:
       summary: Get most recent snapshots
       description: |
@@ -118,7 +118,39 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  /snapshot/{digest}/download:
+  /artifact/snapshot/{digest}:
+    get:
+      summary: Get snapshot information
+      description: >
+        Returns the information of a snapshot and where to retrieve its binary
+        content
+      parameters:
+        - name: digest
+          in: path
+          description: Digest of the snapshot to retrieve
+          required: true
+          schema:
+            type: string
+            format: bytes
+          example: NQVhBc9frGFwBtdCKgWw4P24qQwAsB0vSvijo8FImr5kRZL
+      responses:
+        '200':
+          description: snapshot found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SnapshotMessage'
+        '404':
+          description: snapshot not found
+        '412':
+          description: API version mismatch
+        default:
+          description: snapshot retrieval error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /artifact/snapshot/{digest}/download:
     get:
       summary: Download the snapshot
       description: |
@@ -150,16 +182,35 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  /snapshot/{digest}:
+  /artifact/mithril-stake-distributions:
     get:
-      summary: Get snapshot information
-      description: >
-        Returns the information of a snapshot and where to retrieve its binary
-        content
+      summary: Get most recent Mithril stake distributions
+      description: |
+        Returns the list of the most recent Mithril stake distributions
+      responses:
+        '200':
+          description: Mithril stake distribution found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MithrilStakeDistributionListMessage'
+        '412':
+          description: API version mismatch
+        default:
+          description: Mithril stake distribution retrieval error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /artifact/mithril-stake-distribution/{hash}:
+    get:
+      summary: Get Mithril stake distribution information
+      description: |
+        Returns the information of a Mithril stake distribution
       parameters:
-        - name: digest
+        - name: hash
           in: path
-          description: Digest of the snapshot to retrieve
+          description: Hash of the Mithril stake distribution to retrieve
           required: true
           schema:
             type: string
@@ -167,17 +218,17 @@ paths:
           example: NQVhBc9frGFwBtdCKgWw4P24qQwAsB0vSvijo8FImr5kRZL
       responses:
         '200':
-          description: snapshot found
+          description: Mithril stake distribution found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SnapshotMessage'
+                $ref: '#/components/schemas/MithrilStakeDistributionMessage'
         '404':
-          description: snapshot not found
+          description: Mithril stake distribution not found
         '412':
           description: API version mismatch
         default:
-          description: snapshot retrieval error
+          description: Mithril stake distribution retrieval error
           content:
             application/json:
               schema:
@@ -711,6 +762,77 @@ components:
       description: This message represents a snapshot file and its metadata.
       allOf:
         - $ref: '#/components/schemas/Snapshot'
+    MithrilStakeDistributionListMessage:
+      description: >-
+        MithrilStakeDistributionListMessage represents a list of Mithril stake
+        distribution
+      type: array
+      items:
+        type: object
+        additionalProperties: false
+        required:
+          - epoch
+          - hash
+        properties:
+          epoch:
+            description: Cardano chain epoch number
+            type: integer
+            format: int64
+          hash:
+            description: Hash of the Mithril stake distribution
+            type: string
+            format: bytes
+          certificate_hash:
+            description: Hash of the associated certificate
+            type: string
+            format: bytes
+        example:
+          epoch: 123
+          hash: >-
+            24qQwKgWw4mr5kRZLIUA9XAsB0vSvijo8FIfrGFwBtdCNQVhBc9PXu7RiCHSRem3MmHoKbo
+          certificate_hash: >-
+            AsB0vSvijo8FIfrG/FwBtdCNQVhBc9P24qQwKgWw4mr5kRZL+IUA9XXu7RiCHSRem3MmHoKbo
+    MithrilStakeDistributionMessage:
+      description: This message represents a Mithril stake distribution.
+      type: object
+      additionalProperties: false
+      required:
+        - epoch
+        - hash
+        - signers
+      properties:
+        epoch:
+          description: Cardano chain epoch number
+          type: integer
+          format: int64
+        hash:
+          description: Hash of the Mithril stake distribution
+          type: string
+          format: bytes
+        certificate_hash:
+          description: Hash of the associated certificate
+          type: string
+          format: bytes
+        signers:
+          description: The list of the signers with their stakes and verification keys
+          type: array
+          items:
+            $ref: '#/components/schemas/SignerWithStake'
+      example:
+        epoch: 123
+        hash: >-
+          24qQwKgWw4mr5kRZLIUA9XAsB0vSvijo8FIfrGFwBtdCNQVhBc9PXu7RiCHSRem3MmHoKbo
+        certificate_hash: >-
+          AsB0vSvijo8FIfrG/FwBtdCNQVhBc9P24qQwKgWw4mr5kRZL+IUA9XXu7RiCHSRem3MmHoKbo
+        signers:
+          - party_id: '1234567890'
+            verification_key: >-
+              AsB0vSvijo8FIfrG/FwBtdCNQVhBc9P24qQwKgWw4mr5kRZL+IUA9XXu7RiCHSRem3MmHoKbo
+            stake: '1234'
+          - party_id: '2345678900'
+            verification_key: >-
+              NQVhBc9P24qQwKgWw4mr5kRZL+IUA9XXu7RiCHSRem3MmHoKboAsB0vSvijo8FIfrG/FwBtdC
+            stake: '2345'
     Error:
       description: Internal error representation
       type: object
