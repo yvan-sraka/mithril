@@ -238,16 +238,69 @@
 <a href="#238" id="238">238</a>
 <a href="#239" id="239">239</a>
 <a href="#240" id="240">240</a>
-</pre><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::shared;
-<span class="kw">use </span><span class="kw">crate</span>::http_server::routes::middlewares;
-<span class="kw">use </span><span class="kw">crate</span>::message_adapters::{
-    ToMithrilStakeDistributionListMessageAdapter, ToMithrilStakeDistributionMessageAdapter,
-};
+<a href="#241" id="241">241</a>
+<a href="#242" id="242">242</a>
+<a href="#243" id="243">243</a>
+<a href="#244" id="244">244</a>
+<a href="#245" id="245">245</a>
+<a href="#246" id="246">246</a>
+<a href="#247" id="247">247</a>
+<a href="#248" id="248">248</a>
+<a href="#249" id="249">249</a>
+<a href="#250" id="250">250</a>
+<a href="#251" id="251">251</a>
+<a href="#252" id="252">252</a>
+<a href="#253" id="253">253</a>
+<a href="#254" id="254">254</a>
+<a href="#255" id="255">255</a>
+<a href="#256" id="256">256</a>
+<a href="#257" id="257">257</a>
+<a href="#258" id="258">258</a>
+<a href="#259" id="259">259</a>
+<a href="#260" id="260">260</a>
+<a href="#261" id="261">261</a>
+<a href="#262" id="262">262</a>
+<a href="#263" id="263">263</a>
+<a href="#264" id="264">264</a>
+<a href="#265" id="265">265</a>
+<a href="#266" id="266">266</a>
+<a href="#267" id="267">267</a>
+<a href="#268" id="268">268</a>
+<a href="#269" id="269">269</a>
+<a href="#270" id="270">270</a>
+<a href="#271" id="271">271</a>
+<a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
+<a href="#279" id="279">279</a>
+<a href="#280" id="280">280</a>
+<a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
+<a href="#283" id="283">283</a>
+<a href="#284" id="284">284</a>
+<a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a>
+<a href="#287" id="287">287</a>
+<a href="#288" id="288">288</a>
+<a href="#289" id="289">289</a>
+<a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
+<a href="#293" id="293">293</a>
+<a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
+<a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
+<a href="#299" id="299">299</a>
+<a href="#300" id="300">300</a>
+<a href="#301" id="301">301</a>
+</pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::http_server::routes::middlewares;
 <span class="kw">use </span><span class="kw">crate</span>::DependencyManager;
-<span class="kw">use </span>mithril_common::entities::{Epoch, MithrilStakeDistribution, SignedEntityType};
-<span class="kw">use </span>mithril_common::messages::{
-    MithrilStakeDistributionListMessage, MithrilStakeDistributionMessage,
-};
 <span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>warp::Filter;
 
@@ -265,17 +318,8 @@
 ) -&gt; <span class="kw">impl </span>Filter&lt;Extract = (<span class="kw">impl </span>warp::Reply,), Error = warp::Rejection&gt; + Clone {
     <span class="macro">warp::path!</span>(<span class="string">&quot;artifact&quot; </span>/ <span class="string">&quot;mithril-stake-distributions&quot;</span>)
         .and(warp::get())
-        .and(middlewares::with_signed_entity_storer(dependency_manager))
-        .and(middlewares::with_signed_entity_type(
-            SignedEntityType::MithrilStakeDistribution(Epoch::default()),
-        ))
-        .and_then(
-            shared::handlers::artifacts_by_signed_entity_type::&lt;
-                MithrilStakeDistribution,
-                ToMithrilStakeDistributionListMessageAdapter,
-                MithrilStakeDistributionListMessage,
-            &gt;,
-        )
+        .and(middlewares::with_signed_entity_service(dependency_manager))
+        .and_then(handlers::list_artifacts)
 }
 
 <span class="doccomment">/// GET /artifact/mithril-stake-distribution/:id
@@ -284,19 +328,78 @@
 ) -&gt; <span class="kw">impl </span>Filter&lt;Extract = (<span class="kw">impl </span>warp::Reply,), Error = warp::Rejection&gt; + Clone {
     <span class="macro">warp::path!</span>(<span class="string">&quot;artifact&quot; </span>/ <span class="string">&quot;mithril-stake-distribution&quot; </span>/ String)
         .and(warp::get())
-        .and(middlewares::with_signed_entity_storer(dependency_manager))
-        .and_then(
-            shared::handlers::artifact_by_signed_entity_id::&lt;
-                MithrilStakeDistribution,
-                ToMithrilStakeDistributionMessageAdapter,
-                MithrilStakeDistributionMessage,
-            &gt;,
-        )
+        .and(middlewares::with_signed_entity_service(dependency_manager))
+        .and_then(handlers::get_artifact_by_signed_entity_id)
+}
+
+<span class="kw">pub mod </span>handlers {
+    <span class="kw">use </span><span class="kw">crate</span>::http_server::routes::reply;
+    <span class="kw">use </span><span class="kw">crate</span>::message_adapters::{
+        ToMithrilStakeDistributionListMessageAdapter, ToMithrilStakeDistributionMessageAdapter,
+    };
+    <span class="kw">use </span><span class="kw">crate</span>::signed_entity_service::SignedEntityService;
+    <span class="kw">use </span>mithril_common::messages::MessageAdapter;
+    <span class="kw">use </span>slog_scope::{debug, warn};
+    <span class="kw">use </span>std::convert::Infallible;
+    <span class="kw">use </span>std::sync::Arc;
+    <span class="kw">use </span>warp::http::StatusCode;
+
+    <span class="kw">pub const </span>LIST_MAX_ITEMS: usize = <span class="number">20</span>;
+
+    <span class="doccomment">/// List MithrilStakeDistribution artifacts
+    </span><span class="kw">pub async fn </span>list_artifacts(
+        signed_entity_service: Arc&lt;<span class="kw">dyn </span>SignedEntityService&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw">impl </span>warp::Reply, Infallible&gt; {
+        <span class="macro">debug!</span>(<span class="string">&quot;⇄ HTTP SERVER: artifacts&quot;</span>);
+
+        <span class="kw">match </span>signed_entity_service
+            .get_last_signed_mithril_stake_distributions(LIST_MAX_ITEMS)
+            .<span class="kw">await
+        </span>{
+            <span class="prelude-val">Ok</span>(signed_entities) =&gt; {
+                <span class="kw">let </span>messages = ToMithrilStakeDistributionListMessageAdapter::adapt(signed_entities);
+                <span class="prelude-val">Ok</span>(reply::json(<span class="kw-2">&amp;</span>messages, StatusCode::OK))
+            }
+            <span class="prelude-val">Err</span>(err) =&gt; {
+                <span class="macro">warn!</span>(<span class="string">&quot;list_artifacts_mithril_stake_distribution&quot;</span>; <span class="string">&quot;error&quot; </span>=&gt; <span class="question-mark">?</span>err);
+                <span class="prelude-val">Ok</span>(reply::internal_server_error(err.to_string()))
+            }
+        }
+    }
+
+    <span class="doccomment">/// Get Artifact by signed entity id
+    </span><span class="kw">pub async fn </span>get_artifact_by_signed_entity_id(
+        signed_entity_id: String,
+        signed_entity_service: Arc&lt;<span class="kw">dyn </span>SignedEntityService&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw">impl </span>warp::Reply, Infallible&gt; {
+        <span class="macro">debug!</span>(<span class="string">&quot;⇄ HTTP SERVER: artifact/{signed_entity_id}&quot;</span>);
+
+        <span class="kw">match </span>signed_entity_service
+            .get_signed_mithril_stake_distribution_by_id(<span class="kw-2">&amp;</span>signed_entity_id)
+            .<span class="kw">await
+        </span>{
+            <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(signed_entity)) =&gt; {
+                <span class="kw">let </span>message = ToMithrilStakeDistributionMessageAdapter::adapt(signed_entity);
+                <span class="prelude-val">Ok</span>(reply::json(<span class="kw-2">&amp;</span>message, StatusCode::OK))
+            }
+            <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; {
+                <span class="macro">warn!</span>(<span class="string">&quot;get_mithril_stake_distribution_details::not_found&quot;</span>);
+                <span class="prelude-val">Ok</span>(reply::empty(StatusCode::NOT_FOUND))
+            }
+            <span class="prelude-val">Err</span>(err) =&gt; {
+                <span class="macro">warn!</span>(<span class="string">&quot;get_mithril_stake_distribution_details::error&quot;</span>; <span class="string">&quot;error&quot; </span>=&gt; <span class="question-mark">?</span>err);
+                <span class="prelude-val">Ok</span>(reply::internal_server_error(err.to_string()))
+            }
+        }
+    }
 }
 
 <span class="attr">#[cfg(test)]
-</span><span class="kw">mod </span>tests {
+</span><span class="kw">pub mod </span>tests {
     <span class="kw">use </span><span class="kw">crate</span>::http_server::SERVER_BASE_PATH;
+    <span class="kw">use </span><span class="kw">crate</span>::signed_entity_service::MockSignedEntityService;
+    <span class="kw">use </span>mithril_common::entities::{Epoch, SignedEntity, SignedEntityType};
+    <span class="kw">use </span>mithril_common::signable_builder::Artifact;
     <span class="kw">use </span>mithril_common::sqlite::HydrationError;
     <span class="kw">use </span>mithril_common::test_utils::apispec::APISpec;
     <span class="kw">use </span>mithril_common::test_utils::fake_data;
@@ -307,7 +410,6 @@
     <span class="kw">use </span>warp::test::request;
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
-    <span class="kw">use </span><span class="kw">crate</span>::database::provider::MockSignedEntityStorer;
 
     <span class="kw">fn </span>setup_router(
         dependency_manager: Arc&lt;DependencyManager&gt;,
@@ -322,19 +424,39 @@
             .and(routes(dependency_manager).with(cors))
     }
 
+    <span class="kw">pub fn </span>create_signed_entities&lt;T&gt;(
+        signed_entity_type: SignedEntityType,
+        records: Vec&lt;T&gt;,
+    ) -&gt; Vec&lt;SignedEntity&lt;T&gt;&gt;
+    <span class="kw">where
+        </span>T: Artifact,
+    {
+        records
+            .into_iter()
+            .enumerate()
+            .map(|(idx, record)| SignedEntity {
+                signed_entity_id: <span class="macro">format!</span>(<span class="string">&quot;{idx}&quot;</span>),
+                signed_entity_type: signed_entity_type.to_owned(),
+                certificate_id: <span class="macro">format!</span>(<span class="string">&quot;certificate-{idx}&quot;</span>),
+                artifact: record,
+                created_at: <span class="string">&quot;2023-01-19T13:43:05.618857482Z&quot;</span>.to_string(),
+            })
+            .collect()
+    }
+
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_mithril_stake_distributions_get_ok() {
-        <span class="kw">let </span>signed_entity_records = shared::tests::create_signed_entity_records(
+        <span class="kw">let </span>signed_entity_records = create_signed_entities(
             SignedEntityType::MithrilStakeDistribution(Epoch::default()),
             fake_data::mithril_stake_distributions(<span class="number">5</span>),
         );
-        <span class="kw">let </span><span class="kw-2">mut </span>mock_signed_entity_storer = MockSignedEntityStorer::new();
-        mock_signed_entity_storer
-            .expect_get_last_signed_entities_by_type()
-            .return_once(|<span class="kw">_</span>, <span class="kw">_</span>| <span class="prelude-val">Ok</span>(signed_entity_records))
+        <span class="kw">let </span><span class="kw-2">mut </span>mock_signed_entity_service = MockSignedEntityService::new();
+        mock_signed_entity_service
+            .expect_get_last_signed_mithril_stake_distributions()
+            .return_once(|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(signed_entity_records))
             .once();
         <span class="kw">let </span><span class="kw-2">mut </span>dependency_manager = initialize_dependencies().<span class="kw">await</span>;
-        dependency_manager.signed_entity_storer = Arc::new(mock_signed_entity_storer);
+        dependency_manager.signed_entity_service = Arc::new(mock_signed_entity_service);
 
         <span class="kw">let </span>method = Method::GET.as_str();
         <span class="kw">let </span>path = <span class="string">&quot;/artifact/mithril-stake-distributions&quot;</span>;
@@ -357,13 +479,13 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_mithril_stake_distributions_get_ko() {
-        <span class="kw">let </span><span class="kw-2">mut </span>mock_signed_entity_storer = MockSignedEntityStorer::new();
-        mock_signed_entity_storer
-            .expect_get_last_signed_entities_by_type()
-            .return_once(|<span class="kw">_</span>, <span class="kw">_</span>| <span class="prelude-val">Err</span>(HydrationError::InvalidData(<span class="string">&quot;invalid data&quot;</span>.to_string()).into()))
+        <span class="kw">let </span><span class="kw-2">mut </span>mock_signed_entity_service = MockSignedEntityService::new();
+        mock_signed_entity_service
+            .expect_get_last_signed_mithril_stake_distributions()
+            .return_once(|<span class="kw">_</span>| <span class="prelude-val">Err</span>(HydrationError::InvalidData(<span class="string">&quot;invalid data&quot;</span>.to_string()).into()))
             .once();
         <span class="kw">let </span><span class="kw-2">mut </span>dependency_manager = initialize_dependencies().<span class="kw">await</span>;
-        dependency_manager.signed_entity_storer = Arc::new(mock_signed_entity_storer);
+        dependency_manager.signed_entity_service = Arc::new(mock_signed_entity_service);
 
         <span class="kw">let </span>method = Method::GET.as_str();
         <span class="kw">let </span>path = <span class="string">&quot;/artifact/mithril-stake-distributions&quot;</span>;
@@ -386,20 +508,20 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_mithril_stake_distribution_get_ok() {
-        <span class="kw">let </span>signed_entity_record = shared::tests::create_signed_entity_records(
+        <span class="kw">let </span>signed_entity = create_signed_entities(
             SignedEntityType::MithrilStakeDistribution(Epoch::default()),
             fake_data::mithril_stake_distributions(<span class="number">1</span>),
         )
         .first()
         .unwrap()
         .to_owned();
-        <span class="kw">let </span><span class="kw-2">mut </span>mock_signed_entity_storer = MockSignedEntityStorer::new();
-        mock_signed_entity_storer
-            .expect_get_signed_entity()
-            .return_once(|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(signed_entity_record)))
+        <span class="kw">let </span><span class="kw-2">mut </span>mock_signed_entity_service = MockSignedEntityService::new();
+        mock_signed_entity_service
+            .expect_get_signed_mithril_stake_distribution_by_id()
+            .return_once(|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(signed_entity)))
             .once();
         <span class="kw">let </span><span class="kw-2">mut </span>dependency_manager = initialize_dependencies().<span class="kw">await</span>;
-        dependency_manager.signed_entity_storer = Arc::new(mock_signed_entity_storer);
+        dependency_manager.signed_entity_service = Arc::new(mock_signed_entity_service);
 
         <span class="kw">let </span>method = Method::GET.as_str();
         <span class="kw">let </span>path = <span class="string">&quot;/artifact/mithril-stake-distribution/{hash}&quot;</span>;
@@ -422,13 +544,13 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_mithril_stake_distribution_ok_norecord() {
-        <span class="kw">let </span><span class="kw-2">mut </span>mock_signed_entity_storer = MockSignedEntityStorer::new();
-        mock_signed_entity_storer
-            .expect_get_signed_entity()
+        <span class="kw">let </span><span class="kw-2">mut </span>mock_signed_entity_service = MockSignedEntityService::new();
+        mock_signed_entity_service
+            .expect_get_signed_mithril_stake_distribution_by_id()
             .return_once(|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>))
             .once();
         <span class="kw">let </span><span class="kw-2">mut </span>dependency_manager = initialize_dependencies().<span class="kw">await</span>;
-        dependency_manager.signed_entity_storer = Arc::new(mock_signed_entity_storer);
+        dependency_manager.signed_entity_service = Arc::new(mock_signed_entity_service);
 
         <span class="kw">let </span>method = Method::GET.as_str();
         <span class="kw">let </span>path = <span class="string">&quot;/artifact/mithril-stake-distribution/{hash}&quot;</span>;
@@ -451,13 +573,13 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_mithril_stake_distribution_get_ko() {
-        <span class="kw">let </span><span class="kw-2">mut </span>mock_signed_entity_storer = MockSignedEntityStorer::new();
-        mock_signed_entity_storer
-            .expect_get_signed_entity()
+        <span class="kw">let </span><span class="kw-2">mut </span>mock_signed_entity_service = MockSignedEntityService::new();
+        mock_signed_entity_service
+            .expect_get_signed_mithril_stake_distribution_by_id()
             .return_once(|<span class="kw">_</span>| <span class="prelude-val">Err</span>(HydrationError::InvalidData(<span class="string">&quot;invalid data&quot;</span>.to_string()).into()))
             .once();
         <span class="kw">let </span><span class="kw-2">mut </span>dependency_manager = initialize_dependencies().<span class="kw">await</span>;
-        dependency_manager.signed_entity_storer = Arc::new(mock_signed_entity_storer);
+        dependency_manager.signed_entity_service = Arc::new(mock_signed_entity_service);
 
         <span class="kw">let </span>method = Method::GET.as_str();
         <span class="kw">let </span>path = <span class="string">&quot;/artifact/mithril-stake-distribution/{hash}&quot;</span>;
