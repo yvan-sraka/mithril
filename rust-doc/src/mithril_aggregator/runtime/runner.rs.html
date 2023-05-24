@@ -1104,6 +1104,22 @@
 <a href="#1104" id="1104">1104</a>
 <a href="#1105" id="1105">1105</a>
 <a href="#1106" id="1106">1106</a>
+<a href="#1107" id="1107">1107</a>
+<a href="#1108" id="1108">1108</a>
+<a href="#1109" id="1109">1109</a>
+<a href="#1110" id="1110">1110</a>
+<a href="#1111" id="1111">1111</a>
+<a href="#1112" id="1112">1112</a>
+<a href="#1113" id="1113">1113</a>
+<a href="#1114" id="1114">1114</a>
+<a href="#1115" id="1115">1115</a>
+<a href="#1116" id="1116">1116</a>
+<a href="#1117" id="1117">1117</a>
+<a href="#1118" id="1118">1118</a>
+<a href="#1119" id="1119">1119</a>
+<a href="#1120" id="1120">1120</a>
+<a href="#1121" id="1121">1121</a>
+<a href="#1122" id="1122">1122</a>
 </pre><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>mithril_common::entities::Epoch;
 <span class="kw">use </span>mithril_common::entities::SignedEntityType;
@@ -1160,6 +1176,12 @@
 </span><span class="kw">pub trait </span>AggregatorRunnerTrait: Sync + Send {
     <span class="doccomment">/// Return the current beacon from the chain
     </span><span class="kw">async fn </span>get_beacon_from_chain(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Beacon, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
+
+    <span class="doccomment">/// Retrieves the current non certified open message for a given signed entity type.
+    </span><span class="kw">async fn </span>get_current_non_certified_open_message_for_signed_entity_type(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        signed_entity_type: <span class="kw-2">&amp;</span>SignedEntityType,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;OpenMessage&gt;, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
 
     <span class="doccomment">/// Retrieves the current non certified open message.
     </span><span class="kw">async fn </span>get_current_non_certified_open_message(
@@ -1281,6 +1303,38 @@
         <span class="prelude-val">Ok</span>(beacon)
     }
 
+    <span class="kw">async fn </span>get_current_non_certified_open_message_for_signed_entity_type(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        signed_entity_type: <span class="kw-2">&amp;</span>SignedEntityType,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;OpenMessage&gt;, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
+        <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: get_current_non_certified_open_message_for_signed_entity_type&quot;</span>; <span class="string">&quot;signed_entity_type&quot; </span>=&gt; <span class="question-mark">?</span>signed_entity_type);
+        <span class="kw">let </span>open_message = <span class="kw">match </span><span class="self">self
+            </span>.dependencies
+            .certifier_service
+            .get_open_message(signed_entity_type)
+            .<span class="kw">await</span><span class="question-mark">?
+        </span>{
+            <span class="prelude-val">Some</span>(existing_open_message) =&gt; {
+                <span class="macro">info!</span>(
+                    <span class="string">&quot;RUNNER: get_current_non_certified_open_message_for_signed_entity_type: existing open message found&quot;</span>;
+                    <span class="string">&quot;signed_entity_type&quot; </span>=&gt; <span class="question-mark">?</span>signed_entity_type
+                );
+                existing_open_message
+            }
+            <span class="prelude-val">None </span>=&gt; {
+                <span class="macro">info!</span>(
+                    <span class="string">&quot;RUNNER: get_current_non_certified_open_message_for_signed_entity_type: no open message found, a new one will be created&quot;</span>;
+                    <span class="string">&quot;signed_entity_type&quot; </span>=&gt; <span class="question-mark">?</span>signed_entity_type
+                );
+                <span class="kw">let </span>protocol_message = <span class="self">self</span>.compute_protocol_message(signed_entity_type).<span class="kw">await</span><span class="question-mark">?</span>;
+                <span class="self">self</span>.create_open_message(signed_entity_type, <span class="kw-2">&amp;</span>protocol_message)
+                    .<span class="kw">await</span><span class="question-mark">?
+            </span>}
+        };
+
+        <span class="prelude-val">Ok</span>((!open_message.is_certified).then_some(open_message))
+    }
+
     <span class="kw">async fn </span>get_current_non_certified_open_message(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;OpenMessage&gt;, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
@@ -1298,32 +1352,10 @@
         ];
 
         <span class="kw">for </span>signed_entity_type <span class="kw">in </span>signed_entity_types {
-            <span class="kw">let </span>open_message = <span class="kw">match </span><span class="self">self
-                </span>.dependencies
-                .certifier_service
-                .get_open_message(<span class="kw-2">&amp;</span>signed_entity_type)
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(open_message) = <span class="self">self
+                </span>.get_current_non_certified_open_message_for_signed_entity_type(<span class="kw-2">&amp;</span>signed_entity_type)
                 .<span class="kw">await</span><span class="question-mark">?
             </span>{
-                <span class="prelude-val">Some</span>(existing_open_message) =&gt; {
-                    <span class="macro">info!</span>(
-                        <span class="string">&quot;RUNNER: get_current_non_certified_open_message: existing open message found&quot;</span>;
-                        <span class="string">&quot;signed_entity_type&quot; </span>=&gt; <span class="question-mark">?</span>signed_entity_type
-                    );
-                    existing_open_message
-                }
-                <span class="prelude-val">None </span>=&gt; {
-                    <span class="macro">info!</span>(
-                        <span class="string">&quot;RUNNER: get_current_non_certified_open_message: no open message found, a new one will be created&quot;</span>;
-                        <span class="string">&quot;signed_entity_type&quot; </span>=&gt; <span class="question-mark">?</span>signed_entity_type
-                    );
-                    <span class="kw">let </span>protocol_message =
-                        <span class="self">self</span>.compute_protocol_message(<span class="kw-2">&amp;</span>signed_entity_type).<span class="kw">await</span><span class="question-mark">?</span>;
-                    <span class="self">self</span>.create_open_message(<span class="kw-2">&amp;</span>signed_entity_type, <span class="kw-2">&amp;</span>protocol_message)
-                        .<span class="kw">await</span><span class="question-mark">?
-                </span>}
-            };
-
-            <span class="kw">if </span>!open_message.is_certified {
                 <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(open_message));
             }
             <span class="macro">info!</span>(

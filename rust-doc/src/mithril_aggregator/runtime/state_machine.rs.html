@@ -708,6 +708,13 @@
 <a href="#708" id="708">708</a>
 <a href="#709" id="709">709</a>
 <a href="#710" id="710">710</a>
+<a href="#711" id="711">711</a>
+<a href="#712" id="712">712</a>
+<a href="#713" id="713">713</a>
+<a href="#714" id="714">714</a>
+<a href="#715" id="715">715</a>
+<a href="#716" id="716">716</a>
+<a href="#717" id="717">717</a>
 </pre><pre class="rust"><code><span class="kw">use crate</span>::{
     entities::OpenMessage,
     runtime::{AggregatorRunnerTrait, RuntimeError},
@@ -846,34 +853,20 @@
             AggregatorState::Idle(state) =&gt; {
                 <span class="kw">let </span>chain_beacon = <span class="self">self</span>.runner.get_beacon_from_chain().<span class="kw">await</span><span class="question-mark">?</span>;
 
-                <span class="kw">if </span>state.current_beacon.is_none()
-                    || chain_beacon
-                        .compare_to_older(state.current_beacon.as_ref().unwrap())
-                        .map_err(|e|
-                            RuntimeError::keep_state(
-                                <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;Beacon in the state ({:?}) is newer than the beacon read on chain &#39;{:?})&quot;</span>, state.current_beacon, chain_beacon), <span class="prelude-val">Some</span>(e.into())))<span class="question-mark">?
-                        </span>.is_new_beacon()
-                {
-                    <span class="macro">info!</span>(
-                        <span class="string">&quot;→ new Beacon settings found, trying to transition to READY&quot;</span>;
-                        <span class="string">&quot;new_beacon&quot; </span>=&gt; <span class="question-mark">?</span>chain_beacon
-                    );
+                <span class="macro">info!</span>(
+                    <span class="string">&quot;→ new Beacon settings found, trying to transition to READY&quot;</span>;
+                    <span class="string">&quot;new_beacon&quot; </span>=&gt; <span class="question-mark">?</span>chain_beacon
+                );
 
-                    <span class="kw">if </span><span class="self">self
-                        </span>.try_transition_from_idle_to_ready(
-                            state.current_beacon,
-                            chain_beacon.clone(),
-                        )
-                        .<span class="kw">await</span><span class="question-mark">?
-                    </span>{
-                        <span class="self">self</span>.state = AggregatorState::Ready(ReadyState {
-                            current_beacon: chain_beacon,
-                        });
-                    } <span class="kw">else </span>{
-                        <span class="macro">info!</span>(<span class="string">&quot; ⋅ could not transition from IDLE to READY&quot;</span>);
-                    }
+                <span class="kw">if </span><span class="self">self
+                    </span>.try_transition_from_idle_to_ready(state.current_beacon, chain_beacon.clone())
+                    .<span class="kw">await</span><span class="question-mark">?
+                </span>{
+                    <span class="self">self</span>.state = AggregatorState::Ready(ReadyState {
+                        current_beacon: chain_beacon,
+                    });
                 } <span class="kw">else </span>{
-                    <span class="macro">info!</span>(<span class="string">&quot; ⋅ Beacon didn&#39;t change, waiting…&quot;</span>)
+                    <span class="macro">info!</span>(<span class="string">&quot; ⋅ could not transition from IDLE to READY&quot;</span>);
                 }
             }
             AggregatorState::Ready(state) =&gt; {
@@ -899,7 +892,7 @@
                     <span class="comment">// transition READY &gt; SIGNING
                     </span><span class="macro">info!</span>(<span class="string">&quot;→ transitioning to SIGNING&quot;</span>);
                     <span class="kw">let </span>new_state = <span class="self">self
-                        </span>.transition_from_ready_to_signing(state.current_beacon, open_message)
+                        </span>.transition_from_ready_to_signing(chain_beacon, open_message)
                         .<span class="kw">await</span><span class="question-mark">?</span>;
                     <span class="self">self</span>.state = AggregatorState::Signing(new_state);
                 } <span class="kw">else </span>{
@@ -915,25 +908,37 @@
             }
             AggregatorState::Signing(state) =&gt; {
                 <span class="kw">let </span>chain_beacon: Beacon = <span class="self">self</span>.runner.get_beacon_from_chain().<span class="kw">await</span><span class="question-mark">?</span>;
-
-                <span class="kw">if </span>chain_beacon
-                    .compare_to_older(<span class="kw-2">&amp;</span>state.current_beacon)
-                    .map_err(|e|
-                            RuntimeError::keep_state(
-                                <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;Beacon in the state ({:?}) is newer than the beacon read on chain &#39;{:?})&quot;</span>, state.current_beacon, chain_beacon), <span class="prelude-val">Some</span>(e.into())))<span class="question-mark">?
-                    </span>.is_new_beacon()
-                {
-                    <span class="macro">info!</span>(<span class="string">&quot;→ Beacon changed, transitioning to IDLE&quot;</span>; <span class="string">&quot;new_beacon&quot; </span>=&gt; <span class="question-mark">?</span>chain_beacon);
-                    <span class="kw">let </span>new_state = <span class="self">self
-                        </span>.transition_from_signing_to_idle_new_beacon(state)
-                        .<span class="kw">await</span><span class="question-mark">?</span>;
-                    <span class="self">self</span>.state = AggregatorState::Idle(new_state);
+                <span class="kw">let </span>has_newer_open_message = <span class="kw">if let </span><span class="prelude-val">Some</span>(open_message_new) = <span class="self">self
+                    </span>.runner
+                    .get_current_non_certified_open_message_for_signed_entity_type(
+                        <span class="kw-2">&amp;</span>state.open_message.signed_entity_type,
+                    )
+                    .<span class="kw">await</span><span class="question-mark">?
+                </span>{
+                    open_message_new.signed_entity_type != state.open_message.signed_entity_type
                 } <span class="kw">else </span>{
+                    <span class="bool-val">false
+                </span>};
+
+                <span class="kw">if </span>state.current_beacon.epoch &lt; chain_beacon.epoch {
+                    <span class="comment">// SIGNING &gt; IDLE
+                    </span><span class="macro">info!</span>(<span class="string">&quot;→ Epoch changed, transitioning to IDLE&quot;</span>);
+                    <span class="kw">let </span>new_state = <span class="self">self</span>.transition_from_signing_to_idle(state).<span class="kw">await</span><span class="question-mark">?</span>;
+                    <span class="self">self</span>.state = AggregatorState::Idle(new_state);
+                } <span class="kw">else if </span>has_newer_open_message {
+                    <span class="comment">// SIGNING &gt; READY
+                    </span><span class="macro">info!</span>(<span class="string">&quot;→ Open message changed, transitioning to READY&quot;</span>);
                     <span class="kw">let </span>new_state = <span class="self">self
-                            </span>.transition_from_signing_to_idle_multisignature(state)
-                            .<span class="kw">await</span><span class="question-mark">?</span>;
-                        <span class="macro">info!</span>(<span class="string">&quot;→ a multi-signature have been created, build a snapshot &amp; a certificate and transitioning back to IDLE&quot;</span>);
-                        <span class="self">self</span>.state = AggregatorState::Idle(new_state);
+                        </span>.transition_from_signing_to_ready_new_open_message(state)
+                        .<span class="kw">await</span><span class="question-mark">?</span>;
+                    <span class="self">self</span>.state = AggregatorState::Ready(new_state);
+                } <span class="kw">else </span>{
+                    <span class="comment">// SIGNING &gt; READY
+                    </span><span class="kw">let </span>new_state = <span class="self">self
+                        </span>.transition_from_signing_to_ready_multisignature(state)
+                        .<span class="kw">await</span><span class="question-mark">?</span>;
+                    <span class="macro">info!</span>(<span class="string">&quot;→ a multi-signature have been created, build a snapshot &amp; a certificate and transitioning back to READY&quot;</span>);
+                    <span class="self">self</span>.state = AggregatorState::Ready(new_state);
                 }
             }
         }
@@ -977,13 +982,13 @@
         <span class="prelude-val">Ok</span>(is_chain_valid)
     }
 
-    <span class="doccomment">/// Perform a transition from `SIGNING` state to `IDLE` state when a new
+    <span class="doccomment">/// Perform a transition from `SIGNING` state to `READY` state when a new
     /// multi-signature is issued.
-    </span><span class="kw">async fn </span>transition_from_signing_to_idle_multisignature(
+    </span><span class="kw">async fn </span>transition_from_signing_to_ready_multisignature(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         state: SigningState,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;IdleState, RuntimeError&gt; {
-        <span class="macro">trace!</span>(<span class="string">&quot;launching transition from SIGNING to IDLE state&quot;</span>);
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;ReadyState, RuntimeError&gt; {
+        <span class="macro">trace!</span>(<span class="string">&quot;launching transition from SIGNING to READY state&quot;</span>);
         <span class="kw">let </span>certificate = <span class="self">self
             </span>.runner
             .create_certificate(<span class="kw-2">&amp;</span>state.open_message.signed_entity_type)
@@ -998,14 +1003,14 @@
             .create_artifact(<span class="kw-2">&amp;</span>state.open_message.signed_entity_type, <span class="kw-2">&amp;</span>certificate)
             .<span class="kw">await</span><span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(IdleState {
-            current_beacon: <span class="prelude-val">Some</span>(state.current_beacon),
+        <span class="prelude-val">Ok</span>(ReadyState {
+            current_beacon: state.current_beacon,
         })
     }
 
     <span class="doccomment">/// Perform a transition from `SIGNING` state to `IDLE` state when a new
-    /// beacon is detected.
-    </span><span class="kw">async fn </span>transition_from_signing_to_idle_new_beacon(
+    /// epoch is detected.
+    </span><span class="kw">async fn </span>transition_from_signing_to_idle(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         state: SigningState,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;IdleState, RuntimeError&gt; {
@@ -1014,6 +1019,20 @@
 
         <span class="prelude-val">Ok</span>(IdleState {
             current_beacon: <span class="prelude-val">Some</span>(state.current_beacon),
+        })
+    }
+
+    <span class="doccomment">/// Perform a transition from `SIGNING` state to `READY` state when a new
+    /// open message is detected.
+    </span><span class="kw">async fn </span>transition_from_signing_to_ready_new_open_message(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        state: SigningState,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;ReadyState, RuntimeError&gt; {
+        <span class="macro">trace!</span>(<span class="string">&quot;launching transition from SIGNING to READY state&quot;</span>);
+        <span class="self">self</span>.runner.drop_pending_certificate().<span class="kw">await</span><span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(ReadyState {
+            current_beacon: state.current_beacon,
         })
     }
 
@@ -1054,6 +1073,7 @@
     <span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::runner::MockAggregatorRunner;
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
+    <span class="kw">use </span>mithril_common::entities::{Epoch, SignedEntityType};
     <span class="kw">use </span>mithril_common::era::UnsupportedEraError;
     <span class="kw">use </span>mithril_common::test_utils::fake_data;
     <span class="kw">use </span>mockall::predicate;
@@ -1065,25 +1085,6 @@
         AggregatorRuntime::new(Duration::from_millis(<span class="number">100</span>), init_state, Arc::new(runner))
             .<span class="kw">await
             </span>.unwrap()
-    }
-
-    <span class="attr">#[tokio::test]
-    </span><span class="kw">pub async fn </span>idle_check_no_new_beacon_with_current_beacon() {
-        <span class="kw">let </span><span class="kw-2">mut </span>runner = MockAggregatorRunner::new();
-        runner
-            .expect_get_beacon_from_chain()
-            .once()
-            .returning(|| <span class="prelude-val">Ok</span>(fake_data::beacon()));
-        <span class="kw">let </span><span class="kw-2">mut </span>runtime = init_runtime(
-            <span class="prelude-val">Some</span>(AggregatorState::Idle(IdleState {
-                current_beacon: <span class="prelude-val">Some</span>(fake_data::beacon()),
-            })),
-            runner,
-        )
-        .<span class="kw">await</span>;
-        runtime.cycle().<span class="kw">await</span>.unwrap();
-
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;idle&quot;</span>.to_string(), runtime.get_state());
     }
 
     <span class="attr">#[tokio::test]
@@ -1303,32 +1304,37 @@
     }
 
     <span class="attr">#[tokio::test]
-    </span><span class="kw">async fn </span>signing_changing_beacon_to_idle() {
+    </span><span class="kw">async fn </span>signing_changing_open_message_to_ready() {
         <span class="kw">let </span><span class="kw-2">mut </span>runner = MockAggregatorRunner::new();
         runner
             .expect_get_beacon_from_chain()
             .once()
             .returning(|| <span class="prelude-val">Ok</span>(fake_data::beacon()));
         runner
+            .expect_get_current_non_certified_open_message_for_signed_entity_type()
+            .once()
+            .returning(|<span class="kw">_</span>| {
+                <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(OpenMessage {
+                    signed_entity_type: SignedEntityType::MithrilStakeDistribution(Epoch(<span class="number">1</span>)),
+                    ..OpenMessage::dummy()
+                }))
+            });
+        runner
             .expect_drop_pending_certificate()
             .once()
             .returning(|| <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(fake_data::certificate_pending())));
 
         <span class="kw">let </span>state = SigningState {
-            <span class="comment">// this current beacon must be outdated so the state machine will
-            // return to idle state
-            </span>current_beacon: {
-                <span class="kw">let </span><span class="kw-2">mut </span>beacon = fake_data::beacon();
-                beacon.immutable_file_number -= <span class="number">1</span>;
-
-                beacon
+            current_beacon: fake_data::beacon(),
+            open_message: OpenMessage {
+                signed_entity_type: SignedEntityType::MithrilStakeDistribution(Epoch(<span class="number">2</span>)),
+                ..OpenMessage::dummy()
             },
-            open_message: OpenMessage::dummy(),
         };
         <span class="kw">let </span><span class="kw-2">mut </span>runtime = init_runtime(<span class="prelude-val">Some</span>(AggregatorState::Signing(state)), runner).<span class="kw">await</span>;
         runtime.cycle().<span class="kw">await</span>.unwrap();
 
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;idle&quot;</span>.to_string(), runtime.get_state());
+        <span class="macro">assert_eq!</span>(<span class="string">&quot;ready&quot;</span>.to_string(), runtime.get_state());
     }
 
     <span class="attr">#[tokio::test]
@@ -1338,6 +1344,10 @@
             .expect_get_beacon_from_chain()
             .once()
             .returning(|| <span class="prelude-val">Ok</span>(fake_data::beacon()));
+        runner
+            .expect_get_current_non_certified_open_message_for_signed_entity_type()
+            .once()
+            .returning(|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(OpenMessage::dummy())));
         runner
             .expect_create_certificate()
             .once()
@@ -1363,6 +1373,10 @@
             .once()
             .returning(|| <span class="prelude-val">Ok</span>(fake_data::beacon()));
         runner
+            .expect_get_current_non_certified_open_message_for_signed_entity_type()
+            .once()
+            .returning(|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(OpenMessage::dummy())));
+        runner
             .expect_create_certificate()
             .return_once(<span class="kw">move </span>|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(fake_data::certificate(<span class="string">&quot;whatever&quot;</span>.to_string()))));
         runner
@@ -1381,7 +1395,7 @@
         <span class="kw">let </span><span class="kw-2">mut </span>runtime = init_runtime(<span class="prelude-val">Some</span>(AggregatorState::Signing(state)), runner).<span class="kw">await</span>;
         runtime.cycle().<span class="kw">await</span>.unwrap();
 
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;idle&quot;</span>.to_string(), runtime.get_state());
+        <span class="macro">assert_eq!</span>(<span class="string">&quot;ready&quot;</span>.to_string(), runtime.get_state());
     }
 
     <span class="attr">#[tokio::test]

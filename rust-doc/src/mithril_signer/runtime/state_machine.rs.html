@@ -743,12 +743,103 @@
 <a href="#743" id="743">743</a>
 <a href="#744" id="744">744</a>
 <a href="#745" id="745">745</a>
+<a href="#746" id="746">746</a>
+<a href="#747" id="747">747</a>
+<a href="#748" id="748">748</a>
+<a href="#749" id="749">749</a>
+<a href="#750" id="750">750</a>
+<a href="#751" id="751">751</a>
+<a href="#752" id="752">752</a>
+<a href="#753" id="753">753</a>
+<a href="#754" id="754">754</a>
+<a href="#755" id="755">755</a>
+<a href="#756" id="756">756</a>
+<a href="#757" id="757">757</a>
+<a href="#758" id="758">758</a>
+<a href="#759" id="759">759</a>
+<a href="#760" id="760">760</a>
+<a href="#761" id="761">761</a>
+<a href="#762" id="762">762</a>
+<a href="#763" id="763">763</a>
+<a href="#764" id="764">764</a>
+<a href="#765" id="765">765</a>
+<a href="#766" id="766">766</a>
+<a href="#767" id="767">767</a>
+<a href="#768" id="768">768</a>
+<a href="#769" id="769">769</a>
+<a href="#770" id="770">770</a>
+<a href="#771" id="771">771</a>
+<a href="#772" id="772">772</a>
+<a href="#773" id="773">773</a>
+<a href="#774" id="774">774</a>
+<a href="#775" id="775">775</a>
+<a href="#776" id="776">776</a>
+<a href="#777" id="777">777</a>
+<a href="#778" id="778">778</a>
+<a href="#779" id="779">779</a>
+<a href="#780" id="780">780</a>
+<a href="#781" id="781">781</a>
+<a href="#782" id="782">782</a>
+<a href="#783" id="783">783</a>
+<a href="#784" id="784">784</a>
+<a href="#785" id="785">785</a>
+<a href="#786" id="786">786</a>
+<a href="#787" id="787">787</a>
+<a href="#788" id="788">788</a>
+<a href="#789" id="789">789</a>
+<a href="#790" id="790">790</a>
+<a href="#791" id="791">791</a>
+<a href="#792" id="792">792</a>
+<a href="#793" id="793">793</a>
+<a href="#794" id="794">794</a>
+<a href="#795" id="795">795</a>
+<a href="#796" id="796">796</a>
+<a href="#797" id="797">797</a>
+<a href="#798" id="798">798</a>
+<a href="#799" id="799">799</a>
+<a href="#800" id="800">800</a>
+<a href="#801" id="801">801</a>
+<a href="#802" id="802">802</a>
+<a href="#803" id="803">803</a>
+<a href="#804" id="804">804</a>
+<a href="#805" id="805">805</a>
+<a href="#806" id="806">806</a>
+<a href="#807" id="807">807</a>
+<a href="#808" id="808">808</a>
+<a href="#809" id="809">809</a>
+<a href="#810" id="810">810</a>
+<a href="#811" id="811">811</a>
+<a href="#812" id="812">812</a>
+<a href="#813" id="813">813</a>
+<a href="#814" id="814">814</a>
+<a href="#815" id="815">815</a>
+<a href="#816" id="816">816</a>
+<a href="#817" id="817">817</a>
+<a href="#818" id="818">818</a>
+<a href="#819" id="819">819</a>
+<a href="#820" id="820">820</a>
+<a href="#821" id="821">821</a>
+<a href="#822" id="822">822</a>
+<a href="#823" id="823">823</a>
+<a href="#824" id="824">824</a>
+<a href="#825" id="825">825</a>
+<a href="#826" id="826">826</a>
+<a href="#827" id="827">827</a>
+<a href="#828" id="828">828</a>
+<a href="#829" id="829">829</a>
+<a href="#830" id="830">830</a>
+<a href="#831" id="831">831</a>
+<a href="#832" id="832">832</a>
+<a href="#833" id="833">833</a>
+<a href="#834" id="834">834</a>
 </pre><pre class="rust"><code><span class="kw">use </span>slog_scope::{crit, debug, error, info};
 <span class="kw">use </span>std::{fmt::Display, thread::sleep, time::Duration};
 
 <span class="kw">use </span>mithril_common::{
     crypto_helper::ProtocolInitializerError,
-    entities::{Beacon, CertificatePending, Epoch, EpochSettings, SignerWithStake},
+    entities::{
+        Beacon, CertificatePending, Epoch, EpochSettings, SignedEntityType, SignerWithStake,
+    },
 };
 
 <span class="kw">use super</span>::{Runner, RuntimeError};
@@ -768,15 +859,18 @@
     <span class="doccomment">/// `Registered` state. The Signer has successfuly registered against the
     /// Aggregator for this Epoch, it is now able to sign.
     </span>Registered {
-        <span class="doccomment">/// Beacon when Signer may sign.
-        </span>beacon: Beacon,
+        <span class="doccomment">/// Epoch when Signer may sign.
+        </span>epoch: Epoch,
     },
 
-    <span class="doccomment">/// `Signed` state. The Signer has signed the immutable files for the
-    /// current Beacon.
+    <span class="doccomment">/// `Signed` state. The Signer has signed the message for the
+    /// current pending certificate.
     </span>Signed {
-        <span class="doccomment">/// Beacon when Signer signed.
-        </span>beacon: Beacon,
+        <span class="doccomment">/// Epoch when Signer signed.
+        </span>epoch: Epoch,
+
+        <span class="doccomment">/// Entity type that is signed
+        </span>signed_entity_type: SignedEntityType,
     },
 }
 
@@ -793,12 +887,18 @@
 
     <span class="doccomment">/// Returns `true` if the state in `Registered`
     </span><span class="kw">pub fn </span>is_registered(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
-        <span class="macro">matches!</span>(<span class="kw-2">*</span><span class="self">self</span>, SignerState::Registered { beacon: <span class="kw">_ </span>})
+        <span class="macro">matches!</span>(<span class="kw-2">*</span><span class="self">self</span>, SignerState::Registered { epoch: <span class="kw">_ </span>})
     }
 
     <span class="doccomment">/// Returns `true` if the state in `Signed`
     </span><span class="kw">pub fn </span>is_signed(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
-        <span class="macro">matches!</span>(<span class="kw-2">*</span><span class="self">self</span>, SignerState::Signed { beacon: <span class="kw">_ </span>})
+        <span class="macro">matches!</span>(
+            <span class="kw-2">*</span><span class="self">self</span>,
+            SignerState::Signed {
+                epoch: <span class="kw">_</span>,
+                signed_entity_type: <span class="kw">_
+            </span>}
+        )
     }
 }
 
@@ -807,8 +907,11 @@
         <span class="kw">match </span><span class="self">self </span>{
             <span class="self">Self</span>::Init =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Init&quot;</span>),
             <span class="self">Self</span>::Unregistered { epoch } =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Unregistered - {epoch:?}&quot;</span>),
-            <span class="self">Self</span>::Registered { beacon } =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Registered - {beacon}&quot;</span>),
-            <span class="self">Self</span>::Signed { beacon } =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Signed - {beacon}&quot;</span>),
+            <span class="self">Self</span>::Registered { epoch } =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Registered - {epoch}&quot;</span>),
+            <span class="self">Self</span>::Signed {
+                epoch,
+                signed_entity_type,
+            } =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Signed - {epoch} - {signed_entity_type:?}&quot;</span>),
         }
     }
 }
@@ -904,18 +1007,16 @@
                     <span class="macro">info!</span>(<span class="string">&quot;→ No epoch settings found yet, waiting…&quot;</span>);
                 }
             }
-            SignerState::Registered { beacon } =&gt; {
-                <span class="kw">if let </span><span class="prelude-val">Some</span>(new_beacon) = <span class="self">self</span>.has_epoch_changed(beacon.epoch).<span class="kw">await</span><span class="question-mark">? </span>{
+            SignerState::Registered { epoch } =&gt; {
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(new_epoch) = <span class="self">self</span>.has_epoch_changed(<span class="kw-2">*</span>epoch).<span class="kw">await</span><span class="question-mark">? </span>{
                     <span class="macro">info!</span>(<span class="string">&quot;→ Epoch has changed, transiting to UNREGISTERED&quot;</span>);
                     <span class="self">self</span>.state = <span class="self">self
-                        </span>.transition_from_registered_to_unregistered(new_beacon)
+                        </span>.transition_from_registered_to_unregistered(new_epoch)
                         .<span class="kw">await</span><span class="question-mark">?</span>;
                 } <span class="kw">else if let </span><span class="prelude-val">Some</span>(pending_certificate) =
                     <span class="self">self</span>.runner.get_pending_certificate().<span class="kw">await</span>.map_err(|e| {
                         RuntimeError::KeepState {
-                            message: <span class="macro">format!</span>(
-                                <span class="string">&quot;could not fetch pending certificate at beacon {beacon:?}&quot;
-                            </span>),
+                            message: <span class="string">&quot;could not fetch the pending certificate&quot;</span>.to_string(),
                             nested_error: <span class="prelude-val">Some</span>(e),
                         }
                     })<span class="question-mark">?
@@ -930,9 +1031,7 @@
                         .can_i_sign(<span class="kw-2">&amp;</span>pending_certificate)
                         .<span class="kw">await
                         </span>.map_err(|e| RuntimeError::KeepState {
-                            message: <span class="macro">format!</span>(
-                                <span class="string">&quot;could not determine if I can sign certificate at beacon {beacon:?}&quot;
-                            </span>),
+                            message: <span class="string">&quot;could not determine if I can sign certificate&quot;</span>.to_string(),
                             nested_error: <span class="prelude-val">Some</span>(e),
                         })<span class="question-mark">?
                     </span>{
@@ -947,21 +1046,35 @@
                     <span class="macro">info!</span>(<span class="string">&quot; ⋅ no pending certificate, waiting…&quot;</span>);
                 }
             }
-            SignerState::Signed { beacon } =&gt; {
-                <span class="kw">if let </span><span class="prelude-val">Some</span>(new_beacon) = <span class="self">self</span>.has_beacon_changed(beacon).<span class="kw">await</span><span class="question-mark">? </span>{
-                    <span class="macro">info!</span>(<span class="string">&quot;  New beacon detected: {:?}&quot;</span>, new_beacon);
-
-                    <span class="kw">if </span>new_beacon.epoch &gt; beacon.epoch {
-                        <span class="macro">info!</span>(<span class="string">&quot; → new Epoch detected, transiting to UNREGISTERED&quot;</span>);
-                        <span class="self">self</span>.state = <span class="self">self
-                            </span>.transition_from_signed_to_unregistered(new_beacon)
-                            .<span class="kw">await</span><span class="question-mark">?</span>;
+            SignerState::Signed {
+                epoch,
+                signed_entity_type,
+            } =&gt; {
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(new_epoch) = <span class="self">self</span>.has_epoch_changed(<span class="kw-2">*</span>epoch).<span class="kw">await</span><span class="question-mark">? </span>{
+                    <span class="macro">info!</span>(<span class="string">&quot; → new Epoch detected, transiting to UNREGISTERED&quot;</span>);
+                    <span class="self">self</span>.state = <span class="self">self
+                        </span>.transition_from_signed_to_unregistered(new_epoch)
+                        .<span class="kw">await</span><span class="question-mark">?</span>;
+                } <span class="kw">else if let </span><span class="prelude-val">Some</span>(pending_certificate) =
+                    <span class="self">self</span>.runner.get_pending_certificate().<span class="kw">await</span>.map_err(|e| {
+                        RuntimeError::KeepState {
+                            message: <span class="string">&quot;could not fetch the pending certificate&quot;</span>.to_string(),
+                            nested_error: <span class="prelude-val">Some</span>(e),
+                        }
+                    })<span class="question-mark">?
+                </span>{
+                    <span class="macro">info!</span>(
+                        <span class="string">&quot; ⋅ Epoch has NOT changed but there is a pending certificate&quot;</span>;
+                        <span class="string">&quot;pending_certificate&quot; </span>=&gt; <span class="question-mark">?</span>pending_certificate
+                    );
+                    <span class="kw">if </span>pending_certificate.signed_entity_type == <span class="kw-2">*</span>signed_entity_type {
+                        <span class="macro">info!</span>(<span class="string">&quot; ⋅ pending certificate has not changed, waiting…&quot;</span>);
                     } <span class="kw">else </span>{
-                        <span class="macro">info!</span>(<span class="string">&quot; → new immutable file detected, transiting to REGISTERED&quot;</span>);
-                        <span class="self">self</span>.state = SignerState::Registered { beacon: new_beacon };
+                        <span class="macro">info!</span>(<span class="string">&quot; → new pending certificate detected, transiting to REGISTERED&quot;</span>);
+                        <span class="self">self</span>.state = <span class="self">self</span>.transition_from_signed_to_registered().<span class="kw">await</span><span class="question-mark">?</span>;
                     }
                 } <span class="kw">else </span>{
-                    <span class="macro">info!</span>(<span class="string">&quot; ⋅ NO new beacon detected, waiting&quot;</span>);
+                    <span class="macro">info!</span>(<span class="string">&quot; ⋅ no pending certificate, waiting…&quot;</span>);
                 }
             }
         };
@@ -969,27 +1082,14 @@
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="doccomment">/// Return the new beacon if the epoch is different than the one in the given beacon.
-    </span><span class="kw">async fn </span>has_epoch_changed(<span class="kw-2">&amp;</span><span class="self">self</span>, epoch: Epoch) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Beacon&gt;, RuntimeError&gt; {
+    <span class="doccomment">/// Return the new epoch if the epoch is different than the given one.
+    </span><span class="kw">async fn </span>has_epoch_changed(<span class="kw-2">&amp;</span><span class="self">self</span>, epoch: Epoch) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Epoch&gt;, RuntimeError&gt; {
         <span class="kw">let </span>current_beacon = <span class="self">self
             </span>.get_current_beacon(<span class="string">&quot;checking if epoch has changed&quot;</span>)
             .<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="kw">if </span>current_beacon.epoch &gt; epoch {
-            <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(current_beacon))
-        } <span class="kw">else </span>{
-            <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
-        }
-    }
-
-    <span class="doccomment">/// Return true if the current beacon is different than the given beacon.
-    </span><span class="kw">async fn </span>has_beacon_changed(<span class="kw-2">&amp;</span><span class="self">self</span>, beacon: <span class="kw-2">&amp;</span>Beacon) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Beacon&gt;, RuntimeError&gt; {
-        <span class="kw">let </span>current_beacon = <span class="self">self
-            </span>.get_current_beacon(<span class="string">&quot;checking if beacon has changed&quot;</span>)
-            .<span class="kw">await</span><span class="question-mark">?</span>;
-
-        <span class="kw">if </span><span class="kw-2">&amp;</span>current_beacon != beacon {
-            <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(current_beacon))
+            <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(current_beacon.epoch))
         } <span class="kw">else </span>{
             <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
         }
@@ -997,14 +1097,12 @@
 
     <span class="kw">async fn </span>transition_from_unregistered_to_unregistered(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        new_beacon: Beacon,
+        new_epoch: Epoch,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;SignerState, RuntimeError&gt; {
-        <span class="self">self</span>.update_era_checker(new_beacon.epoch, <span class="string">&quot;unregistered → unregistered&quot;</span>)
+        <span class="self">self</span>.update_era_checker(new_epoch, <span class="string">&quot;unregistered → unregistered&quot;</span>)
             .<span class="kw">await</span><span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(SignerState::Unregistered {
-            epoch: new_beacon.epoch,
-        })
+        <span class="prelude-val">Ok</span>(SignerState::Unregistered { epoch: new_epoch })
     }
 
     <span class="kw">async fn </span>transition_from_init_to_unregistered(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;SignerState, RuntimeError&gt; {
@@ -1019,26 +1117,32 @@
 
     <span class="kw">async fn </span>transition_from_signed_to_unregistered(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        beacon: Beacon,
+        epoch: Epoch,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;SignerState, RuntimeError&gt; {
-        <span class="self">self</span>.update_era_checker(beacon.epoch, <span class="string">&quot;signed → unregistered&quot;</span>)
+        <span class="self">self</span>.update_era_checker(epoch, <span class="string">&quot;signed → unregistered&quot;</span>)
             .<span class="kw">await</span><span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(SignerState::Unregistered {
-            epoch: beacon.epoch,
+        <span class="prelude-val">Ok</span>(SignerState::Unregistered { epoch })
+    }
+
+    <span class="kw">async fn </span>transition_from_signed_to_registered(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;SignerState, RuntimeError&gt; {
+        <span class="kw">let </span>current_beacon = <span class="self">self
+            </span>.get_current_beacon(<span class="string">&quot;checking if epoch has changed&quot;</span>)
+            .<span class="kw">await</span><span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(SignerState::Registered {
+            epoch: current_beacon.epoch,
         })
     }
 
     <span class="kw">async fn </span>transition_from_registered_to_unregistered(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        beacon: Beacon,
+        epoch: Epoch,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;SignerState, RuntimeError&gt; {
-        <span class="self">self</span>.update_era_checker(beacon.epoch, <span class="string">&quot;registered → unregistered&quot;</span>)
+        <span class="self">self</span>.update_era_checker(epoch, <span class="string">&quot;registered → unregistered&quot;</span>)
             .<span class="kw">await</span><span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(SignerState::Unregistered {
-            epoch: beacon.epoch,
-        })
+        <span class="prelude-val">Ok</span>(SignerState::Unregistered { epoch })
     }
 
     <span class="doccomment">/// Launch the transition process from the `Unregistered` to the `Registered` state.
@@ -1065,7 +1169,9 @@
             }
         })<span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(SignerState::Registered { beacon })
+        <span class="prelude-val">Ok</span>(SignerState::Registered {
+            epoch: beacon.epoch,
+        })
     }
 
     <span class="doccomment">/// Launch the transition process from the `Registered` to the `Signed` state.
@@ -1126,7 +1232,8 @@
             })<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(SignerState::Signed {
-            beacon: current_beacon.clone(),
+            epoch: current_beacon.epoch,
+            signed_entity_type: pending_certificate.signed_entity_type.to_owned(),
         })
     }
 
@@ -1265,7 +1372,7 @@
             .<span class="kw">await
             </span>.expect(<span class="string">&quot;Cycling the state machine should not fail&quot;</span>);
 
-        <span class="kw">if let </span>SignerState::Registered { beacon: <span class="kw">_ </span>} = state_machine.get_state() {
+        <span class="kw">if let </span>SignerState::Registered { epoch: <span class="kw">_ </span>} = state_machine.get_state() {
         } <span class="kw">else </span>{
             <span class="macro">panic!</span>(
                 <span class="string">&quot;state machine did not return a RegisteredState but {:?}&quot;</span>,
@@ -1286,16 +1393,8 @@
             .once()
             .returning(|_e: Epoch| <span class="prelude-val">Ok</span>(()));
 
-        <span class="kw">let </span><span class="kw-2">mut </span>state_machine = init_state_machine(
-            SignerState::Registered {
-                beacon: Beacon {
-                    epoch: Epoch(<span class="number">0</span>),
-                    immutable_file_number: <span class="number">0</span>,
-                    ..Default::default()
-                },
-            },
-            runner,
-        );
+        <span class="kw">let </span><span class="kw-2">mut </span>state_machine =
+            init_state_machine(SignerState::Registered { epoch: Epoch(<span class="number">0</span>) }, runner);
 
         state_machine
             .cycle()
@@ -1317,7 +1416,7 @@
             ..Default::default()
         };
         <span class="kw">let </span>state = SignerState::Registered {
-            beacon: beacon.clone(),
+            epoch: beacon.epoch,
         };
 
         <span class="kw">let </span><span class="kw-2">mut </span>certificate_pending = fake_data::certificate_pending();
@@ -1340,13 +1439,7 @@
             </span>.expect(<span class="string">&quot;Cycling the state machine should not fail&quot;</span>);
 
         <span class="macro">assert_eq!</span>(
-            SignerState::Registered {
-                beacon: Beacon {
-                    epoch: Epoch(<span class="number">9</span>),
-                    immutable_file_number: <span class="number">99</span>,
-                    ..Default::default()
-                }
-            },
+            SignerState::Registered { epoch: Epoch(<span class="number">9</span>) },
             <span class="kw-2">*</span>state_machine.get_state(),
             <span class="string">&quot;state machine did not return a RegisteredState but {:?}&quot;</span>,
             state_machine.get_state()
@@ -1361,11 +1454,12 @@
             ..Default::default()
         };
         <span class="kw">let </span>state = SignerState::Registered {
-            beacon: beacon.clone(),
+            epoch: beacon.epoch,
         };
 
         <span class="kw">let </span><span class="kw-2">mut </span>certificate_pending = fake_data::certificate_pending();
         certificate_pending.beacon = beacon.clone();
+        <span class="kw">let </span>signed_entity_type = certificate_pending.signed_entity_type.to_owned();
         <span class="kw">let </span><span class="kw-2">mut </span>runner = MockSignerRunner::new();
         runner
             .expect_get_current_beacon()
@@ -1401,11 +1495,8 @@
 
         <span class="macro">assert_eq!</span>(
             SignerState::Signed {
-                beacon: Beacon {
-                    epoch: Epoch(<span class="number">9</span>),
-                    immutable_file_number: <span class="number">99</span>,
-                    ..Default::default()
-                }
+                epoch: Epoch(<span class="number">9</span>),
+                signed_entity_type
             },
             <span class="kw-2">*</span>state_machine.get_state(),
             <span class="string">&quot;state machine did not return a RegisteredState but {:?}&quot;</span>,
@@ -1420,19 +1511,26 @@
             epoch: Epoch(<span class="number">9</span>),
             ..Default::default()
         };
-        <span class="kw">let </span>new_beacon = Beacon {
-            immutable_file_number: <span class="number">100</span>,
-            ..beacon.clone()
-        };
+        <span class="kw">let </span>beacon_clone = beacon.clone();
         <span class="kw">let </span>state = SignerState::Signed {
-            beacon: beacon.clone(),
+            epoch: beacon.epoch,
+            signed_entity_type: SignedEntityType::CardanoImmutableFilesFull(beacon.clone()),
         };
+
+        <span class="kw">let </span><span class="kw-2">mut </span>certificate_pending = fake_data::certificate_pending();
+        certificate_pending.beacon = beacon.clone();
+        certificate_pending.signed_entity_type =
+            SignedEntityType::MithrilStakeDistribution(Epoch(<span class="number">10</span>));
 
         <span class="kw">let </span><span class="kw-2">mut </span>runner = MockSignerRunner::new();
         runner
             .expect_get_current_beacon()
+            .times(<span class="number">2</span>)
+            .returning(<span class="kw">move </span>|| <span class="prelude-val">Ok</span>(beacon_clone.to_owned()));
+        runner
+            .expect_get_pending_certificate()
             .once()
-            .returning(<span class="kw">move </span>|| <span class="prelude-val">Ok</span>(new_beacon.to_owned()));
+            .returning(<span class="kw">move </span>|| <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(certificate_pending.clone())));
 
         <span class="kw">let </span><span class="kw-2">mut </span>state_machine = init_state_machine(state, runner);
         state_machine
@@ -1442,10 +1540,7 @@
 
         <span class="macro">assert_eq!</span>(
             SignerState::Registered {
-                beacon: Beacon {
-                    immutable_file_number: <span class="number">100</span>,
-                    ..beacon.clone()
-                }
+                epoch: beacon.epoch
             },
             <span class="kw-2">*</span>state_machine.get_state()
         );
@@ -1463,7 +1558,8 @@
             ..beacon.clone()
         };
         <span class="kw">let </span>state = SignerState::Signed {
-            beacon: beacon.clone(),
+            epoch: beacon.epoch,
+            signed_entity_type: SignedEntityType::dummy(),
         };
 
         <span class="kw">let </span><span class="kw-2">mut </span>runner = MockSignerRunner::new();
@@ -1484,6 +1580,88 @@
 
         <span class="macro">assert_eq!</span>(
             SignerState::Unregistered { epoch: Epoch(<span class="number">10</span>) },
+            <span class="kw-2">*</span>state_machine.get_state()
+        );
+    }
+
+    <span class="attr">#[tokio::test]
+    </span><span class="kw">async fn </span>signed_to_signed_no_pending_certificate() {
+        <span class="kw">let </span>beacon = Beacon {
+            immutable_file_number: <span class="number">99</span>,
+            epoch: Epoch(<span class="number">9</span>),
+            ..Default::default()
+        };
+        <span class="kw">let </span>beacon_clone = beacon.clone();
+        <span class="kw">let </span>state = SignerState::Signed {
+            epoch: beacon.epoch,
+            signed_entity_type: SignedEntityType::dummy(),
+        };
+
+        <span class="kw">let </span><span class="kw-2">mut </span>certificate_pending = fake_data::certificate_pending();
+        certificate_pending.beacon = beacon.clone();
+
+        <span class="kw">let </span><span class="kw-2">mut </span>runner = MockSignerRunner::new();
+        runner
+            .expect_get_current_beacon()
+            .once()
+            .returning(<span class="kw">move </span>|| <span class="prelude-val">Ok</span>(beacon_clone.to_owned()));
+        runner
+            .expect_get_pending_certificate()
+            .once()
+            .returning(<span class="kw">move </span>|| <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>));
+
+        <span class="kw">let </span><span class="kw-2">mut </span>state_machine = init_state_machine(state, runner);
+        state_machine
+            .cycle()
+            .<span class="kw">await
+            </span>.expect(<span class="string">&quot;Cycling the state machine should not fail&quot;</span>);
+
+        <span class="macro">assert_eq!</span>(
+            SignerState::Signed {
+                epoch: beacon.epoch,
+                signed_entity_type: SignedEntityType::dummy(),
+            },
+            <span class="kw-2">*</span>state_machine.get_state()
+        );
+    }
+
+    <span class="attr">#[tokio::test]
+    </span><span class="kw">async fn </span>signed_to_signed_unsigned_pending_certificate() {
+        <span class="kw">let </span>beacon = Beacon {
+            immutable_file_number: <span class="number">99</span>,
+            epoch: Epoch(<span class="number">9</span>),
+            ..Default::default()
+        };
+        <span class="kw">let </span>beacon_clone = beacon.clone();
+        <span class="kw">let </span>state = SignerState::Signed {
+            epoch: beacon.epoch,
+            signed_entity_type: SignedEntityType::dummy(),
+        };
+
+        <span class="kw">let </span><span class="kw-2">mut </span>certificate_pending = fake_data::certificate_pending();
+        certificate_pending.beacon = beacon.clone();
+
+        <span class="kw">let </span><span class="kw-2">mut </span>runner = MockSignerRunner::new();
+        runner
+            .expect_get_current_beacon()
+            .once()
+            .returning(<span class="kw">move </span>|| <span class="prelude-val">Ok</span>(beacon_clone.to_owned()));
+        runner
+            .expect_get_pending_certificate()
+            .once()
+            .returning(<span class="kw">move </span>|| <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(certificate_pending.clone())));
+
+        <span class="kw">let </span><span class="kw-2">mut </span>state_machine = init_state_machine(state, runner);
+        state_machine
+            .cycle()
+            .<span class="kw">await
+            </span>.expect(<span class="string">&quot;Cycling the state machine should not fail&quot;</span>);
+
+        <span class="macro">assert_eq!</span>(
+            SignerState::Signed {
+                epoch: beacon.epoch,
+                signed_entity_type: SignedEntityType::dummy(),
+            },
             <span class="kw-2">*</span>state_machine.get_state()
         );
     }
