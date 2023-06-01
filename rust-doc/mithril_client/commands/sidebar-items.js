@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["DownloadCommand","ListCommand","RestoreCommand","ShowCommand"]};
+window.SIDEBAR_ITEMS = {"mod":["snapshot"]};

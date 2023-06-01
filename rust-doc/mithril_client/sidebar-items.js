@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["AggregatorHandlerError","RuntimeError"],"fn":["convert_to_field_items"],"mod":["commands"],"struct":["AggregatorHTTPClient","Config","FromCertificateMessageAdapter","FromSnapshotListMessageAdapter","FromSnapshotMessageAdapter","Runtime"],"trait":["AggregatorHandler"]};
+window.SIDEBAR_ITEMS = {"mod":["aggregator_client","commands","services"],"struct":["Config","FromCertificateMessageAdapter","FromSnapshotListMessageAdapter","FromSnapshotMessageAdapter","SnapshotFieldItem","SnapshotListItem"]};
