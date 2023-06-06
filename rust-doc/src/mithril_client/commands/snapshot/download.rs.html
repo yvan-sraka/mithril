@@ -61,44 +61,13 @@
 <a href="#61" id="61">61</a>
 <a href="#62" id="62">62</a>
 <a href="#63" id="63">63</a>
-<a href="#64" id="64">64</a>
-<a href="#65" id="65">65</a>
-<a href="#66" id="66">66</a>
-<a href="#67" id="67">67</a>
-<a href="#68" id="68">68</a>
-<a href="#69" id="69">69</a>
-<a href="#70" id="70">70</a>
-<a href="#71" id="71">71</a>
-<a href="#72" id="72">72</a>
-<a href="#73" id="73">73</a>
-<a href="#74" id="74">74</a>
-<a href="#75" id="75">75</a>
-<a href="#76" id="76">76</a>
-<a href="#77" id="77">77</a>
-<a href="#78" id="78">78</a>
-<a href="#79" id="79">79</a>
-<a href="#80" id="80">80</a>
-<a href="#81" id="81">81</a>
-<a href="#82" id="82">82</a>
-<a href="#83" id="83">83</a>
-<a href="#84" id="84">84</a>
-<a href="#85" id="85">85</a>
-<a href="#86" id="86">86</a>
-<a href="#87" id="87">87</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{path::PathBuf, sync::Arc};
 
 <span class="kw">use </span>clap::Parser;
-<span class="kw">use </span>config::{builder::DefaultState, ConfigBuilder};
-<span class="kw">use </span>mithril_common::{
-    api_version::APIVersionProvider, certificate_chain::MithrilCertificateVerifier,
-    digesters::CardanoImmutableDigester, StdResult,
-};
+<span class="kw">use </span>config::{builder::DefaultState, Config, ConfigBuilder};
+<span class="kw">use </span>mithril_common::StdResult;
 
-<span class="kw">use crate</span>::{
-    aggregator_client::{AggregatorHTTPClient, CertificateClient, SnapshotClient},
-    services::{MithrilClientSnapshotService, SnapshotService},
-    Config,
-};
+<span class="kw">use </span><span class="kw">crate</span>::dependencies::DependenciesBuilder;
 
 <span class="doccomment">/// Clap command to download the snapshot and verify the certificate.
 </span><span class="attr">#[derive(Parser, Debug, Clone)]
@@ -120,33 +89,16 @@
 <span class="kw">impl </span>SnapshotDownloadCommand {
     <span class="doccomment">/// Command execution
     </span><span class="kw">pub async fn </span>execute(<span class="kw-2">&amp;</span><span class="self">self</span>, config_builder: ConfigBuilder&lt;DefaultState&gt;) -&gt; StdResult&lt;()&gt; {
-        <span class="kw">let </span>config: Config = config_builder
-            .build()
-            .map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;configuration build error: {e}&quot;</span>))<span class="question-mark">?
-            </span>.try_deserialize()
-            .map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;configuration deserialize error: {e}&quot;</span>))<span class="question-mark">?</span>;
-        <span class="kw">let </span>snapshot_service = {
-            <span class="kw">let </span>http_client = Arc::new(AggregatorHTTPClient::new(
-                <span class="kw-2">&amp;</span>config.aggregator_endpoint,
-                APIVersionProvider::compute_all_versions_sorted()<span class="question-mark">?</span>,
-            ));
-
-            MithrilClientSnapshotService::new(
-                Arc::new(SnapshotClient::new(http_client.clone())),
-                Arc::new(CertificateClient::new(http_client)),
-                Arc::new(MithrilCertificateVerifier::new(slog_scope::logger())),
-                Arc::new(CardanoImmutableDigester::new(
-                    <span class="kw-2">&amp;</span><span class="self">self</span>.download_dir.join(<span class="string">&quot;db&quot;</span>),
-                    <span class="prelude-val">None</span>,
-                    slog_scope::logger(),
-                )),
-            )
-        };
+        <span class="kw">let </span>config_builder = config_builder.set_default(<span class="string">&quot;genesis_verification_key&quot;</span>, <span class="string">&quot;&quot;</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>config: Config = config_builder.build()<span class="question-mark">?</span>;
+        <span class="kw">let </span>config = Arc::new(config);
+        <span class="kw">let </span><span class="kw-2">mut </span>dependencies_builder = DependenciesBuilder::new(config.clone());
+        <span class="kw">let </span>snapshot_service = dependencies_builder.get_snapshot_service().<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let </span>filepath = snapshot_service
             .download(
                 <span class="kw-2">&amp;</span><span class="self">self</span>.digest,
                 <span class="kw-2">&amp;</span><span class="self">self</span>.download_dir,
-                <span class="kw-2">&amp;</span>config.genesis_verification_key,
+                <span class="kw-2">&amp;</span>config.get_string(<span class="string">&quot;genesis_verification_key&quot;</span>)<span class="question-mark">?</span>,
             )
             .<span class="kw">await</span><span class="question-mark">?</span>;
 
@@ -165,8 +117,8 @@ docker run -v cardano-node-ipc:/ipc -v cardano-node-data:/data --mount type=bind
                 <span class="kw-2">&amp;</span><span class="self">self</span>.digest,
                 filepath.display(),
                 filepath.display(),
-                config.network.clone()
-            );
+                config.get_string(<span class="string">&quot;network&quot;</span>)<span class="question-mark">?
+            </span>);
         }
 
         <span class="prelude-val">Ok</span>(())
