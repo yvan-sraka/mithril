@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["SnapshotServiceError"],"struct":["MithrilClientSnapshotService"],"trait":["SnapshotService"]};
+window.SIDEBAR_ITEMS = {"enum":["MithrilStakeDistributionServiceError","SnapshotServiceError"],"struct":["AppMithrilStakeDistributionService","MithrilClientSnapshotService"],"trait":["MithrilStakeDistributionService","SnapshotService"]};

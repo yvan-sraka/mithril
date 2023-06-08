@@ -552,6 +552,17 @@
 <a href="#552" id="552">552</a>
 <a href="#553" id="553">553</a>
 <a href="#554" id="554">554</a>
+<a href="#555" id="555">555</a>
+<a href="#556" id="556">556</a>
+<a href="#557" id="557">557</a>
+<a href="#558" id="558">558</a>
+<a href="#559" id="559">559</a>
+<a href="#560" id="560">560</a>
+<a href="#561" id="561">561</a>
+<a href="#562" id="562">562</a>
+<a href="#563" id="563">563</a>
+<a href="#564" id="564">564</a>
+<a href="#565" id="565">565</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! A module used to validate the Certificate Chain created by an aggregator
 //!
 </span><span class="kw">use </span>async_trait::async_trait;
@@ -565,7 +576,7 @@
     key_decode_hex, ProtocolGenesisError, ProtocolGenesisSignature, ProtocolGenesisVerifier,
     ProtocolMultiSignature,
 };
-<span class="kw">use </span><span class="kw">crate</span>::entities::{Certificate, ProtocolMessagePartKey, ProtocolParameters};
+<span class="kw">use </span><span class="kw">crate</span>::entities::{Certificate, ProtocolMessage, ProtocolMessagePartKey, ProtocolParameters};
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">use </span>mockall::automock;
@@ -673,6 +684,17 @@
             certificate = previous_certificate;
         }
         <span class="prelude-val">Ok</span>(())
+    }
+
+    <span class="doccomment">/// still a dirty hack to mock the protocol message
+    /// verify that the protocol message is equal to the signed message of the certificate.
+    /// TODO: Remove this method.
+    </span><span class="kw">fn </span>verify_protocol_message(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        protocol_message: <span class="kw-2">&amp;</span>ProtocolMessage,
+        certificate: <span class="kw-2">&amp;</span>Certificate,
+    ) -&gt; bool {
+        protocol_message.compute_hash() == certificate.signed_message
     }
 }
 
