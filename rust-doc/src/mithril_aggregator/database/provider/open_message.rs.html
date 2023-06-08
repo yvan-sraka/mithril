@@ -895,6 +895,15 @@
 <a href="#895" id="895">895</a>
 <a href="#896" id="896">896</a>
 <a href="#897" id="897">897</a>
+<a href="#898" id="898">898</a>
+<a href="#899" id="899">899</a>
+<a href="#900" id="900">900</a>
+<a href="#901" id="901">901</a>
+<a href="#902" id="902">902</a>
+<a href="#903" id="903">903</a>
+<a href="#904" id="904">904</a>
+<a href="#905" id="905">905</a>
+<a href="#906" id="906">906</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>mithril_common::StdError;
 
 <span class="kw">use </span>mithril_common::entities::{ProtocolMessage, SingleSignatures};
@@ -1318,6 +1327,13 @@
         <span class="self">Self </span>{ connection }
     }
 
+    <span class="kw">fn </span>get_epoch_condition(<span class="kw-2">&amp;</span><span class="self">self</span>, epoch: Epoch) -&gt; WhereCondition {
+        WhereCondition::new(
+            <span class="string">&quot;epoch_setting_id = ?*&quot;</span>,
+            <span class="macro">vec!</span>[Value::Integer(epoch.<span class="number">0 </span><span class="kw">as </span>i64)],
+        )
+    }
+
     <span class="kw">fn </span>get_signed_entity_type_condition(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         signed_entity_type: <span class="kw-2">&amp;</span>SignedEntityType,
@@ -1390,14 +1406,16 @@ order by open_message.created_at desc, open_message.rowid desc
         <span class="prelude-val">Ok</span>(messages.next())
     }
 
-    <span class="doccomment">/// Return an open message with its associated single signatures if any.
+    <span class="doccomment">/// Return an open message with its associated single signatures for the given Epoch and [SignedEntityType].
     </span><span class="kw">pub async fn </span>get_open_message_with_single_signatures(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         signed_entity_type: <span class="kw-2">&amp;</span>SignedEntityType,
     ) -&gt; StdResult&lt;<span class="prelude-ty">Option</span>&lt;OpenMessageWithSingleSignaturesRecord&gt;&gt; {
         <span class="kw">let </span>lock = <span class="self">self</span>.connection.lock().<span class="kw">await</span>;
         <span class="kw">let </span>provider = OpenMessageWithSingleSignaturesProvider::new(<span class="kw-2">&amp;</span>lock);
-        <span class="kw">let </span>filters = provider.get_signed_entity_type_condition(signed_entity_type);
+        <span class="kw">let </span>filters = provider
+            .get_epoch_condition(signed_entity_type.get_epoch())
+            .and_where(provider.get_signed_entity_type_condition(signed_entity_type));
         <span class="kw">let </span><span class="kw-2">mut </span>messages = provider.find(filters)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(messages.next())

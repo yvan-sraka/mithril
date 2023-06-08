@@ -674,54 +674,6 @@
 <a href="#674" id="674">674</a>
 <a href="#675" id="675">675</a>
 <a href="#676" id="676">676</a>
-<a href="#677" id="677">677</a>
-<a href="#678" id="678">678</a>
-<a href="#679" id="679">679</a>
-<a href="#680" id="680">680</a>
-<a href="#681" id="681">681</a>
-<a href="#682" id="682">682</a>
-<a href="#683" id="683">683</a>
-<a href="#684" id="684">684</a>
-<a href="#685" id="685">685</a>
-<a href="#686" id="686">686</a>
-<a href="#687" id="687">687</a>
-<a href="#688" id="688">688</a>
-<a href="#689" id="689">689</a>
-<a href="#690" id="690">690</a>
-<a href="#691" id="691">691</a>
-<a href="#692" id="692">692</a>
-<a href="#693" id="693">693</a>
-<a href="#694" id="694">694</a>
-<a href="#695" id="695">695</a>
-<a href="#696" id="696">696</a>
-<a href="#697" id="697">697</a>
-<a href="#698" id="698">698</a>
-<a href="#699" id="699">699</a>
-<a href="#700" id="700">700</a>
-<a href="#701" id="701">701</a>
-<a href="#702" id="702">702</a>
-<a href="#703" id="703">703</a>
-<a href="#704" id="704">704</a>
-<a href="#705" id="705">705</a>
-<a href="#706" id="706">706</a>
-<a href="#707" id="707">707</a>
-<a href="#708" id="708">708</a>
-<a href="#709" id="709">709</a>
-<a href="#710" id="710">710</a>
-<a href="#711" id="711">711</a>
-<a href="#712" id="712">712</a>
-<a href="#713" id="713">713</a>
-<a href="#714" id="714">714</a>
-<a href="#715" id="715">715</a>
-<a href="#716" id="716">716</a>
-<a href="#717" id="717">717</a>
-<a href="#718" id="718">718</a>
-<a href="#719" id="719">719</a>
-<a href="#720" id="720">720</a>
-<a href="#721" id="721">721</a>
-<a href="#722" id="722">722</a>
-<a href="#723" id="723">723</a>
-<a href="#724" id="724">724</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! ## Certifier Service
 //!
 //! This service is responsible of [OpenMessage] cycle of life. It creates open
@@ -850,7 +802,6 @@
     certificate_verifier: Arc&lt;<span class="kw">dyn </span>CertificateVerifier&gt;,
     genesis_verifier: Arc&lt;ProtocolGenesisVerifier&gt;,
     multi_signer: Arc&lt;RwLock&lt;<span class="kw">dyn </span>MultiSigner&gt;&gt;,
-    current_epoch: Arc&lt;RwLock&lt;Epoch&gt;&gt;,
     _logger: Logger,
 }
 
@@ -864,7 +815,6 @@
         certificate_verifier: Arc&lt;<span class="kw">dyn </span>CertificateVerifier&gt;,
         genesis_verifier: Arc&lt;ProtocolGenesisVerifier&gt;,
         multi_signer: Arc&lt;RwLock&lt;<span class="kw">dyn </span>MultiSigner&gt;&gt;,
-        current_epoch: Epoch,
         logger: Logger,
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
@@ -874,7 +824,6 @@
             multi_signer,
             certificate_verifier,
             genesis_verifier,
-            current_epoch: Arc::new(RwLock::new(current_epoch)),
             _logger: logger,
         }
     }
@@ -897,19 +846,8 @@
 </span><span class="kw">impl </span>CertifierService <span class="kw">for </span>MithrilCertifierService {
     <span class="kw">async fn </span>inform_epoch(<span class="kw-2">&amp;</span><span class="self">self</span>, epoch: Epoch) -&gt; StdResult&lt;()&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;CertifierService::inform_epoch(epoch: {epoch:?})&quot;</span>);
-        <span class="kw">let </span><span class="kw-2">mut </span>current_epoch = <span class="self">self</span>.current_epoch.write().<span class="kw">await</span>;
-
-        <span class="kw">if </span>epoch &lt;= <span class="kw-2">*</span>current_epoch {
-            <span class="macro">debug!</span>(<span class="string">&quot;CertifierService::inform_epoch: given epoch ({epoch:?}) is older than current epoch ({}), ignoring&quot;</span>, <span class="kw-2">*</span>current_epoch);
-
-            <span class="kw">return </span><span class="prelude-val">Ok</span>(());
-        }
-        <span class="kw">let </span>nb = <span class="self">self
-            </span>.open_message_repository
-            .clean_epoch(<span class="kw-2">*</span>current_epoch)
-            .<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="macro">info!</span>(<span class="string">&quot;MithrilCertifierService: Got a new Epoch: {epoch:?}. Cleaned {nb} open messages along with their single signatures.&quot;</span>);
-        <span class="kw-2">*</span>current_epoch = epoch;
+        <span class="kw">let </span>nb = <span class="self">self</span>.open_message_repository.clean_epoch(epoch).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="macro">info!</span>(<span class="string">&quot;MithrilCertifierService: Informed of a new Epoch: {epoch:?}. Cleaned {nb} open messages along with their single signatures.&quot;</span>);
 
         <span class="prelude-val">Ok</span>(())
     }
@@ -955,10 +893,13 @@
         protocol_message: <span class="kw-2">&amp;</span>ProtocolMessage,
     ) -&gt; StdResult&lt;OpenMessage&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;CertifierService::create_open_message(signed_entity_type: {signed_entity_type:?}, protocol_message: {protocol_message:?})&quot;</span>);
-        <span class="kw">let </span>current_epoch = <span class="self">self</span>.current_epoch.read().<span class="kw">await</span>;
         <span class="kw">let </span>open_message = <span class="self">self
             </span>.open_message_repository
-            .create_open_message(<span class="kw-2">*</span>current_epoch, signed_entity_type, protocol_message)
+            .create_open_message(
+                signed_entity_type.get_epoch(),
+                signed_entity_type,
+                protocol_message,
+            )
             .<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="macro">info!</span>(<span class="string">&quot;CertifierService::create_open_message: created open message for {signed_entity_type:?}&quot;</span>);
         <span class="macro">debug!</span>(
@@ -1138,43 +1079,19 @@
             certificate_verifier,
             genesis_verifier,
             multi_signer,
-            Epoch(<span class="number">0</span>),
             logger,
         )
     }
 
     <span class="attr">#[tokio::test]
-    </span><span class="kw">async fn </span>should_not_clean_epoch_when_inform_same_epoch() {
+    </span><span class="kw">async fn </span>should_clean_epoch_when_inform_epoch() {
         <span class="kw">let </span>beacon = Beacon::new(<span class="string">&quot;devnet&quot;</span>.to_string(), <span class="number">1</span>, <span class="number">1</span>);
         <span class="kw">let </span>signed_entity_type = SignedEntityType::CardanoImmutableFilesFull(beacon.clone());
         <span class="kw">let </span>protocol_message = ProtocolMessage::new();
         <span class="kw">let </span>epoch = beacon.epoch;
         <span class="kw">let </span>epochs_with_signers = (<span class="number">1</span>..=<span class="number">5</span>).map(Epoch).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
         <span class="kw">let </span>fixture = MithrilFixtureBuilder::default().with_signers(<span class="number">5</span>).build();
-        <span class="kw">let </span><span class="kw-2">mut </span>certifier_service = setup_certifier_service(<span class="kw-2">&amp;</span>fixture, <span class="kw-2">&amp;</span>epochs_with_signers).<span class="kw">await</span>;
-        certifier_service.current_epoch = Arc::new(RwLock::new(epoch));
-        certifier_service
-            .create_open_message(<span class="kw-2">&amp;</span>signed_entity_type, <span class="kw-2">&amp;</span>protocol_message)
-            .<span class="kw">await
-            </span>.unwrap();
-        certifier_service.inform_epoch(epoch).<span class="kw">await</span>.unwrap();
-        <span class="kw">let </span>open_message = certifier_service
-            .get_open_message(<span class="kw-2">&amp;</span>signed_entity_type)
-            .<span class="kw">await
-            </span>.unwrap();
-        <span class="macro">assert!</span>(open_message.is_some());
-    }
-
-    <span class="attr">#[tokio::test]
-    </span><span class="kw">async fn </span>should_clean_epoch_when_inform_new_epoch() {
-        <span class="kw">let </span>beacon = Beacon::new(<span class="string">&quot;devnet&quot;</span>.to_string(), <span class="number">1</span>, <span class="number">1</span>);
-        <span class="kw">let </span>signed_entity_type = SignedEntityType::CardanoImmutableFilesFull(beacon.clone());
-        <span class="kw">let </span>protocol_message = ProtocolMessage::new();
-        <span class="kw">let </span>epoch = beacon.epoch;
-        <span class="kw">let </span>epochs_with_signers = (<span class="number">1</span>..=<span class="number">5</span>).map(Epoch).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-        <span class="kw">let </span>fixture = MithrilFixtureBuilder::default().with_signers(<span class="number">5</span>).build();
-        <span class="kw">let </span><span class="kw-2">mut </span>certifier_service = setup_certifier_service(<span class="kw-2">&amp;</span>fixture, <span class="kw-2">&amp;</span>epochs_with_signers).<span class="kw">await</span>;
-        certifier_service.current_epoch = Arc::new(RwLock::new(epoch));
+        <span class="kw">let </span>certifier_service = setup_certifier_service(<span class="kw-2">&amp;</span>fixture, <span class="kw-2">&amp;</span>epochs_with_signers).<span class="kw">await</span>;
         certifier_service
             .create_open_message(<span class="kw-2">&amp;</span>signed_entity_type, <span class="kw-2">&amp;</span>protocol_message)
             .<span class="kw">await
@@ -1192,11 +1109,9 @@
         <span class="kw">let </span>beacon = Beacon::new(<span class="string">&quot;devnet&quot;</span>.to_string(), <span class="number">3</span>, <span class="number">1</span>);
         <span class="kw">let </span>signed_entity_type = SignedEntityType::CardanoImmutableFilesFull(beacon.clone());
         <span class="kw">let </span>protocol_message = ProtocolMessage::new();
-        <span class="kw">let </span>epoch = beacon.epoch;
         <span class="kw">let </span>epochs_with_signers = (<span class="number">1</span>..=<span class="number">5</span>).map(Epoch).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
         <span class="kw">let </span>fixture = MithrilFixtureBuilder::default().with_signers(<span class="number">1</span>).build();
-        <span class="kw">let </span><span class="kw-2">mut </span>certifier_service = setup_certifier_service(<span class="kw-2">&amp;</span>fixture, <span class="kw-2">&amp;</span>epochs_with_signers).<span class="kw">await</span>;
-        certifier_service.current_epoch = Arc::new(RwLock::new(epoch));
+        <span class="kw">let </span>certifier_service = setup_certifier_service(<span class="kw-2">&amp;</span>fixture, <span class="kw-2">&amp;</span>epochs_with_signers).<span class="kw">await</span>;
         certifier_service
             .multi_signer
             .write()
@@ -1233,11 +1148,9 @@
         <span class="kw">let </span>beacon = Beacon::new(<span class="string">&quot;devnet&quot;</span>.to_string(), <span class="number">3</span>, <span class="number">1</span>);
         <span class="kw">let </span>signed_entity_type = SignedEntityType::CardanoImmutableFilesFull(beacon.clone());
         <span class="kw">let </span><span class="kw-2">mut </span>protocol_message = ProtocolMessage::new();
-        <span class="kw">let </span>epoch = beacon.epoch;
         <span class="kw">let </span>epochs_with_signers = (<span class="number">1</span>..=<span class="number">5</span>).map(Epoch).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
         <span class="kw">let </span>fixture = MithrilFixtureBuilder::default().with_signers(<span class="number">1</span>).build();
-        <span class="kw">let </span><span class="kw-2">mut </span>certifier_service = setup_certifier_service(<span class="kw-2">&amp;</span>fixture, <span class="kw-2">&amp;</span>epochs_with_signers).<span class="kw">await</span>;
-        certifier_service.current_epoch = Arc::new(RwLock::new(epoch));
+        <span class="kw">let </span>certifier_service = setup_certifier_service(<span class="kw-2">&amp;</span>fixture, <span class="kw-2">&amp;</span>epochs_with_signers).<span class="kw">await</span>;
         certifier_service
             .multi_signer
             .write()
@@ -1273,11 +1186,9 @@
         <span class="kw">let </span>beacon = Beacon::new(<span class="string">&quot;devnet&quot;</span>.to_string(), <span class="number">3</span>, <span class="number">1</span>);
         <span class="kw">let </span>signed_entity_type = SignedEntityType::CardanoImmutableFilesFull(beacon.clone());
         <span class="kw">let </span>protocol_message = ProtocolMessage::new();
-        <span class="kw">let </span>epoch = beacon.epoch;
         <span class="kw">let </span>epochs_with_signers = (<span class="number">1</span>..=<span class="number">5</span>).map(Epoch).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
         <span class="kw">let </span>fixture = MithrilFixtureBuilder::default().with_signers(<span class="number">1</span>).build();
-        <span class="kw">let </span><span class="kw-2">mut </span>certifier_service = setup_certifier_service(<span class="kw-2">&amp;</span>fixture, <span class="kw-2">&amp;</span>epochs_with_signers).<span class="kw">await</span>;
-        certifier_service.current_epoch = Arc::new(RwLock::new(epoch));
+        <span class="kw">let </span>certifier_service = setup_certifier_service(<span class="kw-2">&amp;</span>fixture, <span class="kw-2">&amp;</span>epochs_with_signers).<span class="kw">await</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>open_message = certifier_service
             .open_message_repository
             .create_open_message(beacon.epoch, <span class="kw-2">&amp;</span>signed_entity_type, <span class="kw-2">&amp;</span>protocol_message)
@@ -1307,11 +1218,9 @@
         <span class="kw">let </span>beacon = Beacon::new(<span class="string">&quot;devnet&quot;</span>.to_string(), <span class="number">3</span>, <span class="number">1</span>);
         <span class="kw">let </span>signed_entity_type = SignedEntityType::CardanoImmutableFilesFull(beacon.clone());
         <span class="kw">let </span>protocol_message = ProtocolMessage::new();
-        <span class="kw">let </span>epoch = beacon.epoch;
         <span class="kw">let </span>epochs_with_signers = (<span class="number">1</span>..=<span class="number">5</span>).map(Epoch).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
         <span class="kw">let </span>fixture = MithrilFixtureBuilder::default().with_signers(<span class="number">3</span>).build();
-        <span class="kw">let </span><span class="kw-2">mut </span>certifier_service = setup_certifier_service(<span class="kw-2">&amp;</span>fixture, <span class="kw-2">&amp;</span>epochs_with_signers).<span class="kw">await</span>;
-        certifier_service.current_epoch = Arc::new(RwLock::new(epoch));
+        <span class="kw">let </span>certifier_service = setup_certifier_service(<span class="kw-2">&amp;</span>fixture, <span class="kw-2">&amp;</span>epochs_with_signers).<span class="kw">await</span>;
         certifier_service
             .multi_signer
             .write()
@@ -1388,11 +1297,9 @@
     </span><span class="kw">async fn </span>should_not_create_certificate_for_open_message_not_created() {
         <span class="kw">let </span>beacon = Beacon::new(<span class="string">&quot;devnet&quot;</span>.to_string(), <span class="number">1</span>, <span class="number">1</span>);
         <span class="kw">let </span>signed_entity_type = SignedEntityType::CardanoImmutableFilesFull(beacon.clone());
-        <span class="kw">let </span>epoch = beacon.epoch;
         <span class="kw">let </span>epochs_with_signers = (<span class="number">1</span>..=<span class="number">5</span>).map(Epoch).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
         <span class="kw">let </span>fixture = MithrilFixtureBuilder::default().with_signers(<span class="number">5</span>).build();
-        <span class="kw">let </span><span class="kw-2">mut </span>certifier_service = setup_certifier_service(<span class="kw-2">&amp;</span>fixture, <span class="kw-2">&amp;</span>epochs_with_signers).<span class="kw">await</span>;
-        certifier_service.current_epoch = Arc::new(RwLock::new(epoch));
+        <span class="kw">let </span>certifier_service = setup_certifier_service(<span class="kw-2">&amp;</span>fixture, <span class="kw-2">&amp;</span>epochs_with_signers).<span class="kw">await</span>;
         certifier_service
             .create_certificate(<span class="kw-2">&amp;</span>signed_entity_type)
             .<span class="kw">await
@@ -1407,8 +1314,7 @@
         <span class="kw">let </span>epoch = beacon.epoch;
         <span class="kw">let </span>epochs_with_signers = (<span class="number">1</span>..=<span class="number">5</span>).map(Epoch).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
         <span class="kw">let </span>fixture = MithrilFixtureBuilder::default().with_signers(<span class="number">5</span>).build();
-        <span class="kw">let </span><span class="kw-2">mut </span>certifier_service = setup_certifier_service(<span class="kw-2">&amp;</span>fixture, <span class="kw-2">&amp;</span>epochs_with_signers).<span class="kw">await</span>;
-        certifier_service.current_epoch = Arc::new(RwLock::new(epoch));
+        <span class="kw">let </span>certifier_service = setup_certifier_service(<span class="kw-2">&amp;</span>fixture, <span class="kw-2">&amp;</span>epochs_with_signers).<span class="kw">await</span>;
         certifier_service
             .open_message_repository
             .create_open_message(epoch, <span class="kw-2">&amp;</span>signed_entity_type, <span class="kw-2">&amp;</span>protocol_message)
@@ -1429,11 +1335,9 @@
         <span class="kw">let </span>beacon = Beacon::new(<span class="string">&quot;devnet&quot;</span>.to_string(), <span class="number">1</span>, <span class="number">1</span>);
         <span class="kw">let </span>signed_entity_type = SignedEntityType::CardanoImmutableFilesFull(beacon.clone());
         <span class="kw">let </span>protocol_message = ProtocolMessage::new();
-        <span class="kw">let </span>epoch = beacon.epoch;
         <span class="kw">let </span>epochs_with_signers = (<span class="number">1</span>..=<span class="number">5</span>).map(Epoch).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
         <span class="kw">let </span>fixture = MithrilFixtureBuilder::default().with_signers(<span class="number">5</span>).build();
         <span class="kw">let </span><span class="kw-2">mut </span>certifier_service = setup_certifier_service(<span class="kw-2">&amp;</span>fixture, <span class="kw-2">&amp;</span>epochs_with_signers).<span class="kw">await</span>;
-        certifier_service.current_epoch = Arc::new(RwLock::new(epoch));
         certifier_service.multi_signer = Arc::new(RwLock::new(mock_multi_signer));
         certifier_service
             .create_open_message(<span class="kw-2">&amp;</span>signed_entity_type, <span class="kw-2">&amp;</span>protocol_message)
