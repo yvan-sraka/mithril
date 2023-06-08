@@ -1218,7 +1218,7 @@
 
     <span class="kw">fn </span>get_epoch_condition(<span class="kw-2">&amp;</span><span class="self">self</span>, epoch: Epoch) -&gt; WhereCondition {
         WhereCondition::new(
-            <span class="string">&quot;epoch_setting_id &lt;= ?*&quot;</span>,
+            <span class="string">&quot;epoch_setting_id &lt; ?*&quot;</span>,
             <span class="macro">vec!</span>[Value::Integer(epoch.<span class="number">0 </span><span class="kw">as </span>i64)],
         )
     }
@@ -1453,7 +1453,7 @@ order by open_message.created_at desc, open_message.rowid desc
             .ok_or_else(|| <span class="macro">panic!</span>(<span class="string">&quot;Updating an open_message should not return nothing.&quot;</span>))
     }
 
-    <span class="doccomment">/// Remove all the [OpenMessageRecord] for the given Epoch in the database.
+    <span class="doccomment">/// Remove all the [OpenMessageRecord] for the strictly previous epochs of the given epoch in the database.
     /// It returns the number of messages removed.
     </span><span class="kw">pub async fn </span>clean_epoch(<span class="kw-2">&amp;</span><span class="self">self</span>, epoch: Epoch) -&gt; StdResult&lt;usize&gt; {
         <span class="kw">let </span>lock = <span class="self">self</span>.connection.lock().<span class="kw">await</span>;
@@ -1618,7 +1618,7 @@ order by open_message.created_at desc, open_message.rowid desc
         <span class="kw">let </span>provider = DeleteOpenMessageProvider::new(<span class="kw-2">&amp;</span>connection);
         <span class="kw">let </span>(expr, params) = provider.get_epoch_condition(Epoch(<span class="number">12</span>)).expand();
 
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;epoch_setting_id &lt;= ?1&quot;</span>.to_string(), expr);
+        <span class="macro">assert_eq!</span>(<span class="string">&quot;epoch_setting_id &lt; ?1&quot;</span>.to_string(), expr);
         <span class="macro">assert_eq!</span>(<span class="macro">vec!</span>[Value::Integer(<span class="number">12</span>)], params,);
     }
 
