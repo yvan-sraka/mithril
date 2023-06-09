@@ -69,12 +69,25 @@
 <a href="#69" id="69">69</a>
 <a href="#70" id="70">70</a>
 <a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
+<a href="#74" id="74">74</a>
+<a href="#75" id="75">75</a>
+<a href="#76" id="76">76</a>
+<a href="#77" id="77">77</a>
+<a href="#78" id="78">78</a>
+<a href="#79" id="79">79</a>
+<a href="#80" id="80">80</a>
+<a href="#81" id="81">81</a>
 </pre></div><pre class="rust"><code><span class="kw">use crate</span>::{
     digesters::ImmutableFileListingError,
     entities::{Beacon, ImmutableFileNumber},
 };
 <span class="kw">use </span>async_trait::async_trait;
-<span class="kw">use </span>std::{io, path::PathBuf};
+<span class="kw">use </span>std::{
+    io,
+    path::{Path, PathBuf},
+};
 <span class="kw">use </span>thiserror::Error;
 
 <span class="doccomment">/// A digester than can compute the digest used for mithril signatures
@@ -86,6 +99,7 @@
 ///     use mithril_common::digesters::{ImmutableDigester, ImmutableDigesterError};
 ///     use mithril_common::entities::Beacon;
 ///     use mockall::mock;
+///     use std::path::Path;
 ///
 ///     mock! {
 ///         pub ImmutableDigesterImpl { }
@@ -94,6 +108,7 @@
 ///         impl ImmutableDigester for ImmutableDigesterImpl {
 ///             async fn compute_digest(
 ///               &amp;self,
+///               dirpath: &amp;Path,
 ///               beacon: &amp;Beacon,
 ///             ) -&gt; Result&lt;String, ImmutableDigesterError&gt;;
 ///         }
@@ -102,10 +117,11 @@
 ///     #[test]
 ///     fn test_mock() {
 ///         let mut mock = MockDigesterImpl::new();
-///         mock.expect_compute_digest().return_once(|_| {
+///         mock.expect_compute_digest().return_once(|_, _| {
 ///             Err(ImmutableDigesterError::NotEnoughImmutable {
 ///                 expected_number: 3,
 ///                 found_number: None,
+///                 db_dir: PathBuff::new(),
 ///             })
 ///         });
 ///     }
@@ -114,7 +130,11 @@
 </span><span class="attr">#[async_trait]
 </span><span class="kw">pub trait </span>ImmutableDigester: Sync + Send {
     <span class="doccomment">/// Compute the digest
-    </span><span class="kw">async fn </span>compute_digest(<span class="kw-2">&amp;</span><span class="self">self</span>, beacon: <span class="kw-2">&amp;</span>Beacon) -&gt; <span class="prelude-ty">Result</span>&lt;String, ImmutableDigesterError&gt;;
+    </span><span class="kw">async fn </span>compute_digest(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        dirpath: <span class="kw-2">&amp;</span>Path,
+        beacon: <span class="kw-2">&amp;</span>Beacon,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;String, ImmutableDigesterError&gt;;
 }
 
 <span class="doccomment">/// [ImmutableDigester] related Errors.

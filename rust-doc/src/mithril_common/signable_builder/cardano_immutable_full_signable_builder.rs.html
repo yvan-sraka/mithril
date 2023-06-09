@@ -81,7 +81,31 @@
 <a href="#81" id="81">81</a>
 <a href="#82" id="82">82</a>
 <a href="#83" id="83">83</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
+<a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
 <span class="kw">use crate</span>::{
     digesters::ImmutableDigester,
@@ -96,14 +120,20 @@
 </span><span class="kw">pub struct </span>CardanoImmutableFilesFullSignableBuilder {
     immutable_digester: Arc&lt;<span class="kw">dyn </span>ImmutableDigester&gt;,
     logger: Logger,
+    dirpath: PathBuf,
 }
 
 <span class="kw">impl </span>CardanoImmutableFilesFullSignableBuilder {
     <span class="doccomment">/// Constructor
-    </span><span class="kw">pub fn </span>new(immutable_digester: Arc&lt;<span class="kw">dyn </span>ImmutableDigester&gt;, logger: Logger) -&gt; <span class="self">Self </span>{
+    </span><span class="kw">pub fn </span>new(
+        immutable_digester: Arc&lt;<span class="kw">dyn </span>ImmutableDigester&gt;,
+        dirpath: <span class="kw-2">&amp;</span>Path,
+        logger: Logger,
+    ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             immutable_digester,
             logger,
+            dirpath: dirpath.to_owned(),
         }
     }
 }
@@ -112,7 +142,10 @@
 </span><span class="kw">impl </span>SignableBuilder&lt;Beacon&gt; <span class="kw">for </span>CardanoImmutableFilesFullSignableBuilder {
     <span class="kw">async fn </span>compute_protocol_message(<span class="kw-2">&amp;</span><span class="self">self</span>, beacon: Beacon) -&gt; StdResult&lt;ProtocolMessage&gt; {
         <span class="macro">debug!</span>(<span class="self">self</span>.logger, <span class="string">&quot;SignableBuilder::compute_signable({beacon:?})&quot;</span>);
-        <span class="kw">let </span>digest = <span class="self">self</span>.immutable_digester.compute_digest(<span class="kw-2">&amp;</span>beacon).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>digest = <span class="self">self
+            </span>.immutable_digester
+            .compute_digest(<span class="kw-2">&amp;</span><span class="self">self</span>.dirpath, <span class="kw-2">&amp;</span>beacon)
+            .<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="macro">info!</span>(<span class="self">self</span>.logger, <span class="string">&quot;SignableBuilder: digest = &#39;{digest}&#39;.&quot;</span>);
         <span class="kw">let </span><span class="kw-2">mut </span>protocol_message = ProtocolMessage::new();
         protocol_message.set_message_part(ProtocolMessagePartKey::SnapshotDigest, digest);
@@ -123,6 +156,8 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
+    <span class="kw">use </span>std::path::Path;
+
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
     <span class="kw">use </span><span class="kw">crate</span>::digesters::{ImmutableDigester, ImmutableDigesterError};
@@ -135,7 +170,11 @@
 
     <span class="attr">#[async_trait]
     </span><span class="kw">impl </span>ImmutableDigester <span class="kw">for </span>ImmutableDigesterImpl {
-        <span class="kw">async fn </span>compute_digest(<span class="kw-2">&amp;</span><span class="self">self</span>, beacon: <span class="kw-2">&amp;</span>Beacon) -&gt; <span class="prelude-ty">Result</span>&lt;String, ImmutableDigesterError&gt; {
+        <span class="kw">async fn </span>compute_digest(
+            <span class="kw-2">&amp;</span><span class="self">self</span>,
+            _dirpath: <span class="kw-2">&amp;</span>Path,
+            beacon: <span class="kw-2">&amp;</span>Beacon,
+        ) -&gt; <span class="prelude-ty">Result</span>&lt;String, ImmutableDigesterError&gt; {
             <span class="prelude-val">Ok</span>(<span class="macro">format!</span>(<span class="string">&quot;immutable {}&quot;</span>, beacon.immutable_file_number))
         }
     }
@@ -149,8 +188,11 @@
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>compute_signable() {
         <span class="kw">let </span>digester = ImmutableDigesterImpl::default();
-        <span class="kw">let </span>signable_builder =
-            CardanoImmutableFilesFullSignableBuilder::new(Arc::new(digester), create_logger());
+        <span class="kw">let </span>signable_builder = CardanoImmutableFilesFullSignableBuilder::new(
+            Arc::new(digester),
+            Path::new(<span class="string">&quot;&quot;</span>),
+            create_logger(),
+        );
         <span class="kw">let </span>protocol_message = signable_builder
             .compute_protocol_message(Beacon::default())
             .<span class="kw">await

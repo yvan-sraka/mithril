@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["MithrilStakeDistributionCommands","SnapshotCommands"],"struct":["SnapshotDownloadCommand","SnapshotListCommand","SnapshotShowCommand"]};
+window.SIDEBAR_ITEMS = {"enum":["SnapshotCommands"],"struct":["SnapshotDownloadCommand","SnapshotListCommand","SnapshotShowCommand"]};

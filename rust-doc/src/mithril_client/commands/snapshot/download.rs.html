@@ -61,6 +61,7 @@
 <a href="#61" id="61">61</a>
 <a href="#62" id="62">62</a>
 <a href="#63" id="63">63</a>
+<a href="#64" id="64">64</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{path::PathBuf, sync::Arc};
 
 <span class="kw">use </span>clap::Parser;
@@ -94,9 +95,10 @@
         <span class="kw">let </span>config = Arc::new(config);
         <span class="kw">let </span><span class="kw-2">mut </span>dependencies_builder = DependenciesBuilder::new(config.clone());
         <span class="kw">let </span>snapshot_service = dependencies_builder.get_snapshot_service().<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>snapshot = snapshot_service.show(<span class="kw-2">&amp;</span><span class="self">self</span>.digest).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let </span>filepath = snapshot_service
             .download(
-                <span class="kw-2">&amp;</span><span class="self">self</span>.digest,
+                <span class="kw-2">&amp;</span>snapshot,
                 <span class="kw-2">&amp;</span><span class="self">self</span>.download_dir,
                 <span class="kw-2">&amp;</span>config.get_string(<span class="string">&quot;genesis_verification_key&quot;</span>)<span class="question-mark">?</span>,
             )
@@ -117,8 +119,8 @@ docker run -v cardano-node-ipc:/ipc -v cardano-node-data:/data --mount type=bind
                 <span class="kw-2">&amp;</span><span class="self">self</span>.digest,
                 filepath.display(),
                 filepath.display(),
-                config.get_string(<span class="string">&quot;network&quot;</span>)<span class="question-mark">?
-            </span>);
+                snapshot.beacon.network,
+            );
         }
 
         <span class="prelude-val">Ok</span>(())

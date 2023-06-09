@@ -1125,8 +1125,6 @@
 <a href="#1125" id="1125">1125</a>
 <a href="#1126" id="1126">1126</a>
 <a href="#1127" id="1127">1127</a>
-<a href="#1128" id="1128">1128</a>
-<a href="#1129" id="1129">1129</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>mithril_common::{
@@ -1680,11 +1678,8 @@
             ExecutionEnvironment::Production =&gt; <span class="prelude-val">Some</span>(<span class="self">self</span>.get_immutable_cache_provider().<span class="kw">await</span><span class="question-mark">?</span>),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
         };
-        <span class="kw">let </span>digester = CardanoImmutableDigester::new(
-            <span class="kw-2">&amp;</span><span class="self">self</span>.configuration.db_directory,
-            immutable_digester_cache,
-            <span class="self">self</span>.get_logger().<span class="kw">await</span><span class="question-mark">?</span>,
-        );
+        <span class="kw">let </span>digester =
+            CardanoImmutableDigester::new(immutable_digester_cache, <span class="self">self</span>.get_logger().<span class="kw">await</span><span class="question-mark">?</span>);
 
         <span class="prelude-val">Ok</span>(Arc::new(digester))
     }
@@ -1991,6 +1986,7 @@
             Arc::new(MithrilStakeDistributionSignableBuilder::default());
         <span class="kw">let </span>immutable_signable_builder = Arc::new(CardanoImmutableFilesFullSignableBuilder::new(
             <span class="self">self</span>.get_immutable_digester().<span class="kw">await</span><span class="question-mark">?</span>,
+            <span class="kw-2">&amp;</span><span class="self">self</span>.configuration.db_directory,
             <span class="self">self</span>.get_logger().<span class="kw">await</span><span class="question-mark">?</span>,
         ));
         <span class="kw">let </span>signable_builder_service = Arc::new(MithrilSignableBuilderService::new(
