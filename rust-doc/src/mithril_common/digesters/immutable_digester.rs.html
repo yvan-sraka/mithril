@@ -67,12 +67,14 @@
 <a href="#67" id="67">67</a>
 <a href="#68" id="68">68</a>
 <a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
 </pre></div><pre class="rust"><code><span class="kw">use crate</span>::{
     digesters::ImmutableFileListingError,
     entities::{Beacon, ImmutableFileNumber},
 };
 <span class="kw">use </span>async_trait::async_trait;
-<span class="kw">use </span>std::io;
+<span class="kw">use </span>std::{io, path::PathBuf};
 <span class="kw">use </span>thiserror::Error;
 
 <span class="doccomment">/// A digester than can compute the digest used for mithril signatures
@@ -124,12 +126,14 @@
 
     <span class="doccomment">/// Error raised when there&#39;s less than the required number of completed immutables in
     /// the cardano database or even no immutable at all.
-    </span><span class="attr">#[error(<span class="string">&quot;At least two immutables chunk should exists&quot;</span>)]
+    </span><span class="attr">#[error(<span class="string">&quot;At least two immutable chunks should exist in directory &#39;{db_dir}&#39;: expected {expected_number} but found {found_number:?}.&quot;</span>)]
     </span>NotEnoughImmutable {
         <span class="doccomment">/// Expected last [ImmutableFileNumber].
         </span>expected_number: ImmutableFileNumber,
         <span class="doccomment">/// Last [ImmutableFileNumber] found when listing [ImmutableFiles][crate::digesters::ImmutableFile].
         </span>found_number: <span class="prelude-ty">Option</span>&lt;ImmutableFileNumber&gt;,
+        <span class="doccomment">/// A cardano node DB directory
+        </span>db_dir: PathBuf,
     },
 
     <span class="doccomment">/// Error raised when the digest computation failed.
