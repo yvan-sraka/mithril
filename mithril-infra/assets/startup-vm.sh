@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # Remove /startup-ready.txt
 rm -f /startup-ready.txt
