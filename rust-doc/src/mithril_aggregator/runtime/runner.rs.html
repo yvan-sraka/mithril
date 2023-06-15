@@ -1120,6 +1120,15 @@
 <a href="#1120" id="1120">1120</a>
 <a href="#1121" id="1121">1121</a>
 <a href="#1122" id="1122">1122</a>
+<a href="#1123" id="1123">1123</a>
+<a href="#1124" id="1124">1124</a>
+<a href="#1125" id="1125">1125</a>
+<a href="#1126" id="1126">1126</a>
+<a href="#1127" id="1127">1127</a>
+<a href="#1128" id="1128">1128</a>
+<a href="#1129" id="1129">1129</a>
+<a href="#1130" id="1130">1130</a>
+<a href="#1131" id="1131">1131</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>mithril_common::entities::Epoch;
 <span class="kw">use </span>mithril_common::entities::SignedEntityType;
@@ -1308,31 +1317,40 @@
         signed_entity_type: <span class="kw-2">&amp;</span>SignedEntityType,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;OpenMessage&gt;, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: get_current_non_certified_open_message_for_signed_entity_type&quot;</span>; <span class="string">&quot;signed_entity_type&quot; </span>=&gt; <span class="question-mark">?</span>signed_entity_type);
-        <span class="kw">let </span>open_message = <span class="kw">match </span><span class="self">self
+        <span class="kw">let </span>open_message_maybe = <span class="kw">match </span><span class="self">self
             </span>.dependencies
             .certifier_service
             .get_open_message(signed_entity_type)
             .<span class="kw">await</span><span class="question-mark">?
         </span>{
-            <span class="prelude-val">Some</span>(existing_open_message) =&gt; {
+            <span class="prelude-val">Some</span>(existing_open_message) <span class="kw">if </span>!existing_open_message.is_certified =&gt; {
                 <span class="macro">info!</span>(
-                    <span class="string">&quot;RUNNER: get_current_non_certified_open_message_for_signed_entity_type: existing open message found&quot;</span>;
+                    <span class="string">&quot;RUNNER: get_current_non_certified_open_message_for_signed_entity_type: existing open message found, not already certified&quot;</span>;
                     <span class="string">&quot;signed_entity_type&quot; </span>=&gt; <span class="question-mark">?</span>signed_entity_type
                 );
-                existing_open_message
+                <span class="prelude-val">Some</span>(existing_open_message)
             }
+            <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; {
+                <span class="macro">info!</span>(
+                    <span class="string">&quot;RUNNER: get_current_non_certified_open_message_for_signed_entity_type: existing open message found, already certified&quot;</span>;
+                    <span class="string">&quot;signed_entity_type&quot; </span>=&gt; <span class="question-mark">?</span>signed_entity_type
+                );
+                <span class="prelude-val">None
+            </span>}
             <span class="prelude-val">None </span>=&gt; {
                 <span class="macro">info!</span>(
                     <span class="string">&quot;RUNNER: get_current_non_certified_open_message_for_signed_entity_type: no open message found, a new one will be created&quot;</span>;
                     <span class="string">&quot;signed_entity_type&quot; </span>=&gt; <span class="question-mark">?</span>signed_entity_type
                 );
                 <span class="kw">let </span>protocol_message = <span class="self">self</span>.compute_protocol_message(signed_entity_type).<span class="kw">await</span><span class="question-mark">?</span>;
-                <span class="self">self</span>.create_open_message(signed_entity_type, <span class="kw-2">&amp;</span>protocol_message)
-                    .<span class="kw">await</span><span class="question-mark">?
-            </span>}
+                <span class="prelude-val">Some</span>(
+                    <span class="self">self</span>.create_open_message(signed_entity_type, <span class="kw-2">&amp;</span>protocol_message)
+                        .<span class="kw">await</span><span class="question-mark">?</span>,
+                )
+            }
         };
 
-        <span class="prelude-val">Ok</span>((!open_message.is_certified).then_some(open_message))
+        <span class="prelude-val">Ok</span>(open_message_maybe)
     }
 
     <span class="kw">async fn </span>get_current_non_certified_open_message(
