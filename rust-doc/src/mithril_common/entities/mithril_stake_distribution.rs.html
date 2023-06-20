@@ -58,13 +58,29 @@
 <a href="#58" id="58">58</a>
 <a href="#59" id="59">59</a>
 <a href="#60" id="60">60</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>serde::{Deserialize, Serialize};
+<a href="#61" id="61">61</a>
+<a href="#62" id="62">62</a>
+<a href="#63" id="63">63</a>
+<a href="#64" id="64">64</a>
+<a href="#65" id="65">65</a>
+<a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>chrono::{DateTime, Utc};
+<span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>sha2::{Digest, Sha256};
 
 <span class="kw">use crate</span>::{
     entities::{Epoch, SignerWithStake},
     signable_builder::Artifact,
 };
+
+<span class="kw">use </span><span class="kw">super</span>::ProtocolParameters;
 
 <span class="doccomment">/// Mithril Stake Distribution
 </span><span class="attr">#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
@@ -80,6 +96,12 @@
 
     <span class="doccomment">/// Hash of the associated certificate
     </span><span class="kw">pub </span>certificate_hash: String,
+
+    <span class="doccomment">/// Creation time
+    </span><span class="kw">pub </span>created_at: DateTime&lt;Utc&gt;,
+
+    <span class="doccomment">/// Protocol parameters used to sign this stake distribution
+    </span><span class="kw">pub </span>protocol_parameters: ProtocolParameters,
 }
 
 <span class="kw">impl </span>MithrilStakeDistribution {
@@ -88,6 +110,8 @@
         epoch: Epoch,
         signers_with_stake: Vec&lt;SignerWithStake&gt;,
         certificate_hash: String,
+        created_at: DateTime&lt;Utc&gt;,
+        protocol_parameters: <span class="kw-2">&amp;</span>ProtocolParameters,
     ) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span><span class="kw-2">mut </span>signers_with_stake_sorted = signers_with_stake;
         signers_with_stake_sorted.sort();
@@ -96,6 +120,8 @@
             signers_with_stake: signers_with_stake_sorted,
             hash: <span class="string">&quot;&quot;</span>.to_string(),
             certificate_hash,
+            created_at,
+            protocol_parameters: protocol_parameters.to_owned(),
         };
         mithril_stake_distribution.hash = mithril_stake_distribution.compute_hash();
         mithril_stake_distribution

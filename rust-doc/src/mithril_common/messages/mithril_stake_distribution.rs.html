@@ -72,13 +72,34 @@
 <a href="#72" id="72">72</a>
 <a href="#73" id="73">73</a>
 <a href="#74" id="74">74</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>serde::{Deserialize, Serialize};
+<a href="#75" id="75">75</a>
+<a href="#76" id="76">76</a>
+<a href="#77" id="77">77</a>
+<a href="#78" id="78">78</a>
+<a href="#79" id="79">79</a>
+<a href="#80" id="80">80</a>
+<a href="#81" id="81">81</a>
+<a href="#82" id="82">82</a>
+<a href="#83" id="83">83</a>
+<a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>std::str::FromStr;
+
+<span class="kw">use </span>chrono::DateTime;
+<span class="kw">use </span>chrono::Utc;
+<span class="kw">use </span>serde::{Deserialize, Serialize};
 
 <span class="kw">use </span><span class="kw">crate</span>::entities::Epoch;
+<span class="kw">use </span><span class="kw">crate</span>::entities::ProtocolParameters;
 <span class="kw">use </span><span class="kw">crate</span>::entities::SignerWithStake;
 <span class="kw">use </span><span class="kw">crate</span>::test_utils::fake_data;
 <span class="doccomment">/// Message structure of a Mitrhil Stake Distribution
-</span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq, Default, Serialize, Deserialize)]
+</span><span class="attr">#[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
 </span><span class="kw">pub struct </span>MithrilStakeDistributionMessage {
     <span class="doccomment">/// Epoch at which the Mithril Stake Distribution is created
     </span><span class="kw">pub </span>epoch: Epoch,
@@ -92,6 +113,12 @@
 
     <span class="doccomment">/// Hash of the associated certificate
     </span><span class="kw">pub </span>certificate_hash: String,
+
+    <span class="doccomment">/// DateTime of creation
+    </span><span class="kw">pub </span>created_at: DateTime&lt;Utc&gt;,
+
+    <span class="doccomment">/// Protocol parameters used to compute AVK
+    </span><span class="kw">pub </span>protocol_parameters: ProtocolParameters,
 }
 
 <span class="kw">impl </span>MithrilStakeDistributionMessage {
@@ -105,12 +132,15 @@
                 .to_owned()],
             hash: <span class="string">&quot;hash-123&quot;</span>.to_string(),
             certificate_hash: <span class="string">&quot;cert-hash-123&quot;</span>.to_string(),
+            created_at: DateTime::from_str(<span class="string">&quot;2023-06-13 17:05:41&quot;</span>).unwrap(),
+            protocol_parameters: fake_data::protocol_parameters(),
         }
     }
 }
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
+
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
     <span class="kw">fn </span>golden_message() -&gt; MithrilStakeDistributionMessage {
@@ -119,6 +149,8 @@
             signers_with_stake: fake_data::signers_with_stakes(<span class="number">1</span>),
             hash: <span class="string">&quot;hash-123&quot;</span>.to_string(),
             certificate_hash: <span class="string">&quot;cert-hash-123&quot;</span>.to_string(),
+            created_at: DateTime::from_str(<span class="string">&quot;2023-06-13T17:05:41Z&quot;</span>).unwrap(),
+            protocol_parameters: fake_data::protocol_parameters(),
         }
     }
 
@@ -135,13 +167,13 @@
                 }
             ],
             &quot;hash&quot;: &quot;hash-123&quot;,
-            &quot;certificate_hash&quot;: &quot;cert-hash-123&quot;
+            &quot;certificate_hash&quot;: &quot;cert-hash-123&quot;,
+            &quot;created_at&quot;: &quot;2023-06-13T17:05:41Z&quot;,
+            &quot;protocol_parameters&quot;: {&quot;k&quot;: 5, &quot;m&quot;: 100, &quot;phi_f&quot;: 0.65 }
         }&quot;#</span>;
         <span class="kw">let </span>message: MithrilStakeDistributionMessage = serde_json::from_str(json).expect(
             <span class="string">&quot;This JSON is expected to be succesfully parsed into a MithrilStakeDistributionMessage instance.&quot;</span>,
         );
-
-        <span class="macro">println!</span>(<span class="string">&quot;{}&quot;</span>, serde_json::to_string(<span class="kw-2">&amp;</span>golden_message()).unwrap());
 
         <span class="macro">assert_eq!</span>(golden_message(), message);
     }

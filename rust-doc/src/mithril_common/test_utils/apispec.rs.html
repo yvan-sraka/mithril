@@ -288,6 +288,8 @@
 <a href="#288" id="288">288</a>
 <a href="#289" id="289">289</a>
 <a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Tools to helps validate conformity to an OpenAPI specification
 
 </span><span class="kw">use </span>glob::glob;
@@ -323,9 +325,11 @@
                 .path(path)
                 .content_type(content_type)
                 .validate_request(request_body)
-                .unwrap_or_else(|<span class="kw">_</span>| <span class="macro">panic!</span>(<span class="string">&quot;OpenAPI invalid request in {}&quot;</span>, spec_file))
+                .map_err(|e| <span class="macro">panic!</span>(<span class="string">&quot;OpenAPI invalid request in {spec_file}, reason: {e}&quot;</span>))
+                .unwrap()
                 .validate_response(response)
-                .unwrap_or_else(|<span class="kw">_</span>| <span class="macro">panic!</span>(<span class="string">&quot;OpenAPI invalid response in {}&quot;</span>, spec_file));
+                .map_err(|e| <span class="macro">panic!</span>(<span class="string">&quot;OpenAPI invalid response in {spec_file}, reason: {e}&quot;</span>))
+                .unwrap();
         }
     }
 

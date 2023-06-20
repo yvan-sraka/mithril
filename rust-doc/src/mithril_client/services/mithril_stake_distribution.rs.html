@@ -412,9 +412,9 @@
     certificate_chain::CertificateVerifier,
     crypto_helper::{
         key_decode_hex, key_encode_hex, ProtocolClerk, ProtocolGenesisVerifier,
-        ProtocolKeyRegistration, ProtocolParameters, ProtocolStakeDistribution,
+        ProtocolKeyRegistration,
     },
-    entities::{ProtocolMessagePartKey, SignerWithStake},
+    entities::{MithrilStakeDistribution, ProtocolMessagePartKey},
     messages::MithrilStakeDistributionListItemMessage,
     StdError, StdResult,
 };
@@ -496,17 +496,17 @@
     // TODO: Create a structure to handle message verification.
     </span><span class="kw">async fn </span>create_clerk(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        signers_with_stake: <span class="kw-2">&amp;</span>[SignerWithStake],
-        protocol_parameters: <span class="kw-2">&amp;</span>ProtocolParameters,
+        stake_distribution: <span class="kw-2">&amp;</span>MithrilStakeDistribution,
     ) -&gt; StdResult&lt;<span class="prelude-ty">Option</span>&lt;ProtocolClerk&gt;&gt; {
-        <span class="kw">let </span>stake_distribution = signers_with_stake
+        <span class="kw">let </span>stakes: Vec&lt;(String, u64)&gt; = stake_distribution
+            .signers_with_stake
             .iter()
-            .map(|s| s.into())
-            .collect::&lt;ProtocolStakeDistribution&gt;();
-        <span class="kw">let </span><span class="kw-2">mut </span>key_registration = ProtocolKeyRegistration::init(<span class="kw-2">&amp;</span>stake_distribution);
+            .map(|signer| (signer.party_id.clone(), signer.stake))
+            .collect();
+        <span class="kw">let </span><span class="kw-2">mut </span>key_registration = ProtocolKeyRegistration::init(<span class="kw-2">&amp;</span>stakes);
         <span class="kw">let </span><span class="kw-2">mut </span>total_signers = <span class="number">0</span>;
 
-        <span class="kw">for </span>signer <span class="kw">in </span>signers_with_stake {
+        <span class="kw">for </span>signer <span class="kw">in </span><span class="kw-2">&amp;</span>stake_distribution.signers_with_stake {
             <span class="kw">let </span>operational_certificate = <span class="kw">match </span><span class="kw-2">&amp;</span>signer.operational_certificate {
                 <span class="prelude-val">Some</span>(operational_certificate) =&gt; key_decode_hex(operational_certificate)<span class="question-mark">?</span>,
                 <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
@@ -534,7 +534,7 @@
             <span class="kw">_ </span>=&gt; {
                 <span class="kw">let </span>closed_registration = key_registration.close();
                 <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(ProtocolClerk::from_registration(
-                    protocol_parameters,
+                    <span class="kw-2">&amp;</span>stake_distribution.protocol_parameters.clone().into(),
                     <span class="kw-2">&amp;</span>closed_registration,
                 )))
             }
@@ -596,10 +596,7 @@
 
         <span class="comment">// 4 Compute and check protocol message
         </span><span class="kw">let </span>clerk = <span class="self">self
-            </span>.create_clerk(
-                <span class="kw-2">&amp;</span>stake_distribution.signers_with_stake,
-                <span class="kw-2">&amp;</span>certificate.metadata.protocol_parameters.clone().into(),
-            )
+            </span>.create_clerk(<span class="kw-2">&amp;</span>stake_distribution)
             .<span class="kw">await</span><span class="question-mark">?
             </span>.ok_or_else(|| {
                 MithrilStakeDistributionServiceError::CouldNotVerifyStakeDistribution {
@@ -642,15 +639,16 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
+    <span class="kw">use </span>chrono::{DateTime, Utc};
     <span class="kw">use </span>mithril_common::{
         certificate_chain::MithrilCertificateVerifier,
         crypto_helper::ProtocolGenesisSigner,
-        entities::Epoch,
+        entities::{Epoch, SignerWithStake},
         messages::{
             CertificateMessage, MithrilStakeDistributionListMessage,
             MithrilStakeDistributionMessage,
         },
-        test_utils::MithrilFixtureBuilder,
+        test_utils::{fake_data, MithrilFixtureBuilder},
     };
 
     <span class="kw">use crate</span>::{
@@ -671,6 +669,8 @@
             signers_with_stake: signers_with_stake.to_owned(),
             hash: <span class="string">&quot;hash-123&quot;</span>.to_string(),
             certificate_hash: <span class="string">&quot;certificate-hash-123&quot;</span>.to_string(),
+            created_at: DateTime::&lt;Utc&gt;::default(),
+            protocol_parameters: fake_data::protocol_parameters(),
         }
     }
 

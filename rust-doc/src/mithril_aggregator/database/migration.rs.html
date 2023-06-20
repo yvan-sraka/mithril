@@ -330,6 +330,27 @@
 <a href="#330" id="330">330</a>
 <a href="#331" id="331">331</a>
 <a href="#332" id="332">332</a>
+<a href="#333" id="333">333</a>
+<a href="#334" id="334">334</a>
+<a href="#335" id="335">335</a>
+<a href="#336" id="336">336</a>
+<a href="#337" id="337">337</a>
+<a href="#338" id="338">338</a>
+<a href="#339" id="339">339</a>
+<a href="#340" id="340">340</a>
+<a href="#341" id="341">341</a>
+<a href="#342" id="342">342</a>
+<a href="#343" id="343">343</a>
+<a href="#344" id="344">344</a>
+<a href="#345" id="345">345</a>
+<a href="#346" id="346">346</a>
+<a href="#347" id="347">347</a>
+<a href="#348" id="348">348</a>
+<a href="#349" id="349">349</a>
+<a href="#350" id="350">350</a>
+<a href="#351" id="351">351</a>
+<a href="#352" id="352">352</a>
+<a href="#353" id="353">353</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Migration module
 //!
 </span><span class="kw">use </span>mithril_common::database::SqlMigration;
@@ -658,6 +679,27 @@ drop table signed_entity_old;
             <span class="number">12</span>,
             <span class="string">r#&quot;
 create unique index open_message_unique_index on open_message(signed_entity_type_id, beacon);
+&quot;#</span>,
+        ),
+        <span class="comment">// Migration 13
+        // Update signed_entity.artifact type MithrilStakeDistribution to add new fields in JSON.
+        </span>SqlMigration::new(
+            <span class="number">13</span>,
+            <span class="string">r#&quot;
+update signed_entity
+    set artifact = json_insert(
+        json_insert(
+            artifact,
+            &#39;$.protocol_parameters&#39;, 
+            json(certificate.protocol_parameters)
+        ), 
+        &#39;$.created_at&#39;, 
+        created_at
+    )
+from certificate 
+where 
+    signed_entity.signed_entity_type_id = 0
+    and signed_entity.certificate_id = certificate.certificate_id
 &quot;#</span>,
         ),
     ]
