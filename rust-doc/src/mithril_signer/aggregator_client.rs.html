@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `mithril-signer/src/certificate_handler.rs`."><title>certificate_handler.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-ba5701c5741a7b69.css" id="mainThemeStyle"><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="mithril_signer" data-themes="" data-resource-suffix="" data-rustdoc-version="1.70.0 (90c541806 2023-05-31)" data-search-js="search-e077946657036a58.js" data-settings-js="settings-298e1ea74db45b39.js" data-settings-css="settings-7bfb4c59cc6bc502.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ></div><script src="../../static.files/storage-62ce34ea385b278a.js"></script><script defer src="../../static.files/source-script-905937fbbdc8e9ea.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-f61008743c98d196.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../mithril_signer/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `mithril-signer/src/aggregator_client.rs`."><title>aggregator_client.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-ba5701c5741a7b69.css" id="mainThemeStyle"><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="mithril_signer" data-themes="" data-resource-suffix="" data-rustdoc-version="1.70.0 (90c541806 2023-05-31)" data-search-js="search-e077946657036a58.js" data-settings-js="settings-298e1ea74db45b39.js" data-settings-css="settings-7bfb4c59cc6bc502.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ></div><script src="../../static.files/storage-62ce34ea385b278a.js"></script><script defer src="../../static.files/source-script-905937fbbdc8e9ea.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-f61008743c98d196.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../mithril_signer/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -744,8 +744,53 @@
 <a href="#744" id="744">744</a>
 <a href="#745" id="745">745</a>
 <a href="#746" id="746">746</a>
+<a href="#747" id="747">747</a>
+<a href="#748" id="748">748</a>
+<a href="#749" id="749">749</a>
+<a href="#750" id="750">750</a>
+<a href="#751" id="751">751</a>
+<a href="#752" id="752">752</a>
+<a href="#753" id="753">753</a>
+<a href="#754" id="754">754</a>
+<a href="#755" id="755">755</a>
+<a href="#756" id="756">756</a>
+<a href="#757" id="757">757</a>
+<a href="#758" id="758">758</a>
+<a href="#759" id="759">759</a>
+<a href="#760" id="760">760</a>
+<a href="#761" id="761">761</a>
+<a href="#762" id="762">762</a>
+<a href="#763" id="763">763</a>
+<a href="#764" id="764">764</a>
+<a href="#765" id="765">765</a>
+<a href="#766" id="766">766</a>
+<a href="#767" id="767">767</a>
+<a href="#768" id="768">768</a>
+<a href="#769" id="769">769</a>
+<a href="#770" id="770">770</a>
+<a href="#771" id="771">771</a>
+<a href="#772" id="772">772</a>
+<a href="#773" id="773">773</a>
+<a href="#774" id="774">774</a>
+<a href="#775" id="775">775</a>
+<a href="#776" id="776">776</a>
+<a href="#777" id="777">777</a>
+<a href="#778" id="778">778</a>
+<a href="#779" id="779">779</a>
+<a href="#780" id="780">780</a>
+<a href="#781" id="781">781</a>
+<a href="#782" id="782">782</a>
+<a href="#783" id="783">783</a>
+<a href="#784" id="784">784</a>
+<a href="#785" id="785">785</a>
+<a href="#786" id="786">786</a>
+<a href="#787" id="787">787</a>
+<a href="#788" id="788">788</a>
+<a href="#789" id="789">789</a>
+<a href="#790" id="790">790</a>
+<a href="#791" id="791">791</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
-<span class="kw">use </span>reqwest::{<span class="self">self</span>, Client, RequestBuilder, Response, StatusCode};
+<span class="kw">use </span>reqwest::{<span class="self">self</span>, Client, Proxy, RequestBuilder, Response, StatusCode};
 <span class="kw">use </span>slog_scope::debug;
 <span class="kw">use </span>std::{io, sync::Arc};
 <span class="kw">use </span>thiserror::Error;
@@ -767,9 +812,9 @@
     ToRegisterSignatureMessageAdapter, ToRegisterSignerMessageAdapter,
 };
 
-<span class="doccomment">/// Error structure for the Certificate Handler.
+<span class="doccomment">/// Error structure for the Aggregator Client.
 </span><span class="attr">#[derive(Error, Debug)]
-</span><span class="kw">pub enum </span>CertificateHandlerError {
+</span><span class="kw">pub enum </span>AggregatorClientError {
     <span class="doccomment">/// The aggregator host has returned a technical error.
     </span><span class="attr">#[error(<span class="string">&quot;remote server technical error: &#39;{0}&#39;&quot;</span>)]
     </span>RemoteServerTechnical(String),
@@ -793,59 +838,87 @@
     <span class="doccomment">/// Incompatible API version error
     </span><span class="attr">#[error(<span class="string">&quot;HTTP API version mismatch: {0}&quot;</span>)]
     </span>ApiVersionMismatch(String),
+
+    <span class="doccomment">/// HTTP client creation error
+    </span><span class="attr">#[error(<span class="string">&quot;HTTP client creation failed: {0}&quot;</span>)]
+    </span>HTTPClientCreation(String),
+
+    <span class="doccomment">/// Proxy creation error
+    </span><span class="attr">#[error(<span class="string">&quot;proxy creation failed: {0}&quot;</span>)]
+    </span>ProxyCreation(String),
 }
 
 <span class="attr">#[cfg(test)]
 </span><span class="doccomment">/// convenient methods to error enum
-</span><span class="kw">impl </span>CertificateHandlerError {
+</span><span class="kw">impl </span>AggregatorClientError {
     <span class="kw">pub fn </span>is_api_version_mismatch(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
         <span class="macro">matches!</span>(<span class="self">self</span>, <span class="self">Self</span>::ApiVersionMismatch(<span class="kw">_</span>))
     }
 }
 
-<span class="doccomment">/// Trait for mocking and testing a `CertificateHandler`
+<span class="doccomment">/// Trait for mocking and testing a `AggregatorClient`
 </span><span class="attr">#[cfg_attr(test, automock)]
 #[async_trait]
-</span><span class="kw">pub trait </span>CertificateHandler: Sync + Send {
+</span><span class="kw">pub trait </span>AggregatorClient: Sync + Send {
     <span class="doccomment">/// Retrieves epoch settings from the aggregator
-    </span><span class="kw">async fn </span>retrieve_epoch_settings(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;EpochSettings&gt;, CertificateHandlerError&gt;;
+    </span><span class="kw">async fn </span>retrieve_epoch_settings(<span class="kw-2">&amp;</span><span class="self">self</span>)
+        -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;EpochSettings&gt;, AggregatorClientError&gt;;
 
     <span class="doccomment">/// Retrieves a pending certificate from the aggregator
     </span><span class="kw">async fn </span>retrieve_pending_certificate(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;CertificatePending&gt;, CertificateHandlerError&gt;;
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;CertificatePending&gt;, AggregatorClientError&gt;;
 
     <span class="doccomment">/// Registers signer with the aggregator.
     </span><span class="kw">async fn </span>register_signer(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         epoch: Epoch,
         signer: <span class="kw-2">&amp;</span>Signer,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), CertificateHandlerError&gt;;
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), AggregatorClientError&gt;;
 
     <span class="doccomment">/// Registers single signatures with the aggregator.
     </span><span class="kw">async fn </span>register_signatures(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         signed_entity_type: <span class="kw-2">&amp;</span>SignedEntityType,
         signatures: <span class="kw-2">&amp;</span>SingleSignatures,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), CertificateHandlerError&gt;;
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), AggregatorClientError&gt;;
 }
 
-<span class="doccomment">/// CertificateHandlerHTTPClient is a http client for an aggregator
-</span><span class="kw">pub struct </span>CertificateHandlerHTTPClient {
+<span class="doccomment">/// AggregatorHTTPClient is a http client for an aggregator
+</span><span class="kw">pub struct </span>AggregatorHTTPClient {
     aggregator_endpoint: String,
+    relay_endpoint: <span class="prelude-ty">Option</span>&lt;String&gt;,
     api_version_provider: Arc&lt;APIVersionProvider&gt;,
 }
 
-<span class="kw">impl </span>CertificateHandlerHTTPClient {
-    <span class="doccomment">/// CertificateHandlerHTTPClient factory
-    </span><span class="kw">pub fn </span>new(aggregator_endpoint: String, api_version_provider: Arc&lt;APIVersionProvider&gt;) -&gt; <span class="self">Self </span>{
-        <span class="macro">debug!</span>(<span class="string">&quot;New CertificateHandlerHTTPClient created&quot;</span>);
+<span class="kw">impl </span>AggregatorHTTPClient {
+    <span class="doccomment">/// AggregatorHTTPClient factory
+    </span><span class="kw">pub fn </span>new(
+        aggregator_endpoint: String,
+        relay_endpoint: <span class="prelude-ty">Option</span>&lt;String&gt;,
+        api_version_provider: Arc&lt;APIVersionProvider&gt;,
+    ) -&gt; <span class="self">Self </span>{
+        <span class="macro">debug!</span>(<span class="string">&quot;New AggregatorHTTPClient created&quot;</span>);
         <span class="self">Self </span>{
             aggregator_endpoint,
+            relay_endpoint,
             api_version_provider,
         }
+    }
+
+    <span class="kw">fn </span>prepare_http_client(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Client, AggregatorClientError&gt; {
+        <span class="kw">let </span>client = <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.relay_endpoint {
+            <span class="prelude-val">Some</span>(relay_endpoint) =&gt; Client::builder()
+                .proxy(
+                    Proxy::all(relay_endpoint)
+                        .map_err(|e| AggregatorClientError::ProxyCreation(e.to_string()))<span class="question-mark">?</span>,
+                )
+                .build()
+                .map_err(|e| AggregatorClientError::HTTPClientCreation(e.to_string()))<span class="question-mark">?</span>,
+            <span class="prelude-val">None </span>=&gt; Client::new(),
+        };
+
+        <span class="prelude-val">Ok</span>(client)
     }
 
     <span class="doccomment">/// Forge a client request adding protocol version in the headers.
@@ -862,15 +935,15 @@
     }
 
     <span class="doccomment">/// API version error handling
-    </span><span class="kw">fn </span>handle_api_error(<span class="kw-2">&amp;</span><span class="self">self</span>, response: <span class="kw-2">&amp;</span>Response) -&gt; CertificateHandlerError {
+    </span><span class="kw">fn </span>handle_api_error(<span class="kw-2">&amp;</span><span class="self">self</span>, response: <span class="kw-2">&amp;</span>Response) -&gt; AggregatorClientError {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(version) = response.headers().get(MITHRIL_API_VERSION_HEADER) {
-            CertificateHandlerError::ApiVersionMismatch(<span class="macro">format!</span>(
+            AggregatorClientError::ApiVersionMismatch(<span class="macro">format!</span>(
                 <span class="string">&quot;server version: &#39;{}&#39;, signer version: &#39;{}&#39;&quot;</span>,
                 version.to_str().unwrap(),
                 <span class="self">self</span>.api_version_provider.compute_current_version().unwrap()
             ))
         } <span class="kw">else </span>{
-            CertificateHandlerError::ApiVersionMismatch(<span class="macro">format!</span>(
+            AggregatorClientError::ApiVersionMismatch(<span class="macro">format!</span>(
                 <span class="string">&quot;version precondition failed, sent version &#39;{}&#39;.&quot;</span>,
                 <span class="self">self</span>.api_version_provider.compute_current_version().unwrap()
             ))
@@ -879,14 +952,14 @@
 }
 
 <span class="attr">#[async_trait]
-</span><span class="kw">impl </span>CertificateHandler <span class="kw">for </span>CertificateHandlerHTTPClient {
+</span><span class="kw">impl </span>AggregatorClient <span class="kw">for </span>AggregatorHTTPClient {
     <span class="kw">async fn </span>retrieve_epoch_settings(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;EpochSettings&gt;, CertificateHandlerError&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;EpochSettings&gt;, AggregatorClientError&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;Retrieve epoch settings&quot;</span>);
         <span class="kw">let </span>url = <span class="macro">format!</span>(<span class="string">&quot;{}/epoch-settings&quot;</span>, <span class="self">self</span>.aggregator_endpoint);
         <span class="kw">let </span>response = <span class="self">self
-            </span>.prepare_request_builder(Client::new().get(url.clone()))
+            </span>.prepare_request_builder(<span class="self">self</span>.prepare_http_client()<span class="question-mark">?</span>.get(url.clone()))
             .send()
             .<span class="kw">await</span>;
 
@@ -894,14 +967,14 @@
             <span class="prelude-val">Ok</span>(response) =&gt; <span class="kw">match </span>response.status() {
                 StatusCode::OK =&gt; <span class="kw">match </span>response.json::&lt;EpochSettingsMessage&gt;().<span class="kw">await </span>{
                     <span class="prelude-val">Ok</span>(message) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(FromEpochSettingsAdapter::adapt(message))),
-                    <span class="prelude-val">Err</span>(err) =&gt; <span class="prelude-val">Err</span>(CertificateHandlerError::JsonParseFailed(err.to_string())),
+                    <span class="prelude-val">Err</span>(err) =&gt; <span class="prelude-val">Err</span>(AggregatorClientError::JsonParseFailed(err.to_string())),
                 },
                 StatusCode::PRECONDITION_FAILED =&gt; <span class="prelude-val">Err</span>(<span class="self">self</span>.handle_api_error(<span class="kw-2">&amp;</span>response)),
-                <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(CertificateHandlerError::RemoteServerTechnical(
+                <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(AggregatorClientError::RemoteServerTechnical(
                     response.text().<span class="kw">await</span>.unwrap_or_default(),
                 )),
             },
-            <span class="prelude-val">Err</span>(err) =&gt; <span class="prelude-val">Err</span>(CertificateHandlerError::RemoteServerUnreachable(
+            <span class="prelude-val">Err</span>(err) =&gt; <span class="prelude-val">Err</span>(AggregatorClientError::RemoteServerUnreachable(
                 err.to_string(),
             )),
         }
@@ -909,11 +982,11 @@
 
     <span class="kw">async fn </span>retrieve_pending_certificate(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;CertificatePending&gt;, CertificateHandlerError&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;CertificatePending&gt;, AggregatorClientError&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;Retrieve pending certificate&quot;</span>);
         <span class="kw">let </span>url = <span class="macro">format!</span>(<span class="string">&quot;{}/certificate-pending&quot;</span>, <span class="self">self</span>.aggregator_endpoint);
         <span class="kw">let </span>response = <span class="self">self
-            </span>.prepare_request_builder(Client::new().get(url.clone()))
+            </span>.prepare_request_builder(<span class="self">self</span>.prepare_http_client()<span class="question-mark">?</span>.get(url.clone()))
             .send()
             .<span class="kw">await</span>;
 
@@ -921,15 +994,15 @@
             <span class="prelude-val">Ok</span>(response) =&gt; <span class="kw">match </span>response.status() {
                 StatusCode::OK =&gt; <span class="kw">match </span>response.json::&lt;CertificatePendingMessage&gt;().<span class="kw">await </span>{
                     <span class="prelude-val">Ok</span>(message) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(FromPendingCertificateMessageAdapter::adapt(message))),
-                    <span class="prelude-val">Err</span>(err) =&gt; <span class="prelude-val">Err</span>(CertificateHandlerError::JsonParseFailed(err.to_string())),
+                    <span class="prelude-val">Err</span>(err) =&gt; <span class="prelude-val">Err</span>(AggregatorClientError::JsonParseFailed(err.to_string())),
                 },
                 StatusCode::PRECONDITION_FAILED =&gt; <span class="prelude-val">Err</span>(<span class="self">self</span>.handle_api_error(<span class="kw-2">&amp;</span>response)),
                 StatusCode::NO_CONTENT =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
-                <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(CertificateHandlerError::RemoteServerTechnical(
+                <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(AggregatorClientError::RemoteServerTechnical(
                     response.text().<span class="kw">await</span>.unwrap_or_default(),
                 )),
             },
-            <span class="prelude-val">Err</span>(err) =&gt; <span class="prelude-val">Err</span>(CertificateHandlerError::RemoteServerUnreachable(
+            <span class="prelude-val">Err</span>(err) =&gt; <span class="prelude-val">Err</span>(AggregatorClientError::RemoteServerUnreachable(
                 err.to_string(),
             )),
         }
@@ -939,13 +1012,13 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         epoch: Epoch,
         signer: <span class="kw-2">&amp;</span>Signer,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), CertificateHandlerError&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), AggregatorClientError&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;Register signer&quot;</span>);
         <span class="kw">let </span>url = <span class="macro">format!</span>(<span class="string">&quot;{}/register-signer&quot;</span>, <span class="self">self</span>.aggregator_endpoint);
         <span class="kw">let </span>register_signer_message =
             ToRegisterSignerMessageAdapter::adapt(epoch, signer.to_owned());
         <span class="kw">let </span>response = <span class="self">self
-            </span>.prepare_request_builder(Client::new().post(url.clone()))
+            </span>.prepare_request_builder(<span class="self">self</span>.prepare_http_client()<span class="question-mark">?</span>.post(url.clone()))
             .json(<span class="kw-2">&amp;</span>register_signer_message)
             .send()
             .<span class="kw">await</span>;
@@ -954,14 +1027,14 @@
             <span class="prelude-val">Ok</span>(response) =&gt; <span class="kw">match </span>response.status() {
                 StatusCode::CREATED =&gt; <span class="prelude-val">Ok</span>(()),
                 StatusCode::PRECONDITION_FAILED =&gt; <span class="prelude-val">Err</span>(<span class="self">self</span>.handle_api_error(<span class="kw-2">&amp;</span>response)),
-                StatusCode::BAD_REQUEST =&gt; <span class="prelude-val">Err</span>(CertificateHandlerError::RemoteServerLogical(
+                StatusCode::BAD_REQUEST =&gt; <span class="prelude-val">Err</span>(AggregatorClientError::RemoteServerLogical(
                     <span class="macro">format!</span>(<span class="string">&quot;bad request: {}&quot;</span>, response.text().<span class="kw">await</span>.unwrap_or_default()),
                 )),
-                <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(CertificateHandlerError::RemoteServerTechnical(
+                <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(AggregatorClientError::RemoteServerTechnical(
                     response.text().<span class="kw">await</span>.unwrap_or_default(),
                 )),
             },
-            <span class="prelude-val">Err</span>(err) =&gt; <span class="prelude-val">Err</span>(CertificateHandlerError::RemoteServerUnreachable(
+            <span class="prelude-val">Err</span>(err) =&gt; <span class="prelude-val">Err</span>(AggregatorClientError::RemoteServerUnreachable(
                 err.to_string(),
             )),
         }
@@ -971,7 +1044,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         signed_entity_type: <span class="kw-2">&amp;</span>SignedEntityType,
         signatures: <span class="kw-2">&amp;</span>SingleSignatures,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), CertificateHandlerError&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), AggregatorClientError&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;Register signatures&quot;</span>);
         <span class="kw">let </span>url = <span class="macro">format!</span>(<span class="string">&quot;{}/register-signatures&quot;</span>, <span class="self">self</span>.aggregator_endpoint);
         <span class="kw">let </span>register_single_signature_message = ToRegisterSignatureMessageAdapter::adapt(
@@ -979,7 +1052,7 @@
             signatures.to_owned(),
         );
         <span class="kw">let </span>response = <span class="self">self
-            </span>.prepare_request_builder(Client::new().post(url.clone()))
+            </span>.prepare_request_builder(<span class="self">self</span>.prepare_http_client()<span class="question-mark">?</span>.post(url.clone()))
             .json(<span class="kw-2">&amp;</span>register_single_signature_message)
             .send()
             .<span class="kw">await</span>;
@@ -988,17 +1061,17 @@
             <span class="prelude-val">Ok</span>(response) =&gt; <span class="kw">match </span>response.status() {
                 StatusCode::CREATED =&gt; <span class="prelude-val">Ok</span>(()),
                 StatusCode::PRECONDITION_FAILED =&gt; <span class="prelude-val">Err</span>(<span class="self">self</span>.handle_api_error(<span class="kw-2">&amp;</span>response)),
-                StatusCode::BAD_REQUEST =&gt; <span class="prelude-val">Err</span>(CertificateHandlerError::RemoteServerLogical(
+                StatusCode::BAD_REQUEST =&gt; <span class="prelude-val">Err</span>(AggregatorClientError::RemoteServerLogical(
                     <span class="macro">format!</span>(<span class="string">&quot;bad request: {}&quot;</span>, response.text().<span class="kw">await</span>.unwrap_or_default()),
                 )),
-                StatusCode::CONFLICT =&gt; <span class="prelude-val">Err</span>(CertificateHandlerError::RemoteServerLogical(
+                StatusCode::CONFLICT =&gt; <span class="prelude-val">Err</span>(AggregatorClientError::RemoteServerLogical(
                     <span class="string">&quot;already registered single signatures&quot;</span>.to_string(),
                 )),
-                <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(CertificateHandlerError::RemoteServerTechnical(
+                <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(AggregatorClientError::RemoteServerTechnical(
                     response.text().<span class="kw">await</span>.unwrap_or_default(),
                 )),
             },
-            <span class="prelude-val">Err</span>(err) =&gt; <span class="prelude-val">Err</span>(CertificateHandlerError::RemoteServerUnreachable(
+            <span class="prelude-val">Err</span>(err) =&gt; <span class="prelude-val">Err</span>(AggregatorClientError::RemoteServerUnreachable(
                 err.to_string(),
             )),
         }
@@ -1011,16 +1084,16 @@
     <span class="kw">use </span>mithril_common::test_utils::fake_data;
     <span class="kw">use </span>tokio::sync::RwLock;
 
-    <span class="doccomment">/// This certificate handler is intended to be used by test services.
+    <span class="doccomment">/// This aggregator client is intended to be used by test services.
     /// It actually does not communicate with an aggregator host but mimics this behavior.
     /// It is driven by a Tester that controls the CertificatePending it can return and it can return its internal state for testing.
-    </span><span class="kw">pub struct </span>DumbCertificateHandler {
+    </span><span class="kw">pub struct </span>DumbAggregatorClient {
         epoch_settings: RwLock&lt;<span class="prelude-ty">Option</span>&lt;EpochSettings&gt;&gt;,
         certificate_pending: RwLock&lt;<span class="prelude-ty">Option</span>&lt;CertificatePending&gt;&gt;,
         last_registered_signer: RwLock&lt;<span class="prelude-ty">Option</span>&lt;Signer&gt;&gt;,
     }
 
-    <span class="kw">impl </span>DumbCertificateHandler {
+    <span class="kw">impl </span>DumbAggregatorClient {
         <span class="doccomment">/// Instanciate a new DumbCertificateHandler.
         </span><span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
             <span class="self">Self </span>{
@@ -1054,7 +1127,7 @@
         }
     }
 
-    <span class="kw">impl </span>Default <span class="kw">for </span>DumbCertificateHandler {
+    <span class="kw">impl </span>Default <span class="kw">for </span>DumbAggregatorClient {
         <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
             <span class="self">Self </span>{
                 epoch_settings: RwLock::new(<span class="prelude-val">Some</span>(fake_data::epoch_settings())),
@@ -1065,10 +1138,10 @@
     }
 
     <span class="attr">#[async_trait]
-    </span><span class="kw">impl </span>CertificateHandler <span class="kw">for </span>DumbCertificateHandler {
+    </span><span class="kw">impl </span>AggregatorClient <span class="kw">for </span>DumbAggregatorClient {
         <span class="kw">async fn </span>retrieve_epoch_settings(
             <span class="kw-2">&amp;</span><span class="self">self</span>,
-        ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;EpochSettings&gt;, CertificateHandlerError&gt; {
+        ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;EpochSettings&gt;, AggregatorClientError&gt; {
             <span class="kw">let </span>epoch_settings = <span class="self">self</span>.epoch_settings.read().<span class="kw">await</span>.clone();
 
             <span class="prelude-val">Ok</span>(epoch_settings)
@@ -1076,7 +1149,7 @@
 
         <span class="kw">async fn </span>retrieve_pending_certificate(
             <span class="kw-2">&amp;</span><span class="self">self</span>,
-        ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;CertificatePending&gt;, CertificateHandlerError&gt; {
+        ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;CertificatePending&gt;, AggregatorClientError&gt; {
             <span class="kw">let </span>cert = <span class="self">self</span>.certificate_pending.read().<span class="kw">await</span>.clone();
 
             <span class="prelude-val">Ok</span>(cert)
@@ -1087,7 +1160,7 @@
             <span class="kw-2">&amp;</span><span class="self">self</span>,
             _epoch: Epoch,
             signer: <span class="kw-2">&amp;</span>Signer,
-        ) -&gt; <span class="prelude-ty">Result</span>&lt;(), CertificateHandlerError&gt; {
+        ) -&gt; <span class="prelude-ty">Result</span>&lt;(), AggregatorClientError&gt; {
             <span class="kw">let </span><span class="kw-2">mut </span>last_registered_signer = <span class="self">self</span>.last_registered_signer.write().<span class="kw">await</span>;
             <span class="kw">let </span>signer = signer.clone();
             <span class="kw-2">*</span>last_registered_signer = <span class="prelude-val">Some</span>(signer);
@@ -1100,7 +1173,7 @@
             <span class="kw-2">&amp;</span><span class="self">self</span>,
             _signed_entity_type: <span class="kw-2">&amp;</span>SignedEntityType,
             _signatures: <span class="kw-2">&amp;</span>SingleSignatures,
-        ) -&gt; <span class="prelude-ty">Result</span>&lt;(), CertificateHandlerError&gt; {
+        ) -&gt; <span class="prelude-ty">Result</span>&lt;(), AggregatorClientError&gt; {
             <span class="prelude-val">Ok</span>(())
         }
     }
@@ -1127,6 +1200,7 @@
             network_magic: <span class="prelude-val">Some</span>(<span class="number">42</span>),
             network: <span class="string">&quot;testnet&quot;</span>.to_string(),
             aggregator_endpoint: server.url(<span class="string">&quot;&quot;</span>),
+            relay_endpoint: <span class="prelude-val">None</span>,
             party_id: <span class="prelude-val">Some</span>(<span class="string">&quot;0&quot;</span>.to_string()),
             run_interval: <span class="number">100</span>,
             db_directory: Path::new(<span class="string">&quot;./db&quot;</span>).to_path_buf(),
@@ -1153,8 +1227,9 @@
             then.status(<span class="number">200</span>)
                 .body(<span class="macro">json!</span>(epoch_settings_expected).to_string());
         });
-        <span class="kw">let </span>certificate_handler = CertificateHandlerHTTPClient::new(
+        <span class="kw">let </span>certificate_handler = AggregatorHTTPClient::new(
             config.aggregator_endpoint,
+            config.relay_endpoint,
             Arc::new(api_version_provider),
         );
         <span class="kw">let </span>epoch_settings = certificate_handler.retrieve_epoch_settings().<span class="kw">await</span>;
@@ -1170,8 +1245,9 @@
             then.status(<span class="number">412</span>)
                 .header(MITHRIL_API_VERSION_HEADER, <span class="string">&quot;0.0.999&quot;</span>);
         });
-        <span class="kw">let </span>certificate_handler = CertificateHandlerHTTPClient::new(
+        <span class="kw">let </span>certificate_handler = AggregatorHTTPClient::new(
             config.aggregator_endpoint,
+            config.relay_endpoint,
             Arc::new(api_version_provider),
         );
         <span class="kw">let </span>epoch_settings = certificate_handler
@@ -1189,13 +1265,14 @@
             when.path(<span class="string">&quot;/epoch-settings&quot;</span>);
             then.status(<span class="number">500</span>).body(<span class="string">&quot;an error occurred&quot;</span>);
         });
-        <span class="kw">let </span>certificate_handler = CertificateHandlerHTTPClient::new(
+        <span class="kw">let </span>certificate_handler = AggregatorHTTPClient::new(
             config.aggregator_endpoint,
+            config.relay_endpoint,
             Arc::new(api_version_provider),
         );
         <span class="kw">let </span>epoch_settings = certificate_handler.retrieve_epoch_settings().<span class="kw">await</span>;
         <span class="macro">assert_eq!</span>(
-            CertificateHandlerError::RemoteServerTechnical(<span class="string">&quot;an error occurred&quot;</span>.to_string())
+            AggregatorClientError::RemoteServerTechnical(<span class="string">&quot;an error occurred&quot;</span>.to_string())
                 .to_string(),
             epoch_settings.unwrap_err().to_string()
         );
@@ -1210,8 +1287,9 @@
             then.status(<span class="number">200</span>)
                 .body(<span class="macro">json!</span>(pending_certificate_expected).to_string());
         });
-        <span class="kw">let </span>certificate_handler = CertificateHandlerHTTPClient::new(
+        <span class="kw">let </span>certificate_handler = AggregatorHTTPClient::new(
             config.aggregator_endpoint,
+            config.relay_endpoint,
             Arc::new(api_version_provider),
         );
         <span class="kw">let </span>pending_certificate = certificate_handler.retrieve_pending_certificate().<span class="kw">await</span>;
@@ -1230,8 +1308,9 @@
             then.status(<span class="number">412</span>)
                 .header(MITHRIL_API_VERSION_HEADER, <span class="string">&quot;0.0.999&quot;</span>);
         });
-        <span class="kw">let </span>certificate_handler = CertificateHandlerHTTPClient::new(
+        <span class="kw">let </span>certificate_handler = AggregatorHTTPClient::new(
             config.aggregator_endpoint,
+            config.relay_endpoint,
             Arc::new(api_version_provider),
         );
         <span class="kw">let </span>error = certificate_handler
@@ -1249,8 +1328,9 @@
             when.path(<span class="string">&quot;/certificate-pending&quot;</span>);
             then.status(<span class="number">204</span>);
         });
-        <span class="kw">let </span>certificate_handler = CertificateHandlerHTTPClient::new(
+        <span class="kw">let </span>certificate_handler = AggregatorHTTPClient::new(
             config.aggregator_endpoint,
+            config.relay_endpoint,
             Arc::new(api_version_provider),
         );
         <span class="kw">let </span>pending_certificate = certificate_handler.retrieve_pending_certificate().<span class="kw">await</span>;
@@ -1264,13 +1344,14 @@
             when.path(<span class="string">&quot;/certificate-pending&quot;</span>);
             then.status(<span class="number">500</span>).body(<span class="string">&quot;an error occurred&quot;</span>);
         });
-        <span class="kw">let </span>certificate_handler = CertificateHandlerHTTPClient::new(
+        <span class="kw">let </span>certificate_handler = AggregatorHTTPClient::new(
             config.aggregator_endpoint,
+            config.relay_endpoint,
             Arc::new(api_version_provider),
         );
         <span class="kw">let </span>pending_certificate = certificate_handler.retrieve_pending_certificate().<span class="kw">await</span>;
         <span class="macro">assert_eq!</span>(
-            CertificateHandlerError::RemoteServerTechnical(<span class="string">&quot;an error occurred&quot;</span>.to_string())
+            AggregatorClientError::RemoteServerTechnical(<span class="string">&quot;an error occurred&quot;</span>.to_string())
                 .to_string(),
             pending_certificate.unwrap_err().to_string()
         );
@@ -1286,8 +1367,9 @@
             when.method(POST).path(<span class="string">&quot;/register-signer&quot;</span>);
             then.status(<span class="number">201</span>);
         });
-        <span class="kw">let </span>certificate_handler = CertificateHandlerHTTPClient::new(
+        <span class="kw">let </span>certificate_handler = AggregatorHTTPClient::new(
             config.aggregator_endpoint,
+            config.relay_endpoint,
             Arc::new(api_version_provider),
         );
         <span class="kw">let </span>register_signer = certificate_handler
@@ -1307,8 +1389,9 @@
         });
         <span class="kw">let </span>single_signers = fake_data::signers(<span class="number">1</span>);
         <span class="kw">let </span>single_signer = single_signers.first().unwrap();
-        <span class="kw">let </span>certificate_handler = CertificateHandlerHTTPClient::new(
+        <span class="kw">let </span>certificate_handler = AggregatorHTTPClient::new(
             config.aggregator_endpoint,
+            config.relay_endpoint,
             Arc::new(api_version_provider),
         );
         <span class="kw">let </span>error = certificate_handler
@@ -1335,15 +1418,16 @@
                 .unwrap(),
             );
         });
-        <span class="kw">let </span>certificate_handler = CertificateHandlerHTTPClient::new(
+        <span class="kw">let </span>certificate_handler = AggregatorHTTPClient::new(
             config.aggregator_endpoint,
+            config.relay_endpoint,
             Arc::new(api_version_provider),
         );
         <span class="kw">let </span>register_signer = certificate_handler
             .register_signer(epoch, single_signer)
             .<span class="kw">await</span>;
         <span class="macro">assert_eq!</span>(
-            CertificateHandlerError::RemoteServerLogical(
+            AggregatorClientError::RemoteServerLogical(
                 <span class="string">&quot;bad request: {\&quot;label\&quot;:\&quot;error\&quot;,\&quot;message\&quot;:\&quot;an error\&quot;}&quot;</span>.to_string()
             )
             .to_string(),
@@ -1361,15 +1445,16 @@
             when.method(POST).path(<span class="string">&quot;/register-signer&quot;</span>);
             then.status(<span class="number">500</span>).body(<span class="string">&quot;an error occurred&quot;</span>);
         });
-        <span class="kw">let </span>certificate_handler = CertificateHandlerHTTPClient::new(
+        <span class="kw">let </span>certificate_handler = AggregatorHTTPClient::new(
             config.aggregator_endpoint,
+            config.relay_endpoint,
             Arc::new(api_version_provider),
         );
         <span class="kw">let </span>register_signer = certificate_handler
             .register_signer(epoch, single_signer)
             .<span class="kw">await</span>;
         <span class="macro">assert_eq!</span>(
-            CertificateHandlerError::RemoteServerTechnical(<span class="string">&quot;an error occurred&quot;</span>.to_string())
+            AggregatorClientError::RemoteServerTechnical(<span class="string">&quot;an error occurred&quot;</span>.to_string())
                 .to_string(),
             register_signer.unwrap_err().to_string()
         );
@@ -1383,8 +1468,9 @@
             when.method(POST).path(<span class="string">&quot;/register-signatures&quot;</span>);
             then.status(<span class="number">201</span>);
         });
-        <span class="kw">let </span>certificate_handler = CertificateHandlerHTTPClient::new(
+        <span class="kw">let </span>certificate_handler = AggregatorHTTPClient::new(
             config.aggregator_endpoint,
+            config.relay_endpoint,
             Arc::new(api_version_provider),
         );
         <span class="kw">let </span>register_signatures = certificate_handler
@@ -1402,8 +1488,9 @@
                 .header(MITHRIL_API_VERSION_HEADER, <span class="string">&quot;0.0.999&quot;</span>);
         });
         <span class="kw">let </span>single_signatures = fake_data::single_signatures((<span class="number">1</span>..<span class="number">5</span>).collect());
-        <span class="kw">let </span>certificate_handler = CertificateHandlerHTTPClient::new(
+        <span class="kw">let </span>certificate_handler = AggregatorHTTPClient::new(
             config.aggregator_endpoint,
+            config.relay_endpoint,
             Arc::new(api_version_provider),
         );
         <span class="kw">let </span>error = certificate_handler
@@ -1428,15 +1515,16 @@
                 .unwrap(),
             );
         });
-        <span class="kw">let </span>certificate_handler = CertificateHandlerHTTPClient::new(
+        <span class="kw">let </span>certificate_handler = AggregatorHTTPClient::new(
             config.aggregator_endpoint,
+            config.relay_endpoint,
             Arc::new(api_version_provider),
         );
         <span class="kw">let </span>register_signatures = certificate_handler
             .register_signatures(<span class="kw-2">&amp;</span>SignedEntityType::dummy(), <span class="kw-2">&amp;</span>single_signatures)
             .<span class="kw">await</span>;
         <span class="macro">assert_eq!</span>(
-            CertificateHandlerError::RemoteServerLogical(
+            AggregatorClientError::RemoteServerLogical(
                 <span class="string">&quot;bad request: {\&quot;label\&quot;:\&quot;error\&quot;,\&quot;message\&quot;:\&quot;an error\&quot;}&quot;</span>.to_string()
             )
             .to_string(),
@@ -1452,15 +1540,16 @@
             when.method(POST).path(<span class="string">&quot;/register-signatures&quot;</span>);
             then.status(<span class="number">409</span>);
         });
-        <span class="kw">let </span>certificate_handler = CertificateHandlerHTTPClient::new(
+        <span class="kw">let </span>certificate_handler = AggregatorHTTPClient::new(
             config.aggregator_endpoint,
+            config.relay_endpoint,
             Arc::new(api_version_provider),
         );
         <span class="kw">let </span>register_signatures = certificate_handler
             .register_signatures(<span class="kw-2">&amp;</span>SignedEntityType::dummy(), <span class="kw-2">&amp;</span>single_signatures)
             .<span class="kw">await</span>;
         <span class="macro">assert_eq!</span>(
-            CertificateHandlerError::RemoteServerLogical(
+            AggregatorClientError::RemoteServerLogical(
                 <span class="string">&quot;already registered single signatures&quot;</span>.to_string()
             )
             .to_string(),
@@ -1476,15 +1565,16 @@
             when.method(POST).path(<span class="string">&quot;/register-signatures&quot;</span>);
             then.status(<span class="number">500</span>).body(<span class="string">&quot;an error occurred&quot;</span>);
         });
-        <span class="kw">let </span>certificate_handler = CertificateHandlerHTTPClient::new(
+        <span class="kw">let </span>certificate_handler = AggregatorHTTPClient::new(
             config.aggregator_endpoint,
+            config.relay_endpoint,
             Arc::new(api_version_provider),
         );
         <span class="kw">let </span>register_signatures = certificate_handler
             .register_signatures(<span class="kw-2">&amp;</span>SignedEntityType::dummy(), <span class="kw-2">&amp;</span>single_signatures)
             .<span class="kw">await</span>;
         <span class="macro">assert_eq!</span>(
-            CertificateHandlerError::RemoteServerTechnical(<span class="string">&quot;an error occurred&quot;</span>.to_string())
+            AggregatorClientError::RemoteServerTechnical(<span class="string">&quot;an error occurred&quot;</span>.to_string())
                 .to_string(),
             register_signatures.unwrap_err().to_string()
         );

@@ -905,6 +905,7 @@
 <a href="#905" id="905">905</a>
 <a href="#906" id="906">906</a>
 <a href="#907" id="907">907</a>
+<a href="#908" id="908">908</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>slog_scope::{debug, info, trace, warn};
 <span class="kw">use </span>std::error::Error <span class="kw">as </span>StdError;
@@ -1414,7 +1415,7 @@
     };
 
     <span class="kw">use crate</span>::{
-        CertificateHandler, DumbCertificateHandler, MithrilSingleSigner, MockCertificateHandler,
+        AggregatorClient, DumbAggregatorClient, MithrilSingleSigner, MockAggregatorClient,
         ProtocolInitializerStore, SingleSigner,
     };
 
@@ -1466,7 +1467,7 @@
 
         SignerServices {
             stake_store: Arc::new(StakeStore::new(Box::new(DumbStoreAdapter::new()), <span class="prelude-val">None</span>)),
-            certificate_handler: Arc::new(DumbCertificateHandler::default()),
+            certificate_handler: Arc::new(DumbAggregatorClient::default()),
             chain_observer,
             digester,
             single_signer: Arc::new(MithrilSingleSigner::new(<span class="string">&quot;1&quot;</span>.to_string())),
@@ -1489,6 +1490,7 @@
         <span class="kw">let </span>services = init_services().<span class="kw">await</span>;
         <span class="kw">let </span>config = Configuration {
             aggregator_endpoint: <span class="string">&quot;http://0.0.0.0:3000&quot;</span>.to_string(),
+            relay_endpoint: <span class="prelude-val">None</span>,
             cardano_cli_path: PathBuf::new(),
             cardano_node_socket_path: PathBuf::new(),
             db_directory: PathBuf::new(),
@@ -1567,7 +1569,7 @@
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_register_signer_to_aggregator() {
         <span class="kw">let </span><span class="kw-2">mut </span>services = init_services().<span class="kw">await</span>;
-        <span class="kw">let </span>certificate_handler = Arc::new(DumbCertificateHandler::default());
+        <span class="kw">let </span>certificate_handler = Arc::new(DumbAggregatorClient::default());
         services.certificate_handler = certificate_handler.clone();
         <span class="kw">let </span>protocol_initializer_store = services.protocol_initializer_store.clone();
         <span class="kw">let </span>chain_observer = Arc::new(FakeObserver::default());
@@ -1780,7 +1782,7 @@
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_send_single_signature() {
         <span class="kw">let </span><span class="kw-2">mut </span>services = init_services().<span class="kw">await</span>;
-        <span class="kw">let </span><span class="kw-2">mut </span>certificate_handler = MockCertificateHandler::new();
+        <span class="kw">let </span><span class="kw-2">mut </span>certificate_handler = MockAggregatorClient::new();
         certificate_handler
             .expect_register_signatures()
             .once()

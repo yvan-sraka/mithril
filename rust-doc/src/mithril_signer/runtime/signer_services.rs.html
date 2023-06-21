@@ -341,6 +341,7 @@
 <a href="#341" id="341">341</a>
 <a href="#342" id="342">342</a>
 <a href="#343" id="343">343</a>
+<a href="#344" id="344">344</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>sqlite::Connection;
 <span class="kw">use </span>std::{fs, sync::Arc};
@@ -366,13 +367,12 @@
 };
 
 <span class="kw">use crate</span>::{
-    certificate_handler::CertificateHandler, single_signer::SingleSigner,
-    CertificateHandlerHTTPClient, Configuration, MithrilSingleSigner, ProtocolInitializerStore,
-    ProtocolInitializerStorer,
+    aggregator_client::AggregatorClient, single_signer::SingleSigner, AggregatorHTTPClient,
+    Configuration, MithrilSingleSigner, ProtocolInitializerStore, ProtocolInitializerStorer,
 };
 
 <span class="kw">type </span>StakeStoreService = Arc&lt;StakeStore&gt;;
-<span class="kw">type </span>CertificateHandlerService = Arc&lt;<span class="kw">dyn </span>CertificateHandler&gt;;
+<span class="kw">type </span>CertificateHandlerService = Arc&lt;<span class="kw">dyn </span>AggregatorClient&gt;;
 <span class="kw">type </span>ChainObserverService = Arc&lt;<span class="kw">dyn </span>ChainObserver&gt;;
 <span class="kw">type </span>DigesterService = Arc&lt;<span class="kw">dyn </span>ImmutableDigester&gt;;
 <span class="kw">type </span>SingleSignerService = Arc&lt;<span class="kw">dyn </span>SingleSigner&gt;;
@@ -541,8 +541,9 @@
         ));
 
         <span class="kw">let </span>api_version_provider = Arc::new(APIVersionProvider::new(era_checker.clone()));
-        <span class="kw">let </span>certificate_handler = Arc::new(CertificateHandlerHTTPClient::new(
+        <span class="kw">let </span>certificate_handler = Arc::new(AggregatorHTTPClient::new(
             <span class="self">self</span>.config.aggregator_endpoint.clone(),
+            <span class="self">self</span>.config.relay_endpoint.clone(),
             api_version_provider.clone(),
         ));
 
@@ -648,6 +649,7 @@
             network_magic: <span class="prelude-val">None</span>,
             network: <span class="string">&quot;preview&quot;</span>.to_string(),
             aggregator_endpoint: <span class="string">&quot;&quot;</span>.to_string(),
+            relay_endpoint: <span class="prelude-val">None</span>,
             party_id: <span class="prelude-val">Some</span>(<span class="string">&quot;party-123456&quot;</span>.to_string()),
             run_interval: <span class="number">1000</span>,
             db_directory: PathBuf::new(),
