@@ -670,8 +670,6 @@
 <a href="#670" id="670">670</a>
 <a href="#671" id="671">671</a>
 <a href="#672" id="672">672</a>
-<a href="#673" id="673">673</a>
-<a href="#674" id="674">674</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>async_trait::async_trait;
@@ -1073,12 +1071,13 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
+    <span class="kw">use </span><span class="kw">crate</span>::database::provider::apply_all_migrations_to_db;
     <span class="kw">use </span>mithril_common::test_utils::fake_data;
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
     <span class="kw">pub fn </span>setup_epoch_setting_db(connection: <span class="kw-2">&amp;</span>Connection) -&gt; <span class="prelude-ty">Result</span>&lt;(), StdError&gt; {
-        <span class="kw">use </span><span class="kw">crate</span>::database::migration::get_migrations;
+        apply_all_migrations_to_db(connection)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>query = {
             <span class="comment">// leverage the expanded parameter from this provider which is unit
@@ -1087,9 +1086,6 @@
             <span class="kw">let </span>(sql_values, <span class="kw">_</span>) = update_provider
                 .get_update_condition(Epoch(<span class="number">1</span>), ProtocolParameters::new(<span class="number">1</span>, <span class="number">2</span>, <span class="number">1.0</span>))
                 .expand();
-            <span class="kw">for </span>migration <span class="kw">in </span>get_migrations() {
-                connection.execute(<span class="kw-2">&amp;</span>migration.alterations)<span class="question-mark">?</span>;
-            }
 
             <span class="macro">format!</span>(<span class="string">&quot;insert into epoch_setting {sql_values}&quot;</span>)
         };

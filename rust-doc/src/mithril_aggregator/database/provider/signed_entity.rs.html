@@ -566,12 +566,13 @@
 <a href="#566" id="566">566</a>
 <a href="#567" id="567">567</a>
 <a href="#568" id="568">568</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
-
+<a href="#569" id="569">569</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
+<span class="kw">use </span>chrono::{DateTime, Utc};
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>sqlite::{Connection, Value};
-
-<span class="kw">use </span>async_trait::async_trait;
+<span class="kw">use </span>std::sync::Arc;
+<span class="kw">use </span>tokio::sync::Mutex;
 
 <span class="kw">use </span>mithril_common::{
     entities::{SignedEntity, SignedEntityType, SignedEntityTypeDiscriminants, Snapshot},
@@ -581,11 +582,8 @@
         WhereCondition,
     },
     store::adapter::AdapterError,
-    StdResult,
+    StdError, StdResult,
 };
-
-<span class="kw">use </span>mithril_common::StdError;
-<span class="kw">use </span>tokio::sync::Mutex;
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">use </span>mockall::automock;
@@ -606,7 +604,7 @@
     </span><span class="kw">pub </span>artifact: String,
 
     <span class="doccomment">/// Date and time when the signed_entity was created
-    </span><span class="kw">pub </span>created_at: String,
+    </span><span class="kw">pub </span>created_at: DateTime&lt;Utc&gt;,
 }
 
 <span class="kw">impl </span>From&lt;Snapshot&gt; <span class="kw">for </span>SignedEntityRecord {
@@ -678,7 +676,13 @@
             )<span class="question-mark">?</span>,
             certificate_id,
             artifact: artifact_str,
-            created_at,
+            created_at: DateTime::parse_from_rfc3339(<span class="kw-2">&amp;</span>created_at)
+                .map_err(|e| {
+                    HydrationError::InvalidData(<span class="macro">format!</span>(
+                        <span class="string">&quot;Could not turn string &#39;{created_at}&#39; to rfc3339 Datetime. Error: {e}&quot;
+                    </span>))
+                })<span class="question-mark">?
+                </span>.with_timezone(<span class="kw-2">&amp;</span>Utc),
         };
 
         <span class="prelude-val">Ok</span>(signed_entity_record)
@@ -804,7 +808,7 @@
                 Value::String(signed_entity_record.certificate_id),
                 Value::String(signed_entity_record.signed_entity_type.get_json_beacon().unwrap()),
                 Value::String(signed_entity_record.artifact),
-                Value::String(signed_entity_record.created_at),
+                Value::String(signed_entity_record.created_at.to_rfc3339()),
             ],
         )
     }
@@ -917,9 +921,8 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
+    <span class="kw">use </span><span class="kw">crate</span>::database::provider::{apply_all_migrations_to_db, disable_foreign_key_support};
     <span class="kw">use </span>mithril_common::{entities::Beacon, test_utils::fake_data};
-
-    <span class="kw">use </span><span class="kw">crate</span>::database::migration::get_migrations;
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
@@ -946,9 +949,8 @@
         connection: <span class="kw-2">&amp;</span>Connection,
         signed_entity_records: Vec&lt;SignedEntityRecord&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), StdError&gt; {
-        <span class="kw">for </span>migration <span class="kw">in </span>get_migrations() {
-            connection.execute(<span class="kw-2">&amp;</span>migration.alterations)<span class="question-mark">?</span>;
-        }
+        apply_all_migrations_to_db(connection)<span class="question-mark">?</span>;
+        disable_foreign_key_support(connection)<span class="question-mark">?</span>;
 
         <span class="kw">if </span>signed_entity_records.is_empty() {
             <span class="kw">return </span><span class="prelude-val">Ok</span>(());
@@ -990,7 +992,7 @@
                 .bind(<span class="number">5</span>, signed_entity_record.artifact.as_str())
                 .unwrap();
             statement
-                .bind(<span class="number">6</span>, signed_entity_record.created_at.as_str())
+                .bind(<span class="number">6</span>, signed_entity_record.created_at.to_rfc3339().as_str())
                 .unwrap();
 
             statement.next().unwrap();
@@ -1076,7 +1078,7 @@
                         .unwrap()
                 ),
                 Value::String(signed_entity_record.artifact),
-                Value::String(signed_entity_record.created_at),
+                Value::String(signed_entity_record.created_at.to_rfc3339()),
             ],
             params
         );

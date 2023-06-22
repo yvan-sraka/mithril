@@ -270,33 +270,37 @@
 <a href="#270" id="270">270</a>
 <a href="#271" id="271">271</a>
 <a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::entities::{ProtocolParameters, ProtocolVersion, SignerWithStake, StakeDistribution};
-<span class="kw">use </span>serde::{Deserialize, Serialize};
+<span class="kw">use </span>chrono::{DateTime, Utc};
 <span class="kw">use </span>sha2::{Digest, Sha256};
 
 <span class="doccomment">/// CertificateMetadata represents the metadata associated to a Certificate
-</span><span class="attr">#[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
+</span><span class="attr">#[derive(Clone, Debug, PartialEq, Default)]
 </span><span class="kw">pub struct </span>CertificateMetadata {
     <span class="doccomment">/// Protocol Version (semver)
     /// Useful to achieve backward compatibility of the certificates (including of the multi signature)
     /// part of METADATA(p,n)
-    </span><span class="attr">#[serde(rename = <span class="string">&quot;version&quot;</span>)]
     </span><span class="kw">pub </span>protocol_version: ProtocolVersion,
 
     <span class="doccomment">/// Protocol parameters
     /// part of METADATA(p,n)
-    </span><span class="attr">#[serde(rename = <span class="string">&quot;parameters&quot;</span>)]
     </span><span class="kw">pub </span>protocol_parameters: ProtocolParameters,
 
     <span class="doccomment">/// Date and time when the certificate was initiated
     /// Represents the time at which the single signatures registration is opened
     /// part of METADATA(p,n)
-    </span><span class="kw">pub </span>initiated_at: String,
+    </span><span class="kw">pub </span>initiated_at: DateTime&lt;Utc&gt;,
 
     <span class="doccomment">/// Date and time when the certificate was sealed
     /// Represents the time at which the quorum of single signatures was reached so that they were aggregated into a multi signature
     /// part of METADATA(p,n)
-    </span><span class="kw">pub </span>sealed_at: String,
+    </span><span class="kw">pub </span>sealed_at: DateTime&lt;Utc&gt;,
 
     <span class="doccomment">/// The list of the active signers with their stakes and verification keys
     /// part of METADATA(p,n)
@@ -308,8 +312,8 @@
     </span><span class="kw">pub fn </span>new(
         protocol_version: ProtocolVersion,
         protocol_parameters: ProtocolParameters,
-        initiated_at: String,
-        sealed_at: String,
+        initiated_at: DateTime&lt;Utc&gt;,
+        sealed_at: DateTime&lt;Utc&gt;,
         signers: Vec&lt;SignerWithStake&gt;,
     ) -&gt; CertificateMetadata {
         CertificateMetadata {
@@ -331,8 +335,8 @@
         <span class="kw">let </span><span class="kw-2">mut </span>hasher = Sha256::new();
         hasher.update(<span class="self">self</span>.protocol_version.as_bytes());
         hasher.update(<span class="self">self</span>.protocol_parameters.compute_hash().as_bytes());
-        hasher.update(<span class="self">self</span>.initiated_at.as_bytes());
-        hasher.update(<span class="self">self</span>.sealed_at.as_bytes());
+        hasher.update(<span class="self">self</span>.initiated_at.timestamp_nanos().to_be_bytes());
+        hasher.update(<span class="self">self</span>.sealed_at.timestamp_nanos().to_be_bytes());
         <span class="self">self</span>.signers
             .iter()
             .for_each(|signer| hasher.update(signer.compute_hash().as_bytes()));
@@ -343,18 +347,26 @@
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use </span>chrono::{Duration, TimeZone, Timelike};
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_certificate_metadata_compute_hash() {
-        <span class="kw">let </span>hash_expected = <span class="string">&quot;512632ae13b4527486303a78b500fb328b9f353b8a635a32f74fe1d899439ae8&quot;</span>;
+        <span class="kw">let </span>hash_expected = <span class="string">&quot;59453eed12f6d228136963fd3367a844a33bff26362dc1e80580802a3753adb6&quot;</span>;
+
+        <span class="kw">let </span>initiated_at = Utc
+            .with_ymd_and_hms(<span class="number">2024</span>, <span class="number">2</span>, <span class="number">12</span>, <span class="number">13</span>, <span class="number">11</span>, <span class="number">47</span>)
+            .unwrap()
+            .with_nanosecond(<span class="number">123043</span>)
+            .unwrap();
+        <span class="kw">let </span>sealed_at = initiated_at + Duration::seconds(<span class="number">100</span>);
 
         <span class="macro">assert_eq!</span>(
             hash_expected,
             CertificateMetadata::new(
                 <span class="string">&quot;0.1.0&quot;</span>.to_string(),
                 ProtocolParameters::new(<span class="number">1000</span>, <span class="number">100</span>, <span class="number">0.123</span>),
-                <span class="string">&quot;initiated_at&quot;</span>.to_string(),
-                <span class="string">&quot;sealed_at&quot;</span>.to_string(),
+                initiated_at,
+                sealed_at,
                 <span class="macro">vec!</span>[
                     SignerWithStake::new(
                         <span class="string">&quot;1&quot;</span>.to_string(),
@@ -382,8 +394,8 @@
             CertificateMetadata::new(
                 <span class="string">&quot;0.1.0-modified&quot;</span>.to_string(),
                 ProtocolParameters::new(<span class="number">1000</span>, <span class="number">100</span>, <span class="number">0.123</span>),
-                <span class="string">&quot;initiated_at&quot;</span>.to_string(),
-                <span class="string">&quot;sealed_at&quot;</span>.to_string(),
+                initiated_at,
+                sealed_at,
                 <span class="macro">vec!</span>[
                     SignerWithStake::new(
                         <span class="string">&quot;1&quot;</span>.to_string(),
@@ -411,8 +423,8 @@
             CertificateMetadata::new(
                 <span class="string">&quot;0.1.0&quot;</span>.to_string(),
                 ProtocolParameters::new(<span class="number">2000</span>, <span class="number">100</span>, <span class="number">0.123</span>),
-                <span class="string">&quot;initiated_at&quot;</span>.to_string(),
-                <span class="string">&quot;sealed_at&quot;</span>.to_string(),
+                initiated_at,
+                sealed_at,
                 <span class="macro">vec!</span>[
                     SignerWithStake::new(
                         <span class="string">&quot;1&quot;</span>.to_string(),
@@ -440,8 +452,8 @@
             CertificateMetadata::new(
                 <span class="string">&quot;0.1.0&quot;</span>.to_string(),
                 ProtocolParameters::new(<span class="number">1000</span>, <span class="number">100</span>, <span class="number">0.123</span>),
-                <span class="string">&quot;initiated_at-modified&quot;</span>.to_string(),
-                <span class="string">&quot;sealed_at&quot;</span>.to_string(),
+                initiated_at - Duration::seconds(<span class="number">78</span>),
+                sealed_at,
                 <span class="macro">vec!</span>[
                     SignerWithStake::new(
                         <span class="string">&quot;1&quot;</span>.to_string(),
@@ -469,8 +481,8 @@
             CertificateMetadata::new(
                 <span class="string">&quot;0.1.0&quot;</span>.to_string(),
                 ProtocolParameters::new(<span class="number">1000</span>, <span class="number">100</span>, <span class="number">0.123</span>),
-                <span class="string">&quot;initiated_at&quot;</span>.to_string(),
-                <span class="string">&quot;sealed_at-modified&quot;</span>.to_string(),
+                initiated_at,
+                sealed_at + Duration::seconds(<span class="number">207</span>),
                 <span class="macro">vec!</span>[
                     SignerWithStake::new(
                         <span class="string">&quot;1&quot;</span>.to_string(),
@@ -498,8 +510,8 @@
             CertificateMetadata::new(
                 <span class="string">&quot;0.1.0&quot;</span>.to_string(),
                 ProtocolParameters::new(<span class="number">1000</span>, <span class="number">100</span>, <span class="number">0.123</span>),
-                <span class="string">&quot;initiated_at&quot;</span>.to_string(),
-                <span class="string">&quot;sealed_at&quot;</span>.to_string(),
+                initiated_at,
+                sealed_at,
                 <span class="macro">vec!</span>[
                     SignerWithStake::new(
                         <span class="string">&quot;1-modified&quot;</span>.to_string(),
@@ -527,8 +539,8 @@
             CertificateMetadata::new(
                 <span class="string">&quot;0.1.0&quot;</span>.to_string(),
                 ProtocolParameters::new(<span class="number">1000</span>, <span class="number">100</span>, <span class="number">0.123</span>),
-                <span class="string">&quot;initiated_at&quot;</span>.to_string(),
-                <span class="string">&quot;sealed_at&quot;</span>.to_string(),
+                initiated_at,
+                sealed_at,
                 <span class="macro">vec!</span>[SignerWithStake::new(
                     <span class="string">&quot;1&quot;</span>.to_string(),
                     <span class="string">&quot;verification-key-123&quot;</span>.to_string(),

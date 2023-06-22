@@ -904,25 +904,42 @@
 <a href="#904" id="904">904</a>
 <a href="#905" id="905">905</a>
 <a href="#906" id="906">906</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>mithril_common::StdError;
-
-<span class="kw">use </span>mithril_common::entities::{ProtocolMessage, SingleSignatures};
-<span class="kw">use </span>mithril_common::{
-    entities::{Epoch, SignedEntityType},
-    sqlite::{HydrationError, Projection, SqLiteEntity, WhereCondition},
-    sqlite::{Provider, SourceAlias},
+<a href="#907" id="907">907</a>
+<a href="#908" id="908">908</a>
+<a href="#909" id="909">909</a>
+<a href="#910" id="910">910</a>
+<a href="#911" id="911">911</a>
+<a href="#912" id="912">912</a>
+<a href="#913" id="913">913</a>
+<a href="#914" id="914">914</a>
+<a href="#915" id="915">915</a>
+<a href="#916" id="916">916</a>
+<a href="#917" id="917">917</a>
+<a href="#918" id="918">918</a>
+<a href="#919" id="919">919</a>
+<a href="#920" id="920">920</a>
+<a href="#921" id="921">921</a>
+<a href="#922" id="922">922</a>
+<a href="#923" id="923">923</a>
+<a href="#924" id="924">924</a>
+<a href="#925" id="925">925</a>
+<a href="#926" id="926">926</a>
+<a href="#927" id="927">927</a>
+<a href="#928" id="928">928</a>
+<a href="#929" id="929">929</a>
+<a href="#930" id="930">930</a>
+<a href="#931" id="931">931</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>mithril_common::{
+    entities::{Epoch, ProtocolMessage, SignedEntityType, SingleSignatures},
+    sqlite::{HydrationError, Projection, Provider, SourceAlias, SqLiteEntity, WhereCondition},
+    StdResult,
 };
 
-<span class="kw">use </span>chrono::NaiveDateTime;
-<span class="kw">use </span>sqlite::Row;
-<span class="kw">use </span>sqlite::{Connection, Value};
-
+<span class="kw">use </span>chrono::{DateTime, Utc};
+<span class="kw">use </span>sqlite::{Connection, Row, Value};
 <span class="kw">use </span>std::sync::Arc;
-
 <span class="kw">use </span>tokio::sync::Mutex;
 <span class="kw">use </span>uuid::Uuid;
-
-<span class="kw">type </span>StdResult&lt;T&gt; = <span class="prelude-ty">Result</span>&lt;T, StdError&gt;;
 
 <span class="doccomment">/// ## OpenMessage
 ///
@@ -947,7 +964,7 @@
     </span><span class="kw">pub </span>is_certified: bool,
 
     <span class="doccomment">/// Message creation datetime, it is set by the database.
-    </span><span class="kw">pub </span>created_at: NaiveDateTime,
+    </span><span class="kw">pub </span>created_at: DateTime&lt;Utc&gt;,
 }
 
 <span class="kw">impl </span>OpenMessageRecord {
@@ -964,7 +981,7 @@
             signed_entity_type,
             protocol_message: ProtocolMessage::new(),
             is_certified: <span class="bool-val">false</span>,
-            created_at: chrono::Local::now().naive_local(),
+            created_at: Utc::now(),
         }
     }
 }
@@ -1020,11 +1037,11 @@
         <span class="kw">let </span>is_certified = row.get::&lt;i64, <span class="kw">_</span>&gt;(<span class="number">5</span>) != <span class="number">0</span>;
         <span class="kw">let </span>datetime = <span class="kw-2">&amp;</span>row.get::&lt;String, <span class="kw">_</span>&gt;(<span class="number">6</span>);
         <span class="kw">let </span>created_at =
-            NaiveDateTime::parse_from_str(datetime, <span class="string">&quot;%Y-%m-%d %H:%M:%S&quot;</span>).map_err(|e| {
+            DateTime::parse_from_rfc3339(datetime).map_err(|e| {
                 HydrationError::InvalidData(<span class="macro">format!</span>(
-                    <span class="string">&quot;Could not turn open_message.created_at field value &#39;{datetime}&#39; to NaiveDateTime. Error: {e}&quot;
+                    <span class="string">&quot;Could not turn open_message.created_at field value &#39;{datetime}&#39; to rfc3339 Datetime. Error: {e}&quot;
                 </span>))
-            })<span class="question-mark">?</span>;
+            })<span class="question-mark">?</span>.with_timezone(<span class="kw-2">&amp;</span>Utc);
 
         <span class="kw">let </span>open_message = <span class="self">Self </span>{
             open_message_id,
@@ -1128,6 +1145,7 @@
 <span class="kw">struct </span>InsertOpenMessageProvider&lt;<span class="lifetime">&#39;client</span>&gt; {
     connection: <span class="kw-2">&amp;</span><span class="lifetime">&#39;client </span>Connection,
 }
+
 <span class="kw">impl</span>&lt;<span class="lifetime">&#39;client</span>&gt; InsertOpenMessageProvider&lt;<span class="lifetime">&#39;client</span>&gt; {
     <span class="kw">pub fn </span>new(connection: <span class="kw-2">&amp;</span><span class="lifetime">&#39;client </span>Connection) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{ connection }
@@ -1139,7 +1157,7 @@
         signed_entity_type: <span class="kw-2">&amp;</span>SignedEntityType,
         protocol_message: <span class="kw-2">&amp;</span>ProtocolMessage,
     ) -&gt; StdResult&lt;WhereCondition&gt; {
-        <span class="kw">let </span>expression = <span class="string">&quot;(open_message_id, epoch_setting_id, beacon, signed_entity_type_id, protocol_message) values (?*, ?*, ?*, ?*, ?*)&quot;</span>;
+        <span class="kw">let </span>expression = <span class="string">&quot;(open_message_id, epoch_setting_id, beacon, signed_entity_type_id, protocol_message, created_at) values (?*, ?*, ?*, ?*, ?*, ?*)&quot;</span>;
         <span class="kw">let </span>beacon_str = signed_entity_type.get_json_beacon()<span class="question-mark">?</span>;
         <span class="kw">let </span>parameters = <span class="macro">vec!</span>[
             Value::String(Uuid::new_v4().to_string()),
@@ -1147,6 +1165,7 @@
             Value::String(beacon_str),
             Value::Integer(signed_entity_type.index() <span class="kw">as </span>i64),
             Value::String(serde_json::to_string(protocol_message)<span class="question-mark">?</span>),
+            Value::String(Utc::now().to_rfc3339()),
         ];
 
         <span class="prelude-val">Ok</span>(WhereCondition::new(expression, parameters))
@@ -1177,15 +1196,17 @@
     }
 
     <span class="kw">fn </span>get_update_condition(<span class="kw-2">&amp;</span><span class="self">self</span>, open_message: <span class="kw-2">&amp;</span>OpenMessageRecord) -&gt; StdResult&lt;WhereCondition&gt; {
-        <span class="kw">let </span>expression = <span class="string">&quot;(open_message_id, epoch_setting_id, beacon, signed_entity_type_id, protocol_message, is_certified) values (?*, ?*, ?*, ?*, ?*, ?*)&quot;</span>;
+        <span class="kw">let </span>expression = <span class="string">&quot;epoch_setting_id = ?*, beacon = ?*, \
+signed_entity_type_id = ?*, protocol_message = ?*, is_certified = ?* \
+where open_message_id = ?*&quot;</span>;
         <span class="kw">let </span>beacon_str = open_message.signed_entity_type.get_json_beacon()<span class="question-mark">?</span>;
         <span class="kw">let </span>parameters = <span class="macro">vec!</span>[
-            Value::String(open_message.open_message_id.to_string()),
             Value::Integer(open_message.epoch.<span class="number">0 </span><span class="kw">as </span>i64),
             Value::String(beacon_str),
             Value::Integer(open_message.signed_entity_type.index() <span class="kw">as </span>i64),
             Value::String(serde_json::to_string(<span class="kw-2">&amp;</span>open_message.protocol_message)<span class="question-mark">?</span>),
             Value::Integer(open_message.is_certified <span class="kw">as </span>i64),
+            Value::String(open_message.open_message_id.to_string()),
         ];
 
         <span class="prelude-val">Ok</span>(WhereCondition::new(expression, parameters))
@@ -1203,7 +1224,7 @@
         <span class="kw">let </span>aliases = SourceAlias::new(<span class="kw-2">&amp;</span>[(<span class="string">&quot;{:open_message:}&quot;</span>, <span class="string">&quot;open_message&quot;</span>)]);
         <span class="kw">let </span>projection = <span class="self">Self</span>::Entity::get_projection().expand(aliases);
 
-        <span class="macro">format!</span>(<span class="string">&quot;replace into open_message {condition} returning {projection}&quot;</span>)
+        <span class="macro">format!</span>(<span class="string">&quot;update open_message set {condition} returning {projection}&quot;</span>)
     }
 }
 
@@ -1261,7 +1282,7 @@
     </span><span class="kw">pub </span>single_signatures: Vec&lt;SingleSignatures&gt;,
 
     <span class="doccomment">/// Message creation datetime, it is set by the database.
-    </span><span class="kw">pub </span>created_at: NaiveDateTime,
+    </span><span class="kw">pub </span>created_at: DateTime&lt;Utc&gt;,
 }
 
 <span class="kw">impl </span>SqLiteEntity <span class="kw">for </span>OpenMessageWithSingleSignaturesRecord {
@@ -1469,13 +1490,32 @@ order by open_message.created_at desc, open_message.rowid desc
 </span><span class="kw">mod </span>tests {
     <span class="kw">use </span>mithril_common::{entities::Beacon, sqlite::SourceAlias};
 
+    <span class="kw">use </span><span class="kw">crate</span>::database::provider::{
+        apply_all_migrations_to_db, disable_foreign_key_support, SingleSignatureRecord,
+    };
     <span class="kw">use crate</span>::{dependency_injection::DependenciesBuilder, Configuration};
 
     <span class="kw">use </span><span class="kw">crate</span>::database::provider::test_helper::{
-        setup_single_signature_db, setup_single_signature_records,
+        insert_single_signatures_in_db, setup_single_signature_records,
     };
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
+
+    <span class="kw">async fn </span>get_connection() -&gt; Arc&lt;Mutex&lt;Connection&gt;&gt; {
+        <span class="kw">let </span>config = Configuration::new_sample();
+        <span class="kw">let </span><span class="kw-2">mut </span>builder = DependenciesBuilder::new(config);
+        <span class="kw">let </span>connection = builder.get_sqlite_connection().<span class="kw">await</span>.unwrap();
+        {
+            <span class="kw">let </span>lock = connection.lock().<span class="kw">await</span>;
+            lock.execute(
+                <span class="string">r#&quot;insert into epoch_setting(epoch_setting_id, protocol_parameters)
+values (1, &#39;{&quot;k&quot;: 100, &quot;m&quot;: 5, &quot;phi&quot;: 0.65 }&#39;), (2, &#39;{&quot;k&quot;: 100, &quot;m&quot;: 5, &quot;phi&quot;: 0.65 }&#39;);&quot;#</span>,
+            )
+            .unwrap();
+        }
+
+        connection
+    }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>open_message_with_single_signature_projection() {
@@ -1571,7 +1611,7 @@ order by open_message.created_at desc, open_message.rowid desc
             .unwrap()
             .expand();
 
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;(open_message_id, epoch_setting_id, beacon, signed_entity_type_id, protocol_message) values (?1, ?2, ?3, ?4, ?5)&quot;</span>.to_string(), expr);
+        <span class="macro">assert_eq!</span>(<span class="string">&quot;(open_message_id, epoch_setting_id, beacon, signed_entity_type_id, protocol_message, created_at) values (?1, ?2, ?3, ?4, ?5, ?6)&quot;</span>.to_string(), expr);
         <span class="macro">assert_eq!</span>(Value::Integer(<span class="number">12</span>), params[<span class="number">1</span>]);
         <span class="macro">assert_eq!</span>(
             Value::String(<span class="string">r#&quot;{&quot;network&quot;:&quot;&quot;,&quot;epoch&quot;:0,&quot;immutable_file_number&quot;:0}&quot;#</span>.to_string()),
@@ -1591,22 +1631,26 @@ order by open_message.created_at desc, open_message.rowid desc
             signed_entity_type: SignedEntityType::dummy(),
             protocol_message: ProtocolMessage::new(),
             is_certified: <span class="bool-val">true</span>,
-            created_at: NaiveDateTime::default(),
+            created_at: DateTime::&lt;Utc&gt;::default(),
         };
         <span class="kw">let </span>(expr, params) = provider
             .get_update_condition(<span class="kw-2">&amp;</span>open_message)
             .unwrap()
             .expand();
 
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;(open_message_id, epoch_setting_id, beacon, signed_entity_type_id, protocol_message, is_certified) values (?1, ?2, ?3, ?4, ?5, ?6)&quot;</span>.to_string(), expr);
+        <span class="macro">assert_eq!</span>(
+            <span class="string">&quot;epoch_setting_id = ?1, beacon = ?2, signed_entity_type_id = ?3, protocol_message = ?4, is_certified = ?5 where open_message_id = ?6&quot;
+                </span>.to_string(),
+            expr
+        );
         <span class="macro">assert_eq!</span>(
             <span class="macro">vec!</span>[
-                Value::String(open_message.open_message_id.to_string()),
                 Value::Integer(open_message.epoch.<span class="number">0 </span><span class="kw">as </span>i64),
                 Value::String(open_message.signed_entity_type.get_json_beacon().unwrap()),
                 Value::Integer(open_message.signed_entity_type.index() <span class="kw">as </span>i64),
                 Value::String(serde_json::to_string(<span class="kw-2">&amp;</span>open_message.protocol_message).unwrap()),
                 Value::Integer(open_message.is_certified <span class="kw">as </span>i64),
+                Value::String(open_message.open_message_id.to_string()),
             ],
             params
         );
@@ -1620,18 +1664,6 @@ order by open_message.created_at desc, open_message.rowid desc
 
         <span class="macro">assert_eq!</span>(<span class="string">&quot;epoch_setting_id &lt; ?1&quot;</span>.to_string(), expr);
         <span class="macro">assert_eq!</span>(<span class="macro">vec!</span>[Value::Integer(<span class="number">12</span>)], params,);
-    }
-
-    <span class="kw">async fn </span>get_connection() -&gt; Arc&lt;Mutex&lt;Connection&gt;&gt; {
-        <span class="kw">let </span>config = Configuration::new_sample();
-        <span class="kw">let </span><span class="kw-2">mut </span>builder = DependenciesBuilder::new(config);
-        <span class="kw">let </span>connection = builder.get_sqlite_connection().<span class="kw">await</span>.unwrap();
-        {
-            <span class="kw">let </span>lock = connection.lock().<span class="kw">await</span>;
-            lock.execute(<span class="string">r#&quot;insert into epoch_setting(epoch_setting_id, protocol_parameters) values (1, &#39;{&quot;k&quot;: 100, &quot;m&quot;: 5, &quot;phi&quot;: 0.65 }&#39;), (2, &#39;{&quot;k&quot;: 100, &quot;m&quot;: 5, &quot;phi&quot;: 0.65 }&#39;);&quot;#</span>).unwrap();
-        }
-
-        connection
     }
 
     <span class="attr">#[tokio::test]
@@ -1763,15 +1795,32 @@ order by open_message.created_at desc, open_message.rowid desc
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>repository_get_open_message_with_single_signatures_when_signatures_exist() {
-        <span class="kw">let </span>single_signature_records = setup_single_signature_records(<span class="number">1</span>, <span class="number">1</span>, <span class="number">4</span>);
-
         <span class="kw">let </span>connection = Connection::open(<span class="string">&quot;:memory:&quot;</span>).unwrap();
-        setup_single_signature_db(<span class="kw-2">&amp;</span>connection, single_signature_records.clone()).unwrap();
-        <span class="kw">let </span>repository = OpenMessageRepository::new(Arc::new(Mutex::new(connection)));
+        apply_all_migrations_to_db(<span class="kw-2">&amp;</span>connection).unwrap();
+        disable_foreign_key_support(<span class="kw-2">&amp;</span>connection).unwrap();
+        <span class="kw">let </span>connection = Arc::new(Mutex::new(connection));
+        <span class="kw">let </span>repository = OpenMessageRepository::new(connection.clone());
 
-        <span class="kw">let </span><span class="kw-2">mut </span>open_message = OpenMessageRecord::dummy();
-        open_message.open_message_id = single_signature_records[<span class="number">0</span>].open_message_id;
-        repository.update_open_message(<span class="kw-2">&amp;</span>open_message).<span class="kw">await</span>.unwrap();
+        <span class="kw">let </span>open_message = repository
+            .create_open_message(
+                Epoch(<span class="number">1</span>),
+                <span class="kw-2">&amp;</span>SignedEntityType::MithrilStakeDistribution(Epoch(<span class="number">1</span>)),
+                <span class="kw-2">&amp;</span>ProtocolMessage::default(),
+            )
+            .<span class="kw">await
+            </span>.unwrap();
+        <span class="kw">let </span>single_signature_records: Vec&lt;SingleSignatureRecord&gt; =
+            setup_single_signature_records(<span class="number">1</span>, <span class="number">1</span>, <span class="number">4</span>)
+                .into_iter()
+                .map(|s| SingleSignatureRecord {
+                    open_message_id: open_message.open_message_id,
+                    ..s
+                })
+                .collect();
+        {
+            <span class="kw">let </span>conn = connection.lock().<span class="kw">await</span>;
+            insert_single_signatures_in_db(<span class="kw-2">&amp;</span>conn, single_signature_records).unwrap();
+        }
 
         <span class="kw">let </span>open_message_with_single_signatures = repository
             .get_open_message_with_single_signatures(<span class="kw-2">&amp;</span>open_message.signed_entity_type)
@@ -1787,7 +1836,8 @@ order by open_message.created_at desc, open_message.rowid desc
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>repository_get_open_message_with_single_signatures_when_signatures_not_exist() {
         <span class="kw">let </span>connection = Connection::open(<span class="string">&quot;:memory:&quot;</span>).unwrap();
-        setup_single_signature_db(<span class="kw-2">&amp;</span>connection, Vec::new()).unwrap();
+        apply_all_migrations_to_db(<span class="kw-2">&amp;</span>connection).unwrap();
+        disable_foreign_key_support(<span class="kw-2">&amp;</span>connection).unwrap();
         <span class="kw">let </span>repository = OpenMessageRepository::new(Arc::new(Mutex::new(connection)));
 
         <span class="kw">let </span>open_message = OpenMessageRecord::dummy();

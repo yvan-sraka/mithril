@@ -789,6 +789,9 @@
 <a href="#789" id="789">789</a>
 <a href="#790" id="790">790</a>
 <a href="#791" id="791">791</a>
+<a href="#792" id="792">792</a>
+<a href="#793" id="793">793</a>
+<a href="#794" id="794">794</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>reqwest::{<span class="self">self</span>, Client, Proxy, RequestBuilder, Response, StatusCode};
 <span class="kw">use </span>slog_scope::debug;
@@ -1221,7 +1224,7 @@
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_epoch_settings_ok_200() {
         <span class="kw">let </span>(server, config, api_version_provider) = setup_test();
-        <span class="kw">let </span>epoch_settings_expected = fake_data::epoch_settings();
+        <span class="kw">let </span>epoch_settings_expected = EpochSettingsMessage::dummy();
         <span class="kw">let </span>_snapshots_mock = server.mock(|when, then| {
             when.path(<span class="string">&quot;/epoch-settings&quot;</span>);
             then.status(<span class="number">200</span>)
@@ -1234,7 +1237,10 @@
         );
         <span class="kw">let </span>epoch_settings = certificate_handler.retrieve_epoch_settings().<span class="kw">await</span>;
         epoch_settings.as_ref().expect(<span class="string">&quot;unexpected error&quot;</span>);
-        <span class="macro">assert_eq!</span>(epoch_settings_expected, epoch_settings.unwrap().unwrap());
+        <span class="macro">assert_eq!</span>(
+            FromEpochSettingsAdapter::adapt(epoch_settings_expected),
+            epoch_settings.unwrap().unwrap()
+        );
     }
 
     <span class="attr">#[tokio::test]
@@ -1281,7 +1287,7 @@
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_certificate_pending_ok_200() {
         <span class="kw">let </span>(server, config, api_version_provider) = setup_test();
-        <span class="kw">let </span>pending_certificate_expected = fake_data::certificate_pending();
+        <span class="kw">let </span>pending_certificate_expected = CertificatePendingMessage::dummy();
         <span class="kw">let </span>_snapshots_mock = server.mock(|when, then| {
             when.path(<span class="string">&quot;/certificate-pending&quot;</span>);
             then.status(<span class="number">200</span>)
@@ -1295,7 +1301,7 @@
         <span class="kw">let </span>pending_certificate = certificate_handler.retrieve_pending_certificate().<span class="kw">await</span>;
         pending_certificate.as_ref().expect(<span class="string">&quot;unexpected error&quot;</span>);
         <span class="macro">assert_eq!</span>(
-            pending_certificate_expected,
+            FromPendingCertificateMessageAdapter::adapt(pending_certificate_expected),
             pending_certificate.unwrap().unwrap()
         );
     }

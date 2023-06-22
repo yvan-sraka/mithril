@@ -2,11 +2,31 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://mithril.network/doc/adr/</id>
     <title>Mithril. A complete guide. Blog</title>
-    <updated>2023-01-05T00:00:00.000Z</updated>
+    <updated>2023-06-21T00:00:00.000Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://mithril.network/doc/adr/"/>
     <subtitle>Mithril. A complete guide. Blog</subtitle>
     <icon>https://mithril.network/doc/img/logo.svg</icon>
+    <entry>
+        <title type="html"><![CDATA[5. Use rfc3339 for date formatting 
+]]></title>
+        <id>https://mithril.network/doc/adr/5</id>
+        <link href="https://mithril.network/doc/adr/5"/>
+        <updated>2023-06-21T00:00:00.000Z</updated>
+        <summary type="html"><![CDATA[Status]]></summary>
+        <content type="html"><![CDATA[<h2 class="anchor anchorWithStickyNavbar_LWe7" id="status">Status<a href="#status" class="hash-link" aria-label="Direct link to Status" title="Direct link to Status">​</a></h2><p>Accepted</p><h2 class="anchor anchorWithStickyNavbar_LWe7" id="context">Context<a href="#context" class="hash-link" aria-label="Direct link to Context" title="Direct link to Context">​</a></h2><p>Previously, on the Mithril project we did not have a preferred format for the dates in our applications, leading to
+multiple formats being used.</p><p>For example when querying a certificate from an aggregator, the <code>initiated_at</code> field did not specify the timezone,
+timezone that could be found in the <code>sealed_at</code> field:</p><div class="language-json codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_biex"><pre tabindex="0" class="prism-code language-json codeBlock_bY9V thin-scrollbar"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token punctuation" style="color:#393A34">{</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token property" style="color:#36acaa">"initiated_at"</span><span class="token operator" style="color:#393A34">:</span><span class="token plain"> </span><span class="token string" style="color:#e3116c">"2023-05-26T00:02:23"</span><span class="token punctuation" style="color:#393A34">,</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token property" style="color:#36acaa">"sealed_at"</span><span class="token operator" style="color:#393A34">:</span><span class="token plain"> </span><span class="token string" style="color:#e3116c">"2023-05-26T00:03:23.998753492Z"</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token punctuation" style="color:#393A34">}</span><br></span></code></pre><div class="buttonGroup__atx"><button type="button" aria-label="Copy code to clipboard" title="Copy" class="clean-btn"><span class="copyButtonIcons_eSgA" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_y97N"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_LjdS"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div><p>Same problem in our databases where a date could be stored without timezone and milliseconds (ie: <code>2023-06-13 16:35:28</code>)
+in one table column and with them in another (ie: <code>2023-06-13T16:35:28.143292875Z</code>).</p><p>The <a href="https://datatracker.ietf.org/doc/html/rfc3339" target="_blank" rel="noopener noreferrer">RFC 3339</a> is a widely used, easily readable, mostly numeric (no
+translation is needed to parse the day or the month), format. Also, it always includes the timezone meaning that our
+client can convert such date to their local time if needed.</p><h2 class="anchor anchorWithStickyNavbar_LWe7" id="decision">Decision<a href="#decision" class="hash-link" aria-label="Direct link to Decision" title="Direct link to Decision">​</a></h2><p><em>Therefore</em></p><ul><li>We commit to use <strong>RFC 3339</strong> compatible date and time whenever we need to store or show a date and time.</li></ul><h2 class="anchor anchorWithStickyNavbar_LWe7" id="consequences">Consequences<a href="#consequences" class="hash-link" aria-label="Direct link to Consequences" title="Direct link to Consequences">​</a></h2><ul><li>All dates and time must use a dedicated type in the application, ie: the <code>DateTime&lt;Utc&gt;</code> type from
+<a href="https://crates.io/crates/chrono" target="_blank" rel="noopener noreferrer">chrono</a> crate.<ul><li>This means that dates must <strong>never</strong> be stored in our types using Strings.</li></ul></li><li>Internally, we will always use the <strong>UTC timezone</strong>, to avoid useless conversions between timezones.</li><li>Users or scripts querying dates from our applications or from our databases will be able to parse all of them using
+the same format.</li></ul>]]></content>
+        <author>
+            <name>Mithril Team</name>
+        </author>
+        <category label="Accepted" term="Accepted"/>
+    </entry>
     <entry>
         <title type="html"><![CDATA[4. Mithril Network Upgrade Strategy
 ]]></title>

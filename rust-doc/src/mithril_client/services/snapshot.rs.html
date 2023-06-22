@@ -808,24 +808,24 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
-    <span class="kw">use </span>std::fs::create_dir_all;
-    <span class="kw">use </span>std::io::Write;
-
-    <span class="kw">use </span>config::builder::DefaultState;
-    <span class="kw">use </span>config::ConfigBuilder;
-    <span class="kw">use </span>flate2::write::GzEncoder;
-    <span class="kw">use </span>flate2::Compression;
-    <span class="kw">use </span>mithril_common::crypto_helper::key_encode_hex;
-    <span class="kw">use </span>mithril_common::crypto_helper::tests_setup::setup_genesis;
-    <span class="kw">use </span>mithril_common::digesters::DumbImmutableDigester;
-    <span class="kw">use </span>mithril_common::messages::{
-        CertificateMessage, SnapshotListItemMessage, SnapshotListMessage, SnapshotMessage,
+    <span class="kw">use </span>chrono::{DateTime, Utc};
+    <span class="kw">use </span>config::{builder::DefaultState, ConfigBuilder};
+    <span class="kw">use </span>flate2::{write::GzEncoder, Compression};
+    <span class="kw">use </span>mithril_common::{
+        crypto_helper::{key_encode_hex, tests_setup::setup_genesis},
+        digesters::DumbImmutableDigester,
+        messages::{
+            CertificateMessage, SnapshotListItemMessage, SnapshotListMessage, SnapshotMessage,
+        },
+        test_utils::fake_data,
     };
-    <span class="kw">use </span>mithril_common::test_utils::fake_data;
+    <span class="kw">use </span>std::{fs::create_dir_all, io::Write};
 
-    <span class="kw">use </span><span class="kw">crate</span>::aggregator_client::{AggregatorClient, MockAggregatorHTTPClient};
-    <span class="kw">use </span><span class="kw">crate</span>::dependencies::DependenciesBuilder;
-    <span class="kw">use </span><span class="kw">crate</span>::FromSnapshotMessageAdapter;
+    <span class="kw">use crate</span>::{
+        aggregator_client::{AggregatorClient, MockAggregatorHTTPClient},
+        dependencies::DependenciesBuilder,
+        FromSnapshotMessageAdapter,
+    };
 
     <span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::mock::<span class="kw-2">*</span>;
 
@@ -854,7 +854,7 @@
             beacon: fake_data::beacon(),
             certificate_hash: <span class="string">&quot;certificate-hash-1&quot;</span>.to_string(),
             size: <span class="number">1024</span>,
-            created_at: <span class="string">&quot;whatever&quot;</span>.to_string(),
+            created_at: DateTime::&lt;Utc&gt;::default(),
             locations: <span class="macro">vec!</span>[<span class="string">&quot;location-1.1&quot;</span>.to_string(), <span class="string">&quot;location-1.2&quot;</span>.to_string()],
         };
         <span class="kw">let </span>item2 = SnapshotListItemMessage {
@@ -862,7 +862,7 @@
             beacon: fake_data::beacon(),
             certificate_hash: <span class="string">&quot;certificate-hash-2&quot;</span>.to_string(),
             size: <span class="number">1024</span>,
-            created_at: <span class="string">&quot;whatever&quot;</span>.to_string(),
+            created_at: DateTime::&lt;Utc&gt;::default(),
             locations: <span class="macro">vec!</span>[<span class="string">&quot;location-2.1&quot;</span>.to_string(), <span class="string">&quot;location-2.2&quot;</span>.to_string()],
         };
 
@@ -875,7 +875,7 @@
             beacon: fake_data::beacon(),
             certificate_hash: <span class="string">&quot;snapshot-digest-123&quot;</span>.to_string(),
             size: <span class="number">1024</span>,
-            created_at: <span class="string">&quot;whatever&quot;</span>.to_string(),
+            created_at: DateTime::&lt;Utc&gt;::default(),
             locations: <span class="macro">vec!</span>[<span class="string">&quot;location-10.1&quot;</span>.to_string(), <span class="string">&quot;location-10.2&quot;</span>.to_string()],
         }
     }
@@ -1106,7 +1106,7 @@
     </span><span class="kw">async fn </span>test_download_snapshot_dir_already_exists() {
         <span class="kw">let </span>test_path = std::env::temp_dir().join(<span class="string">&quot;test_download_snapshot_dir_already_exists&quot;</span>);
         <span class="kw">let _ </span>= std::fs::remove_dir_all(<span class="kw-2">&amp;</span>test_path);
-        std::fs::create_dir_all(test_path.join(<span class="string">&quot;db&quot;</span>)).unwrap();
+        create_dir_all(test_path.join(<span class="string">&quot;db&quot;</span>)).unwrap();
         <span class="kw">let </span>http_client = MockAggregatorHTTPClient::new();
         <span class="kw">let </span>http_client = Arc::new(http_client);
         <span class="kw">let </span><span class="kw-2">mut </span>dep_builder = get_dep_builder(http_client);

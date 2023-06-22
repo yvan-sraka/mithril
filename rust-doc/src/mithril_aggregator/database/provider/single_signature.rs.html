@@ -502,11 +502,22 @@
 <a href="#502" id="502">502</a>
 <a href="#503" id="503">503</a>
 <a href="#504" id="504">504</a>
-</pre></div><pre class="rust"><code><span class="attr">#![allow(dead_code)]
-</span><span class="kw">use </span>std::sync::Arc;
-
-<span class="kw">use </span>chrono::Utc;
+<a href="#505" id="505">505</a>
+<a href="#506" id="506">506</a>
+<a href="#507" id="507">507</a>
+<a href="#508" id="508">508</a>
+<a href="#509" id="509">509</a>
+<a href="#510" id="510">510</a>
+<a href="#511" id="511">511</a>
+<a href="#512" id="512">512</a>
+<a href="#513" id="513">513</a>
+<a href="#514" id="514">514</a>
+<a href="#515" id="515">515</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>chrono::{DateTime, Utc};
 <span class="kw">use </span>sqlite::{Connection, Value};
+<span class="kw">use </span>std::sync::Arc;
+<span class="kw">use </span>tokio::sync::Mutex;
+<span class="kw">use </span>uuid::Uuid;
 
 <span class="kw">use </span>mithril_common::{
     entities::{Epoch, HexEncodedSingleSignature, LotteryIndex, SingleSignatures},
@@ -514,11 +525,8 @@
         EntityCursor, HydrationError, Projection, Provider, SourceAlias, SqLiteEntity,
         WhereCondition,
     },
+    StdError,
 };
-
-<span class="kw">use </span>mithril_common::StdError;
-<span class="kw">use </span>tokio::sync::Mutex;
-<span class="kw">use </span>uuid::Uuid;
 
 <span class="kw">use </span><span class="kw">super</span>::OpenMessageRecord;
 
@@ -541,7 +549,7 @@
     </span><span class="kw">pub </span>signature: HexEncodedSingleSignature,
 
     <span class="doccomment">/// Date and time when the single_signature was created
-    </span><span class="kw">pub </span>created_at: String,
+    </span><span class="kw">pub </span>created_at: DateTime&lt;Utc&gt;,
 }
 
 <span class="kw">impl </span>SingleSignatureRecord {
@@ -556,7 +564,7 @@
             registration_epoch_setting_id,
             lottery_indexes: other.won_indexes.to_owned(),
             signature: other.signature.to_owned(),
-            created_at: <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, Utc::now()),
+            created_at: Utc::now(),
         }
     }
 }
@@ -604,7 +612,13 @@
                 </span>))
             })<span class="question-mark">?</span>,
             signature,
-            created_at,
+            created_at: DateTime::parse_from_rfc3339(<span class="kw-2">&amp;</span>created_at)
+                .map_err(|e| {
+                    HydrationError::InvalidData(<span class="macro">format!</span>(
+                        <span class="string">&quot;Could not turn string &#39;{created_at}&#39; to rfc3339 Datetime. Error: {e}&quot;
+                    </span>))
+                })<span class="question-mark">?
+                </span>.with_timezone(<span class="kw-2">&amp;</span>Utc),
         };
 
         <span class="prelude-val">Ok</span>(single_signature_record)
@@ -656,14 +670,16 @@
         ))
     }
 
-    <span class="kw">fn </span>condition_by_signer_id(<span class="kw-2">&amp;</span><span class="self">self</span>, signer_id: String) -&gt; <span class="prelude-ty">Result</span>&lt;WhereCondition, StdError&gt; {
+    <span class="attr">#[allow(dead_code)] </span><span class="comment">// todo: Should we keep this ?
+    </span><span class="kw">fn </span>condition_by_signer_id(<span class="kw-2">&amp;</span><span class="self">self</span>, signer_id: String) -&gt; <span class="prelude-ty">Result</span>&lt;WhereCondition, StdError&gt; {
         <span class="prelude-val">Ok</span>(WhereCondition::new(
             <span class="string">&quot;signer_id = ?*&quot;</span>,
             <span class="macro">vec!</span>[Value::String(signer_id)],
         ))
     }
 
-    <span class="kw">fn </span>condition_by_registration_epoch(
+    <span class="attr">#[allow(dead_code)] </span><span class="comment">// todo: Should we keep this ?
+    </span><span class="kw">fn </span>condition_by_registration_epoch(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         registration_epoch: <span class="kw-2">&amp;</span>Epoch,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;WhereCondition, StdError&gt; {
@@ -734,7 +750,7 @@
                 ),
                 Value::String(serde_json::to_string(<span class="kw-2">&amp;</span>single_signature_record.lottery_indexes).unwrap()),
                 Value::String(single_signature_record.signature.to_owned()),
-                Value::String(single_signature_record.created_at.to_owned()),
+                Value::String(single_signature_record.created_at.to_rfc3339()),
             ],
         )
     }
@@ -807,7 +823,10 @@
 </span><span class="kw">mod </span>tests {
     <span class="kw">use </span>mithril_common::test_utils::fake_data;
 
-    <span class="kw">use </span><span class="kw">crate</span>::database::provider::{setup_single_signature_db, setup_single_signature_records};
+    <span class="kw">use </span><span class="kw">crate</span>::database::provider::{
+        apply_all_migrations_to_db, disable_foreign_key_support, insert_single_signatures_in_db,
+        setup_single_signature_records,
+    };
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
@@ -906,7 +925,7 @@
                     serde_json::to_string(<span class="kw-2">&amp;</span>single_signature_record.lottery_indexes).unwrap()
                 ),
                 Value::String(single_signature_record.signature),
-                Value::String(single_signature_record.created_at),
+                Value::String(single_signature_record.created_at.to_rfc3339()),
             ],
             params
         );
@@ -917,7 +936,9 @@
         <span class="kw">let </span>single_signature_records_src = setup_single_signature_records(<span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>);
 
         <span class="kw">let </span>connection = Connection::open(<span class="string">&quot;:memory:&quot;</span>).unwrap();
-        setup_single_signature_db(<span class="kw-2">&amp;</span>connection, single_signature_records_src.clone()).unwrap();
+        apply_all_migrations_to_db(<span class="kw-2">&amp;</span>connection).unwrap();
+        disable_foreign_key_support(<span class="kw-2">&amp;</span>connection).unwrap();
+        insert_single_signatures_in_db(<span class="kw-2">&amp;</span>connection, single_signature_records_src.clone()).unwrap();
 
         <span class="kw">let </span>provider = SingleSignatureRecordProvider::new(<span class="kw-2">&amp;</span>connection);
 
@@ -989,7 +1010,8 @@
         <span class="kw">let </span>single_signature_records_copy = single_signature_records.clone();
 
         <span class="kw">let </span>connection = Connection::open(<span class="string">&quot;:memory:&quot;</span>).unwrap();
-        setup_single_signature_db(<span class="kw-2">&amp;</span>connection, Vec::new()).unwrap();
+        apply_all_migrations_to_db(<span class="kw-2">&amp;</span>connection).unwrap();
+        disable_foreign_key_support(<span class="kw-2">&amp;</span>connection).unwrap();
 
         <span class="kw">let </span>provider = UpdateSingleSignatureRecordProvider::new(<span class="kw-2">&amp;</span>connection);
 

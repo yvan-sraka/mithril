@@ -175,10 +175,18 @@
 <a href="#175" id="175">175</a>
 <a href="#176" id="176">176</a>
 <a href="#177" id="177">177</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>serde::{Deserialize, Serialize};
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>chrono::{DateTime, Utc};
+<span class="kw">use </span>serde::{Deserialize, Serialize};
 
 <span class="kw">use </span><span class="kw">crate</span>::entities::Beacon;
-
 <span class="kw">use </span><span class="kw">crate</span>::entities::ProtocolMessage;
 <span class="kw">use </span><span class="kw">crate</span>::entities::ProtocolMessagePartKey;
 <span class="kw">use </span><span class="kw">crate</span>::entities::ProtocolParameters;
@@ -204,12 +212,12 @@
     <span class="doccomment">/// Date and time when the certificate was initiated
     /// Represents the time at which the single signatures registration is opened
     /// part of METADATA(p,n)
-    </span><span class="kw">pub </span>initiated_at: String,
+    </span><span class="kw">pub </span>initiated_at: DateTime&lt;Utc&gt;,
 
     <span class="doccomment">/// Date and time when the certificate was sealed
     /// Represents the time at which the quorum of single signatures was reached so that they were aggregated into a multi signature
     /// part of METADATA(p,n)
-    </span><span class="kw">pub </span>sealed_at: String,
+    </span><span class="kw">pub </span>sealed_at: DateTime&lt;Utc&gt;,
 
     <span class="doccomment">/// The number of signers that contributed to the certificate
     /// part of METADATA(p,n)
@@ -271,8 +279,12 @@
             metadata: CertificateListItemMessageMetadata {
                 protocol_version: <span class="string">&quot;0.1.0&quot;</span>.to_string(),
                 protocol_parameters: ProtocolParameters::new(<span class="number">1000</span>, <span class="number">100</span>, <span class="number">0.123</span>),
-                initiated_at: <span class="string">&quot;initiated_at&quot;</span>.to_string(),
-                sealed_at: <span class="string">&quot;sealed_at&quot;</span>.to_string(),
+                initiated_at: DateTime::parse_from_rfc3339(<span class="string">&quot;2024-02-12T13:11:47Z&quot;</span>)
+                    .unwrap()
+                    .with_timezone(<span class="kw-2">&amp;</span>Utc),
+                sealed_at: DateTime::parse_from_rfc3339(<span class="string">&quot;2024-02-12T13:12:57Z&quot;</span>)
+                    .unwrap()
+                    .with_timezone(<span class="kw-2">&amp;</span>Utc),
                 total_signers: <span class="number">2</span>,
             },
             protocol_message: protocol_message.clone(),
@@ -303,8 +315,12 @@
             metadata: CertificateListItemMessageMetadata {
                 protocol_version: <span class="string">&quot;0.1.0&quot;</span>.to_string(),
                 protocol_parameters: ProtocolParameters::new(<span class="number">1000</span>, <span class="number">100</span>, <span class="number">0.123</span>),
-                initiated_at: <span class="string">&quot;initiated_at&quot;</span>.to_string(),
-                sealed_at: <span class="string">&quot;sealed_at&quot;</span>.to_string(),
+                initiated_at: DateTime::parse_from_rfc3339(<span class="string">&quot;2024-02-12T13:11:47Z&quot;</span>)
+                    .unwrap()
+                    .with_timezone(<span class="kw-2">&amp;</span>Utc),
+                sealed_at: DateTime::parse_from_rfc3339(<span class="string">&quot;2024-02-12T13:12:57Z&quot;</span>)
+                    .unwrap()
+                    .with_timezone(<span class="kw-2">&amp;</span>Utc),
                 total_signers: <span class="number">2</span>,
             },
             protocol_message: protocol_message.clone(),
@@ -331,8 +347,8 @@
         &quot;m&quot;: 100,
         &quot;phi_f&quot;: 0.123
     },
-    &quot;initiated_at&quot;: &quot;initiated_at&quot;,
-    &quot;sealed_at&quot;: &quot;sealed_at&quot;,
+    &quot;initiated_at&quot;: &quot;2024-02-12T13:11:47Z&quot;,
+    &quot;sealed_at&quot;: &quot;2024-02-12T13:12:57Z&quot;,
     &quot;total_signers&quot;: 2
 },
 &quot;protocol_message&quot;: {

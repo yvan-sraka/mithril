@@ -1175,11 +1175,24 @@
 <a href="#1175" id="1175">1175</a>
 <a href="#1176" id="1176">1176</a>
 <a href="#1177" id="1177">1177</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
-
+<a href="#1178" id="1178">1178</a>
+<a href="#1179" id="1179">1179</a>
+<a href="#1180" id="1180">1180</a>
+<a href="#1181" id="1181">1181</a>
+<a href="#1182" id="1182">1182</a>
+<a href="#1183" id="1183">1183</a>
+<a href="#1184" id="1184">1184</a>
+<a href="#1185" id="1185">1185</a>
+<a href="#1186" id="1186">1186</a>
+<a href="#1187" id="1187">1187</a>
+<a href="#1188" id="1188">1188</a>
+<a href="#1189" id="1189">1189</a>
+<a href="#1190" id="1190">1190</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
+<span class="kw">use </span>chrono::{DateTime, Utc};
 <span class="kw">use </span>sqlite::{Connection, Value};
-
-<span class="kw">use </span>async_trait::async_trait;
+<span class="kw">use </span>std::sync::Arc;
+<span class="kw">use </span>tokio::sync::Mutex;
 
 <span class="kw">use </span>mithril_common::{
     certificate_chain::{CertificateRetriever, CertificateRetrieverError},
@@ -1192,11 +1205,8 @@
         WhereCondition,
     },
     store::adapter::{AdapterError, StoreAdapter},
-    StdResult,
+    StdError, StdResult,
 };
-
-<span class="kw">use </span>mithril_common::StdError;
-<span class="kw">use </span>tokio::sync::Mutex;
 
 <span class="doccomment">/// Certificate record is the representation of a stored certificate.
 </span><span class="attr">#[derive(Debug, PartialEq, Clone)]
@@ -1237,10 +1247,10 @@
     </span><span class="kw">pub </span>signers: Vec&lt;SignerWithStake&gt;,
 
     <span class="doccomment">/// Date and time when the certificate was initiated
-    </span><span class="kw">pub </span>initiated_at: String,
+    </span><span class="kw">pub </span>initiated_at: DateTime&lt;Utc&gt;,
 
     <span class="doccomment">/// Date and time when the certificate was sealed
-    </span><span class="kw">pub </span>sealed_at: String,
+    </span><span class="kw">pub </span>sealed_at: DateTime&lt;Utc&gt;,
 }
 
 <span class="kw">impl </span>CertificateRecord {
@@ -1265,8 +1275,12 @@
             protocol_parameters: Default::default(),
             protocol_message: Default::default(),
             signers: <span class="macro">vec!</span>[],
-            initiated_at: <span class="string">&quot;???&quot;</span>.to_string(),
-            sealed_at: <span class="string">&quot;???&quot;</span>.to_string(),
+            initiated_at: DateTime::parse_from_rfc3339(<span class="string">&quot;2024-02-12T13:11:47Z&quot;</span>)
+                .unwrap()
+                .with_timezone(<span class="kw-2">&amp;</span>Utc),
+            sealed_at: DateTime::parse_from_rfc3339(<span class="string">&quot;2024-02-12T13:12:57Z&quot;</span>)
+                .unwrap()
+                .with_timezone(<span class="kw-2">&amp;</span>Utc),
         }
     }
 }
@@ -1406,8 +1420,20 @@
                     </span>))
                 },
             )<span class="question-mark">?</span>,
-            initiated_at,
-            sealed_at
+            initiated_at: DateTime::parse_from_rfc3339(<span class="kw-2">&amp;</span>initiated_at).map_err(
+                |e| {
+                  HydrationError::InvalidData(<span class="macro">format!</span>(
+                      <span class="string">&quot;Could not turn string &#39;{initiated_at}&#39; to rfc3339 Datetime. Error: {e}&quot;
+                  </span>))
+              },
+            )<span class="question-mark">?</span>.with_timezone(<span class="kw-2">&amp;</span>Utc),
+            sealed_at: DateTime::parse_from_rfc3339(<span class="kw-2">&amp;</span>sealed_at).map_err(
+                |e| {
+                    HydrationError::InvalidData(<span class="macro">format!</span>(
+                        <span class="string">&quot;Could not turn string &#39;{sealed_at}&#39; to rfc3339 Datetime. Error: {e}&quot;
+                    </span>))
+                },
+            )<span class="question-mark">?</span>.with_timezone(<span class="kw-2">&amp;</span>Utc),
         };
 
         <span class="prelude-val">Ok</span>(certificate_record)
@@ -1557,8 +1583,8 @@
                 ),
                 Value::String(serde_json::to_string(<span class="kw-2">&amp;</span>certificate_record.protocol_message).unwrap()),
                 Value::String(serde_json::to_string(<span class="kw-2">&amp;</span>certificate_record.signers).unwrap()),
-                Value::String(certificate_record.initiated_at.to_owned()),
-                Value::String(certificate_record.sealed_at.to_owned()),
+                Value::String(certificate_record.initiated_at.to_rfc3339()),
+                Value::String(certificate_record.sealed_at.to_rfc3339()),
             ],
         )
     }
@@ -1787,8 +1813,9 @@ group by certificate.epoch order by certificate.epoch desc, certificate.ROWID as
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
+    <span class="kw">use </span><span class="kw">crate</span>::database::provider::disable_foreign_key_support;
     <span class="kw">use crate</span>::{
-        database::migration::get_migrations, dependency_injection::DependenciesBuilder,
+        database::provider::apply_all_migrations_to_db, dependency_injection::DependenciesBuilder,
         Configuration,
     };
     <span class="kw">use </span>mithril_common::crypto_helper::tests_setup::setup_certificate_chain;
@@ -1799,9 +1826,8 @@ group by certificate.epoch order by certificate.epoch desc, certificate.ROWID as
         connection: <span class="kw-2">&amp;</span>Connection,
         certificates: Vec&lt;Certificate&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), StdError&gt; {
-        <span class="kw">for </span>migration <span class="kw">in </span>get_migrations() {
-            connection.execute(<span class="kw-2">&amp;</span>migration.alterations)<span class="question-mark">?</span>;
-        }
+        apply_all_migrations_to_db(connection)<span class="question-mark">?</span>;
+        disable_foreign_key_support(connection)<span class="question-mark">?</span>;
 
         <span class="kw">if </span>certificates.is_empty() {
             <span class="kw">return </span><span class="prelude-val">Ok</span>(());
@@ -1877,10 +1903,10 @@ group by certificate.epoch order by certificate.epoch desc, certificate.ROWID as
                 )
                 .unwrap();
             statement
-                .bind(<span class="number">12</span>, certificate_record.initiated_at.as_str())
+                .bind(<span class="number">12</span>, certificate_record.initiated_at.to_rfc3339().as_str())
                 .unwrap();
             statement
-                .bind(<span class="number">13</span>, certificate_record.sealed_at.as_str())
+                .bind(<span class="number">13</span>, certificate_record.sealed_at.to_rfc3339().as_str())
                 .unwrap();
             statement.next().unwrap();
         }
@@ -1966,8 +1992,8 @@ group by certificate.epoch order by certificate.epoch desc, certificate.ROWID as
                 ),
                 Value::String(serde_json::to_string(<span class="kw-2">&amp;</span>certificate_record.protocol_message).unwrap()),
                 Value::String(serde_json::to_string(<span class="kw-2">&amp;</span>certificate_record.signers).unwrap()),
-                Value::String(certificate_record.initiated_at),
-                Value::String(certificate_record.sealed_at),
+                Value::String(certificate_record.initiated_at.to_rfc3339()),
+                Value::String(certificate_record.sealed_at.to_rfc3339()),
             ],
             params
         );

@@ -457,14 +457,10 @@
 <a href="#457" id="457">457</a>
 <a href="#458" id="458">458</a>
 <a href="#459" id="459">459</a>
-<a href="#460" id="460">460</a>
-<a href="#461" id="461">461</a>
-<a href="#462" id="462">462</a>
-<a href="#463" id="463">463</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>async_trait::async_trait;
-<span class="kw">use </span>chrono::NaiveDateTime;
+<span class="kw">use </span>chrono::{DateTime, Utc};
 <span class="kw">use </span>sqlite::{Connection, Value};
 
 <span class="kw">use </span>mithril_common::{
@@ -495,7 +491,7 @@
     </span>epoch: Epoch,
 
     <span class="doccomment">/// DateTime of the record creation.
-    </span>created_at: NaiveDateTime,
+    </span>created_at: DateTime&lt;Utc&gt;,
 }
 
 <span class="kw">impl </span>SqLiteEntity <span class="kw">for </span>StakePool {
@@ -519,13 +515,13 @@
                     <span class="string">&quot;Could not cast i64 ({epoch_int}) to u64. Error: &#39;{e}&#39;&quot;
                 </span>))
             })<span class="question-mark">?</span>),
-            created_at: NaiveDateTime::parse_from_str(datetime, <span class="string">&quot;%Y-%m-%d %H:%M:%S&quot;</span>).map_err(
-                |e| {
+            created_at: DateTime::parse_from_rfc3339(datetime)
+                .map_err(|e| {
                     HydrationError::InvalidData(<span class="macro">format!</span>(
-                        <span class="string">&quot;Could not turn string &#39;{datetime}&#39; to NaiveDateTime. Error: {e}&quot;
+                        <span class="string">&quot;Could not turn string &#39;{datetime}&#39; to rfc3339 Datetime. Error: {e}&quot;
                     </span>))
-                },
-            )<span class="question-mark">?</span>,
+                })<span class="question-mark">?
+                </span>.with_timezone(<span class="kw-2">&amp;</span>Utc),
         };
 
         <span class="prelude-val">Ok</span>(stake_pool)
@@ -587,17 +583,17 @@
 }
 
 <span class="doccomment">/// Query to update the stake distribution
-</span><span class="kw">pub struct </span>UpdateStakePoolProvider&lt;<span class="lifetime">&#39;conn</span>&gt; {
+</span><span class="kw">pub struct </span>InsertOrReplaceStakePoolProvider&lt;<span class="lifetime">&#39;conn</span>&gt; {
     connection: <span class="kw-2">&amp;</span><span class="lifetime">&#39;conn </span>Connection,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;conn</span>&gt; UpdateStakePoolProvider&lt;<span class="lifetime">&#39;conn</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;conn</span>&gt; InsertOrReplaceStakePoolProvider&lt;<span class="lifetime">&#39;conn</span>&gt; {
     <span class="doccomment">/// Create a new instance
     </span><span class="kw">pub fn </span>new(connection: <span class="kw-2">&amp;</span><span class="lifetime">&#39;conn </span>Connection) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{ connection }
     }
 
-    <span class="kw">fn </span>get_update_condition(
+    <span class="kw">fn </span>get_insert_or_replace_condition(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         stake_pool_id: <span class="kw-2">&amp;</span>str,
         epoch: Epoch,
@@ -607,11 +603,12 @@
         <span class="kw">let </span>stake = i64::try_from(stake).unwrap();
 
         WhereCondition::new(
-            <span class="string">&quot;(stake_pool_id, epoch, stake) values (?1, ?2, ?3)&quot;</span>,
+            <span class="string">&quot;(stake_pool_id, epoch, stake, created_at) values (?1, ?2, ?3, ?4)&quot;</span>,
             <span class="macro">vec!</span>[
                 Value::String(stake_pool_id.to_owned()),
                 Value::Integer(epoch),
                 Value::Integer(stake),
+                Value::String(Utc::now().to_rfc3339()),
             ],
         )
     }
@@ -622,7 +619,7 @@
         epoch: Epoch,
         stake: Stake,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;StakePool, StdError&gt; {
-        <span class="kw">let </span>filters = <span class="self">self</span>.get_update_condition(stake_pool_id, epoch, stake);
+        <span class="kw">let </span>filters = <span class="self">self</span>.get_insert_or_replace_condition(stake_pool_id, epoch, stake);
 
         <span class="kw">let </span>entity = <span class="self">self</span>.find(filters)<span class="question-mark">?
             </span>.next()
@@ -632,7 +629,7 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;conn</span>&gt; Provider&lt;<span class="lifetime">&#39;conn</span>&gt; <span class="kw">for </span>UpdateStakePoolProvider&lt;<span class="lifetime">&#39;conn</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;conn</span>&gt; Provider&lt;<span class="lifetime">&#39;conn</span>&gt; <span class="kw">for </span>InsertOrReplaceStakePoolProvider&lt;<span class="lifetime">&#39;conn</span>&gt; {
     <span class="kw">type </span>Entity = StakePool;
 
     <span class="kw">fn </span>get_connection(<span class="kw-2">&amp;</span><span class="lifetime">&#39;conn </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;conn </span>Connection {
@@ -711,7 +708,7 @@
         stakes: StakeDistribution,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;StakeDistribution&gt;, StoreError&gt; {
         <span class="kw">let </span>connection = <span class="kw-2">&amp;*</span><span class="self">self</span>.connection.lock().<span class="kw">await</span>;
-        <span class="kw">let </span>provider = UpdateStakePoolProvider::new(connection);
+        <span class="kw">let </span>provider = InsertOrReplaceStakePoolProvider::new(connection);
         <span class="kw">let </span><span class="kw-2">mut </span>new_stakes = StakeDistribution::new();
         connection
             .execute(<span class="string">&quot;begin transaction&quot;</span>)
@@ -755,27 +752,18 @@
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use </span><span class="kw">crate</span>::database::provider::apply_all_migrations_to_db;
 
     <span class="kw">pub fn </span>setup_stake_db(connection: <span class="kw-2">&amp;</span>Connection) -&gt; <span class="prelude-ty">Result</span>&lt;(), StdError&gt; {
-        <span class="kw">use </span><span class="kw">crate</span>::database::migration::get_migrations;
+        apply_all_migrations_to_db(connection)<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>migrations = get_migrations();
-        <span class="kw">let </span>migration =
-            migrations
-                .iter()
-                .find(|<span class="kw-2">&amp;</span>m| m.version == <span class="number">1</span>)
-                .ok_or_else(|| -&gt; StdError {
-                    <span class="string">&quot;There should be a migration version 1&quot;</span>.to_string().into()
-                })<span class="question-mark">?</span>;
         <span class="kw">let </span>query = {
             <span class="comment">// leverage the expanded parameter from this provider which is unit
             // tested on its own above.
-            </span><span class="kw">let </span>update_provider = UpdateStakePoolProvider::new(connection);
+            </span><span class="kw">let </span>update_provider = InsertOrReplaceStakePoolProvider::new(connection);
             <span class="kw">let </span>(sql_values, <span class="kw">_</span>) = update_provider
-                .get_update_condition(<span class="string">&quot;pool_id&quot;</span>, Epoch(<span class="number">1</span>), <span class="number">1000</span>)
+                .get_insert_or_replace_condition(<span class="string">&quot;pool_id&quot;</span>, Epoch(<span class="number">1</span>), <span class="number">1000</span>)
                 .expand();
-
-            connection.execute(<span class="kw-2">&amp;</span>migration.alterations)<span class="question-mark">?</span>;
 
             <span class="macro">format!</span>(<span class="string">&quot;insert into stake_pool {sql_values}&quot;</span>)
         };
@@ -796,6 +784,7 @@
             statement.bind(<span class="number">1</span>, <span class="kw-2">*</span>pool_id).unwrap();
             statement.bind(<span class="number">2</span>, <span class="kw-2">*</span>epoch).unwrap();
             statement.bind(<span class="number">3</span>, <span class="kw-2">*</span>stake).unwrap();
+            statement.bind(<span class="number">4</span>, Utc::now().to_rfc3339().as_str()).unwrap();
             statement.next().unwrap();
         }
 
@@ -825,21 +814,24 @@
     }
 
     <span class="attr">#[test]
-    </span><span class="kw">fn </span>update_stake_pool() {
+    </span><span class="kw">fn </span>insert_or_replace_stake_pool() {
         <span class="kw">let </span>connection = Connection::open(<span class="string">&quot;:memory:&quot;</span>).unwrap();
-        <span class="kw">let </span>provider = UpdateStakePoolProvider::new(<span class="kw-2">&amp;</span>connection);
-        <span class="kw">let </span>condition = provider.get_update_condition(<span class="string">&quot;pool_id&quot;</span>, Epoch(<span class="number">1</span>), <span class="number">1000</span>);
+        <span class="kw">let </span>provider = InsertOrReplaceStakePoolProvider::new(<span class="kw-2">&amp;</span>connection);
+        <span class="kw">let </span>condition = provider.get_insert_or_replace_condition(<span class="string">&quot;pool_id&quot;</span>, Epoch(<span class="number">1</span>), <span class="number">1000</span>);
         <span class="kw">let </span>(values, params) = condition.expand();
 
         <span class="macro">assert_eq!</span>(
-            <span class="string">&quot;(stake_pool_id, epoch, stake) values (?1, ?2, ?3)&quot;</span>.to_string(),
+            <span class="string">&quot;(stake_pool_id, epoch, stake, created_at) values (?1, ?2, ?3, ?4)&quot;</span>.to_string(),
             values
         );
         <span class="macro">assert_eq!</span>(
             <span class="macro">vec!</span>[
                 Value::String(<span class="string">&quot;pool_id&quot;</span>.to_string()),
                 Value::Integer(<span class="number">1</span>),
-                Value::Integer(<span class="number">1000</span>)
+                Value::Integer(<span class="number">1000</span>),
+                <span class="comment">// Last params is the created_at date, since it&#39;s created by the condition itself
+                // (using Utc::now()) we don&#39;t need to test it
+                </span>params.last().unwrap().clone()
             ],
             params
         );
@@ -887,7 +879,7 @@
         <span class="kw">let </span>connection = Connection::open(<span class="string">&quot;:memory:&quot;</span>).unwrap();
         setup_stake_db(<span class="kw-2">&amp;</span>connection).unwrap();
 
-        <span class="kw">let </span>provider = UpdateStakePoolProvider::new(<span class="kw-2">&amp;</span>connection);
+        <span class="kw">let </span>provider = InsertOrReplaceStakePoolProvider::new(<span class="kw-2">&amp;</span>connection);
         <span class="kw">let </span>stake_pool = provider.persist(<span class="string">&quot;pool4&quot;</span>, Epoch(<span class="number">3</span>), <span class="number">9999</span>).unwrap();
 
         <span class="macro">assert_eq!</span>(<span class="string">&quot;pool4&quot;</span>.to_string(), stake_pool.stake_pool_id);

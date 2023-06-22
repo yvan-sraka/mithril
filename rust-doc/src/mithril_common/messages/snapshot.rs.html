@@ -88,11 +88,15 @@
 <a href="#88" id="88">88</a>
 <a href="#89" id="89">89</a>
 <a href="#90" id="90">90</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>serde::{Deserialize, Serialize};
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>chrono::{DateTime, Utc};
+<span class="kw">use </span>serde::{Deserialize, Serialize};
 
-<span class="kw">use </span><span class="kw">crate</span>::entities::Beacon;
+<span class="kw">use </span><span class="kw">crate</span>::entities::{Beacon, Epoch};
 
-<span class="kw">use </span><span class="kw">crate</span>::entities::Epoch;
 <span class="doccomment">/// Message structure of a snapshot
 </span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq, Default, Serialize, Deserialize)]
 </span><span class="kw">pub struct </span>SnapshotMessage {
@@ -109,7 +113,7 @@
     </span><span class="kw">pub </span>size: u64,
 
     <span class="doccomment">/// Date and time at which the snapshot was created
-    </span><span class="kw">pub </span>created_at: String,
+    </span><span class="kw">pub </span>created_at: DateTime&lt;Utc&gt;,
 
     <span class="doccomment">/// Locations where the binary content of the snapshot can be retrieved
     </span><span class="kw">pub </span>locations: Vec&lt;String&gt;,
@@ -128,7 +132,9 @@
             certificate_hash: <span class="string">&quot;d5daf6c03ace4a9c074e951844075b9b373bafc4e039160e3e2af01823e9abfb&quot;
                 </span>.to_string(),
             size: <span class="number">807803196</span>,
-            created_at: <span class="string">&quot;2023-01-19T13:43:05.618857482Z&quot;</span>.to_string(),
+            created_at: DateTime::parse_from_rfc3339(<span class="string">&quot;2023-01-19T13:43:05.618857482Z&quot;</span>)
+                .unwrap()
+                .with_timezone(<span class="kw-2">&amp;</span>Utc),
             locations: <span class="macro">vec!</span>[<span class="string">&quot;https://host/certificate.tar.gz&quot;</span>.to_string()],
         }
     }
@@ -149,7 +155,9 @@
             certificate_hash: <span class="string">&quot;d5daf6c03ace4a9c074e951844075b9b373bafc4e039160e3e2af01823e9abfb&quot;
                 </span>.to_string(),
             size: <span class="number">807803196</span>,
-            created_at: <span class="string">&quot;2023-01-19T13:43:05.618857482Z&quot;</span>.to_string(),
+            created_at: DateTime::parse_from_rfc3339(<span class="string">&quot;2023-01-19T13:43:05.618857482Z&quot;</span>)
+                .unwrap()
+                .with_timezone(<span class="kw-2">&amp;</span>Utc),
             locations: <span class="macro">vec!</span>[<span class="string">&quot;https://host/certificate.tar.gz&quot;</span>.to_string()],
         }
     }

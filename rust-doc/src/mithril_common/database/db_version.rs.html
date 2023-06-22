@@ -267,12 +267,23 @@
 <a href="#267" id="267">267</a>
 <a href="#268" id="268">268</a>
 <a href="#269" id="269">269</a>
+<a href="#270" id="270">270</a>
+<a href="#271" id="271">271</a>
+<a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
+<a href="#279" id="279">279</a>
+<a href="#280" id="280">280</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     cmp::Ordering,
     fmt::{Debug, Display},
 };
 
-<span class="kw">use </span>chrono::NaiveDateTime;
+<span class="kw">use </span>chrono::{DateTime, NaiveDateTime, Utc};
 <span class="kw">use </span>sqlite::{Connection, Row, Value};
 
 <span class="kw">use </span><span class="kw">crate</span>::sqlite::{
@@ -321,22 +332,32 @@
     <span class="doccomment">/// Name of the application.
     </span><span class="kw">pub </span>application_type: ApplicationNodeType,
 
-    <span class="doccomment">/// Date of the last version upgrade, Sqlite does not store timezone
-    /// information hence we have to use a `Chrono::NaiveDateTime` here.
-    </span><span class="kw">pub </span>updated_at: NaiveDateTime,
+    <span class="doccomment">/// Date of the last version upgrade
+    </span><span class="kw">pub </span>updated_at: DateTime&lt;Utc&gt;,
 }
 
 <span class="kw">impl </span>SqLiteEntity <span class="kw">for </span>DatabaseVersion {
     <span class="kw">fn </span>hydrate(row: Row) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, HydrationError&gt; {
+        <span class="kw">let </span>version = row.get::&lt;i64, <span class="kw">_</span>&gt;(<span class="number">0</span>);
+        <span class="kw">let </span>application_type = <span class="kw-2">&amp;</span>row.get::&lt;String, <span class="kw">_</span>&gt;(<span class="number">1</span>);
+        <span class="kw">let </span>updated_at = <span class="kw-2">&amp;</span>row.get::&lt;String, <span class="kw">_</span>&gt;(<span class="number">2</span>);
+
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
-            version: row.get::&lt;i64, <span class="kw">_</span>&gt;(<span class="number">0</span>),
-            application_type: ApplicationNodeType::new(<span class="kw-2">&amp;</span>row.get::&lt;String, <span class="kw">_</span>&gt;(<span class="number">1</span>))
+            version,
+            application_type: ApplicationNodeType::new(application_type)
                 .map_err(|e| HydrationError::InvalidData(<span class="macro">format!</span>(<span class="string">&quot;{e}&quot;</span>)))<span class="question-mark">?</span>,
-            updated_at: NaiveDateTime::parse_from_str(
-                <span class="kw-2">&amp;</span>row.get::&lt;String, <span class="kw">_</span>&gt;(<span class="number">2</span>),
-                <span class="string">&quot;%Y-%m-%d %H:%M:%S&quot;</span>,
-            )
-            .map_err(|e| HydrationError::InvalidData(<span class="macro">format!</span>(<span class="string">&quot;{e}&quot;</span>)))<span class="question-mark">?</span>,
+            updated_at: <span class="kw">match </span>DateTime::parse_from_rfc3339(updated_at) {
+                <span class="prelude-val">Ok</span>(date) =&gt; <span class="prelude-val">Ok</span>(date.with_timezone(<span class="kw-2">&amp;</span>Utc)),
+                <span class="comment">// todo: remove this fallback when aggregators &amp; signers have been migrated
+                // Fallback to previous date format for compatibility
+                </span><span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; NaiveDateTime::parse_from_str(updated_at, <span class="string">&quot;%Y-%m-%d %H:%M:%S&quot;</span>)
+                    .map_err(|e| {
+                        HydrationError::InvalidData(<span class="macro">format!</span>(
+                            <span class="string">&quot;Could not turn string &#39;{updated_at}&#39; to rfc3339 Datetime. Error: {e}&quot;
+                        </span>))
+                    })
+                    .map(|d| d.and_utc()),
+            }<span class="question-mark">?</span>,
         })
     }
 
@@ -394,9 +415,9 @@
 
         <span class="kw">if </span>!table_exists {
             <span class="kw">let </span>sql = <span class="macro">format!</span>(<span class="string">&quot;
-create table db_version (application_type text not null primary key, version integer not null, updated_at timestamp not null default CURRENT_TIMESTAMP);
-insert into db_version (application_type, version) values (&#39;{application_type}&#39;, 0);
-&quot;</span>);
+create table db_version (application_type text not null primary key, version integer not null, updated_at text not null);
+insert into db_version (application_type, version, updated_at) values (&#39;{application_type}&#39;, 0, &#39;{}&#39;);
+&quot;</span>, Utc::now().to_rfc3339());
             connection.execute(sql)<span class="question-mark">?</span>;
         }
 
@@ -458,6 +479,7 @@ where {condition}
             <span class="macro">vec!</span>[
                 Value::String(<span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, version.application_type)),
                 Value::Integer(version.version),
+                Value::String(version.updated_at.to_rfc3339()),
             ],
         );
         <span class="kw">let </span>entity = <span class="self">self
@@ -482,8 +504,8 @@ where {condition}
 
         <span class="macro">format!</span>(
             <span class="string">r#&quot;
-insert into db_version (application_type, version) values (?, ?)
-  on conflict (application_type) do update set version = excluded.version, updated_at = CURRENT_TIMESTAMP
+insert into db_version (application_type, version, updated_at) values (?, ?, ?)
+  on conflict (application_type) do update set version = excluded.version, updated_at = excluded.updated_at
 returning {projection}
 &quot;#
         </span>)
@@ -528,8 +550,8 @@ where true
 
         <span class="macro">assert_eq!</span>(
             <span class="string">r#&quot;
-insert into db_version (application_type, version) values (?, ?)
-  on conflict (application_type) do update set version = excluded.version, updated_at = CURRENT_TIMESTAMP
+insert into db_version (application_type, version, updated_at) values (?, ?, ?)
+  on conflict (application_type) do update set version = excluded.version, updated_at = excluded.updated_at
 returning db_version.version as version, db_version.application_type as application_type, db_version.updated_at as updated_at
 &quot;#</span>,
             provider.get_definition(<span class="string">&quot;true&quot;</span>)

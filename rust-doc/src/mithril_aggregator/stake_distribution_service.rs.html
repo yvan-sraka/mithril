@@ -374,6 +374,15 @@
 <a href="#374" id="374">374</a>
 <a href="#375" id="375">375</a>
 <a href="#376" id="376">376</a>
+<a href="#377" id="377">377</a>
+<a href="#378" id="378">378</a>
+<a href="#379" id="379">379</a>
+<a href="#380" id="380">380</a>
+<a href="#381" id="381">381</a>
+<a href="#382" id="382">382</a>
+<a href="#383" id="383">383</a>
+<a href="#384" id="384">384</a>
+<a href="#385" id="385">385</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Stake Pool manager for the Runners
 //!
 
@@ -603,9 +612,9 @@
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
     <span class="kw">use </span><span class="kw">crate</span>::dependency_injection::DependenciesBuilder;
+    <span class="kw">use </span>mithril_common::chain_observer::MockChainObserver;
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
-    <span class="kw">use </span>mithril_common::chain_observer::MockChainObserver;
 
     <span class="kw">async fn </span>get_service(chain_observer: MockChainObserver) -&gt; MithrilStakeDistributionService {
         <span class="kw">let </span><span class="kw-2">mut </span>builder = DependenciesBuilder::new(<span class="kw">crate</span>::Configuration::new_sample());
@@ -613,29 +622,38 @@
             builder.get_stake_store().<span class="kw">await</span>.unwrap(),
             Arc::new(chain_observer),
         );
-        <span class="kw">let </span>query =
-            <span class="string">&quot;insert into stake_pool (stake_pool_id, epoch, stake) values (?1, ?2, ?3)&quot;</span>.to_string();
-        <span class="kw">let </span>stake_distribution: <span class="kw-2">&amp;</span>[(<span class="kw-2">&amp;</span>str, i64, i64); <span class="number">9</span>] = <span class="kw-2">&amp;</span>[
-            (<span class="string">&quot;pool1&quot;</span>, <span class="number">1</span>, <span class="number">1000</span>),
-            (<span class="string">&quot;pool2&quot;</span>, <span class="number">1</span>, <span class="number">1100</span>),
-            (<span class="string">&quot;pool3&quot;</span>, <span class="number">1</span>, <span class="number">1300</span>),
-            (<span class="string">&quot;pool1&quot;</span>, <span class="number">2</span>, <span class="number">1230</span>),
-            (<span class="string">&quot;pool2&quot;</span>, <span class="number">2</span>, <span class="number">1090</span>),
-            (<span class="string">&quot;pool3&quot;</span>, <span class="number">2</span>, <span class="number">1300</span>),
-            (<span class="string">&quot;pool1&quot;</span>, <span class="number">3</span>, <span class="number">1250</span>),
-            (<span class="string">&quot;pool2&quot;</span>, <span class="number">3</span>, <span class="number">1370</span>),
-            (<span class="string">&quot;pool3&quot;</span>, <span class="number">3</span>, <span class="number">1300</span>),
-        ];
-        <span class="kw">let </span>connection = builder.get_sqlite_connection().<span class="kw">await</span>.unwrap();
-        <span class="kw">let </span>cnt_lock = connection.lock().<span class="kw">await</span>;
 
-        <span class="kw">for </span>(pool_id, epoch, stake) <span class="kw">in </span>stake_distribution {
-            <span class="kw">let </span><span class="kw-2">mut </span>statement = cnt_lock.prepare(<span class="kw-2">&amp;</span>query).unwrap();
-
-            statement.bind(<span class="number">1</span>, <span class="kw-2">*</span>pool_id).unwrap();
-            statement.bind(<span class="number">2</span>, <span class="kw-2">*</span>epoch).unwrap();
-            statement.bind(<span class="number">3</span>, <span class="kw-2">*</span>stake).unwrap();
-            statement.next().unwrap();
+        <span class="kw">let </span>store = builder.get_stake_store().<span class="kw">await</span>.unwrap();
+        <span class="kw">for </span>(epoch, stake_distribution) <span class="kw">in </span>[
+            (
+                Epoch(<span class="number">1</span>),
+                [
+                    (<span class="string">&quot;pool1&quot;</span>.to_string(), <span class="number">1000</span>),
+                    (<span class="string">&quot;pool2&quot;</span>.to_string(), <span class="number">1100</span>),
+                    (<span class="string">&quot;pool3&quot;</span>.to_string(), <span class="number">1300</span>),
+                ],
+            ),
+            (
+                Epoch(<span class="number">2</span>),
+                [
+                    (<span class="string">&quot;pool1&quot;</span>.to_string(), <span class="number">1230</span>),
+                    (<span class="string">&quot;pool2&quot;</span>.to_string(), <span class="number">1090</span>),
+                    (<span class="string">&quot;pool3&quot;</span>.to_string(), <span class="number">1300</span>),
+                ],
+            ),
+            (
+                Epoch(<span class="number">3</span>),
+                [
+                    (<span class="string">&quot;pool1&quot;</span>.to_string(), <span class="number">1250</span>),
+                    (<span class="string">&quot;pool2&quot;</span>.to_string(), <span class="number">1370</span>),
+                    (<span class="string">&quot;pool3&quot;</span>.to_string(), <span class="number">1300</span>),
+                ],
+            ),
+        ] {
+            store
+                .save_stakes(epoch, StakeDistribution::from(stake_distribution))
+                .<span class="kw">await
+                </span>.unwrap();
         }
 
         stake_service

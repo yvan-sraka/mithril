@@ -525,6 +525,9 @@
 <a href="#525" id="525">525</a>
 <a href="#526" id="526">526</a>
 <a href="#527" id="527">527</a>
+<a href="#528" id="528">528</a>
+<a href="#529" id="529">529</a>
+<a href="#530" id="530">530</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::http_server::routes::middlewares;
 <span class="kw">use </span><span class="kw">crate</span>::http_server::SERVER_BASE_PATH;
 <span class="kw">use </span><span class="kw">crate</span>::DependencyManager;
@@ -754,18 +757,19 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
-    <span class="kw">use </span><span class="kw">crate</span>::http_server::SERVER_BASE_PATH;
-    <span class="kw">use </span><span class="kw">crate</span>::signed_entity_service::MockSignedEntityService;
-    <span class="kw">use </span>mithril_common::entities::{Beacon, SignedEntity, SignedEntityType};
-    <span class="kw">use </span>mithril_common::signable_builder::Artifact;
-    <span class="kw">use </span>mithril_common::sqlite::HydrationError;
-    <span class="kw">use </span>mithril_common::test_utils::apispec::APISpec;
-    <span class="kw">use </span>mithril_common::test_utils::fake_data;
+    <span class="kw">use crate</span>::{
+        http_server::SERVER_BASE_PATH, initialize_dependencies,
+        signed_entity_service::MockSignedEntityService,
+    };
+    <span class="kw">use </span>chrono::{DateTime, Utc};
+    <span class="kw">use </span>mithril_common::{
+        entities::{Beacon, SignedEntity, SignedEntityType},
+        signable_builder::Artifact,
+        sqlite::HydrationError,
+        test_utils::{apispec::APISpec, fake_data},
+    };
     <span class="kw">use </span>serde_json::Value::Null;
-
-    <span class="kw">use </span><span class="kw">crate</span>::initialize_dependencies;
-    <span class="kw">use </span>warp::http::Method;
-    <span class="kw">use </span>warp::test::request;
+    <span class="kw">use </span>warp::{http::Method, test::request};
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
@@ -797,7 +801,9 @@
                 signed_entity_type: signed_entity_type.to_owned(),
                 certificate_id: <span class="macro">format!</span>(<span class="string">&quot;certificate-{idx}&quot;</span>),
                 artifact: record,
-                created_at: <span class="string">&quot;2023-01-19T13:43:05.618857482Z&quot;</span>.to_string(),
+                created_at: DateTime::parse_from_rfc3339(<span class="string">&quot;2023-01-19T13:43:05.618857482Z&quot;</span>)
+                    .unwrap()
+                    .with_timezone(<span class="kw-2">&amp;</span>Utc),
             })
             .collect()
     }

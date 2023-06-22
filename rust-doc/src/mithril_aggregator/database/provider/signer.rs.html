@@ -527,18 +527,31 @@
 <a href="#527" id="527">527</a>
 <a href="#528" id="528">528</a>
 <a href="#529" id="529">529</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
-
-<span class="kw">use </span>async_trait::async_trait;
-<span class="kw">use </span>chrono::Utc;
+<a href="#530" id="530">530</a>
+<a href="#531" id="531">531</a>
+<a href="#532" id="532">532</a>
+<a href="#533" id="533">533</a>
+<a href="#534" id="534">534</a>
+<a href="#535" id="535">535</a>
+<a href="#536" id="536">536</a>
+<a href="#537" id="537">537</a>
+<a href="#538" id="538">538</a>
+<a href="#539" id="539">539</a>
+<a href="#540" id="540">540</a>
+<a href="#541" id="541">541</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
+<span class="kw">use </span>chrono::{DateTime, Utc};
 <span class="kw">use </span>sqlite::{Connection, Value};
-
-<span class="kw">use </span>mithril_common::sqlite::{
-    EntityCursor, HydrationError, Projection, Provider, SourceAlias, SqLiteEntity, WhereCondition,
-};
-
-<span class="kw">use </span>mithril_common::StdError;
+<span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>tokio::sync::Mutex;
+
+<span class="kw">use </span>mithril_common::{
+    sqlite::{
+        EntityCursor, HydrationError, Projection, Provider, SourceAlias, SqLiteEntity,
+        WhereCondition,
+    },
+    StdError,
+};
 
 <span class="kw">use </span><span class="kw">crate</span>::signer_registerer::SignerRecorder;
 
@@ -552,10 +565,10 @@
     </span>pool_ticker: <span class="prelude-ty">Option</span>&lt;String&gt;,
 
     <span class="doccomment">/// Date and time when the signer was created.
-    </span>created_at: String,
+    </span>created_at: DateTime&lt;Utc&gt;,
 
     <span class="doccomment">/// Date and time when the signer was updated.
-    </span>updated_at: String,
+    </span>updated_at: DateTime&lt;Utc&gt;,
 }
 
 <span class="kw">impl </span>SqLiteEntity <span class="kw">for </span>SignerRecord {
@@ -571,8 +584,20 @@
         <span class="kw">let </span>signer_record = <span class="self">Self </span>{
             signer_id,
             pool_ticker,
-            created_at,
-            updated_at,
+            created_at: DateTime::parse_from_rfc3339(<span class="kw-2">&amp;</span>created_at)
+                .map_err(|e| {
+                    HydrationError::InvalidData(<span class="macro">format!</span>(
+                        <span class="string">&quot;Could not turn string &#39;{created_at}&#39; to rfc3339 Datetime. Error: {e}&quot;
+                    </span>))
+                })<span class="question-mark">?
+                </span>.with_timezone(<span class="kw-2">&amp;</span>Utc),
+            updated_at: DateTime::parse_from_rfc3339(<span class="kw-2">&amp;</span>updated_at)
+                .map_err(|e| {
+                    HydrationError::InvalidData(<span class="macro">format!</span>(
+                        <span class="string">&quot;Could not turn string &#39;{updated_at}&#39; to rfc3339 Datetime. Error: {e}&quot;
+                    </span>))
+                })<span class="question-mark">?
+                </span>.with_timezone(<span class="kw-2">&amp;</span>Utc),
         };
 
         <span class="prelude-val">Ok</span>(signer_record)
@@ -661,8 +686,8 @@
                     .pool_ticker
                     .map(Value::String)
                     .unwrap_or(Value::Null),
-                Value::String(signer_record.created_at),
-                Value::String(signer_record.updated_at),
+                Value::String(signer_record.created_at.to_rfc3339()),
+                Value::String(signer_record.updated_at.to_rfc3339()),
             ],
         )
     }
@@ -715,8 +740,8 @@
                     .pool_ticker
                     .map(Value::String)
                     .unwrap_or(Value::Null),
-                Value::String(signer_record.created_at),
-                Value::String(signer_record.updated_at),
+                Value::String(signer_record.created_at.to_rfc3339()),
+                Value::String(signer_record.updated_at.to_rfc3339()),
             ],
         )
     }
@@ -766,8 +791,8 @@
     <span class="kw">async fn </span>record_signer_id(<span class="kw-2">&amp;</span><span class="self">self</span>, signer_id: String) -&gt; <span class="prelude-ty">Result</span>&lt;(), StdError&gt; {
         <span class="kw">let </span>connection = <span class="kw-2">&amp;*</span><span class="self">self</span>.connection.lock().<span class="kw">await</span>;
         <span class="kw">let </span>provider = InsertSignerRecordProvider::new(connection);
-        <span class="kw">let </span>created_at = <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, Utc::now());
-        <span class="kw">let </span>updated_at = created_at.clone();
+        <span class="kw">let </span>created_at = Utc::now();
+        <span class="kw">let </span>updated_at = created_at;
         <span class="kw">let </span>signer_record = SignerRecord {
             signer_id,
             pool_ticker: <span class="prelude-val">None</span>,
@@ -786,8 +811,8 @@
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), StdError&gt; {
         <span class="kw">let </span>connection = <span class="kw-2">&amp;*</span><span class="self">self</span>.connection.lock().<span class="kw">await</span>;
         <span class="kw">let </span>provider = UpdateSignerRecordProvider::new(connection);
-        <span class="kw">let </span>created_at = <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, Utc::now());
-        <span class="kw">let </span>updated_at = created_at.clone();
+        <span class="kw">let </span>created_at = Utc::now();
+        <span class="kw">let </span>updated_at = created_at;
         <span class="kw">let </span>signer_record = SignerRecord {
             signer_id,
             pool_ticker,
@@ -802,8 +827,8 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
-
-    <span class="kw">use </span><span class="kw">crate</span>::database::migration::get_migrations;
+    <span class="kw">use </span><span class="kw">crate</span>::database::provider::apply_all_migrations_to_db;
+    <span class="kw">use </span>chrono::Duration;
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
@@ -812,8 +837,12 @@
             .map(|idx| SignerRecord {
                 signer_id: <span class="macro">format!</span>(<span class="string">&quot;signer-{idx}&quot;</span>),
                 pool_ticker: <span class="prelude-val">Some</span>(<span class="macro">format!</span>(<span class="string">&quot;pool-ticker-{idx}&quot;</span>)),
-                created_at: <span class="string">&quot;2023-01-19T13:43:05.618857482Z&quot;</span>.to_string(),
-                updated_at: <span class="string">&quot;2024-01-19T13:43:05.618857482Z&quot;</span>.to_string(),
+                created_at: DateTime::parse_from_rfc3339(<span class="string">&quot;2023-01-19T13:43:05.618857482Z&quot;</span>)
+                    .unwrap()
+                    .with_timezone(<span class="kw-2">&amp;</span>Utc),
+                updated_at: DateTime::parse_from_rfc3339(<span class="string">&quot;2024-01-19T13:43:05.618857482Z&quot;</span>)
+                    .unwrap()
+                    .with_timezone(<span class="kw-2">&amp;</span>Utc),
             })
             .collect()
     }
@@ -822,9 +851,7 @@
         connection: <span class="kw-2">&amp;</span>Connection,
         signer_records: Vec&lt;SignerRecord&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), StdError&gt; {
-        <span class="kw">for </span>migration <span class="kw">in </span>get_migrations() {
-            connection.execute(<span class="kw-2">&amp;</span>migration.alterations)<span class="question-mark">?</span>;
-        }
+        apply_all_migrations_to_db(connection)<span class="question-mark">?</span>;
 
         <span class="kw">if </span>signer_records.is_empty() {
             <span class="kw">return </span><span class="prelude-val">Ok</span>(());
@@ -854,10 +881,10 @@
                 )
                 .unwrap();
             statement
-                .bind(<span class="number">3</span>, signer_record.created_at.as_str())
+                .bind(<span class="number">3</span>, signer_record.created_at.to_rfc3339().as_str())
                 .unwrap();
             statement
-                .bind(<span class="number">4</span>, signer_record.updated_at.as_str())
+                .bind(<span class="number">4</span>, signer_record.updated_at.to_rfc3339().as_str())
                 .unwrap();
             statement.next().unwrap();
         }
@@ -906,8 +933,8 @@
             <span class="macro">vec!</span>[
                 Value::String(signer_record.signer_id),
                 Value::String(signer_record.pool_ticker.unwrap()),
-                Value::String(signer_record.created_at),
-                Value::String(signer_record.updated_at),
+                Value::String(signer_record.created_at.to_rfc3339()),
+                Value::String(signer_record.updated_at.to_rfc3339()),
             ],
             params
         );
@@ -929,8 +956,8 @@
             <span class="macro">vec!</span>[
                 Value::String(signer_record.signer_id),
                 Value::String(signer_record.pool_ticker.unwrap()),
-                Value::String(signer_record.created_at),
-                Value::String(signer_record.updated_at),
+                Value::String(signer_record.created_at.to_rfc3339()),
+                Value::String(signer_record.updated_at.to_rfc3339()),
             ],
             params
         );
@@ -984,11 +1011,10 @@
             <span class="macro">assert_eq!</span>(signer_record, signer_record_saved);
         }
 
-        <span class="kw">for </span>signer_record <span class="kw">in </span>signer_records_fake {
-            <span class="kw">let </span><span class="kw-2">mut </span>signer_record_copy = signer_record.clone();
-            signer_record_copy.updated_at = <span class="string">&quot;2025-01-19T13:43:05.618857482Z&quot;</span>.to_string();
-            <span class="kw">let </span>signer_record_saved = provider.persist(signer_record_copy.clone()).unwrap();
-            <span class="macro">assert_eq!</span>(signer_record_copy, signer_record_saved);
+        <span class="kw">for </span><span class="kw-2">mut </span>signer_record <span class="kw">in </span>signer_records_fake {
+            signer_record.updated_at += Duration::hours(<span class="number">1</span>);
+            <span class="kw">let </span>signer_record_saved = provider.persist(signer_record.clone()).unwrap();
+            <span class="macro">assert_eq!</span>(signer_record, signer_record_saved);
         }
     }
 
@@ -1006,13 +1032,11 @@
             <span class="macro">assert_eq!</span>(signer_record, signer_record_saved);
         }
 
-        <span class="kw">for </span>signer_record <span class="kw">in </span>signer_records_fake {
-            <span class="kw">let </span><span class="kw-2">mut </span>signer_record_copy = signer_record.clone();
-            signer_record_copy.pool_ticker =
-                <span class="prelude-val">Some</span>(<span class="macro">format!</span>(<span class="string">&quot;new-pool-{}&quot;</span>, signer_record_copy.signer_id));
-            signer_record_copy.updated_at = <span class="string">&quot;2025-01-19T13:43:05.618857482Z&quot;</span>.to_string();
-            <span class="kw">let </span>signer_record_saved = provider.persist(signer_record_copy.clone()).unwrap();
-            <span class="macro">assert_eq!</span>(signer_record_copy, signer_record_saved);
+        <span class="kw">for </span><span class="kw-2">mut </span>signer_record <span class="kw">in </span>signer_records_fake {
+            signer_record.pool_ticker = <span class="prelude-val">Some</span>(<span class="macro">format!</span>(<span class="string">&quot;new-pool-{}&quot;</span>, signer_record.signer_id));
+            signer_record.updated_at += Duration::hours(<span class="number">1</span>);
+            <span class="kw">let </span>signer_record_saved = provider.persist(signer_record.clone()).unwrap();
+            <span class="macro">assert_eq!</span>(signer_record, signer_record_saved);
         }
     }
 
