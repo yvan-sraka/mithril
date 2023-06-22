@@ -523,6 +523,33 @@
 <a href="#523" id="523">523</a>
 <a href="#524" id="524">524</a>
 <a href="#525" id="525">525</a>
+<a href="#526" id="526">526</a>
+<a href="#527" id="527">527</a>
+<a href="#528" id="528">528</a>
+<a href="#529" id="529">529</a>
+<a href="#530" id="530">530</a>
+<a href="#531" id="531">531</a>
+<a href="#532" id="532">532</a>
+<a href="#533" id="533">533</a>
+<a href="#534" id="534">534</a>
+<a href="#535" id="535">535</a>
+<a href="#536" id="536">536</a>
+<a href="#537" id="537">537</a>
+<a href="#538" id="538">538</a>
+<a href="#539" id="539">539</a>
+<a href="#540" id="540">540</a>
+<a href="#541" id="541">541</a>
+<a href="#542" id="542">542</a>
+<a href="#543" id="543">543</a>
+<a href="#544" id="544">544</a>
+<a href="#545" id="545">545</a>
+<a href="#546" id="546">546</a>
+<a href="#547" id="547">547</a>
+<a href="#548" id="548">548</a>
+<a href="#549" id="549">549</a>
+<a href="#550" id="550">550</a>
+<a href="#551" id="551">551</a>
+<a href="#552" id="552">552</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Migration module
 //!
 </span><span class="kw">use </span>mithril_common::database::SqlMigration;
@@ -894,7 +921,10 @@ create table new_signer (
     primary key (signer_id)
 );
 
-insert into new_signer select * from signer order by rowid asc;
+insert into new_signer (signer_id, pool_ticker, created_at, updated_at)
+    select              signer_id, pool_ticker, strftime(&#39;%Y-%m-%dT%H:%M:%fZ&#39;, created_at),
+        strftime(&#39;%Y-%m-%dT%H:%M:%fZ&#39;, updated_at)
+    from signer order by rowid asc;
 
 drop table signer;
 alter table new_signer rename to signer;
@@ -913,7 +943,12 @@ create table new_signer_registration (
     foreign key (epoch_setting_id) references epoch_setting(epoch_setting_id)
     foreign key (signer_id) references signer(signer_id)
 );
-insert into new_signer_registration select * from signer_registration order by rowid asc;
+insert into new_signer_registration
+        (  signer_id, epoch_setting_id, verification_key, verification_key_signature,
+        operational_certificate, kes_period, stake, created_at)
+    select signer_id, epoch_setting_id, verification_key, verification_key_signature,
+        operational_certificate, kes_period, stake, strftime(&#39;%Y-%m-%dT%H:%M:%fZ&#39;, created_at)
+    from signer_registration order by rowid asc;
 
 drop table signer_registration;
 alter table new_signer_registration rename to signer_registration;
@@ -930,7 +965,12 @@ create table new_single_signature (
     foreign key (open_message_id) references open_message(open_message_id) on delete cascade
     foreign key (signer_id, registration_epoch_setting_id) references signer_registration(signer_id, epoch_setting_id)
 );
-insert into new_single_signature select * from single_signature order by rowid asc;
+insert into new_single_signature
+        (  open_message_id, signer_id, registration_epoch_setting_id, lottery_indexes, signature,
+        created_at)
+    select open_message_id, signer_id, registration_epoch_setting_id, lottery_indexes, signature,
+        strftime(&#39;%Y-%m-%dT%H:%M:%fZ&#39;, created_at)
+    from single_signature order by rowid asc;
 
 drop table single_signature;
 alter table new_single_signature rename to single_signature;
@@ -949,12 +989,13 @@ create table new_open_message (
     foreign key (signed_entity_type_id) references signed_entity_type (signed_entity_type_id)
 );
 
-insert into new_open_message (open_message_id, epoch_setting_id, beacon, signed_entity_type_id,
-    created_at, protocol_message, is_certified)
+insert into new_open_message
+        (  open_message_id, epoch_setting_id, beacon, signed_entity_type_id,
+        protocol_message, is_certified,
+        created_at)
     select open_message_id, epoch_setting_id, beacon, signed_entity_type_id,
-        strftime(&#39;%Y-%m-%dT%H:%M:%fZ&#39;, created_at) as created_at,
-        protocol_message,
-        is_certified
+        protocol_message, is_certified,
+        strftime(&#39;%Y-%m-%dT%H:%M:%fZ&#39;, created_at)
     from open_message order by rowid asc;
 
 drop table open_message;
@@ -981,10 +1022,14 @@ create table new_certificate (
     foreign key (parent_certificate_id) references certificate(certificate_id)
 );
 insert into new_certificate
+        (  certificate_id, parent_certificate_id, message, signature, aggregate_verification_key,
+        epoch, beacon, protocol_version, protocol_parameters, protocol_message, signers,
+        initiated_at,
+        sealed_at)
     select certificate_id, parent_certificate_id, message, signature, aggregate_verification_key,
         epoch, beacon, protocol_version, protocol_parameters, protocol_message, signers,
-        strftime(&#39;%Y-%m-%dT%H:%M:%fZ&#39;, initiated_at) as initiated_at,
-        strftime(&#39;%Y-%m-%dT%H:%M:%fZ&#39;, sealed_at) as sealed_at
+        strftime(&#39;%Y-%m-%dT%H:%M:%fZ&#39;, initiated_at),
+        strftime(&#39;%Y-%m-%dT%H:%M:%fZ&#39;, sealed_at)
     from certificate order by rowid asc;
 
 drop table certificate;
@@ -1001,8 +1046,9 @@ create table new_stake_pool (
     primary key (epoch, stake_pool_id)
 );
 
-insert into new_stake_pool (stake_pool_id, epoch, stake, created_at)
-    select stake_pool_id, epoch, stake, strftime(&#39;%Y-%m-%dT%H:%M:%fZ&#39;, created_at) as created_at
+insert into new_stake_pool
+        (  stake_pool_id, epoch, stake, created_at)
+    select stake_pool_id, epoch, stake, strftime(&#39;%Y-%m-%dT%H:%M:%fZ&#39;, created_at)
     from stake_pool order by rowid asc;
 
 drop table stake_pool;
@@ -1014,13 +1060,18 @@ create table new_signed_entity (
     signed_entity_type_id       integer     not null,
     certificate_id              text        not null,
     beacon                      json        not null,
-    artifact                    json        not null,
     created_at                  text        not null,
+    artifact                    json        not null,
     primary key (signed_entity_id)
     foreign key (signed_entity_type_id) references signed_entity_type(signed_entity_type_id)
     foreign key (certificate_id) references certificate(certificate_id)
 );
-insert into new_signed_entity select * from signed_entity order by rowid asc;
+insert into new_signed_entity
+        (  signed_entity_id, signed_entity_type_id, certificate_id, beacon, artifact,
+        created_at)
+    select signed_entity_id, signed_entity_type_id, certificate_id, beacon, artifact,
+        strftime(&#39;%Y-%m-%dT%H:%M:%fZ&#39;, created_at)
+    from signed_entity order by rowid asc;
 
 drop table signed_entity;
 alter table new_signed_entity rename to signed_entity;
@@ -1040,7 +1091,10 @@ pragma foreign_keys=true;
 create table if not exists &#39;db_version&#39; (application_type text not null primary key, version integer not null, updated_at text not null);
 
 create table new_db_version (application_type text not null primary key, version integer not null, updated_at text not null);
-insert into new_db_version select * from db_version order by rowid asc;
+insert into new_db_version
+        (  application_type, version, updated_at)
+    select application_type, version, updated_at
+    from db_version order by rowid asc;
 
 drop table db_version;
 alter table new_db_version rename to db_version;
