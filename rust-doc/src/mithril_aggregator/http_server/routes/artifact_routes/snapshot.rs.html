@@ -573,7 +573,7 @@
     dependency_manager: Arc&lt;DependencyManager&gt;,
 ) -&gt; <span class="kw">impl </span>Filter&lt;Extract = (<span class="kw">impl </span>warp::Reply,), Error = warp::Rejection&gt; + Clone {
     <span class="macro">warp::path!</span>(<span class="string">&quot;artifact&quot; </span>/ <span class="string">&quot;snapshot&quot; </span>/ String / <span class="string">&quot;download&quot;</span>)
-        .and(warp::get())
+        .and(warp::get().or(warp::head()).unify())
         .and(middlewares::with_config(dependency_manager.clone()))
         .and(middlewares::with_signed_entity_service(dependency_manager))
         .and_then(handlers::snapshot_download)

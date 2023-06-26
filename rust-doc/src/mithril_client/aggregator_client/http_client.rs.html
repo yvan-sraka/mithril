@@ -230,16 +230,23 @@
 <a href="#230" id="230">230</a>
 <a href="#231" id="231">231</a>
 <a href="#232" id="232">232</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>std::{
-    io::{stdout, Write},
-    path::Path,
-    sync::Arc,
-};
+<a href="#233" id="233">233</a>
+<a href="#234" id="234">234</a>
+<a href="#235" id="235">235</a>
+<a href="#236" id="236">236</a>
+<a href="#237" id="237">237</a>
+<a href="#238" id="238">238</a>
+<a href="#239" id="239">239</a>
+<a href="#240" id="240">240</a>
+<a href="#241" id="241">241</a>
+<a href="#242" id="242">242</a>
+<a href="#243" id="243">243</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>std::{path::Path, sync::Arc};
 
 <span class="kw">use </span>async_recursion::async_recursion;
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>futures::StreamExt;
-<span class="kw">use </span>human_bytes::human_bytes;
+<span class="kw">use </span>indicatif::ProgressBar;
 <span class="kw">use </span>reqwest::{Client, Response, StatusCode};
 <span class="kw">use </span>semver::Version;
 <span class="kw">use </span>slog_scope::debug;
@@ -288,7 +295,15 @@
     </span><span class="kw">async fn </span>get_content(<span class="kw-2">&amp;</span><span class="self">self</span>, url: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;String, AggregatorHTTPClientError&gt;;
 
     <span class="doccomment">/// Download large files on the disk
-    </span><span class="kw">async fn </span>download(<span class="kw-2">&amp;</span><span class="self">self</span>, url: <span class="kw-2">&amp;</span>str, filepath: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Result</span>&lt;(), AggregatorHTTPClientError&gt;;
+    </span><span class="kw">async fn </span>download(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        url: <span class="kw-2">&amp;</span>str,
+        filepath: <span class="kw-2">&amp;</span>Path,
+        progress_bar: ProgressBar,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), AggregatorHTTPClientError&gt;;
+
+    <span class="doccomment">/// Test if the given URL points to a valid location &amp; existing content.
+    </span><span class="kw">async fn </span>probe(<span class="kw-2">&amp;</span><span class="self">self</span>, url: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;(), AggregatorHTTPClientError&gt;;
 }
 
 <span class="doccomment">/// Responsible of HTTP transport and API version check.
@@ -407,7 +422,12 @@
             })
     }
 
-    <span class="kw">async fn </span>download(<span class="kw-2">&amp;</span><span class="self">self</span>, url: <span class="kw-2">&amp;</span>str, filepath: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Result</span>&lt;(), AggregatorHTTPClientError&gt; {
+    <span class="kw">async fn </span>download(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        url: <span class="kw-2">&amp;</span>str,
+        filepath: <span class="kw-2">&amp;</span>Path,
+        progress_bar: ProgressBar,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), AggregatorHTTPClientError&gt; {
         <span class="kw">let </span>response = <span class="self">self</span>.get(url).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>local_file = fs::File::create(filepath).<span class="kw">await</span>.map_err(|e| {
             AggregatorHTTPClientError::SubsystemError {
@@ -418,14 +438,8 @@
                 error: e.into(),
             }
         })<span class="question-mark">?</span>;
-        <span class="kw">let </span>bytes_total = response.content_length().ok_or_else(|| {
-            AggregatorHTTPClientError::RemoteServerTechnical(
-                <span class="string">&quot;Download: cannot get response content length&quot;</span>.to_string(),
-            )
-        })<span class="question-mark">?</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>downloaded_bytes: u64 = <span class="number">0</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>remote_stream = response.bytes_stream();
-        <span class="kw">let </span><span class="kw-2">mut </span>cursor = <span class="number">0</span>;
 
         <span class="kw">while let </span><span class="prelude-val">Some</span>(item) = remote_stream.next().<span class="kw">await </span>{
             <span class="kw">let </span>chunk = item.map_err(|e| {
@@ -444,22 +458,30 @@
                 }
             })<span class="question-mark">?</span>;
             downloaded_bytes += chunk.len() <span class="kw">as </span>u64;
-            cursor = (cursor + <span class="number">1</span>) % <span class="number">40</span>;
-            <span class="macro">print!</span>(
-                <span class="string">&quot;{} downloading {} ({:02}%)          \r&quot;</span>,
-                <span class="kw">match </span>cursor {
-                    <span class="number">0</span>..=<span class="number">9 </span>=&gt; <span class="string">&#39;/&#39;</span>,
-                    <span class="number">10</span>..=<span class="number">19 </span>=&gt; <span class="string">&#39;|&#39;</span>,
-                    <span class="number">20</span>..=<span class="number">29 </span>=&gt; <span class="string">&#39;\\&#39;</span>,
-                    <span class="kw">_ </span>=&gt; <span class="string">&#39;-&#39;</span>,
-                },
-                human_bytes(bytes_total <span class="kw">as </span>f64),
-                (<span class="number">100 </span>* downloaded_bytes) / bytes_total
-            );
-            stdout().flush().unwrap();
+            progress_bar.set_position(downloaded_bytes);
         }
 
         <span class="prelude-val">Ok</span>(())
+    }
+
+    <span class="kw">async fn </span>probe(<span class="kw-2">&amp;</span><span class="self">self</span>, url: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;(), AggregatorHTTPClientError&gt; {
+        <span class="macro">debug!</span>(<span class="string">&quot;HEAD url=&#39;{url}&#39;.&quot;</span>);
+        <span class="kw">let </span>request_builder = Client::new().head(url.to_owned());
+        <span class="kw">let </span>response = request_builder.send().<span class="kw">await</span>.map_err(|e| {
+            AggregatorHTTPClientError::SubsystemError {
+                message: <span class="macro">format!</span>(<span class="string">&quot;Cannot perform a HEAD for url=&#39;{url}&#39;&quot;</span>),
+                error: e.into(),
+            }
+        })<span class="question-mark">?</span>;
+        <span class="kw">match </span>response.status() {
+            StatusCode::OK =&gt; <span class="prelude-val">Ok</span>(()),
+            StatusCode::NOT_FOUND =&gt; <span class="prelude-val">Err</span>(AggregatorHTTPClientError::RemoteServerLogical(<span class="macro">format!</span>(
+                <span class="string">&quot;Url=&#39;{url} not found&quot;
+            </span>))),
+            status_code =&gt; <span class="prelude-val">Err</span>(AggregatorHTTPClientError::RemoteServerTechnical(<span class="macro">format!</span>(
+                <span class="string">&quot;Unhandled error {status_code}&quot;
+            </span>))),
+        }
     }
 }
 </code></pre></div></section></main></body></html>

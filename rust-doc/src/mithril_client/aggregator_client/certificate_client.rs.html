@@ -145,6 +145,12 @@
 <a href="#145" id="145">145</a>
 <a href="#146" id="146">146</a>
 <a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>async_trait::async_trait;
@@ -155,6 +161,7 @@
     messages::CertificateMessage,
     StdResult,
 };
+<span class="kw">use </span>slog_scope::{crit, debug};
 
 <span class="kw">use </span><span class="kw">crate</span>::FromCertificateMessageAdapter;
 
@@ -180,7 +187,12 @@
             <span class="prelude-val">Err</span>(e) <span class="kw">if </span><span class="macro">matches!</span>(e, AggregatorHTTPClientError::RemoteServerLogical(<span class="kw">_</span>)) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
             <span class="prelude-val">Err</span>(e) =&gt; <span class="prelude-val">Err</span>(e.into()),
             <span class="prelude-val">Ok</span>(response) =&gt; {
-                <span class="kw">let </span>message = serde_json::from_str::&lt;CertificateMessage&gt;(<span class="kw-2">&amp;</span>response)<span class="question-mark">?</span>;
+                <span class="kw">let </span>message =
+                    serde_json::from_str::&lt;CertificateMessage&gt;(<span class="kw-2">&amp;</span>response).map_err(|e| {
+                        <span class="macro">crit!</span>(<span class="string">&quot;Could not create certificate from API message: {e}.&quot;</span>);
+                        <span class="macro">debug!</span>(<span class="string">&quot;Certificate message = {response}&quot;</span>);
+                        e
+                    })<span class="question-mark">?</span>;
 
                 <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(FromCertificateMessageAdapter::adapt(message)))
             }

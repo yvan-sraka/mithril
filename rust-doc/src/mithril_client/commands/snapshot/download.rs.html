@@ -62,10 +62,22 @@
 <a href="#62" id="62">62</a>
 <a href="#63" id="63">63</a>
 <a href="#64" id="64">64</a>
+<a href="#65" id="65">65</a>
+<a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
+<a href="#74" id="74">74</a>
+<a href="#75" id="75">75</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{path::PathBuf, sync::Arc};
 
 <span class="kw">use </span>clap::Parser;
 <span class="kw">use </span>config::{builder::DefaultState, Config, ConfigBuilder};
+<span class="kw">use </span>indicatif::ProgressDrawTarget;
 <span class="kw">use </span>mithril_common::StdResult;
 
 <span class="kw">use </span><span class="kw">crate</span>::dependencies::DependenciesBuilder;
@@ -96,22 +108,32 @@
         <span class="kw">let </span><span class="kw-2">mut </span>dependencies_builder = DependenciesBuilder::new(config.clone());
         <span class="kw">let </span>snapshot_service = dependencies_builder.get_snapshot_service().<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let </span>snapshot = snapshot_service.show(<span class="kw-2">&amp;</span><span class="self">self</span>.digest).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>progress_target = <span class="kw">if </span><span class="self">self</span>.json {
+            ProgressDrawTarget::hidden()
+        } <span class="kw">else </span>{
+            ProgressDrawTarget::stdout()
+        };
         <span class="kw">let </span>filepath = snapshot_service
             .download(
                 <span class="kw-2">&amp;</span>snapshot,
                 <span class="kw-2">&amp;</span><span class="self">self</span>.download_dir,
                 <span class="kw-2">&amp;</span>config.get_string(<span class="string">&quot;genesis_verification_key&quot;</span>)<span class="question-mark">?</span>,
+                progress_target,
             )
             .<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="kw">if </span><span class="self">self</span>.json {
-            <span class="macro">println!</span>(<span class="string">r#&quot;{{&quot;file&quot;: &quot;{}&quot;}}&quot;#</span>, filepath.display());
+            <span class="macro">println!</span>(
+                <span class="string">r#&quot;{{&quot;db_directory&quot;: &quot;{}&quot;}}&quot;#</span>,
+                filepath.canonicalize()<span class="question-mark">?</span>.display()
+            );
         } <span class="kw">else </span>{
             <span class="macro">println!</span>(
-                <span class="string">r###&quot;Unpack success snapshot &#39;{}&#39;
-into {}
+                <span class="string">r###&quot;Snapshot &#39;{}&#39; has been unpacked and checked against Mithril multi-signature contained in the certificate.
+                
+Files in the directory &#39;{}&#39; can be used to run a Cardano node.
 
-Restore a Cardano Node with:
+If you are using Cardano Docker image, you can restore a Cardano Node with:
 
 docker run -v cardano-node-ipc:/ipc -v cardano-node-data:/data --mount type=bind,source=&quot;{}&quot;,target=/data/db/ -e NETWORK={} inputoutput/cardano-node:8.1.1
 
