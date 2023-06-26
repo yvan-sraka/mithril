@@ -829,9 +829,6 @@
 <a href="#829" id="829">829</a>
 <a href="#830" id="830">830</a>
 <a href="#831" id="831">831</a>
-<a href="#832" id="832">832</a>
-<a href="#833" id="833">833</a>
-<a href="#834" id="834">834</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>slog_scope::{crit, debug, error, info};
 <span class="kw">use </span>std::{fmt::Display, thread::sleep, time::Duration};
 
@@ -1071,7 +1068,7 @@
                         <span class="macro">info!</span>(<span class="string">&quot; ⋅ pending certificate has not changed, waiting…&quot;</span>);
                     } <span class="kw">else </span>{
                         <span class="macro">info!</span>(<span class="string">&quot; → new pending certificate detected, transiting to REGISTERED&quot;</span>);
-                        <span class="self">self</span>.state = <span class="self">self</span>.transition_from_signed_to_registered().<span class="kw">await</span><span class="question-mark">?</span>;
+                        <span class="self">self</span>.state = <span class="self">self</span>.transition_from_signed_to_registered(<span class="kw-2">*</span>epoch).<span class="kw">await</span><span class="question-mark">?</span>;
                     }
                 } <span class="kw">else </span>{
                     <span class="macro">info!</span>(<span class="string">&quot; ⋅ no pending certificate, waiting…&quot;</span>);
@@ -1125,14 +1122,11 @@
         <span class="prelude-val">Ok</span>(SignerState::Unregistered { epoch })
     }
 
-    <span class="kw">async fn </span>transition_from_signed_to_registered(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;SignerState, RuntimeError&gt; {
-        <span class="kw">let </span>current_beacon = <span class="self">self
-            </span>.get_current_beacon(<span class="string">&quot;checking if epoch has changed&quot;</span>)
-            .<span class="kw">await</span><span class="question-mark">?</span>;
-
-        <span class="prelude-val">Ok</span>(SignerState::Registered {
-            epoch: current_beacon.epoch,
-        })
+    <span class="kw">async fn </span>transition_from_signed_to_registered(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        epoch: Epoch,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;SignerState, RuntimeError&gt; {
+        <span class="prelude-val">Ok</span>(SignerState::Registered { epoch })
     }
 
     <span class="kw">async fn </span>transition_from_registered_to_unregistered(
@@ -1525,7 +1519,7 @@
         <span class="kw">let </span><span class="kw-2">mut </span>runner = MockSignerRunner::new();
         runner
             .expect_get_current_beacon()
-            .times(<span class="number">2</span>)
+            .times(<span class="number">1</span>)
             .returning(<span class="kw">move </span>|| <span class="prelude-val">Ok</span>(beacon_clone.to_owned()));
         runner
             .expect_get_pending_certificate()

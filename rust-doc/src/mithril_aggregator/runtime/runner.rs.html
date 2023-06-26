@@ -1129,6 +1129,16 @@
 <a href="#1129" id="1129">1129</a>
 <a href="#1130" id="1130">1130</a>
 <a href="#1131" id="1131">1131</a>
+<a href="#1132" id="1132">1132</a>
+<a href="#1133" id="1133">1133</a>
+<a href="#1134" id="1134">1134</a>
+<a href="#1135" id="1135">1135</a>
+<a href="#1136" id="1136">1136</a>
+<a href="#1137" id="1137">1137</a>
+<a href="#1138" id="1138">1138</a>
+<a href="#1139" id="1139">1139</a>
+<a href="#1140" id="1140">1140</a>
+<a href="#1141" id="1141">1141</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>mithril_common::entities::Epoch;
 <span class="kw">use </span>mithril_common::entities::SignedEntityType;
@@ -1342,6 +1352,11 @@
                     <span class="string">&quot;RUNNER: get_current_non_certified_open_message_for_signed_entity_type: no open message found, a new one will be created&quot;</span>;
                     <span class="string">&quot;signed_entity_type&quot; </span>=&gt; <span class="question-mark">?</span>signed_entity_type
                 );
+                <span class="comment">// In order to fix flakiness in the end to end tests, we are compelled to update the beacon (of the multi-signer)
+                // This avoids the computation of the next AVK on the wrong epoch (in &#39;compute_protocol_message&#39;)
+                // TODO: remove &#39;current_beacon&#39; from the multi-signer state which will avoid this fix
+                </span><span class="kw">let </span>chain_beacon: Beacon = <span class="self">self</span>.get_beacon_from_chain().<span class="kw">await</span><span class="question-mark">?</span>;
+                <span class="self">self</span>.update_beacon(<span class="kw-2">&amp;</span>chain_beacon).<span class="kw">await</span><span class="question-mark">?</span>;
                 <span class="kw">let </span>protocol_message = <span class="self">self</span>.compute_protocol_message(signed_entity_type).<span class="kw">await</span><span class="question-mark">?</span>;
                 <span class="prelude-val">Some</span>(
                     <span class="self">self</span>.create_open_message(signed_entity_type, <span class="kw-2">&amp;</span>protocol_message)
@@ -1516,6 +1531,7 @@
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: update protocol parameters&quot;</span>; <span class="string">&quot;beacon&quot; </span>=&gt; #<span class="question-mark">?</span>new_beacon);
         <span class="kw">let </span>protocol_parameters = <span class="self">self</span>.dependencies.config.protocol_parameters.clone();
 
+        <span class="self">self</span>.update_beacon(new_beacon).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="self">self</span>.dependencies
             .multi_signer
             .write()
@@ -1542,7 +1558,11 @@
             multi_signer
                 .compute_next_stake_distribution_aggregate_verification_key()
                 .<span class="kw">await</span><span class="question-mark">?
-                </span>.unwrap_or_default(),
+                </span>.ok_or_else(|| {
+                    RunnerError::MissingNextAggregateVerificationKey(<span class="macro">format!</span>(
+                        <span class="string">&quot;Next aggregate verification key could not be computed for signer endity type {signed_entity_type:?}&quot;
+                    </span>))
+                })<span class="question-mark">?</span>,
         );
 
         <span class="prelude-val">Ok</span>(protocol_message)
