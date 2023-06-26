@@ -160,18 +160,51 @@
 <a href="#160" id="160">160</a>
 <a href="#161" id="161">161</a>
 <a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use crate</span>::{
     certificate_chain::CertificateGenesisProducer,
     crypto_helper::{
-        key_decode_hex, key_encode_hex, OpCert, ProtocolClerk, ProtocolGenesisSigner,
-        ProtocolInitializer, ProtocolKeyRegistration, ProtocolSigner,
-        ProtocolSignerVerificationKeySignature, ProtocolStakeDistribution,
+        key_decode_hex, key_encode_hex, OpCert, ProtocolAggregateVerificationKey, ProtocolClerk,
+        ProtocolGenesisSigner, ProtocolInitializer, ProtocolKeyRegistration, ProtocolSigner,
+        ProtocolSignerVerificationKey, ProtocolSignerVerificationKeySignature,
+        ProtocolStakeDistribution,
     },
     entities::{
-        Beacon, Certificate, ProtocolMessage, ProtocolParameters, Signer, SignerWithStake,
-        SingleSignatures, StakeDistribution,
+        Beacon, Certificate, HexEncodedAgregateVerificationKey, ProtocolMessage,
+        ProtocolParameters, Signer, SignerWithStake, SingleSignatures, StakeDistribution,
     },
 };
 
@@ -194,6 +227,18 @@
     </span><span class="kw">pub </span>protocol_signer: ProtocolSigner,
     <span class="doccomment">/// A [ProtocolSigner].
     </span><span class="kw">pub </span>protocol_initializer: ProtocolInitializer,
+}
+
+<span class="kw">impl </span>From&lt;SignerFixture&gt; <span class="kw">for </span>SignerWithStake {
+    <span class="kw">fn </span>from(fixture: SignerFixture) -&gt; <span class="self">Self </span>{
+        fixture.signer_with_stake
+    }
+}
+
+<span class="kw">impl </span>From&lt;<span class="kw-2">&amp;</span>SignerFixture&gt; <span class="kw">for </span>SignerWithStake {
+    <span class="kw">fn </span>from(fixture: <span class="kw-2">&amp;</span>SignerFixture) -&gt; <span class="self">Self </span>{
+        fixture.signer_with_stake.clone()
+    }
 }
 
 <span class="kw">impl </span>MithrilFixture {
@@ -248,30 +293,44 @@
         <span class="self">self</span>.stake_distribution.clone()
     }
 
-    <span class="doccomment">/// Create a genesis certificate using the fixture signers for the given beacon
-    </span><span class="kw">pub fn </span>create_genesis_certificate(<span class="kw-2">&amp;</span><span class="self">self</span>, beacon: <span class="kw-2">&amp;</span>Beacon) -&gt; Certificate {
+    <span class="doccomment">/// Create a [ProtocolClerk] based on this fixture protocol parameters &amp; signers
+    </span><span class="kw">pub fn </span>create_clerk(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; ProtocolClerk {
         <span class="kw">let </span><span class="kw-2">mut </span>key_registration = ProtocolKeyRegistration::init(<span class="kw-2">&amp;</span><span class="self">self</span>.stake_distribution);
 
         <span class="kw">for </span>signer <span class="kw">in </span><span class="self">self</span>.signers.clone() {
-            <span class="kw">let </span>verification_key =
-                key_decode_hex(<span class="kw-2">&amp;</span>signer.signer_with_stake.verification_key).unwrap();
             key_registration
                 .register(
                     <span class="prelude-val">Some</span>(signer.signer_with_stake.party_id.to_owned()),
                     signer.operational_certificate(),
                     signer.verification_key_signature(),
                     signer.signer_with_stake.kes_period,
-                    verification_key,
+                    signer.verification_key(),
                 )
                 .unwrap();
         }
-
         <span class="kw">let </span>closed_registration = key_registration.close();
-        <span class="kw">let </span>clerk = ProtocolClerk::from_registration(
+
+        ProtocolClerk::from_registration(
             <span class="kw-2">&amp;</span><span class="self">self</span>.protocol_parameters.clone().into(),
             <span class="kw-2">&amp;</span>closed_registration,
-        );
-        <span class="kw">let </span>genesis_avk = clerk.compute_avk();
+        )
+    }
+
+    <span class="doccomment">/// Compute the Aggregate Verification Key for this fixture.
+    </span><span class="kw">pub fn </span>compute_avk(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; ProtocolAggregateVerificationKey {
+        <span class="kw">let </span>clerk = <span class="self">self</span>.create_clerk();
+        clerk.compute_avk()
+    }
+
+    <span class="doccomment">/// Compute the Aggregate Verification Key for this fixture and returns it has a [HexEncodedAgregateVerificationKey].
+    </span><span class="kw">pub fn </span>compute_and_encode_avk(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; HexEncodedAgregateVerificationKey {
+        <span class="kw">let </span>avk = <span class="self">self</span>.compute_avk();
+        key_encode_hex(avk).unwrap()
+    }
+
+    <span class="doccomment">/// Create a genesis certificate using the fixture signers for the given beacon
+    </span><span class="kw">pub fn </span>create_genesis_certificate(<span class="kw-2">&amp;</span><span class="self">self</span>, beacon: <span class="kw-2">&amp;</span>Beacon) -&gt; Certificate {
+        <span class="kw">let </span>genesis_avk = <span class="self">self</span>.compute_avk();
         <span class="kw">let </span>genesis_signer = ProtocolGenesisSigner::create_deterministic_genesis_signer();
         <span class="kw">let </span>genesis_producer = CertificateGenesisProducer::new(<span class="prelude-val">Some</span>(Arc::new(genesis_signer)));
         <span class="kw">let </span>genesis_protocol_message =
@@ -314,7 +373,12 @@
         }
     }
 
-    <span class="doccomment">/// Decode this verification key signature certificate if any
+    <span class="doccomment">/// Decode this signer verification key certificate
+    </span><span class="kw">pub fn </span>verification_key(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; ProtocolSignerVerificationKey {
+        key_decode_hex(<span class="kw-2">&amp;</span><span class="self">self</span>.signer_with_stake.verification_key).unwrap()
+    }
+
+    <span class="doccomment">/// Decode this signer verification key signature certificate if any
     </span><span class="kw">pub fn </span>verification_key_signature(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;ProtocolSignerVerificationKeySignature&gt; {
         <span class="self">self</span>.signer_with_stake
             .verification_key_signature
