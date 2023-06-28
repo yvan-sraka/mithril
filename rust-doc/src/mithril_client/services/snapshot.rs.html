@@ -617,60 +617,31 @@
 <a href="#617" id="617">617</a>
 <a href="#618" id="618">618</a>
 <a href="#619" id="619">619</a>
-<a href="#620" id="620">620</a>
-<a href="#621" id="621">621</a>
-<a href="#622" id="622">622</a>
-<a href="#623" id="623">623</a>
-<a href="#624" id="624">624</a>
-<a href="#625" id="625">625</a>
-<a href="#626" id="626">626</a>
-<a href="#627" id="627">627</a>
-<a href="#628" id="628">628</a>
-<a href="#629" id="629">629</a>
-<a href="#630" id="630">630</a>
-<a href="#631" id="631">631</a>
-<a href="#632" id="632">632</a>
-<a href="#633" id="633">633</a>
-<a href="#634" id="634">634</a>
-<a href="#635" id="635">635</a>
-<a href="#636" id="636">636</a>
-<a href="#637" id="637">637</a>
-<a href="#638" id="638">638</a>
-<a href="#639" id="639">639</a>
-<a href="#640" id="640">640</a>
-<a href="#641" id="641">641</a>
-<a href="#642" id="642">642</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     fmt::Write,
-    fs::{remove_file, File},
     path::{Path, PathBuf},
     sync::Arc,
     time::Duration,
 };
 
 <span class="kw">use </span>async_trait::async_trait;
-<span class="kw">use </span>flate2::read::GzDecoder;
-<span class="kw">use </span>human_bytes::human_bytes;
+<span class="kw">use </span>futures::Future;
 <span class="kw">use </span>indicatif::{MultiProgress, ProgressBar, ProgressDrawTarget, ProgressState, ProgressStyle};
 <span class="kw">use </span>mithril_common::{
     certificate_chain::CertificateVerifier,
     crypto_helper::{key_decode_hex, ProtocolGenesisVerifier},
     digesters::ImmutableDigester,
-    entities::{ProtocolMessagePartKey, Snapshot},
+    entities::{Certificate, ProtocolMessagePartKey, Snapshot},
     StdError, StdResult,
 };
-<span class="kw">use </span>slog_scope::{debug, info, warn};
-<span class="kw">use </span>tar::Archive;
+<span class="kw">use </span>slog_scope::{debug, warn};
 <span class="kw">use </span>thiserror::Error;
 <span class="kw">use </span>tokio::{select, time::sleep};
 
-<span class="kw">use </span><span class="kw">crate</span>::aggregator_client::{AggregatorHTTPClientError, CertificateClient, SnapshotClient};
-
-<span class="doccomment">/// This ratio will be multiplied by the snapshot size to check if the available
-/// disk space is sufficient to store the archive plus the extracted files. If
-/// the available space is lower than that, a warning is raised. This ratio has
-/// been experimentally established.
-</span><span class="kw">const </span>FREE_SPACE_SNAPSHOT_SIZE_RATIO: f64 = <span class="number">3.5</span>;
+<span class="kw">use crate</span>::{
+    aggregator_client::{AggregatorHTTPClientError, CertificateClient, SnapshotClient},
+    utils::{SnapshotUnpacker, SnapshotUnpackerError},
+};
 
 <span class="doccomment">/// [SnapshotService] related errors.
 </span><span class="attr">#[derive(Error, Debug)]
@@ -703,12 +674,6 @@
         <span class="doccomment">/// Eventual nested error
         </span>error: StdError,
     },
-
-    <span class="doccomment">/// The directory where the files from snapshot are expanded already exists.
-    /// An error is raised because it lets the user a chance to preserve a
-    /// previous work.
-    </span><span class="attr">#[error(<span class="string">&quot;Unpack directory &#39;{0}&#39; already exists, please move or delete it.&quot;</span>)]
-    </span>UnpackDirectoryAlreadyExists(PathBuf),
 }
 
 <span class="doccomment">/// ## SnapshotService
@@ -764,13 +729,62 @@
         }
     }
 
-    <span class="kw">async fn </span>unpack_snapshot(<span class="kw-2">&amp;</span><span class="self">self</span>, filepath: <span class="kw-2">&amp;</span>Path, unpack_dir: <span class="kw-2">&amp;</span>Path) -&gt; StdResult&lt;()&gt; {
-        <span class="kw">let </span>snapshot_file_tar_gz = File::open(filepath)<span class="question-mark">?</span>;
-        <span class="kw">let </span>snapshot_file_tar = GzDecoder::new(snapshot_file_tar_gz);
-        <span class="kw">let </span><span class="kw-2">mut </span>snapshot_archive = Archive::new(snapshot_file_tar);
-        snapshot_archive.unpack(unpack_dir)<span class="question-mark">?</span>;
+    <span class="kw">fn </span>check_disk_space_error(<span class="kw-2">&amp;</span><span class="self">self</span>, error: StdError) -&gt; StdResult&lt;()&gt; {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(SnapshotUnpackerError::NotEnoughSpace {
+            left_space: <span class="kw">_</span>,
+            pathdir: <span class="kw">_</span>,
+            archive_size: <span class="kw">_</span>,
+        }) = error.downcast_ref::&lt;SnapshotUnpackerError&gt;()
+        {
+            <span class="macro">warn!</span>(<span class="string">&quot;{error}&quot;</span>);
+
+            <span class="prelude-val">Ok</span>(())
+        } <span class="kw">else </span>{
+            <span class="prelude-val">Err</span>(error)
+        }
+    }
+
+    <span class="kw">async fn </span>verify_certificate_chain(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        genesis_verification_key: <span class="kw-2">&amp;</span>str,
+        certificate: <span class="kw-2">&amp;</span>Certificate,
+    ) -&gt; StdResult&lt;()&gt; {
+        <span class="kw">let </span>genesis_verification_key = key_decode_hex(<span class="kw-2">&amp;</span>genesis_verification_key.to_string())
+            .map_err(|e| SnapshotServiceError::InvalidParameters {
+                context: <span class="macro">format!</span>(<span class="string">&quot;Invalid genesis verification key &#39;{genesis_verification_key}&#39;&quot;</span>),
+                error: e.into(),
+            })<span class="question-mark">?</span>;
+        <span class="kw">let </span>genesis_verifier =
+            ProtocolGenesisVerifier::from_verification_key(genesis_verification_key);
+
+        <span class="self">self</span>.certificate_verifier
+            .verify_certificate_chain(
+                certificate.clone(),
+                <span class="self">self</span>.certificate_client.clone(),
+                <span class="kw-2">&amp;</span>genesis_verifier,
+            )
+            .<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(())
+    }
+
+    <span class="kw">async fn </span>wait_spinner(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        progress_bar: <span class="kw-2">&amp;</span>MultiProgress,
+        future: <span class="kw">impl </span>Future&lt;Output = StdResult&lt;()&gt;&gt;,
+    ) -&gt; StdResult&lt;()&gt; {
+        <span class="kw">let </span>pb = progress_bar.add(ProgressBar::new_spinner());
+        <span class="kw">let </span>spinner = <span class="kw">async move </span>{
+            <span class="kw">loop </span>{
+                pb.tick();
+                sleep(Duration::from_millis(<span class="number">50</span>)).<span class="kw">await</span>;
+            }
+        };
+
+        <span class="macro">select! </span>{
+            <span class="kw">_ </span>= spinner =&gt; <span class="prelude-val">Ok</span>(()),
+            res = future =&gt; res,
+        }
     }
 }
 
@@ -809,44 +823,17 @@
         progress_target: ProgressDrawTarget,
     ) -&gt; StdResult&lt;PathBuf&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;Snapshot service: download.&quot;</span>);
-        <span class="comment">// 0 - Check prerequisistes are met
-        </span><span class="kw">let </span>unpack_dir = pathdir.join(<span class="string">&quot;db&quot;</span>);
+
+        <span class="kw">let </span>unpack_dir = pathdir.join(<span class="string">&quot;db&quot;</span>);
         <span class="kw">let </span>progress_bar = MultiProgress::with_draw_target(progress_target);
         progress_bar.println(<span class="string">&quot;1/7 - Checking local disk info…&quot;</span>)<span class="question-mark">?</span>;
-        <span class="kw">if </span>unpack_dir.exists() {
-            <span class="kw">return </span><span class="prelude-val">Err</span>(SnapshotServiceError::UnpackDirectoryAlreadyExists(unpack_dir).into());
-        }
-        {
-            <span class="kw">let </span>free_space = fs2::available_space(pathdir)<span class="question-mark">? </span><span class="kw">as </span>f64;
+        <span class="kw">let </span>unpacker = SnapshotUnpacker::default();
 
-            <span class="kw">if </span>free_space &lt; FREE_SPACE_SNAPSHOT_SIZE_RATIO * snapshot.size <span class="kw">as </span>f64 {
-                <span class="macro">warn!</span>(<span class="string">&quot;There might not be enough space on the disk ({} free) to store and unpack a {} size snapshot.&quot;</span>, human_bytes(free_space), human_bytes(snapshot.size <span class="kw">as </span>f64));
-            } <span class="kw">else </span>{
-                <span class="macro">info!</span>(<span class="string">&quot;It seems there is enough disk space ({} free) to download and unpack the {} large snapshot.&quot;</span>, human_bytes(free_space), human_bytes(snapshot.size <span class="kw">as </span>f64));
-            }
-
-            <span class="kw">let </span>_file =
-                File::create(<span class="kw-2">&amp;</span>unpack_dir).map_err(|e| SnapshotServiceError::InvalidParameters {
-                    context: <span class="macro">format!</span>(
-                        <span class="string">&quot;Can not write in the given directory &#39;{}&#39;.&quot;</span>,
-                        pathdir.display()
-                    ),
-                    error: e.into(),
-                })<span class="question-mark">?</span>;
-            remove_file(<span class="kw-2">&amp;</span>unpack_dir)<span class="question-mark">?</span>;
+        <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = unpacker.check_prerequisites(<span class="kw-2">&amp;</span>unpack_dir, snapshot.size) {
+            <span class="self">self</span>.check_disk_space_error(e)<span class="question-mark">?</span>;
         }
 
-        <span class="comment">// 1 - Instanciate a genesis key verifier
-        </span><span class="kw">let </span>genesis_verification_key = key_decode_hex(<span class="kw-2">&amp;</span>genesis_verification_key.to_string())
-            .map_err(|e| SnapshotServiceError::InvalidParameters {
-                context: <span class="macro">format!</span>(<span class="string">&quot;Invalid genesis verification key &#39;{genesis_verification_key}&#39;&quot;</span>),
-                error: e.into(),
-            })<span class="question-mark">?</span>;
-        <span class="kw">let </span>genesis_verifier =
-            ProtocolGenesisVerifier::from_verification_key(genesis_verification_key);
-
-        <span class="comment">// 2 - Get certificate information
-        </span>progress_bar.println(<span class="string">&quot;2/7 - Fetching certificate information…&quot;</span>)<span class="question-mark">?</span>;
+        progress_bar.println(<span class="string">&quot;2/7 - Fetching the certificate&#39;s information…&quot;</span>)<span class="question-mark">?</span>;
         <span class="kw">let </span>certificate = <span class="self">self
             </span>.certificate_client
             .get(<span class="kw-2">&amp;</span>snapshot.certificate_hash)
@@ -855,28 +842,11 @@
                 SnapshotServiceError::CouldNotFindCertificate(snapshot.certificate_hash.clone())
             })<span class="question-mark">?</span>;
 
-        <span class="comment">// 3 - Check the certificate chain
-        </span>progress_bar.println(<span class="string">&quot;3/7 - Check certificate chain…&quot;</span>)<span class="question-mark">?</span>;
-        <span class="kw">let </span>pb = progress_bar.add(ProgressBar::new_spinner());
-        <span class="kw">let </span>spinner = <span class="kw">async move </span>{
-            <span class="kw">loop </span>{
-                pb.tick();
-                sleep(Duration::from_millis(<span class="number">50</span>)).<span class="kw">await</span>;
-            }
-        };
-        <span class="kw">let </span>verifier = <span class="self">self</span>.certificate_verifier.verify_certificate_chain(
-            certificate.clone(),
-            <span class="self">self</span>.certificate_client.clone(),
-            <span class="kw-2">&amp;</span>genesis_verifier,
-        );
-        <span class="kw">let </span>res = <span class="macro">select! </span>{
-            <span class="kw">_ </span>= spinner =&gt; <span class="prelude-val">Ok</span>(()),
-            res = verifier =&gt; res,
-        };
-        res<span class="question-mark">?</span>;
+        progress_bar.println(<span class="string">&quot;3/7 - Verifying the certificate chain…&quot;</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>verifier = <span class="self">self</span>.verify_certificate_chain(genesis_verification_key, <span class="kw-2">&amp;</span>certificate);
+        <span class="self">self</span>.wait_spinner(<span class="kw-2">&amp;</span>progress_bar, verifier).<span class="kw">await</span><span class="question-mark">?</span>;
 
-        <span class="comment">// 4 - Launch download and unpack the file on disk
-        </span>progress_bar.println(<span class="string">&quot;4/7 - Downloading the snapshot…&quot;</span>)<span class="question-mark">?</span>;
+        progress_bar.println(<span class="string">&quot;4/7 - Downloading the snapshot…&quot;</span>)<span class="question-mark">?</span>;
         <span class="kw">let </span>pb = progress_bar.add(ProgressBar::new(snapshot.size));
         pb.set_style(ProgressStyle::with_template(<span class="string">&quot;{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] {bytes}/{total_bytes} ({eta})&quot;</span>)
             .unwrap()
@@ -889,28 +859,10 @@
             </span>.map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;Could not download file in &#39;{}&#39;: {e}&quot;</span>, pathdir.display()))<span class="question-mark">?</span>;
 
         progress_bar.println(<span class="string">&quot;5/7 - Unpacking the snapshot…&quot;</span>)<span class="question-mark">?</span>;
-        {
-            <span class="kw">let </span>pb = progress_bar.add(ProgressBar::new_spinner());
-            <span class="kw">let </span>spinner = <span class="kw">async move </span>{
-                <span class="kw">loop </span>{
-                    pb.tick();
-                    sleep(Duration::from_millis(<span class="number">50</span>)).<span class="kw">await</span>;
-                }
-            };
-            <span class="kw">let </span>unpacker = <span class="self">self</span>.unpack_snapshot(<span class="kw-2">&amp;</span>filepath, <span class="kw-2">&amp;</span>unpack_dir);
-            <span class="kw">let </span>res = <span class="macro">select! </span>{
-                <span class="kw">_ </span>= spinner =&gt; <span class="prelude-val">Ok</span>(()),
-                res = unpacker =&gt; res,
-            };
-            res.map_err(|e| {
-                <span class="macro">format!</span>(
-                    <span class="string">&quot;Could not unpack file &#39;{}&#39; in &#39;{}&#39;: {e}&quot;</span>,
-                    filepath.display(),
-                    unpack_dir.display()
-                )
-            })<span class="question-mark">?</span>;
-        }
-        progress_bar.println(<span class="string">&quot;6/7 - Compute snapshot digest…&quot;</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>unpacker = unpacker.unpack_snapshot(<span class="kw-2">&amp;</span>filepath, <span class="kw-2">&amp;</span>unpack_dir);
+        <span class="self">self</span>.wait_spinner(<span class="kw-2">&amp;</span>progress_bar, unpacker).<span class="kw">await</span><span class="question-mark">?</span>;
+
+        progress_bar.println(<span class="string">&quot;6/7 - Computing the snapshot digest…&quot;</span>)<span class="question-mark">?</span>;
         <span class="kw">let </span>unpacked_snapshot_digest = <span class="self">self
             </span>.immutable_digester
             .compute_digest(<span class="kw-2">&amp;</span>unpack_dir, <span class="kw-2">&amp;</span>certificate.beacon)
@@ -922,8 +874,7 @@
                 )
             })<span class="question-mark">?</span>;
 
-        <span class="comment">// 5 - Compute protocol message and compare hash sums
-        </span>progress_bar.println(<span class="string">&quot;7/7 - Verifying snapshot signature…&quot;</span>)<span class="question-mark">?</span>;
+        progress_bar.println(<span class="string">&quot;7/7 - Verifying the snapshot signature…&quot;</span>)<span class="question-mark">?</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>protocol_message = certificate.protocol_message.clone();
         protocol_message.set_message_part(
             ProtocolMessagePartKey::SnapshotDigest,
@@ -960,7 +911,10 @@
         },
         test_utils::fake_data,
     };
-    <span class="kw">use </span>std::{fs::create_dir_all, io::Write};
+    <span class="kw">use </span>std::{
+        fs::{create_dir_all, File},
+        io::Write,
+    };
 
     <span class="kw">use crate</span>::{
         aggregator_client::{AggregatorClient, MockAggregatorHTTPClient},
@@ -1270,9 +1224,9 @@
             .<span class="kw">await
             </span>.expect_err(<span class="string">&quot;Snapshot download should fail.&quot;</span>);
 
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(e) = err.downcast_ref::&lt;SnapshotServiceError&gt;() {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(e) = err.downcast_ref::&lt;SnapshotUnpackerError&gt;() {
             <span class="kw">match </span>e {
-                SnapshotServiceError::UnpackDirectoryAlreadyExists(path) =&gt; {
+                SnapshotUnpackerError::UnpackDirectoryAlreadyExists(path) =&gt; {
                     <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>test_path.join(<span class="string">&quot;db&quot;</span>), path);
                 }
                 <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;Wrong error type when unpack dir already exists.&quot;</span>),

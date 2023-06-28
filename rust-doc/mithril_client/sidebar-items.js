@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["aggregator_client","commands","dependencies","services"],"struct":["FromCertificateMessageAdapter","FromSnapshotListMessageAdapter","FromSnapshotMessageAdapter","MithrilStakeDistributionListItem","SnapshotFieldItem","SnapshotListItem"]};
+window.SIDEBAR_ITEMS = {"mod":["aggregator_client","commands","dependencies","services","utils"],"struct":["FromCertificateMessageAdapter","FromSnapshotListMessageAdapter","FromSnapshotMessageAdapter","MithrilStakeDistributionListItem","SnapshotFieldItem","SnapshotListItem"]};
