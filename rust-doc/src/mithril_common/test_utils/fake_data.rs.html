@@ -238,6 +238,7 @@
 <a href="#238" id="238">238</a>
 <a href="#239" id="239">239</a>
 <a href="#240" id="240">240</a>
+<a href="#241" id="241">241</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Fake data builders for testing.
 
 </span><span class="kw">use </span>chrono::{DateTime, Utc};
@@ -322,10 +323,11 @@
 }
 
 <span class="doccomment">/// Fake Genesis Certificate
-</span><span class="kw">pub fn </span>genesis_certificate(certificate_hash: String) -&gt; entities::Certificate {
-    <span class="kw">let </span><span class="kw-2">mut </span>certificate = certificate(certificate_hash);
+</span><span class="kw">pub fn </span>genesis_certificate(certificate_hash: <span class="kw-2">&amp;</span>str) -&gt; entities::Certificate {
+    <span class="kw">let </span><span class="kw-2">mut </span>certificate = certificate(certificate_hash.to_string());
+    certificate.previous_hash = String::new();
     certificate.genesis_signature = certificate.multi_signature;
-    certificate.multi_signature = <span class="string">&quot;&quot;</span>.to_string();
+    certificate.multi_signature = String::new();
 
     certificate
 }
@@ -371,7 +373,7 @@
     </span><span class="kw">let </span>previous_hash = <span class="macro">format!</span>(<span class="string">&quot;{certificate_hash}0&quot;</span>);
     <span class="kw">let </span>aggregate_verification_key = <span class="macro">format!</span>(<span class="string">&quot;AVK{}&quot;</span>, beacon.immutable_file_number).repeat(<span class="number">5</span>);
     <span class="kw">let </span>multi_signature = <span class="macro">format!</span>(<span class="string">&quot;MSIG{}&quot;</span>, beacon.immutable_file_number).repeat(<span class="number">200</span>);
-    <span class="kw">let </span>genesis_signature = <span class="string">&quot;&quot;</span>.to_string();
+    <span class="kw">let </span>genesis_signature = String::new();
     <span class="kw">let </span><span class="kw-2">mut </span>certificate = entities::Certificate::new(
         previous_hash,
         beacon,
