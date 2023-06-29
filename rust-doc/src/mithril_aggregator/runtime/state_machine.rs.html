@@ -728,6 +728,83 @@
 <a href="#728" id="728">728</a>
 <a href="#729" id="729">729</a>
 <a href="#730" id="730">730</a>
+<a href="#731" id="731">731</a>
+<a href="#732" id="732">732</a>
+<a href="#733" id="733">733</a>
+<a href="#734" id="734">734</a>
+<a href="#735" id="735">735</a>
+<a href="#736" id="736">736</a>
+<a href="#737" id="737">737</a>
+<a href="#738" id="738">738</a>
+<a href="#739" id="739">739</a>
+<a href="#740" id="740">740</a>
+<a href="#741" id="741">741</a>
+<a href="#742" id="742">742</a>
+<a href="#743" id="743">743</a>
+<a href="#744" id="744">744</a>
+<a href="#745" id="745">745</a>
+<a href="#746" id="746">746</a>
+<a href="#747" id="747">747</a>
+<a href="#748" id="748">748</a>
+<a href="#749" id="749">749</a>
+<a href="#750" id="750">750</a>
+<a href="#751" id="751">751</a>
+<a href="#752" id="752">752</a>
+<a href="#753" id="753">753</a>
+<a href="#754" id="754">754</a>
+<a href="#755" id="755">755</a>
+<a href="#756" id="756">756</a>
+<a href="#757" id="757">757</a>
+<a href="#758" id="758">758</a>
+<a href="#759" id="759">759</a>
+<a href="#760" id="760">760</a>
+<a href="#761" id="761">761</a>
+<a href="#762" id="762">762</a>
+<a href="#763" id="763">763</a>
+<a href="#764" id="764">764</a>
+<a href="#765" id="765">765</a>
+<a href="#766" id="766">766</a>
+<a href="#767" id="767">767</a>
+<a href="#768" id="768">768</a>
+<a href="#769" id="769">769</a>
+<a href="#770" id="770">770</a>
+<a href="#771" id="771">771</a>
+<a href="#772" id="772">772</a>
+<a href="#773" id="773">773</a>
+<a href="#774" id="774">774</a>
+<a href="#775" id="775">775</a>
+<a href="#776" id="776">776</a>
+<a href="#777" id="777">777</a>
+<a href="#778" id="778">778</a>
+<a href="#779" id="779">779</a>
+<a href="#780" id="780">780</a>
+<a href="#781" id="781">781</a>
+<a href="#782" id="782">782</a>
+<a href="#783" id="783">783</a>
+<a href="#784" id="784">784</a>
+<a href="#785" id="785">785</a>
+<a href="#786" id="786">786</a>
+<a href="#787" id="787">787</a>
+<a href="#788" id="788">788</a>
+<a href="#789" id="789">789</a>
+<a href="#790" id="790">790</a>
+<a href="#791" id="791">791</a>
+<a href="#792" id="792">792</a>
+<a href="#793" id="793">793</a>
+<a href="#794" id="794">794</a>
+<a href="#795" id="795">795</a>
+<a href="#796" id="796">796</a>
+<a href="#797" id="797">797</a>
+<a href="#798" id="798">798</a>
+<a href="#799" id="799">799</a>
+<a href="#800" id="800">800</a>
+<a href="#801" id="801">801</a>
+<a href="#802" id="802">802</a>
+<a href="#803" id="803">803</a>
+<a href="#804" id="804">804</a>
+<a href="#805" id="805">805</a>
+<a href="#806" id="806">806</a>
+<a href="#807" id="807">807</a>
 </pre></div><pre class="rust"><code><span class="kw">use crate</span>::{
     entities::OpenMessage,
     runtime::{AggregatorRunnerTrait, RuntimeError},
@@ -781,7 +858,9 @@
 
 <span class="doccomment">/// The AggregatorRuntime responsibility is to create a state machine to handle
 /// all actions required by the process of getting multi-signatures.
-/// See the [documentation](https://mithril.network/doc/mithril/mithril-network/aggregator#under-the-hood) for more explanations about the Aggregator state machine.
+/// See the
+/// [documentation](https://mithril.network/doc/mithril/mithril-network/aggregator#under-the-hood)
+/// for more explanations about the Aggregator state machine.
 </span><span class="kw">pub struct </span>AggregatorRuntime {
     <span class="doccomment">/// the internal state of the automate
     </span>state: AggregatorState,
@@ -834,6 +913,8 @@
 
         <span class="kw">loop </span>{
             <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = <span class="self">self</span>.cycle().<span class="kw">await </span>{
+                <span class="macro">warn!</span>(<span class="string">&quot;State machine issued an error: {e}&quot;</span>);
+
                 <span class="kw">match </span><span class="kw-2">&amp;</span>e {
                     RuntimeError::Critical {
                         message: <span class="kw">_</span>,
@@ -843,8 +924,32 @@
 
                         <span class="kw">return </span><span class="prelude-val">Err</span>(e);
                     }
-                    <span class="kw">_ </span>=&gt; {
-                        <span class="macro">warn!</span>(<span class="string">&quot;state machine: cycle returned an error: &#39;{e}&#39;.&quot;</span>);
+                    RuntimeError::KeepState {
+                        message,
+                        nested_error,
+                    } =&gt; {
+                        <span class="macro">warn!</span>(
+                            <span class="string">&quot;KeepState Error: {message}. Nested error: «{}».&quot;</span>,
+                            nested_error
+                                .as_ref()
+                                .map(|e| <span class="macro">format!</span>(<span class="string">&quot;{e}&quot;</span>))
+                                .unwrap_or(<span class="string">&quot;None&quot;</span>.into())
+                        );
+                    }
+                    RuntimeError::ReInit {
+                        message,
+                        nested_error,
+                    } =&gt; {
+                        <span class="macro">warn!</span>(
+                            <span class="string">&quot;ReInit Error: {message}. Nested error: «{}».&quot;</span>,
+                            nested_error
+                                .as_ref()
+                                .map(|e| <span class="macro">format!</span>(<span class="string">&quot;{e}&quot;</span>))
+                                .unwrap_or(<span class="string">&quot;None&quot;</span>.into())
+                        );
+                        <span class="self">self</span>.state = AggregatorState::Idle(IdleState {
+                            current_beacon: <span class="prelude-val">None</span>,
+                        });
                     }
                 }
             }
@@ -1010,23 +1115,21 @@
                 message: <span class="string">&quot;not enough signature yet to create a certificate, waiting…&quot;</span>.to_string(),
                 nested_error: <span class="prelude-val">None</span>,
             })<span class="question-mark">?</span>;
-
-        <span class="comment">// Every error raised below this comment must be raised to critical in order to trigger an aggregator restart which will avoid a dead loop in the state machine
-        // TODO: Implement a graceful retry mechanism for artifact creation and label open messages with `is_artifact_created` (to keep track of certified but without artifacts open messages)
-        </span><span class="self">self</span>.runner.drop_pending_certificate().<span class="kw">await</span>.map_err(|e| {
-            RuntimeError::critical(
-                <span class="string">&quot;transiting SIGNING → READY: failed dropping pending certificate&quot;</span>,
-                <span class="prelude-val">Some</span>(e),
-            )
-        })<span class="question-mark">?</span>;
+        <span class="self">self</span>.runner
+            .drop_pending_certificate()
+            .<span class="kw">await
+            </span>.map_err(|e| RuntimeError::ReInit {
+                message: <span class="string">&quot;transiting SIGNING → READY: failed to drop pending certificate&quot;
+                    </span>.to_string(),
+                nested_error: <span class="prelude-val">Some</span>(e),
+            })<span class="question-mark">?</span>;
         <span class="self">self</span>.runner
             .create_artifact(<span class="kw-2">&amp;</span>state.open_message.signed_entity_type, <span class="kw-2">&amp;</span>certificate)
             .<span class="kw">await
-            </span>.map_err(|e| {
-                RuntimeError::critical(
-                    <span class="string">&quot;transiting SIGNING → READY: failed creating artifact&quot;</span>,
-                    <span class="prelude-val">Some</span>(e),
-                )
+            </span>.map_err(|e| RuntimeError::ReInit {
+                message: <span class="string">&quot;transiting SIGNING → READY: failed to create artifact. Retrying…&quot;
+                    </span>.to_string(),
+                nested_error: <span class="prelude-val">Some</span>(e),
             })<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(ReadyState {
@@ -1383,10 +1486,61 @@
             open_message: OpenMessage::dummy(),
         };
         <span class="kw">let </span><span class="kw-2">mut </span>runtime = init_runtime(<span class="prelude-val">Some</span>(AggregatorState::Signing(state)), runner).<span class="kw">await</span>;
-        runtime
+        <span class="kw">let </span>err = runtime
             .cycle()
             .<span class="kw">await
             </span>.expect_err(<span class="string">&quot;cycle should have returned an error&quot;</span>);
+
+        <span class="kw">match </span>err {
+            RuntimeError::KeepState {
+                message: <span class="kw">_</span>,
+                nested_error: <span class="kw">_</span>,
+            } =&gt; (),
+            <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;KeepState error expected, got {err:?}.&quot;</span>),
+        };
+
+        <span class="macro">assert_eq!</span>(<span class="string">&quot;signing&quot;</span>.to_string(), runtime.get_state());
+    }
+
+    <span class="attr">#[tokio::test]
+    </span><span class="kw">async fn </span>signing_artifact_not_created() {
+        <span class="kw">let </span><span class="kw-2">mut </span>runner = MockAggregatorRunner::new();
+        runner
+            .expect_get_beacon_from_chain()
+            .once()
+            .returning(|| <span class="prelude-val">Ok</span>(fake_data::beacon()));
+        runner
+            .expect_get_current_non_certified_open_message_for_signed_entity_type()
+            .once()
+            .returning(|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(OpenMessage::dummy())));
+        runner
+            .expect_create_certificate()
+            .return_once(<span class="kw">move </span>|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(fake_data::certificate(<span class="string">&quot;whatever&quot;</span>.to_string()))));
+        runner
+            .expect_drop_pending_certificate()
+            .once()
+            .returning(|| <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(fake_data::certificate_pending())));
+        runner
+            .expect_create_artifact()
+            .once()
+            .returning(|<span class="kw">_</span>, <span class="kw">_</span>| <span class="prelude-val">Err</span>(<span class="string">&quot;whatever&quot;</span>.into()));
+        <span class="kw">let </span>state = SigningState {
+            current_beacon: fake_data::beacon(),
+            open_message: OpenMessage::dummy(),
+        };
+        <span class="kw">let </span><span class="kw-2">mut </span>runtime = init_runtime(<span class="prelude-val">Some</span>(AggregatorState::Signing(state)), runner).<span class="kw">await</span>;
+        <span class="kw">let </span>err = runtime
+            .cycle()
+            .<span class="kw">await
+            </span>.expect_err(<span class="string">&quot;cycle should have returned an error&quot;</span>);
+
+        <span class="kw">match </span>err {
+            RuntimeError::ReInit {
+                message: <span class="kw">_</span>,
+                nested_error: <span class="kw">_</span>,
+            } =&gt; (),
+            <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;ReInit error expected, got {err:?}.&quot;</span>),
+        };
 
         <span class="macro">assert_eq!</span>(<span class="string">&quot;signing&quot;</span>.to_string(), runtime.get_state());
     }

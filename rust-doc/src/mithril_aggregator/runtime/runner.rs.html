@@ -1139,6 +1139,12 @@
 <a href="#1139" id="1139">1139</a>
 <a href="#1140" id="1140">1140</a>
 <a href="#1141" id="1141">1141</a>
+<a href="#1142" id="1142">1142</a>
+<a href="#1143" id="1143">1143</a>
+<a href="#1144" id="1144">1144</a>
+<a href="#1145" id="1145">1145</a>
+<a href="#1146" id="1146">1146</a>
+<a href="#1147" id="1147">1147</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>mithril_common::entities::Epoch;
 <span class="kw">use </span>mithril_common::entities::SignedEntityType;
@@ -1338,6 +1344,7 @@
                     <span class="string">&quot;RUNNER: get_current_non_certified_open_message_for_signed_entity_type: existing open message found, not already certified&quot;</span>;
                     <span class="string">&quot;signed_entity_type&quot; </span>=&gt; <span class="question-mark">?</span>signed_entity_type
                 );
+
                 <span class="prelude-val">Some</span>(existing_open_message)
             }
             <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; {
@@ -1345,6 +1352,7 @@
                     <span class="string">&quot;RUNNER: get_current_non_certified_open_message_for_signed_entity_type: existing open message found, already certified&quot;</span>;
                     <span class="string">&quot;signed_entity_type&quot; </span>=&gt; <span class="question-mark">?</span>signed_entity_type
                 );
+
                 <span class="prelude-val">None
             </span>}
             <span class="prelude-val">None </span>=&gt; {
@@ -1352,12 +1360,16 @@
                     <span class="string">&quot;RUNNER: get_current_non_certified_open_message_for_signed_entity_type: no open message found, a new one will be created&quot;</span>;
                     <span class="string">&quot;signed_entity_type&quot; </span>=&gt; <span class="question-mark">?</span>signed_entity_type
                 );
-                <span class="comment">// In order to fix flakiness in the end to end tests, we are compelled to update the beacon (of the multi-signer)
-                // This avoids the computation of the next AVK on the wrong epoch (in &#39;compute_protocol_message&#39;)
-                // TODO: remove &#39;current_beacon&#39; from the multi-signer state which will avoid this fix
+                <span class="comment">// In order to fix flakiness in the end to end tests, we are
+                // compelled to update the beacon (of the multi-signer) This
+                // avoids the computation of the next AVK on the wrong epoch (in
+                // &#39;compute_protocol_message&#39;)
+                // TODO: remove &#39;current_beacon&#39; from the multi-signer state
+                // which will avoid this fix
                 </span><span class="kw">let </span>chain_beacon: Beacon = <span class="self">self</span>.get_beacon_from_chain().<span class="kw">await</span><span class="question-mark">?</span>;
                 <span class="self">self</span>.update_beacon(<span class="kw-2">&amp;</span>chain_beacon).<span class="kw">await</span><span class="question-mark">?</span>;
                 <span class="kw">let </span>protocol_message = <span class="self">self</span>.compute_protocol_message(signed_entity_type).<span class="kw">await</span><span class="question-mark">?</span>;
+
                 <span class="prelude-val">Some</span>(
                     <span class="self">self</span>.create_open_message(signed_entity_type, <span class="kw-2">&amp;</span>protocol_message)
                         .<span class="kw">await</span><span class="question-mark">?</span>,
