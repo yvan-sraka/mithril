@@ -868,9 +868,6 @@
 <a href="#868" id="868">868</a>
 <a href="#869" id="869">869</a>
 <a href="#870" id="870">870</a>
-<a href="#871" id="871">871</a>
-<a href="#872" id="872">872</a>
-<a href="#873" id="873">873</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>chrono::{DateTime, Utc};
 <span class="kw">use </span>serde::{Deserialize, Serialize};
@@ -955,18 +952,19 @@
     <span class="kw">where
         </span><span class="self">Self</span>: Sized,
     {
-        <span class="kw">let </span>signed_entity_id = row.get::&lt;String, <span class="kw">_</span>&gt;(<span class="number">0</span>);
-        <span class="kw">let </span>signed_entity_type_id_int = row.get::&lt;i64, <span class="kw">_</span>&gt;(<span class="number">1</span>);
-        <span class="kw">let </span>certificate_id = row.get::&lt;String, <span class="kw">_</span>&gt;(<span class="number">2</span>);
+        <span class="kw">let </span>signed_entity_id = row.read::&lt;<span class="kw-2">&amp;</span>str, <span class="kw">_</span>&gt;(<span class="number">0</span>).to_string();
+        <span class="kw">let </span>signed_entity_type_id_int = row.read::&lt;i64, <span class="kw">_</span>&gt;(<span class="number">1</span>);
+        <span class="kw">let </span>certificate_id = row.read::&lt;<span class="kw-2">&amp;</span>str, <span class="kw">_</span>&gt;(<span class="number">2</span>).to_string();
         <span class="comment">// TODO: We need to check first that the cell can be read as a string first
         // (e.g. when beacon json is &#39;{&quot;network&quot;: &quot;dev&quot;, &quot;epoch&quot;: 1, &quot;immutable_file_number&quot;: 2}&#39;).
         // If it fails, we fallback on readign the cell as an integer (e.g. when beacon json is &#39;5&#39;).
         // Maybe there is a better way of doing this.
-        </span><span class="kw">let </span>beacon_str = row
-            .try_get::&lt;String, <span class="kw">_</span>&gt;(<span class="number">3</span>)
-            .unwrap_or_else(|<span class="kw">_</span>| (row.get::&lt;i64, <span class="kw">_</span>&gt;(<span class="number">3</span>)).to_string());
-        <span class="kw">let </span>artifact_str = row.get::&lt;String, <span class="kw">_</span>&gt;(<span class="number">4</span>);
-        <span class="kw">let </span>created_at = row.get::&lt;String, <span class="kw">_</span>&gt;(<span class="number">5</span>);
+        </span><span class="kw">let </span>beacon_str = <span class="kw">match </span>row.try_read::&lt;<span class="kw-2">&amp;</span>str, <span class="kw">_</span>&gt;(<span class="number">3</span>) {
+            <span class="prelude-val">Ok</span>(value) =&gt; value.to_string(),
+            <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; (row.read::&lt;i64, <span class="kw">_</span>&gt;(<span class="number">3</span>)).to_string(),
+        };
+        <span class="kw">let </span>artifact_str = row.read::&lt;<span class="kw-2">&amp;</span>str, <span class="kw">_</span>&gt;(<span class="number">4</span>).to_string();
+        <span class="kw">let </span>created_at = row.read::&lt;<span class="kw-2">&amp;</span>str, <span class="kw">_</span>&gt;(<span class="number">5</span>);
 
         <span class="kw">let </span>signed_entity_record = <span class="self">Self </span>{
             signed_entity_id,
@@ -980,7 +978,7 @@
             )<span class="question-mark">?</span>,
             certificate_id,
             artifact: artifact_str,
-            created_at: DateTime::parse_from_rfc3339(<span class="kw-2">&amp;</span>created_at)
+            created_at: DateTime::parse_from_rfc3339(created_at)
                 .map_err(|e| {
                     HydrationError::InvalidData(<span class="macro">format!</span>(
                         <span class="string">&quot;Could not turn string &#39;{created_at}&#39; to rfc3339 Datetime. Error: {e}&quot;
@@ -1434,31 +1432,27 @@ where signed_entity_id = ?*&quot;</span>;
 
         <span class="kw">for </span>signed_entity_record <span class="kw">in </span>signed_entity_records {
             <span class="kw">let </span><span class="kw-2">mut </span>statement = connection.prepare(<span class="kw-2">&amp;</span>query)<span class="question-mark">?</span>;
-
             statement
-                .bind(<span class="number">1</span>, signed_entity_record.signed_entity_id.as_str())
-                .unwrap();
-            statement
-                .bind(<span class="number">2</span>, signed_entity_record.signed_entity_type.index() <span class="kw">as </span>i64)
-                .unwrap();
-            statement
-                .bind(<span class="number">3</span>, signed_entity_record.certificate_id.as_str())
-                .unwrap();
-            statement
-                .bind(
-                    <span class="number">4</span>,
-                    signed_entity_record
-                        .signed_entity_type
-                        .get_json_beacon()
-                        .unwrap()
-                        .as_str(),
-                )
-                .unwrap();
-            statement
-                .bind(<span class="number">5</span>, signed_entity_record.artifact.as_str())
-                .unwrap();
-            statement
-                .bind(<span class="number">6</span>, signed_entity_record.created_at.to_rfc3339().as_str())
+                .bind::&lt;<span class="kw-2">&amp;</span>[(<span class="kw">_</span>, Value)]&gt;(<span class="kw-2">&amp;</span>[
+                    (<span class="number">1</span>, signed_entity_record.signed_entity_id.into()),
+                    (
+                        <span class="number">2</span>,
+                        i64::try_from(signed_entity_record.signed_entity_type.index())
+                            .unwrap()
+                            .into(),
+                    ),
+                    (<span class="number">3</span>, signed_entity_record.certificate_id.into()),
+                    (
+                        <span class="number">4</span>,
+                        signed_entity_record
+                            .signed_entity_type
+                            .get_json_beacon()
+                            .unwrap()
+                            .into(),
+                    ),
+                    (<span class="number">5</span>, signed_entity_record.artifact.into()),
+                    (<span class="number">6</span>, signed_entity_record.created_at.to_rfc3339().into()),
+                ])
                 .unwrap();
 
             statement.next().unwrap();

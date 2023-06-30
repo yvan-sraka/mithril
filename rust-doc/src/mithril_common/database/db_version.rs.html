@@ -338,9 +338,9 @@
 
 <span class="kw">impl </span>SqLiteEntity <span class="kw">for </span>DatabaseVersion {
     <span class="kw">fn </span>hydrate(row: Row) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, HydrationError&gt; {
-        <span class="kw">let </span>version = row.get::&lt;i64, <span class="kw">_</span>&gt;(<span class="number">0</span>);
-        <span class="kw">let </span>application_type = <span class="kw-2">&amp;</span>row.get::&lt;String, <span class="kw">_</span>&gt;(<span class="number">1</span>);
-        <span class="kw">let </span>updated_at = <span class="kw-2">&amp;</span>row.get::&lt;String, <span class="kw">_</span>&gt;(<span class="number">2</span>);
+        <span class="kw">let </span>version = row.read::&lt;i64, <span class="kw">_</span>&gt;(<span class="number">0</span>);
+        <span class="kw">let </span>application_type = row.read::&lt;<span class="kw-2">&amp;</span>str, <span class="kw">_</span>&gt;(<span class="number">1</span>);
+        <span class="kw">let </span>updated_at = row.read::&lt;<span class="kw-2">&amp;</span>str, <span class="kw">_</span>&gt;(<span class="number">2</span>);
 
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
             version,
@@ -406,11 +406,11 @@
         <span class="kw">let </span>sql = <span class="string">&quot;select exists(select name from sqlite_master where type=&#39;table&#39; and name=&#39;db_version&#39;) as table_exists&quot;</span>;
         <span class="kw">let </span>table_exists = connection
             .prepare(sql)<span class="question-mark">?
-            </span>.into_cursor()
-            .bind(<span class="kw-2">&amp;</span>[])<span class="question-mark">?
-            </span>.next()
-            .unwrap()<span class="question-mark">?
-            </span>.get::&lt;i64, <span class="kw">_</span>&gt;(<span class="number">0</span>)
+            </span>.iter()
+            .next()
+            .unwrap()
+            .unwrap()
+            .read::&lt;i64, <span class="kw">_</span>&gt;(<span class="number">0</span>)
             == <span class="number">1</span>;
 
         <span class="kw">if </span>!table_exists {

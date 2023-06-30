@@ -909,16 +909,6 @@
 <a href="#909" id="909">909</a>
 <a href="#910" id="910">910</a>
 <a href="#911" id="911">911</a>
-<a href="#912" id="912">912</a>
-<a href="#913" id="913">913</a>
-<a href="#914" id="914">914</a>
-<a href="#915" id="915">915</a>
-<a href="#916" id="916">916</a>
-<a href="#917" id="917">917</a>
-<a href="#918" id="918">918</a>
-<a href="#919" id="919">919</a>
-<a href="#920" id="920">920</a>
-<a href="#921" id="921">921</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>chrono::{DateTime, Utc};
 <span class="kw">use </span>sqlite::{Connection, Value};
@@ -1003,14 +993,14 @@
     <span class="kw">where
         </span><span class="self">Self</span>: Sized,
     {
-        <span class="kw">let </span>signer_id = row.get::&lt;String, <span class="kw">_</span>&gt;(<span class="number">0</span>);
-        <span class="kw">let </span>epoch_setting_id_int = row.get::&lt;i64, <span class="kw">_</span>&gt;(<span class="number">1</span>);
-        <span class="kw">let </span>verification_key = row.get::&lt;String, <span class="kw">_</span>&gt;(<span class="number">2</span>);
-        <span class="kw">let </span>verification_key_signature = row.get::&lt;<span class="prelude-ty">Option</span>&lt;String&gt;, <span class="kw">_</span>&gt;(<span class="number">3</span>);
-        <span class="kw">let </span>operational_certificate = row.get::&lt;<span class="prelude-ty">Option</span>&lt;String&gt;, <span class="kw">_</span>&gt;(<span class="number">4</span>);
-        <span class="kw">let </span>kes_period_int = row.get::&lt;<span class="prelude-ty">Option</span>&lt;i64&gt;, <span class="kw">_</span>&gt;(<span class="number">5</span>);
-        <span class="kw">let </span>stake_int = row.get::&lt;<span class="prelude-ty">Option</span>&lt;i64&gt;, <span class="kw">_</span>&gt;(<span class="number">6</span>);
-        <span class="kw">let </span>created_at = row.get::&lt;String, <span class="kw">_</span>&gt;(<span class="number">7</span>);
+        <span class="kw">let </span>signer_id = row.read::&lt;<span class="kw-2">&amp;</span>str, <span class="kw">_</span>&gt;(<span class="number">0</span>).to_string();
+        <span class="kw">let </span>epoch_setting_id_int = row.read::&lt;i64, <span class="kw">_</span>&gt;(<span class="number">1</span>);
+        <span class="kw">let </span>verification_key = row.read::&lt;<span class="kw-2">&amp;</span>str, <span class="kw">_</span>&gt;(<span class="number">2</span>).to_string();
+        <span class="kw">let </span>verification_key_signature = row.read::&lt;<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;, <span class="kw">_</span>&gt;(<span class="number">3</span>).map(|s| s.to_owned());
+        <span class="kw">let </span>operational_certificate = row.read::&lt;<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;, <span class="kw">_</span>&gt;(<span class="number">4</span>).map(|s| s.to_owned());
+        <span class="kw">let </span>kes_period_int = row.read::&lt;<span class="prelude-ty">Option</span>&lt;i64&gt;, <span class="kw">_</span>&gt;(<span class="number">5</span>);
+        <span class="kw">let </span>stake_int = row.read::&lt;<span class="prelude-ty">Option</span>&lt;i64&gt;, <span class="kw">_</span>&gt;(<span class="number">6</span>);
+        <span class="kw">let </span>created_at = row.read::&lt;<span class="kw-2">&amp;</span>str, <span class="kw">_</span>&gt;(<span class="number">7</span>);
 
         <span class="kw">let </span>signer_registration_record = <span class="self">Self </span>{
             signer_id,
@@ -1038,7 +1028,7 @@
                 })<span class="question-mark">?</span>),
                 <span class="prelude-val">None </span>=&gt; <span class="prelude-val">None</span>,
             },
-            created_at: DateTime::parse_from_rfc3339(<span class="kw-2">&amp;</span>created_at)
+            created_at: DateTime::parse_from_rfc3339(created_at)
                 .map_err(|e| {
                     HydrationError::InvalidData(<span class="macro">format!</span>(
                         <span class="string">&quot;Could not turn string &#39;{created_at}&#39; to rfc3339 Datetime. Error: {e}&quot;
@@ -1479,58 +1469,48 @@
                 <span class="kw">let </span>signer_registration_record =
                     SignerRegistrationRecord::from_signer_with_stake(signer_with_stake, epoch);
                 <span class="kw">let </span><span class="kw-2">mut </span>statement = connection.prepare(<span class="kw-2">&amp;</span>query)<span class="question-mark">?</span>;
+                statement
+                    .bind::&lt;<span class="kw-2">&amp;</span>[(<span class="kw">_</span>, Value)]&gt;(<span class="kw-2">&amp;</span>[
+                        (<span class="number">1</span>, signer_registration_record.signer_id.into()),
+                        (
+                            <span class="number">2</span>,
+                            i64::try_from(signer_registration_record.epoch_setting_id.<span class="number">0</span>)
+                                .unwrap()
+                                .into(),
+                        ),
+                        (<span class="number">3</span>, signer_registration_record.verification_key.into()),
+                        (
+                            <span class="number">4</span>,
+                            signer_registration_record
+                                .verification_key_signature
+                                .map(Value::String)
+                                .unwrap_or(Value::Null),
+                        ),
+                        (
+                            <span class="number">5</span>,
+                            signer_registration_record
+                                .operational_certificate
+                                .map(Value::String)
+                                .unwrap_or(Value::Null),
+                        ),
+                        (
+                            <span class="number">6</span>,
+                            signer_registration_record
+                                .kes_period
+                                .map(|k| Value::Integer(k <span class="kw">as </span>i64))
+                                .unwrap_or(Value::Null),
+                        ),
+                        (
+                            <span class="number">7</span>,
+                            signer_registration_record
+                                .stake
+                                .map(|s| Value::Integer(s <span class="kw">as </span>i64))
+                                .unwrap_or(Value::Null),
+                        ),
+                        (<span class="number">8</span>, signer_registration_record.created_at.to_rfc3339().into()),
+                    ])
+                    .unwrap();
 
-                statement
-                    .bind(<span class="number">1</span>, signer_registration_record.signer_id.as_str())
-                    .unwrap();
-                statement
-                    .bind(<span class="number">2</span>, signer_registration_record.epoch_setting_id.<span class="number">0 </span><span class="kw">as </span>i64)
-                    .unwrap();
-                statement
-                    .bind(<span class="number">3</span>, signer_registration_record.verification_key.as_str())
-                    .unwrap();
-                statement
-                    .bind(
-                        <span class="number">4</span>,
-                        <span class="kw-2">&amp;</span>signer_registration_record
-                            .verification_key_signature
-                            .map(Value::String)
-                            .unwrap_or(Value::Null),
-                    )
-                    .unwrap();
-                statement
-                    .bind(
-                        <span class="number">5</span>,
-                        <span class="kw-2">&amp;</span>signer_registration_record
-                            .operational_certificate
-                            .map(Value::String)
-                            .unwrap_or(Value::Null),
-                    )
-                    .unwrap();
-                statement
-                    .bind(
-                        <span class="number">6</span>,
-                        <span class="kw-2">&amp;</span>signer_registration_record
-                            .kes_period
-                            .map(|k| Value::Integer(k <span class="kw">as </span>i64))
-                            .unwrap_or(Value::Null),
-                    )
-                    .unwrap();
-                statement
-                    .bind(
-                        <span class="number">7</span>,
-                        <span class="kw-2">&amp;</span>signer_registration_record
-                            .stake
-                            .map(|s| Value::Integer(s <span class="kw">as </span>i64))
-                            .unwrap_or(Value::Null),
-                    )
-                    .unwrap();
-                statement
-                    .bind(
-                        <span class="number">8</span>,
-                        signer_registration_record.created_at.to_rfc3339().as_str(),
-                    )
-                    .unwrap();
                 statement.next().unwrap();
             }
         }

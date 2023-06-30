@@ -300,10 +300,10 @@
     <span class="kw">where
         </span><span class="self">Self</span>: Sized,
     {
-        <span class="kw">let </span>created_at = <span class="kw-2">&amp;</span>row.get::&lt;String, <span class="kw">_</span>&gt;(<span class="string">&quot;created_at&quot;</span>);
+        <span class="kw">let </span>created_at = <span class="kw-2">&amp;</span>row.read::&lt;<span class="kw-2">&amp;</span>str, <span class="kw">_</span>&gt;(<span class="string">&quot;created_at&quot;</span>);
 
         <span class="kw">let </span>myself = <span class="self">Self </span>{
-            event_id: row.get::&lt;i64, <span class="kw">_</span>&gt;(<span class="string">&quot;event_id&quot;</span>),
+            event_id: row.read::&lt;i64, <span class="kw">_</span>&gt;(<span class="string">&quot;event_id&quot;</span>),
             created_at: DateTime::parse_from_rfc3339(created_at)
                 .map_err(|e| {
                     HydrationError::InvalidData(<span class="macro">format!</span>(
@@ -311,9 +311,9 @@
                     </span>))
                 })<span class="question-mark">?
                 </span>.with_timezone(<span class="kw-2">&amp;</span>Utc),
-            source: row.get::&lt;String, <span class="kw">_</span>&gt;(<span class="string">&quot;source&quot;</span>),
-            action: row.get::&lt;String, <span class="kw">_</span>&gt;(<span class="string">&quot;action&quot;</span>),
-            content: row.get::&lt;String, <span class="kw">_</span>&gt;(<span class="string">&quot;content&quot;</span>),
+            source: row.read::&lt;<span class="kw-2">&amp;</span>str, <span class="kw">_</span>&gt;(<span class="string">&quot;source&quot;</span>).to_string(),
+            action: row.read::&lt;<span class="kw-2">&amp;</span>str, <span class="kw">_</span>&gt;(<span class="string">&quot;action&quot;</span>).to_string(),
+            content: row.read::&lt;<span class="kw-2">&amp;</span>str, <span class="kw">_</span>&gt;(<span class="string">&quot;content&quot;</span>).to_string(),
         };
 
         <span class="prelude-val">Ok</span>(myself)

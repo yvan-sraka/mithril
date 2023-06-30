@@ -584,17 +584,17 @@
     <span class="kw">where
         </span><span class="self">Self</span>: Sized,
     {
-        <span class="kw">let </span>open_message_id = row.get::&lt;String, <span class="kw">_</span>&gt;(<span class="number">0</span>);
-        <span class="kw">let </span>open_message_id = Uuid::parse_str(<span class="kw-2">&amp;</span>open_message_id).map_err(|e| {
+        <span class="kw">let </span>open_message_id = row.read::&lt;<span class="kw-2">&amp;</span>str, <span class="kw">_</span>&gt;(<span class="number">0</span>);
+        <span class="kw">let </span>open_message_id = Uuid::parse_str(open_message_id).map_err(|e| {
             HydrationError::InvalidData(<span class="macro">format!</span>(
                 <span class="string">&quot;Invalid UUID in single_signature.open_message_id: &#39;{open_message_id}&#39;. Error: {e}&quot;
             </span>))
         })<span class="question-mark">?</span>;
-        <span class="kw">let </span>signer_id = row.get::&lt;String, <span class="kw">_</span>&gt;(<span class="number">1</span>);
-        <span class="kw">let </span>registration_epoch_setting_id_int = row.get::&lt;i64, <span class="kw">_</span>&gt;(<span class="number">2</span>);
-        <span class="kw">let </span>lottery_indexes_str = row.get::&lt;String, <span class="kw">_</span>&gt;(<span class="number">3</span>);
-        <span class="kw">let </span>signature = row.get::&lt;String, <span class="kw">_</span>&gt;(<span class="number">4</span>);
-        <span class="kw">let </span>created_at = row.get::&lt;String, <span class="kw">_</span>&gt;(<span class="number">5</span>);
+        <span class="kw">let </span>signer_id = row.read::&lt;<span class="kw-2">&amp;</span>str, <span class="kw">_</span>&gt;(<span class="number">1</span>).to_string();
+        <span class="kw">let </span>registration_epoch_setting_id_int = row.read::&lt;i64, <span class="kw">_</span>&gt;(<span class="number">2</span>);
+        <span class="kw">let </span>lottery_indexes_str = row.read::&lt;<span class="kw-2">&amp;</span>str, <span class="kw">_</span>&gt;(<span class="number">3</span>);
+        <span class="kw">let </span>signature = row.read::&lt;<span class="kw-2">&amp;</span>str, <span class="kw">_</span>&gt;(<span class="number">4</span>).to_string();
+        <span class="kw">let </span>created_at = row.read::&lt;<span class="kw-2">&amp;</span>str, <span class="kw">_</span>&gt;(<span class="number">5</span>);
 
         <span class="kw">let </span>single_signature_record = <span class="self">Self </span>{
             open_message_id,
@@ -606,13 +606,13 @@
                 </span>))
                 })<span class="question-mark">?</span>,
             ),
-            lottery_indexes: serde_json::from_str(<span class="kw-2">&amp;</span>lottery_indexes_str).map_err(|e| {
+            lottery_indexes: serde_json::from_str(lottery_indexes_str).map_err(|e| {
                 HydrationError::InvalidData(<span class="macro">format!</span>(
                     <span class="string">&quot;Could not turn string &#39;{lottery_indexes_str}&#39; to Vec&lt;LotteryIndex&gt;. Error: {e}&quot;
                 </span>))
             })<span class="question-mark">?</span>,
             signature,
-            created_at: DateTime::parse_from_rfc3339(<span class="kw-2">&amp;</span>created_at)
+            created_at: DateTime::parse_from_rfc3339(created_at)
                 .map_err(|e| {
                     HydrationError::InvalidData(<span class="macro">format!</span>(
                         <span class="string">&quot;Could not turn string &#39;{created_at}&#39; to rfc3339 Datetime. Error: {e}&quot;

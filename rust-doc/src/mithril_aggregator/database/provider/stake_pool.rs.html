@@ -458,6 +458,9 @@
 <a href="#458" id="458">458</a>
 <a href="#459" id="459">459</a>
 <a href="#460" id="460">460</a>
+<a href="#461" id="461">461</a>
+<a href="#462" id="462">462</a>
+<a href="#463" id="463">463</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>async_trait::async_trait;
@@ -500,12 +503,12 @@
     <span class="kw">where
         </span><span class="self">Self</span>: Sized,
     {
-        <span class="kw">let </span>epoch_int = row.get::&lt;i64, <span class="kw">_</span>&gt;(<span class="number">2</span>);
-        <span class="kw">let </span>datetime = <span class="kw-2">&amp;</span>row.get::&lt;String, <span class="kw">_</span>&gt;(<span class="number">3</span>);
-        <span class="kw">let </span>stake = row.get::&lt;i64, <span class="kw">_</span>&gt;(<span class="number">1</span>);
+        <span class="kw">let </span>epoch_int = row.read::&lt;i64, <span class="kw">_</span>&gt;(<span class="number">2</span>);
+        <span class="kw">let </span>datetime = <span class="kw-2">&amp;</span>row.read::&lt;<span class="kw-2">&amp;</span>str, <span class="kw">_</span>&gt;(<span class="number">3</span>);
+        <span class="kw">let </span>stake = row.read::&lt;i64, <span class="kw">_</span>&gt;(<span class="number">1</span>);
 
         <span class="kw">let </span>stake_pool = <span class="self">Self </span>{
-            stake_pool_id: row.get::&lt;String, <span class="kw">_</span>&gt;(<span class="number">0</span>),
+            stake_pool_id: row.read::&lt;<span class="kw-2">&amp;</span>str, <span class="kw">_</span>&gt;(<span class="number">0</span>).to_string(),
             stake: u64::try_from(stake).map_err(|e| {
                 HydrationError::InconsistentType(<span class="macro">format!</span>(
                     <span class="string">&quot;Could not cast the stake from internal db I64 → U64. Error: &#39;{e}&#39;.&quot;
@@ -782,11 +785,14 @@
         ];
         <span class="kw">for </span>(pool_id, epoch, stake) <span class="kw">in </span>stake_distribution {
             <span class="kw">let </span><span class="kw-2">mut </span>statement = connection.prepare(<span class="kw-2">&amp;</span>query)<span class="question-mark">?</span>;
-
-            statement.bind(<span class="number">1</span>, <span class="kw-2">*</span>pool_id).unwrap();
-            statement.bind(<span class="number">2</span>, <span class="kw-2">*</span>epoch).unwrap();
-            statement.bind(<span class="number">3</span>, <span class="kw-2">*</span>stake).unwrap();
-            statement.bind(<span class="number">4</span>, Utc::now().to_rfc3339().as_str()).unwrap();
+            statement
+                .bind::&lt;<span class="kw-2">&amp;</span>[(<span class="kw">_</span>, Value)]&gt;(<span class="kw-2">&amp;</span>[
+                    (<span class="number">1</span>, pool_id.to_string().into()),
+                    (<span class="number">2</span>, Value::Integer(<span class="kw-2">*</span>epoch)),
+                    (<span class="number">3</span>, Value::Integer(<span class="kw-2">*</span>stake)),
+                    (<span class="number">4</span>, Utc::now().to_rfc3339().into()),
+                ])
+                .unwrap();
             statement.next().unwrap();
         }
 

@@ -929,6 +929,16 @@
 <a href="#929" id="929">929</a>
 <a href="#930" id="930">930</a>
 <a href="#931" id="931">931</a>
+<a href="#932" id="932">932</a>
+<a href="#933" id="933">933</a>
+<a href="#934" id="934">934</a>
+<a href="#935" id="935">935</a>
+<a href="#936" id="936">936</a>
+<a href="#937" id="937">937</a>
+<a href="#938" id="938">938</a>
+<a href="#939" id="939">939</a>
+<a href="#940" id="940">940</a>
+<a href="#941" id="941">941</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>mithril_common::{
     entities::{Epoch, ProtocolMessage, SignedEntityType, SingleSignatures},
     sqlite::{HydrationError, Projection, Provider, SourceAlias, SqLiteEntity, WhereCondition},
@@ -1004,19 +1014,19 @@
     <span class="kw">where
         </span><span class="self">Self</span>: Sized,
     {
-        <span class="kw">let </span>open_message_id = row.get::&lt;String, <span class="kw">_</span>&gt;(<span class="number">0</span>);
-        <span class="kw">let </span>open_message_id = Uuid::parse_str(<span class="kw-2">&amp;</span>open_message_id).map_err(|e| {
+        <span class="kw">let </span>open_message_id = row.read::&lt;<span class="kw-2">&amp;</span>str, <span class="kw">_</span>&gt;(<span class="number">0</span>);
+        <span class="kw">let </span>open_message_id = Uuid::parse_str(open_message_id).map_err(|e| {
             HydrationError::InvalidData(<span class="macro">format!</span>(
                 <span class="string">&quot;Invalid UUID in open_message.open_message_id: &#39;{open_message_id}&#39;. Error: {e}&quot;
             </span>))
         })<span class="question-mark">?</span>;
-        <span class="kw">let </span>protocol_message = row.get::&lt;String, <span class="kw">_</span>&gt;(<span class="number">4</span>);
-        <span class="kw">let </span>protocol_message = serde_json::from_str(<span class="kw-2">&amp;</span>protocol_message).map_err(|e| {
+        <span class="kw">let </span>protocol_message = row.read::&lt;<span class="kw-2">&amp;</span>str, <span class="kw">_</span>&gt;(<span class="number">4</span>);
+        <span class="kw">let </span>protocol_message = serde_json::from_str(protocol_message).map_err(|e| {
             HydrationError::InvalidData(<span class="macro">format!</span>(
                 <span class="string">&quot;Invalid protocol message JSON representation &#39;{protocol_message}&#39;. Error: {e}&quot;
             </span>))
         })<span class="question-mark">?</span>;
-        <span class="kw">let </span>epoch_setting_id = row.get::&lt;i64, <span class="kw">_</span>&gt;(<span class="number">1</span>);
+        <span class="kw">let </span>epoch_setting_id = row.read::&lt;i64, <span class="kw">_</span>&gt;(<span class="number">1</span>);
         <span class="kw">let </span>epoch_val = u64::try_from(epoch_setting_id)
             .map_err(|e| <span class="macro">panic!</span>(<span class="string">&quot;Integer field open_message.epoch_setting_id (value={epoch_setting_id}) is incompatible with u64 Epoch representation. Error = {e}&quot;</span>))<span class="question-mark">?</span>;
 
@@ -1024,18 +1034,19 @@
         // (e.g. when beacon json is &#39;{&quot;network&quot;: &quot;dev&quot;, &quot;epoch&quot;: 1, &quot;immutable_file_number&quot;: 2}&#39;).
         // If it fails, we fallback on readign the cell as an integer (e.g. when beacon json is &#39;5&#39;).
         // Maybe there is a better way of doing this.
-        </span><span class="kw">let </span>beacon_str = row
-            .try_get::&lt;String, <span class="kw">_</span>&gt;(<span class="number">2</span>)
-            .unwrap_or_else(|<span class="kw">_</span>| (row.get::&lt;i64, <span class="kw">_</span>&gt;(<span class="number">2</span>)).to_string());
+        </span><span class="kw">let </span>beacon_str = <span class="kw">match </span>row.try_read::&lt;<span class="kw-2">&amp;</span>str, <span class="kw">_</span>&gt;(<span class="number">2</span>) {
+            <span class="prelude-val">Ok</span>(value) =&gt; value.to_string(),
+            <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; (row.read::&lt;i64, <span class="kw">_</span>&gt;(<span class="number">2</span>)).to_string(),
+        };
 
-        <span class="kw">let </span>signed_entity_type_id = usize::try_from(row.get::&lt;i64, <span class="kw">_</span>&gt;(<span class="number">3</span>)).map_err(|e| {
+        <span class="kw">let </span>signed_entity_type_id = usize::try_from(row.read::&lt;i64, <span class="kw">_</span>&gt;(<span class="number">3</span>)).map_err(|e| {
             <span class="macro">panic!</span>(
                 <span class="string">&quot;Integer field open_message.signed_entity_type_id cannot be turned into usize: {e}&quot;
             </span>)
         })<span class="question-mark">?</span>;
         <span class="kw">let </span>signed_entity_type = SignedEntityType::hydrate(signed_entity_type_id, <span class="kw-2">&amp;</span>beacon_str)<span class="question-mark">?</span>;
-        <span class="kw">let </span>is_certified = row.get::&lt;i64, <span class="kw">_</span>&gt;(<span class="number">5</span>) != <span class="number">0</span>;
-        <span class="kw">let </span>datetime = <span class="kw-2">&amp;</span>row.get::&lt;String, <span class="kw">_</span>&gt;(<span class="number">6</span>);
+        <span class="kw">let </span>is_certified = row.read::&lt;i64, <span class="kw">_</span>&gt;(<span class="number">5</span>) != <span class="number">0</span>;
+        <span class="kw">let </span>datetime = <span class="kw-2">&amp;</span>row.read::&lt;<span class="kw-2">&amp;</span>str, <span class="kw">_</span>&gt;(<span class="number">6</span>);
         <span class="kw">let </span>created_at =
             DateTime::parse_from_rfc3339(datetime).map_err(|e| {
                 HydrationError::InvalidData(<span class="macro">format!</span>(
@@ -1290,7 +1301,7 @@ where open_message_id = ?*&quot;</span>;
     <span class="kw">where
         </span><span class="self">Self</span>: Sized,
     {
-        <span class="kw">let </span>single_signatures = <span class="kw-2">&amp;</span>row.get::&lt;String, <span class="kw">_</span>&gt;(<span class="number">7</span>);
+        <span class="kw">let </span>single_signatures = <span class="kw-2">&amp;</span>row.read::&lt;<span class="kw-2">&amp;</span>str, <span class="kw">_</span>&gt;(<span class="number">7</span>);
         <span class="kw">let </span>single_signatures: Vec&lt;SingleSignatures&gt; = serde_json::from_str(single_signatures)
             .map_err(|e| {
                 HydrationError::InvalidData(<span class="macro">format!</span>(
@@ -1605,7 +1616,11 @@ values (1, &#39;{&quot;k&quot;: 100, &quot;m&quot;: 5, &quot;phi&quot;: 0.65 }&#
         <span class="kw">let </span>(expr, params) = provider
             .get_insert_condition(
                 epoch,
-                <span class="kw-2">&amp;</span>SignedEntityType::CardanoImmutableFilesFull(Beacon::default()),
+                <span class="kw-2">&amp;</span>SignedEntityType::CardanoImmutableFilesFull(Beacon::new(
+                    <span class="string">&quot;testnet&quot;</span>.to_string(),
+                    <span class="number">2</span>,
+                    <span class="number">4</span>,
+                )),
                 <span class="kw-2">&amp;</span>ProtocolMessage::new(),
             )
             .unwrap()
@@ -1614,11 +1629,16 @@ values (1, &#39;{&quot;k&quot;: 100, &quot;m&quot;: 5, &quot;phi&quot;: 0.65 }&#
         <span class="macro">assert_eq!</span>(<span class="string">&quot;(open_message_id, epoch_setting_id, beacon, signed_entity_type_id, protocol_message, created_at) values (?1, ?2, ?3, ?4, ?5, ?6)&quot;</span>.to_string(), expr);
         <span class="macro">assert_eq!</span>(Value::Integer(<span class="number">12</span>), params[<span class="number">1</span>]);
         <span class="macro">assert_eq!</span>(
-            Value::String(<span class="string">r#&quot;{&quot;network&quot;:&quot;&quot;,&quot;epoch&quot;:0,&quot;immutable_file_number&quot;:0}&quot;#</span>.to_string()),
+            Value::String(
+                <span class="string">r#&quot;{&quot;network&quot;:&quot;testnet&quot;,&quot;epoch&quot;:2,&quot;immutable_file_number&quot;:4}&quot;#</span>.to_string()
+            ),
             params[<span class="number">2</span>]
         );
         <span class="macro">assert_eq!</span>(Value::Integer(<span class="number">2</span>), params[<span class="number">3</span>]);
-        <span class="macro">assert!</span>(!params[<span class="number">4</span>].as_string().unwrap().is_empty());
+        <span class="macro">assert_eq!</span>(
+            Value::String(serde_json::to_string(<span class="kw-2">&amp;</span>ProtocolMessage::new()).unwrap()),
+            params[<span class="number">4</span>]
+        );
     }
 
     <span class="attr">#[test]
