@@ -840,12 +840,6 @@
 <a href="#840" id="840">840</a>
 <a href="#841" id="841">841</a>
 <a href="#842" id="842">842</a>
-<a href="#843" id="843">843</a>
-<a href="#844" id="844">844</a>
-<a href="#845" id="845">845</a>
-<a href="#846" id="846">846</a>
-<a href="#847" id="847">847</a>
-<a href="#848" id="848">848</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>slog_scope::{debug, warn};
 <span class="kw">use </span>std::sync::Arc;
@@ -863,7 +857,7 @@
 
 <span class="kw">use crate</span>::{
     entities::OpenMessage, store::VerificationKeyStorer, ProtocolParametersStore,
-    ProtocolParametersStorer, VerificationKeyStore,
+    ProtocolParametersStorer,
 };
 
 <span class="attr">#[cfg(test)]
@@ -1042,7 +1036,7 @@
     </span>current_beacon: <span class="prelude-ty">Option</span>&lt;entities::Beacon&gt;,
 
     <span class="doccomment">/// Verification key store
-    </span>verification_key_store: Arc&lt;VerificationKeyStore&gt;,
+    </span>verification_key_store: Arc&lt;<span class="kw">dyn </span>VerificationKeyStorer&gt;,
 
     <span class="doccomment">/// Stake store
     </span>stake_store: Arc&lt;<span class="kw">dyn </span>StakeStorer&gt;,
@@ -1054,7 +1048,7 @@
 <span class="kw">impl </span>MultiSignerImpl {
     <span class="doccomment">/// MultiSignerImpl factory
     </span><span class="kw">pub fn </span>new(
-        verification_key_store: Arc&lt;VerificationKeyStore&gt;,
+        verification_key_store: Arc&lt;<span class="kw">dyn </span>VerificationKeyStorer&gt;,
         stake_store: Arc&lt;<span class="kw">dyn </span>StakeStorer&gt;,
         protocol_parameters_store: Arc&lt;ProtocolParametersStore&gt;,
     ) -&gt; <span class="self">Self </span>{
@@ -1435,7 +1429,7 @@
     <span class="kw">use crate</span>::{store::VerificationKeyStore, ProtocolParametersStore};
     <span class="kw">use </span>mithril_common::{
         crypto_helper::tests_setup::<span class="kw-2">*</span>,
-        entities::SignedEntityType,
+        entities::{PartyId, SignedEntityType},
         store::{adapter::MemoryAdapter, StakeStore},
         test_utils::{fake_data, MithrilFixtureBuilder},
     };
@@ -1443,15 +1437,9 @@
 
     <span class="kw">async fn </span>setup_multi_signer() -&gt; MultiSignerImpl {
         <span class="kw">let </span>beacon = fake_data::beacon();
-        <span class="kw">let </span>verification_key_store = VerificationKeyStore::new(
-            Box::new(
-                MemoryAdapter::&lt;Epoch, HashMap&lt;entities::PartyId, entities::SignerWithStake&gt;&gt;::new(
-                    <span class="prelude-val">None</span>,
-                )
-                .unwrap(),
-            ),
-            <span class="prelude-val">None</span>,
-        );
+        <span class="kw">let </span>verification_key_store = VerificationKeyStore::new(Box::new(
+            MemoryAdapter::&lt;Epoch, HashMap&lt;PartyId, SignerWithStake&gt;&gt;::new(<span class="prelude-val">None</span>).unwrap(),
+        ));
         <span class="kw">let </span>stake_store = StakeStore::new(
             Box::new(MemoryAdapter::&lt;Epoch, StakeDistribution&gt;::new(<span class="prelude-val">None</span>).unwrap()),
             <span class="prelude-val">None</span>,

@@ -819,118 +819,27 @@
 <a href="#819" id="819">819</a>
 <a href="#820" id="820">820</a>
 <a href="#821" id="821">821</a>
-<a href="#822" id="822">822</a>
-<a href="#823" id="823">823</a>
-<a href="#824" id="824">824</a>
-<a href="#825" id="825">825</a>
-<a href="#826" id="826">826</a>
-<a href="#827" id="827">827</a>
-<a href="#828" id="828">828</a>
-<a href="#829" id="829">829</a>
-<a href="#830" id="830">830</a>
-<a href="#831" id="831">831</a>
-<a href="#832" id="832">832</a>
-<a href="#833" id="833">833</a>
-<a href="#834" id="834">834</a>
-<a href="#835" id="835">835</a>
-<a href="#836" id="836">836</a>
-<a href="#837" id="837">837</a>
-<a href="#838" id="838">838</a>
-<a href="#839" id="839">839</a>
-<a href="#840" id="840">840</a>
-<a href="#841" id="841">841</a>
-<a href="#842" id="842">842</a>
-<a href="#843" id="843">843</a>
-<a href="#844" id="844">844</a>
-<a href="#845" id="845">845</a>
-<a href="#846" id="846">846</a>
-<a href="#847" id="847">847</a>
-<a href="#848" id="848">848</a>
-<a href="#849" id="849">849</a>
-<a href="#850" id="850">850</a>
-<a href="#851" id="851">851</a>
-<a href="#852" id="852">852</a>
-<a href="#853" id="853">853</a>
-<a href="#854" id="854">854</a>
-<a href="#855" id="855">855</a>
-<a href="#856" id="856">856</a>
-<a href="#857" id="857">857</a>
-<a href="#858" id="858">858</a>
-<a href="#859" id="859">859</a>
-<a href="#860" id="860">860</a>
-<a href="#861" id="861">861</a>
-<a href="#862" id="862">862</a>
-<a href="#863" id="863">863</a>
-<a href="#864" id="864">864</a>
-<a href="#865" id="865">865</a>
-<a href="#866" id="866">866</a>
-<a href="#867" id="867">867</a>
-<a href="#868" id="868">868</a>
-<a href="#869" id="869">869</a>
-<a href="#870" id="870">870</a>
-<a href="#871" id="871">871</a>
-<a href="#872" id="872">872</a>
-<a href="#873" id="873">873</a>
-<a href="#874" id="874">874</a>
-<a href="#875" id="875">875</a>
-<a href="#876" id="876">876</a>
-<a href="#877" id="877">877</a>
-<a href="#878" id="878">878</a>
-<a href="#879" id="879">879</a>
-<a href="#880" id="880">880</a>
-<a href="#881" id="881">881</a>
-<a href="#882" id="882">882</a>
-<a href="#883" id="883">883</a>
-<a href="#884" id="884">884</a>
-<a href="#885" id="885">885</a>
-<a href="#886" id="886">886</a>
-<a href="#887" id="887">887</a>
-<a href="#888" id="888">888</a>
-<a href="#889" id="889">889</a>
-<a href="#890" id="890">890</a>
-<a href="#891" id="891">891</a>
-<a href="#892" id="892">892</a>
-<a href="#893" id="893">893</a>
-<a href="#894" id="894">894</a>
-<a href="#895" id="895">895</a>
-<a href="#896" id="896">896</a>
-<a href="#897" id="897">897</a>
-<a href="#898" id="898">898</a>
-<a href="#899" id="899">899</a>
-<a href="#900" id="900">900</a>
-<a href="#901" id="901">901</a>
-<a href="#902" id="902">902</a>
-<a href="#903" id="903">903</a>
-<a href="#904" id="904">904</a>
-<a href="#905" id="905">905</a>
-<a href="#906" id="906">906</a>
-<a href="#907" id="907">907</a>
-<a href="#908" id="908">908</a>
-<a href="#909" id="909">909</a>
-<a href="#910" id="910">910</a>
-<a href="#911" id="911">911</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>chrono::{DateTime, Utc};
 <span class="kw">use </span>sqlite::{Connection, Value};
-<span class="kw">use </span>std::{
-    collections::{BTreeMap, HashMap},
-    sync::Arc,
-};
+<span class="kw">use </span>std::{collections::HashMap, sync::Arc};
 <span class="kw">use </span>tokio::sync::Mutex;
 
 <span class="kw">use </span>mithril_common::{
     crypto_helper::KESPeriod,
     entities::{
         Epoch, HexEncodedOpCert, HexEncodedVerificationKey, HexEncodedVerificationKeySignature,
-        PartyId, SignerWithStake, Stake,
+        PartyId, Signer, SignerWithStake, Stake,
     },
     sqlite::{
         EntityCursor, HydrationError, Projection, Provider, SourceAlias, SqLiteEntity,
         WhereCondition,
     },
-    store::adapter::{AdapterError, StoreAdapter},
+    store::{adapter::AdapterError, StoreError},
     StdError,
 };
+
+<span class="kw">use </span><span class="kw">crate</span>::VerificationKeyStorer;
 
 <span class="doccomment">/// SignerRegistration record is the representation of a stored signer_registration.
 </span><span class="attr">#[derive(Debug, PartialEq, Clone)]
@@ -975,9 +884,21 @@
     }
 }
 
+<span class="kw">impl </span>From&lt;SignerRegistrationRecord&gt; <span class="kw">for </span>Signer {
+    <span class="kw">fn </span>from(other: SignerRegistrationRecord) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            party_id: other.signer_id,
+            verification_key: other.verification_key,
+            verification_key_signature: other.verification_key_signature,
+            operational_certificate: other.operational_certificate,
+            kes_period: other.kes_period,
+        }
+    }
+}
+
 <span class="kw">impl </span>From&lt;SignerRegistrationRecord&gt; <span class="kw">for </span>SignerWithStake {
-    <span class="kw">fn </span>from(other: SignerRegistrationRecord) -&gt; SignerWithStake {
-        SignerWithStake {
+    <span class="kw">fn </span>from(other: SignerRegistrationRecord) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
             party_id: other.signer_id,
             verification_key: other.verification_key,
             verification_key_signature: other.verification_key_signature,
@@ -1292,144 +1213,82 @@
 }
 
 <span class="doccomment">/// Service to deal with signer_registration (read &amp; write).
-</span><span class="kw">pub struct </span>SignerRegistrationStoreAdapter {
+</span><span class="kw">pub struct </span>SignerRegistrationStore {
     connection: Arc&lt;Mutex&lt;Connection&gt;&gt;,
 }
 
-<span class="kw">impl </span>SignerRegistrationStoreAdapter {
-    <span class="doccomment">/// Create a new SignerRegistrationStoreAdapter service
+<span class="kw">impl </span>SignerRegistrationStore {
+    <span class="doccomment">/// Create a new [SignerRegistrationStore] service
     </span><span class="kw">pub fn </span>new(connection: Arc&lt;Mutex&lt;Connection&gt;&gt;) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{ connection }
     }
 }
 
 <span class="attr">#[async_trait]
-</span><span class="kw">impl </span>StoreAdapter <span class="kw">for </span>SignerRegistrationStoreAdapter {
-    <span class="kw">type </span>Key = Epoch;
-    <span class="kw">type </span>Record = HashMap&lt;PartyId, SignerWithStake&gt;;
-
-    <span class="kw">async fn </span>store_record(
-        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        key: <span class="kw-2">&amp;</span><span class="self">Self</span>::Key,
-        record: <span class="kw-2">&amp;</span><span class="self">Self</span>::Record,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), AdapterError&gt; {
+</span><span class="kw">impl </span>VerificationKeyStorer <span class="kw">for </span>SignerRegistrationStore {
+    <span class="kw">async fn </span>save_verification_key(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        epoch: Epoch,
+        signer: SignerWithStake,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;SignerWithStake&gt;, StoreError&gt; {
         <span class="kw">let </span>connection = <span class="kw-2">&amp;*</span><span class="self">self</span>.connection.lock().<span class="kw">await</span>;
         <span class="kw">let </span>provider = InsertOrReplaceSignerRegistrationRecordProvider::new(connection);
-        connection
-            .execute(<span class="string">&quot;begin transaction&quot;</span>)
-            .map_err(|e| AdapterError::QueryError(e.into()))<span class="question-mark">?</span>;
+        <span class="kw">let </span>existing_record = SignerRegistrationRecordProvider::new(connection)
+            .get_by_signer_id_and_epoch(signer.party_id.clone(), <span class="kw-2">&amp;</span>epoch)
+            .map_err(|e| AdapterError::QueryError(e))<span class="question-mark">?
+            </span>.next();
 
-        <span class="kw">for </span>signer_with_stake <span class="kw">in </span>record.values() {
-            <span class="kw">let </span>_signer_registration_record = provider
-                .persist(SignerRegistrationRecord::from_signer_with_stake(
-                    signer_with_stake.to_owned(),
-                    <span class="kw-2">*</span>key,
-                ))
-                .map_err(|e| AdapterError::GeneralError(<span class="macro">format!</span>(<span class="string">&quot;{e}&quot;</span>)))<span class="question-mark">?</span>;
+        <span class="kw">let </span>_updated_record = provider
+            .persist(SignerRegistrationRecord::from_signer_with_stake(
+                signer, epoch,
+            ))
+            .map_err(|e| AdapterError::GeneralError(<span class="macro">format!</span>(<span class="string">&quot;{e}&quot;</span>)))<span class="question-mark">?</span>;
+
+        <span class="kw">match </span>existing_record {
+            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
+            <span class="prelude-val">Some</span>(previous_record) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(previous_record.into())),
         }
+    }
 
-        connection
-            .execute(<span class="string">&quot;commit transaction&quot;</span>)
-            .map_err(|e| AdapterError::QueryError(e.into()))<span class="question-mark">?</span>;
+    <span class="kw">async fn </span>get_verification_keys(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        epoch: Epoch,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;HashMap&lt;PartyId, Signer&gt;&gt;, StoreError&gt; {
+        <span class="kw">let </span>connection = <span class="kw-2">&amp;*</span><span class="self">self</span>.connection.lock().<span class="kw">await</span>;
+        <span class="kw">let </span>provider = SignerRegistrationRecordProvider::new(connection);
+        <span class="kw">let </span>cursor = provider
+            .get_by_epoch(<span class="kw-2">&amp;</span>epoch)
+            .map_err(|e| AdapterError::GeneralError(<span class="macro">format!</span>(<span class="string">&quot;{e}&quot;</span>)))<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>signer_with_stakes: HashMap&lt;PartyId, Signer&gt; =
+            HashMap::from_iter(cursor.map(|record| (record.signer_id.to_owned(), record.into())));
+
+        <span class="kw">match </span>signer_with_stakes.is_empty() {
+            <span class="bool-val">true </span>=&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
+            <span class="bool-val">false </span>=&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(signer_with_stakes)),
+        }
+    }
+
+    <span class="kw">async fn </span>prune_verification_keys(<span class="kw-2">&amp;</span><span class="self">self</span>, max_epoch_to_prune: Epoch) -&gt; <span class="prelude-ty">Result</span>&lt;(), StoreError&gt; {
+        <span class="kw">let </span>connection = <span class="kw-2">&amp;*</span><span class="self">self</span>.connection.lock().<span class="kw">await</span>;
+        <span class="kw">let </span>_deleted_records = DeleteSignerRegistrationRecordProvider::new(connection)
+            <span class="comment">// we want to prune including the given epoch (+1)
+            </span>.prune(max_epoch_to_prune + <span class="number">1</span>)
+            .map_err(|e| AdapterError::QueryError(e))<span class="question-mark">?
+            </span>.collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 
         <span class="prelude-val">Ok</span>(())
-    }
-
-    <span class="kw">async fn </span>get_record(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span><span class="self">Self</span>::Key) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Record&gt;, AdapterError&gt; {
-        <span class="kw">let </span>connection = <span class="kw-2">&amp;*</span><span class="self">self</span>.connection.lock().<span class="kw">await</span>;
-        <span class="kw">let </span>provider = SignerRegistrationRecordProvider::new(connection);
-        <span class="kw">let </span>cursor = provider
-            .get_by_epoch(key)
-            .map_err(|e| AdapterError::GeneralError(<span class="macro">format!</span>(<span class="string">&quot;{e}&quot;</span>)))<span class="question-mark">?</span>;
-        <span class="kw">let </span><span class="kw-2">mut </span>signer_with_stakes = HashMap::new();
-        <span class="kw">for </span>signer_registration_record <span class="kw">in </span>cursor {
-            signer_with_stakes.insert(
-                signer_registration_record.signer_id.to_string(),
-                signer_registration_record.into(),
-            );
-        }
-        <span class="kw">if </span>signer_with_stakes.is_empty() {
-            <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
-        } <span class="kw">else </span>{
-            <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(signer_with_stakes))
-        }
-    }
-
-    <span class="kw">async fn </span>record_exists(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span><span class="self">Self</span>::Key) -&gt; <span class="prelude-ty">Result</span>&lt;bool, AdapterError&gt; {
-        <span class="prelude-val">Ok</span>(<span class="self">self</span>.get_record(key).<span class="kw">await</span><span class="question-mark">?</span>.is_some())
-    }
-
-    <span class="kw">async fn </span>get_last_n_records(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        how_many: usize,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;(<span class="self">Self</span>::Key, <span class="self">Self</span>::Record)&gt;, AdapterError&gt; {
-        <span class="kw">let </span>connection = <span class="kw-2">&amp;*</span><span class="self">self</span>.connection.lock().<span class="kw">await</span>;
-        <span class="kw">let </span>provider = SignerRegistrationRecordProvider::new(connection);
-        <span class="kw">let </span>cursor = provider
-            .get_all()
-            .map_err(|e| AdapterError::GeneralError(<span class="macro">format!</span>(<span class="string">&quot;{e}&quot;</span>)))<span class="question-mark">?
-            </span>.collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
-            .into_iter()
-            .rev();
-        <span class="kw">let </span>signer_with_stake_by_epoch: BTreeMap&lt;<span class="self">Self</span>::Key, <span class="self">Self</span>::Record&gt; = cursor.fold(
-            BTreeMap::&lt;<span class="self">Self</span>::Key, <span class="self">Self</span>::Record&gt;::new(),
-            |<span class="kw-2">mut </span>acc, signer_registration_record| {
-                <span class="kw">let </span>epoch = signer_registration_record.epoch_setting_id;
-                <span class="kw">let </span><span class="kw-2">mut </span>signer_with_stakes: <span class="self">Self</span>::Record =
-                    <span class="kw">if let </span><span class="prelude-val">Some</span>(signer_with_stakes) = acc.get_mut(<span class="kw-2">&amp;</span>epoch) {
-                        signer_with_stakes.to_owned()
-                    } <span class="kw">else </span>{
-                        HashMap::new()
-                    };
-                signer_with_stakes.insert(
-                    signer_registration_record.signer_id.to_string(),
-                    signer_registration_record.into(),
-                );
-                acc.insert(epoch, signer_with_stakes);
-                acc
-            },
-        );
-        <span class="prelude-val">Ok</span>(signer_with_stake_by_epoch
-            .into_iter()
-            .rev()
-            .take(how_many)
-            .collect())
-    }
-
-    <span class="kw">async fn </span>remove(<span class="kw-2">&amp;mut </span><span class="self">self</span>, key: <span class="kw-2">&amp;</span><span class="self">Self</span>::Key) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Record&gt;, AdapterError&gt; {
-        <span class="kw">let </span>connection = <span class="kw-2">&amp;*</span><span class="self">self</span>.connection.lock().<span class="kw">await</span>;
-        <span class="kw">let </span>provider = DeleteSignerRegistrationRecordProvider::new(connection);
-        <span class="kw">let </span>cursor = provider
-            .delete(<span class="kw-2">*</span>key)
-            .map_err(|e| AdapterError::GeneralError(<span class="macro">format!</span>(<span class="string">&quot;{e}&quot;</span>)))<span class="question-mark">?</span>;
-        <span class="kw">let </span><span class="kw-2">mut </span>signer_with_stakes = HashMap::new();
-        <span class="kw">for </span>signer_registration_record <span class="kw">in </span>cursor {
-            signer_with_stakes.insert(
-                signer_registration_record.signer_id.to_string(),
-                signer_registration_record.into(),
-            );
-        }
-
-        <span class="kw">if </span>signer_with_stakes.is_empty() {
-            <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
-        } <span class="kw">else </span>{
-            <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(signer_with_stakes))
-        }
-    }
-
-    <span class="kw">async fn </span>get_iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Box&lt;<span class="kw">dyn </span>Iterator&lt;Item = <span class="self">Self</span>::Record&gt; + <span class="lifetime">&#39;_</span>&gt;, AdapterError&gt; {
-        <span class="kw">let </span>records = <span class="self">self</span>.get_last_n_records(usize::MAX).<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(Box::new(records.into_iter().map(|(_k, v)| v)))
     }
 }
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
-    <span class="kw">use </span>std::collections::{BTreeMap, HashMap};
+    <span class="kw">use </span>std::collections::HashMap;
 
     <span class="kw">use </span>mithril_common::test_utils::MithrilFixtureBuilder;
 
     <span class="kw">use </span><span class="kw">crate</span>::database::provider::{apply_all_migrations_to_db, disable_foreign_key_support};
+    <span class="kw">use </span><span class="kw">crate</span>::store::test_verification_key_storer;
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
@@ -1760,64 +1619,25 @@
         }
     }
 
-    <span class="attr">#[tokio::test]
-    </span><span class="kw">async fn </span>test_store_adapter() {
-        <span class="kw">let </span>fixture = MithrilFixtureBuilder::default().with_signers(<span class="number">5</span>).build();
-        <span class="kw">let </span>signer_with_stakes = fixture.signers_with_stake();
-        <span class="kw">let </span>signer_with_stakes_by_epoch: Vec&lt;(Epoch, HashMap&lt;PartyId, SignerWithStake&gt;)&gt; = (<span class="number">0</span>..<span class="number">5</span>)
-            .map(|e| {
-                (
-                    Epoch(e),
-                    signer_with_stakes
-                        .clone()
-                        .into_iter()
-                        .map(|s| (s.party_id.to_owned(), s))
-                        .collect(),
-                )
-            })
+    <span class="kw">pub fn </span>init_signer_registration_store(
+        initial_data: Vec&lt;(Epoch, HashMap&lt;PartyId, SignerWithStake&gt;)&gt;,
+    ) -&gt; Arc&lt;<span class="kw">dyn </span>VerificationKeyStorer&gt; {
+        <span class="kw">let </span>connection = Connection::open(<span class="string">&quot;:memory:&quot;</span>).unwrap();
+        <span class="kw">let </span>initial_data: Vec&lt;(Epoch, Vec&lt;SignerWithStake&gt;)&gt; = initial_data
+            .into_iter()
+            .map(|(e, signers)| (e, signers.into_values().collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()))
             .collect();
 
-        <span class="kw">let </span>connection = Connection::open(<span class="string">&quot;:memory:&quot;</span>).unwrap();
-        setup_signer_registration_db(<span class="kw-2">&amp;</span>connection, Vec::new()).unwrap();
+        setup_signer_registration_db(<span class="kw-2">&amp;</span>connection, initial_data).unwrap();
 
-        <span class="kw">let </span><span class="kw-2">mut </span>signer_registration_store_adapter =
-            SignerRegistrationStoreAdapter::new(Arc::new(Mutex::new(connection)));
-
-        <span class="kw">for </span>(epoch, signer_with_stakes) <span class="kw">in </span><span class="kw-2">&amp;</span>signer_with_stakes_by_epoch {
-            <span class="macro">assert!</span>(signer_registration_store_adapter
-                .store_record(epoch, signer_with_stakes)
-                .<span class="kw">await
-                </span>.is_ok());
-        }
-
-        <span class="kw">for </span>(epoch, signer_with_stakes) <span class="kw">in </span><span class="kw-2">&amp;</span>signer_with_stakes_by_epoch {
-            <span class="macro">assert!</span>(signer_registration_store_adapter
-                .record_exists(epoch)
-                .<span class="kw">await
-                </span>.unwrap());
-            <span class="macro">assert_eq!</span>(
-                <span class="prelude-val">Some</span>(signer_with_stakes.to_owned()),
-                signer_registration_store_adapter
-                    .get_record(epoch)
-                    .<span class="kw">await
-                    </span>.unwrap()
-            );
-        }
-        <span class="macro">assert_eq!</span>(
-            signer_with_stakes_by_epoch
-                .clone()
-                .into_iter()
-                .map(|(k, v)| (k, BTreeMap::from_iter(v.into_iter())))
-                .collect::&lt;Vec&lt;(Epoch, BTreeMap&lt;PartyId, SignerWithStake&gt;)&gt;&gt;(),
-            signer_registration_store_adapter
-                .get_last_n_records(signer_with_stakes_by_epoch.len())
-                .<span class="kw">await
-                </span>.unwrap()
-                .into_iter()
-                .rev()
-                .map(|(k, v)| (k, BTreeMap::from_iter(v.into_iter())))
-                .collect::&lt;Vec&lt;(Epoch, BTreeMap&lt;PartyId, SignerWithStake&gt;)&gt;&gt;()
-        )
+        Arc::new(SignerRegistrationStore::new(Arc::new(Mutex::new(
+            connection,
+        ))))
     }
+
+    <span class="macro">test_verification_key_storer!</span>(
+        test_signer_registration_store =&gt;
+        <span class="kw">crate</span>::database::provider::signer_registration::tests::init_signer_registration_store
+    );
 }
 </code></pre></div></section></main></body></html>
