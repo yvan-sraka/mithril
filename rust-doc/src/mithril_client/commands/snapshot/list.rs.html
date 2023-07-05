@@ -61,16 +61,16 @@
         <span class="kw">let </span>config: Config = config_builder.build()<span class="question-mark">?</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>dependencies_builder = DependenciesBuilder::new(Arc::new(config));
         <span class="kw">let </span>snapshot_service = dependencies_builder.get_snapshot_service().<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="kw">let </span>snapshots = snapshot_service.list().<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>items = snapshot_service.list().<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="kw">if </span><span class="self">self</span>.json {
-            <span class="macro">println!</span>(<span class="string">&quot;{}&quot;</span>, serde_json::to_string(<span class="kw-2">&amp;</span>snapshots)<span class="question-mark">?</span>);
+            <span class="macro">println!</span>(<span class="string">&quot;{}&quot;</span>, serde_json::to_string(<span class="kw-2">&amp;</span>items)<span class="question-mark">?</span>);
         } <span class="kw">else </span>{
-            <span class="kw">let </span>snapshot_list_items: Vec&lt;SnapshotListItem&gt; = snapshots
+            <span class="kw">let </span>items = items
                 .into_iter()
-                .map(|snapshot| snapshot.into())
-                .collect();
-            print_stdout(snapshot_list_items.with_title()).unwrap();
+                .map(SnapshotListItem::from)
+                .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+            print_stdout(items.with_title())<span class="question-mark">?</span>;
         }
 
         <span class="prelude-val">Ok</span>(())

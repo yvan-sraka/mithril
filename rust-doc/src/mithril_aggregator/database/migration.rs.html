@@ -550,6 +550,19 @@
 <a href="#550" id="550">550</a>
 <a href="#551" id="551">551</a>
 <a href="#552" id="552">552</a>
+<a href="#553" id="553">553</a>
+<a href="#554" id="554">554</a>
+<a href="#555" id="555">555</a>
+<a href="#556" id="556">556</a>
+<a href="#557" id="557">557</a>
+<a href="#558" id="558">558</a>
+<a href="#559" id="559">559</a>
+<a href="#560" id="560">560</a>
+<a href="#561" id="561">561</a>
+<a href="#562" id="562">562</a>
+<a href="#563" id="563">563</a>
+<a href="#564" id="564">564</a>
+<a href="#565" id="565">565</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Migration module
 //!
 </span><span class="kw">use </span>mithril_common::database::SqlMigration;
@@ -1099,6 +1112,19 @@ insert into new_db_version
 drop table db_version;
 alter table new_db_version rename to db_version;
             &quot;</span>,
+        ),
+        <span class="comment">// Migration 16
+        // Update `signed_entity` table to remove `certificate_hash` and `created_at` from `artifact` JSON field.
+        </span>SqlMigration::new(
+            <span class="number">16</span>,
+            <span class="string">r#&quot;
+update signed_entity
+    set artifact = json_remove(
+        artifact, 
+        &#39;$.certificate_hash&#39;,
+        &#39;$.created_at&#39;
+    );
+&quot;#</span>,
         ),
     ]
 }

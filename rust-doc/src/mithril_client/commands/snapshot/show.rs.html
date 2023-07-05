@@ -63,12 +63,18 @@
 <a href="#63" id="63">63</a>
 <a href="#64" id="64">64</a>
 <a href="#65" id="65">65</a>
+<a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>clap::Parser;
 <span class="kw">use </span>cli_table::{print_stdout, WithTitle};
 <span class="kw">use </span>config::{builder::DefaultState, Config, ConfigBuilder};
-<span class="kw">use </span>mithril_common::{entities::Snapshot, StdError};
+<span class="kw">use </span>mithril_common::{messages::SnapshotMessage, StdError};
 
 <span class="kw">use crate</span>::{dependencies::DependenciesBuilder, SnapshotFieldItem};
 
@@ -92,12 +98,12 @@
         <span class="kw">let </span>config: Config = config_builder.build()<span class="question-mark">?</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>dependencies_builder = DependenciesBuilder::new(Arc::new(config));
         <span class="kw">let </span>snapshot_service = dependencies_builder.get_snapshot_service().<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="kw">let </span>snapshot = snapshot_service.show(<span class="kw-2">&amp;</span><span class="self">self</span>.digest).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let </span>snapshot_message = snapshot_service.show(<span class="kw-2">&amp;</span><span class="self">self</span>.digest).<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="kw">if </span><span class="self">self</span>.json {
-            <span class="macro">println!</span>(<span class="string">&quot;{}&quot;</span>, serde_json::to_string(<span class="kw-2">&amp;</span>snapshot)<span class="question-mark">?</span>);
+            <span class="macro">println!</span>(<span class="string">&quot;{}&quot;</span>, serde_json::to_string(<span class="kw-2">&amp;</span>snapshot_message)<span class="question-mark">?</span>);
         } <span class="kw">else </span>{
-            print_stdout(convert_to_field_items(<span class="kw-2">&amp;</span>snapshot).with_title()).unwrap();
+            print_stdout(convert_to_field_items(<span class="kw-2">&amp;</span>snapshot_message).with_title()).unwrap();
         }
 
         <span class="prelude-val">Ok</span>(())
@@ -105,18 +111,24 @@
 }
 
 <span class="doccomment">/// Convert Snapshot to SnapshotFieldItems routine
-</span><span class="kw">fn </span>convert_to_field_items(snapshot: <span class="kw-2">&amp;</span>Snapshot) -&gt; Vec&lt;SnapshotFieldItem&gt; {
+</span><span class="kw">fn </span>convert_to_field_items(snapshot_message: <span class="kw-2">&amp;</span>SnapshotMessage) -&gt; Vec&lt;SnapshotFieldItem&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>field_items = <span class="macro">vec!</span>[
-        SnapshotFieldItem::new(<span class="string">&quot;Epoch&quot;</span>.to_string(), <span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, snapshot.beacon.epoch)),
+        SnapshotFieldItem::new(
+            <span class="string">&quot;Epoch&quot;</span>.to_string(),
+            <span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, snapshot_message.beacon.epoch),
+        ),
         SnapshotFieldItem::new(
             <span class="string">&quot;Immutable File Number&quot;</span>.to_string(),
-            <span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, snapshot.beacon.immutable_file_number),
+            <span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, snapshot_message.beacon.immutable_file_number),
         ),
-        SnapshotFieldItem::new(<span class="string">&quot;Network&quot;</span>.to_string(), snapshot.beacon.network.to_owned()),
-        SnapshotFieldItem::new(<span class="string">&quot;Digest&quot;</span>.to_string(), snapshot.digest.to_string()),
-        SnapshotFieldItem::new(<span class="string">&quot;Size&quot;</span>.to_string(), <span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, snapshot.size)),
+        SnapshotFieldItem::new(
+            <span class="string">&quot;Network&quot;</span>.to_string(),
+            snapshot_message.beacon.network.to_owned(),
+        ),
+        SnapshotFieldItem::new(<span class="string">&quot;Digest&quot;</span>.to_string(), snapshot_message.digest.to_string()),
+        SnapshotFieldItem::new(<span class="string">&quot;Size&quot;</span>.to_string(), <span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, snapshot_message.size)),
     ];
-    <span class="kw">for </span>(idx, location) <span class="kw">in </span>snapshot.locations.iter().enumerate() {
+    <span class="kw">for </span>(idx, location) <span class="kw">in </span>snapshot_message.locations.iter().enumerate() {
         field_items.push(SnapshotFieldItem::new(
             <span class="macro">format!</span>(<span class="string">&quot;Location {}&quot;</span>, idx + <span class="number">1</span>),
             location.to_string(),
@@ -124,7 +136,7 @@
     }
     field_items.push(SnapshotFieldItem::new(
         <span class="string">&quot;Created&quot;</span>.to_string(),
-        snapshot.created_at.to_string(),
+        snapshot_message.created_at.to_string(),
     ));
     field_items
 }

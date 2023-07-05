@@ -32,15 +32,17 @@
 <a href="#32" id="32">32</a>
 <a href="#33" id="33">33</a>
 <a href="#34" id="34">34</a>
+<a href="#35" id="35">35</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>mithril_common::entities::{SignedEntityType, SingleSignatures};
-<span class="kw">use </span>mithril_common::messages::RegisterSignatureMessage;
+<span class="kw">use </span>mithril_common::messages::{RegisterSignatureMessage, ToMessageAdapter};
 
 <span class="kw">pub struct </span>ToRegisterSignatureMessageAdapter;
 
-<span class="kw">impl </span>ToRegisterSignatureMessageAdapter {
-    <span class="kw">pub fn </span>adapt(
-        signed_entity_type: SignedEntityType,
-        single_signature: SingleSignatures,
+<span class="kw">impl </span>ToMessageAdapter&lt;(SignedEntityType, SingleSignatures), RegisterSignatureMessage&gt;
+    <span class="kw">for </span>ToRegisterSignatureMessageAdapter
+{
+    <span class="kw">fn </span>adapt(
+        (signed_entity_type, single_signature): (SignedEntityType, SingleSignatures),
     ) -&gt; RegisterSignatureMessage {
         RegisterSignatureMessage {
             signed_entity_type: <span class="prelude-val">Some</span>(signed_entity_type),
@@ -60,8 +62,8 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>adapt_ok() {
         <span class="kw">let </span>single_signature = fake_data::single_signatures([<span class="number">1</span>, <span class="number">3</span>].to_vec());
-        <span class="kw">let </span>message =
-            ToRegisterSignatureMessageAdapter::adapt(SignedEntityType::dummy(), single_signature);
+        <span class="kw">let </span>message: RegisterSignatureMessage =
+            ToRegisterSignatureMessageAdapter::adapt((SignedEntityType::dummy(), single_signature));
 
         <span class="macro">assert_eq!</span>(<span class="string">&quot;party_id&quot;</span>.to_string(), message.party_id);
     }

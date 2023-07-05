@@ -94,11 +94,6 @@
 <a href="#94" id="94">94</a>
 <a href="#95" id="95">95</a>
 <a href="#96" id="96">96</a>
-<a href="#97" id="97">97</a>
-<a href="#98" id="98">98</a>
-<a href="#99" id="99">99</a>
-<a href="#100" id="100">100</a>
-<a href="#101" id="101">101</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! This module contains a struct to exchange snapshot information with the Aggregator
 
 </span><span class="kw">use </span>std::{
@@ -109,13 +104,11 @@
 <span class="kw">use </span>indicatif::ProgressBar;
 <span class="kw">use </span>mithril_common::{
     entities::Snapshot,
-    messages::{SnapshotListMessage, SnapshotMessage},
+    messages::{SnapshotListItemMessage, SnapshotListMessage, SnapshotMessage},
     StdResult,
 };
 <span class="kw">use </span>slog_scope::warn;
 <span class="kw">use </span>thiserror::Error;
-
-<span class="kw">use crate</span>::{FromSnapshotListMessageAdapter, FromSnapshotMessageAdapter};
 
 <span class="kw">use </span><span class="kw">super</span>::AggregatorClient;
 
@@ -145,23 +138,20 @@
     }
 
     <span class="doccomment">/// Return a list of available snapshots
-    </span><span class="kw">pub async fn </span>list(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StdResult&lt;Vec&lt;Snapshot&gt;&gt; {
+    </span><span class="kw">pub async fn </span>list(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StdResult&lt;Vec&lt;SnapshotListItemMessage&gt;&gt; {
         <span class="kw">let </span>url = <span class="string">&quot;artifact/snapshots&quot;</span>;
         <span class="kw">let </span>response = <span class="self">self</span>.http_client.get_content(url).<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="kw">let </span>message = serde_json::from_str::&lt;SnapshotListMessage&gt;(<span class="kw-2">&amp;</span>response)<span class="question-mark">?</span>;
-        <span class="kw">let </span>snapshots = FromSnapshotListMessageAdapter::adapt(message);
-
-        <span class="prelude-val">Ok</span>(snapshots)
+        <span class="kw">let </span>items = serde_json::from_str::&lt;SnapshotListMessage&gt;(<span class="kw-2">&amp;</span>response)<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(items)
     }
 
     <span class="doccomment">/// Return a snapshot based on the given digest (list to get the digests)
-    </span><span class="kw">pub async fn </span>show(<span class="kw-2">&amp;</span><span class="self">self</span>, digest: <span class="kw-2">&amp;</span>str) -&gt; StdResult&lt;Snapshot&gt; {
+    </span><span class="kw">pub async fn </span>show(<span class="kw-2">&amp;</span><span class="self">self</span>, digest: <span class="kw-2">&amp;</span>str) -&gt; StdResult&lt;SnapshotMessage&gt; {
         <span class="kw">let </span>url = <span class="macro">format!</span>(<span class="string">&quot;artifact/snapshot/{}&quot;</span>, digest);
         <span class="kw">let </span>response = <span class="self">self</span>.http_client.get_content(<span class="kw-2">&amp;</span>url).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let </span>message = serde_json::from_str::&lt;SnapshotMessage&gt;(<span class="kw-2">&amp;</span>response)<span class="question-mark">?</span>;
-        <span class="kw">let </span>snapshot = FromSnapshotMessageAdapter::adapt(message);
 
-        <span class="prelude-val">Ok</span>(snapshot)
+        <span class="prelude-val">Ok</span>(message)
     }
 
     <span class="doccomment">/// Download the snapshot identified by the given snapshot in the given directory

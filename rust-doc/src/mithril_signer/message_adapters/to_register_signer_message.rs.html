@@ -37,15 +37,15 @@
 <a href="#37" id="37">37</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>mithril_common::{
     entities::{Epoch, Signer},
-    messages::RegisterSignerMessage,
+    messages::{RegisterSignerMessage, ToMessageAdapter},
 };
 
 <span class="doccomment">/// Adapter to create [RegisterSignerMessage] from [Signer] instance.
 </span><span class="kw">pub struct </span>ToRegisterSignerMessageAdapter;
 
-<span class="kw">impl </span>ToRegisterSignerMessageAdapter {
+<span class="kw">impl </span>ToMessageAdapter&lt;(Epoch, Signer), RegisterSignerMessage&gt; <span class="kw">for </span>ToRegisterSignerMessageAdapter {
     <span class="doccomment">/// Method to trigger the conversion.
-    </span><span class="kw">pub fn </span>adapt(epoch: Epoch, signer: Signer) -&gt; RegisterSignerMessage {
+    </span><span class="kw">fn </span>adapt((epoch, signer): (Epoch, Signer)) -&gt; RegisterSignerMessage {
         RegisterSignerMessage {
             epoch: <span class="prelude-val">Some</span>(epoch),
             party_id: signer.party_id,
@@ -67,7 +67,7 @@
     </span><span class="kw">fn </span>adapt_ok() {
         <span class="kw">let </span>epoch = Epoch(<span class="number">1</span>);
         <span class="kw">let </span>signer = fake_data::signers(<span class="number">1</span>)[<span class="number">0</span>].to_owned();
-        <span class="kw">let </span>message = ToRegisterSignerMessageAdapter::adapt(epoch, signer);
+        <span class="kw">let </span>message = ToRegisterSignerMessageAdapter::adapt((epoch, signer));
 
         <span class="macro">assert_eq!</span>(<span class="string">&quot;0&quot;</span>.to_string(), message.party_id);
     }

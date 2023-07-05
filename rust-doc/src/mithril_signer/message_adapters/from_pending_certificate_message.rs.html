@@ -56,17 +56,23 @@
 <a href="#56" id="56">56</a>
 <a href="#57" id="57">57</a>
 <a href="#58" id="58">58</a>
+<a href="#59" id="59">59</a>
+<a href="#60" id="60">60</a>
+<a href="#61" id="61">61</a>
+<a href="#62" id="62">62</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>mithril_common::{
     entities::{CertificatePending, Signer},
-    messages::{CertificatePendingMessage, SignerMessage},
+    messages::{CertificatePendingMessage, FromMessageAdapter, SignerMessage},
 };
 
 <span class="doccomment">/// Adapter to turn [CertificatePendingMessage] instances into [CertificatePending].
 </span><span class="kw">pub struct </span>FromPendingCertificateMessageAdapter;
 
-<span class="kw">impl </span>FromPendingCertificateMessageAdapter {
+<span class="kw">impl </span>FromMessageAdapter&lt;CertificatePendingMessage, CertificatePending&gt;
+    <span class="kw">for </span>FromPendingCertificateMessageAdapter
+{
     <span class="doccomment">/// Adapter method
-    </span><span class="kw">pub fn </span>adapt(message: CertificatePendingMessage) -&gt; CertificatePending {
+    </span><span class="kw">fn </span>adapt(message: CertificatePendingMessage) -&gt; CertificatePending {
         CertificatePending {
             beacon: message.beacon,
             signed_entity_type: message.signed_entity_type,
@@ -76,7 +82,9 @@
             next_signers: <span class="self">Self</span>::adapt_signers(message.next_signers),
         }
     }
+}
 
+<span class="kw">impl </span>FromPendingCertificateMessageAdapter {
     <span class="kw">fn </span>adapt_signers(signer_messages: Vec&lt;SignerMessage&gt;) -&gt; Vec&lt;Signer&gt; {
         signer_messages
             .into_iter()

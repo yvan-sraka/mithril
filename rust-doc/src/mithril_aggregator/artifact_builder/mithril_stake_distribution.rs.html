@@ -140,25 +140,7 @@
 <a href="#140" id="140">140</a>
 <a href="#141" id="141">141</a>
 <a href="#142" id="142">142</a>
-<a href="#143" id="143">143</a>
-<a href="#144" id="144">144</a>
-<a href="#145" id="145">145</a>
-<a href="#146" id="146">146</a>
-<a href="#147" id="147">147</a>
-<a href="#148" id="148">148</a>
-<a href="#149" id="149">149</a>
-<a href="#150" id="150">150</a>
-<a href="#151" id="151">151</a>
-<a href="#152" id="152">152</a>
-<a href="#153" id="153">153</a>
-<a href="#154" id="154">154</a>
-<a href="#155" id="155">155</a>
-<a href="#156" id="156">156</a>
-<a href="#157" id="157">157</a>
-<a href="#158" id="158">158</a>
-<a href="#159" id="159">159</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
-<span class="kw">use </span>chrono::Utc;
 <span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>thiserror::Error;
 <span class="kw">use </span>tokio::sync::RwLock;
@@ -196,7 +178,7 @@
     <span class="kw">async fn </span>compute_artifact(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         beacon: Epoch,
-        certificate: <span class="kw-2">&amp;</span>Certificate,
+        _certificate: <span class="kw-2">&amp;</span>Certificate,
     ) -&gt; StdResult&lt;MithrilStakeDistribution&gt; {
         <span class="kw">let </span>multi_signer = <span class="self">self</span>.multi_signer.read().<span class="kw">await</span>;
         <span class="kw">let </span>protocol_parameters = multi_signer
@@ -206,8 +188,6 @@
         <span class="prelude-val">Ok</span>(MithrilStakeDistribution::new(
             beacon,
             multi_signer.get_next_signers_with_stake().<span class="kw">await</span><span class="question-mark">?</span>,
-            certificate.hash.to_owned(),
-            chrono::DateTime::&lt;Utc&gt;::default(),
             <span class="kw-2">&amp;</span>protocol_parameters.into(),
         ))
     }
@@ -215,7 +195,6 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
-    <span class="kw">use </span>chrono::DateTime;
     <span class="kw">use </span>mithril_common::{crypto_helper::ProtocolParameters, test_utils::fake_data};
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
@@ -242,13 +221,8 @@
             .compute_artifact(Epoch(<span class="number">1</span>), <span class="kw-2">&amp;</span>certificate)
             .<span class="kw">await
             </span>.unwrap();
-        <span class="kw">let </span>artifact_expected = MithrilStakeDistribution::new(
-            Epoch(<span class="number">1</span>),
-            signers_with_stake,
-            <span class="string">&quot;certificate-123&quot;</span>.to_string(),
-            DateTime::&lt;Utc&gt;::default(),
-            <span class="kw-2">&amp;</span>protocol_parameters,
-        );
+        <span class="kw">let </span>artifact_expected =
+            MithrilStakeDistribution::new(Epoch(<span class="number">1</span>), signers_with_stake, <span class="kw-2">&amp;</span>protocol_parameters);
         <span class="macro">assert_eq!</span>(artifact_expected, artifact);
     }
 
@@ -260,8 +234,6 @@
             MithrilStakeDistribution::new(
                 Epoch(<span class="number">1</span>),
                 signers_with_stake.clone(),
-                <span class="string">&quot;certificate-123&quot;</span>.to_string(),
-                DateTime::&lt;Utc&gt;::default(),
                 <span class="kw-2">&amp;</span>ProtocolParameters {
                     k: <span class="number">1</span>,
                     m: <span class="number">1</span>,
@@ -272,8 +244,6 @@
             MithrilStakeDistribution::new(
                 Epoch(<span class="number">1</span>),
                 signers_with_stake.into_iter().rev().collect(),
-                <span class="string">&quot;certificate-123&quot;</span>.to_string(),
-                DateTime::&lt;Utc&gt;::default(),
                 <span class="kw-2">&amp;</span>ProtocolParameters {
                     k: <span class="number">1</span>,
                     m: <span class="number">1</span>,
@@ -291,8 +261,6 @@
         <span class="kw">let </span>sd = MithrilStakeDistribution::new(
             Epoch(<span class="number">1</span>),
             signers_with_stake.clone(),
-            <span class="string">&quot;certificate-123&quot;</span>.to_string(),
-            DateTime::&lt;Utc&gt;::default(),
             <span class="kw-2">&amp;</span>ProtocolParameters {
                 k: <span class="number">1</span>,
                 m: <span class="number">1</span>,
@@ -303,8 +271,6 @@
         <span class="kw">let </span>sd2 = MithrilStakeDistribution::new(
             Epoch(<span class="number">1</span>),
             signers_with_stake.into_iter().rev().collect(),
-            <span class="string">&quot;certificate-123&quot;</span>.to_string(),
-            DateTime::&lt;Utc&gt;::default(),
             <span class="kw-2">&amp;</span>ProtocolParameters {
                 k: <span class="number">1</span>,
                 m: <span class="number">1</span>,

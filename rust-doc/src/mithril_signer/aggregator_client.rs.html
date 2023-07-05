@@ -792,6 +792,8 @@
 <a href="#792" id="792">792</a>
 <a href="#793" id="793">793</a>
 <a href="#794" id="794">794</a>
+<a href="#795" id="795">795</a>
+<a href="#796" id="796">796</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>reqwest::{<span class="self">self</span>, Client, Proxy, RequestBuilder, Response, StatusCode};
 <span class="kw">use </span>slog_scope::debug;
@@ -803,7 +805,9 @@
     entities::{
         CertificatePending, Epoch, EpochSettings, SignedEntityType, Signer, SingleSignatures,
     },
-    messages::{CertificatePendingMessage, EpochSettingsMessage},
+    messages::{
+        CertificatePendingMessage, EpochSettingsMessage, FromMessageAdapter, ToMessageAdapter,
+    },
     MITHRIL_API_VERSION_HEADER, MITHRIL_SIGNER_VERSION_HEADER,
 };
 
@@ -1019,7 +1023,7 @@
         <span class="macro">debug!</span>(<span class="string">&quot;Register signer&quot;</span>);
         <span class="kw">let </span>url = <span class="macro">format!</span>(<span class="string">&quot;{}/register-signer&quot;</span>, <span class="self">self</span>.aggregator_endpoint);
         <span class="kw">let </span>register_signer_message =
-            ToRegisterSignerMessageAdapter::adapt(epoch, signer.to_owned());
+            ToRegisterSignerMessageAdapter::adapt((epoch, signer.to_owned()));
         <span class="kw">let </span>response = <span class="self">self
             </span>.prepare_request_builder(<span class="self">self</span>.prepare_http_client()<span class="question-mark">?</span>.post(url.clone()))
             .json(<span class="kw-2">&amp;</span>register_signer_message)
@@ -1050,10 +1054,10 @@
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), AggregatorClientError&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;Register signatures&quot;</span>);
         <span class="kw">let </span>url = <span class="macro">format!</span>(<span class="string">&quot;{}/register-signatures&quot;</span>, <span class="self">self</span>.aggregator_endpoint);
-        <span class="kw">let </span>register_single_signature_message = ToRegisterSignatureMessageAdapter::adapt(
+        <span class="kw">let </span>register_single_signature_message = ToRegisterSignatureMessageAdapter::adapt((
             signed_entity_type.to_owned(),
             signatures.to_owned(),
-        );
+        ));
         <span class="kw">let </span>response = <span class="self">self
             </span>.prepare_request_builder(<span class="self">self</span>.prepare_http_client()<span class="question-mark">?</span>.post(url.clone()))
             .json(<span class="kw-2">&amp;</span>register_single_signature_message)

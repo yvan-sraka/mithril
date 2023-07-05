@@ -617,6 +617,10 @@
 <a href="#617" id="617">617</a>
 <a href="#618" id="618">618</a>
 <a href="#619" id="619">619</a>
+<a href="#620" id="620">620</a>
+<a href="#621" id="621">621</a>
+<a href="#622" id="622">622</a>
+<a href="#623" id="623">623</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     fmt::Write,
     path::{Path, PathBuf},
@@ -631,7 +635,8 @@
     certificate_chain::CertificateVerifier,
     crypto_helper::{key_decode_hex, ProtocolGenesisVerifier},
     digesters::ImmutableDigester,
-    entities::{Certificate, ProtocolMessagePartKey, Snapshot},
+    entities::{Certificate, ProtocolMessagePartKey, SignedEntity, Snapshot},
+    messages::{SnapshotListItemMessage, SnapshotMessage},
     StdError, StdResult,
 };
 <span class="kw">use </span>slog_scope::{debug, warn};
@@ -682,16 +687,16 @@
 </span><span class="attr">#[async_trait]
 </span><span class="kw">pub trait </span>SnapshotService: Sync + Send {
     <span class="doccomment">/// Return the list of the snapshots stored by the Aggregator.
-    </span><span class="kw">async fn </span>list(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StdResult&lt;Vec&lt;Snapshot&gt;&gt;;
+    </span><span class="kw">async fn </span>list(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StdResult&lt;Vec&lt;SnapshotListItemMessage&gt;&gt;;
 
     <span class="doccomment">/// Show details of the snapshot identified by the given digest.
-    </span><span class="kw">async fn </span>show(<span class="kw-2">&amp;</span><span class="self">self</span>, digest: <span class="kw-2">&amp;</span>str) -&gt; StdResult&lt;Snapshot&gt;;
+    </span><span class="kw">async fn </span>show(<span class="kw-2">&amp;</span><span class="self">self</span>, digest: <span class="kw-2">&amp;</span>str) -&gt; StdResult&lt;SnapshotMessage&gt;;
 
     <span class="doccomment">/// Download and verify the snapshot identified by the given digest.
     /// The returned path is the location where the archive has been unpacked.
     </span><span class="kw">async fn </span>download(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        snapshot: <span class="kw-2">&amp;</span>Snapshot,
+        snapshot_entity: <span class="kw-2">&amp;</span>SignedEntity&lt;Snapshot&gt;,
         pathdir: <span class="kw-2">&amp;</span>Path,
         genesis_verification_key: <span class="kw-2">&amp;</span>str,
         progress_target: ProgressDrawTarget,
@@ -790,15 +795,15 @@
 
 <span class="attr">#[async_trait]
 </span><span class="kw">impl </span>SnapshotService <span class="kw">for </span>MithrilClientSnapshotService {
-    <span class="kw">async fn </span>list(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StdResult&lt;Vec&lt;Snapshot&gt;&gt; {
+    <span class="kw">async fn </span>list(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StdResult&lt;Vec&lt;SnapshotListItemMessage&gt;&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;Snapshot service: list.&quot;</span>);
 
         <span class="self">self</span>.snapshot_client.list().<span class="kw">await
     </span>}
 
-    <span class="kw">async fn </span>show(<span class="kw-2">&amp;</span><span class="self">self</span>, digest: <span class="kw-2">&amp;</span>str) -&gt; StdResult&lt;Snapshot&gt; {
+    <span class="kw">async fn </span>show(<span class="kw-2">&amp;</span><span class="self">self</span>, digest: <span class="kw-2">&amp;</span>str) -&gt; StdResult&lt;SnapshotMessage&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;Snapshot service: show.&quot;</span>);
-        <span class="kw">let </span>snapshot =
+        <span class="kw">let </span>snapshot_message =
             <span class="self">self</span>.snapshot_client
                 .show(digest)
                 .<span class="kw">await
@@ -812,12 +817,12 @@
                     <span class="kw">_ </span>=&gt; e,
                 })<span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(snapshot)
+        <span class="prelude-val">Ok</span>(snapshot_message)
     }
 
     <span class="kw">async fn </span>download(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        snapshot: <span class="kw-2">&amp;</span>Snapshot,
+        snapshot_entity: <span class="kw-2">&amp;</span>SignedEntity&lt;Snapshot&gt;,
         pathdir: <span class="kw-2">&amp;</span>Path,
         genesis_verification_key: <span class="kw-2">&amp;</span>str,
         progress_target: ProgressDrawTarget,
@@ -829,17 +834,19 @@
         progress_bar.println(<span class="string">&quot;1/7 - Checking local disk info…&quot;</span>)<span class="question-mark">?</span>;
         <span class="kw">let </span>unpacker = SnapshotUnpacker::default();
 
-        <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = unpacker.check_prerequisites(<span class="kw-2">&amp;</span>unpack_dir, snapshot.size) {
+        <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = unpacker.check_prerequisites(<span class="kw-2">&amp;</span>unpack_dir, snapshot_entity.artifact.size) {
             <span class="self">self</span>.check_disk_space_error(e)<span class="question-mark">?</span>;
         }
 
         progress_bar.println(<span class="string">&quot;2/7 - Fetching the certificate&#39;s information…&quot;</span>)<span class="question-mark">?</span>;
         <span class="kw">let </span>certificate = <span class="self">self
             </span>.certificate_client
-            .get(<span class="kw-2">&amp;</span>snapshot.certificate_hash)
+            .get(<span class="kw-2">&amp;</span>snapshot_entity.certificate_id)
             .<span class="kw">await</span><span class="question-mark">?
             </span>.ok_or_else(|| {
-                SnapshotServiceError::CouldNotFindCertificate(snapshot.certificate_hash.clone())
+                SnapshotServiceError::CouldNotFindCertificate(
+                    snapshot_entity.certificate_id.clone(),
+                )
             })<span class="question-mark">?</span>;
 
         progress_bar.println(<span class="string">&quot;3/7 - Verifying the certificate chain…&quot;</span>)<span class="question-mark">?</span>;
@@ -847,14 +854,14 @@
         <span class="self">self</span>.wait_spinner(<span class="kw-2">&amp;</span>progress_bar, verifier).<span class="kw">await</span><span class="question-mark">?</span>;
 
         progress_bar.println(<span class="string">&quot;4/7 - Downloading the snapshot…&quot;</span>)<span class="question-mark">?</span>;
-        <span class="kw">let </span>pb = progress_bar.add(ProgressBar::new(snapshot.size));
+        <span class="kw">let </span>pb = progress_bar.add(ProgressBar::new(snapshot_entity.artifact.size));
         pb.set_style(ProgressStyle::with_template(<span class="string">&quot;{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] {bytes}/{total_bytes} ({eta})&quot;</span>)
             .unwrap()
             .with_key(<span class="string">&quot;eta&quot;</span>, |state: <span class="kw-2">&amp;</span>ProgressState, w: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Write| <span class="macro">write!</span>(w, <span class="string">&quot;{:.1}s&quot;</span>, state.eta().as_secs_f64()).unwrap())
             .progress_chars(<span class="string">&quot;#&gt;-&quot;</span>));
         <span class="kw">let </span>filepath = <span class="self">self
             </span>.snapshot_client
-            .download(snapshot, pathdir, pb)
+            .download(<span class="kw-2">&amp;</span>snapshot_entity.artifact, pathdir, pb)
             .<span class="kw">await
             </span>.map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;Could not download file in &#39;{}&#39;: {e}&quot;</span>, pathdir.display()))<span class="question-mark">?</span>;
 
@@ -888,7 +895,7 @@
             }
 
             <span class="kw">return </span><span class="prelude-val">Err</span>(SnapshotServiceError::CouldNotVerifySnapshot {
-                digest: snapshot.digest.clone(),
+                digest: snapshot_entity.artifact.digest.clone(),
                 path: filepath.canonicalize().unwrap(),
             }
             .into());
@@ -907,7 +914,8 @@
         crypto_helper::{key_encode_hex, tests_setup::setup_genesis},
         digesters::DumbImmutableDigester,
         messages::{
-            CertificateMessage, SnapshotListItemMessage, SnapshotListMessage, SnapshotMessage,
+            CertificateMessage, FromMessageAdapter, SnapshotListItemMessage, SnapshotListMessage,
+            SnapshotMessage,
         },
         test_utils::fake_data,
     };
@@ -1161,15 +1169,15 @@
         dep_builder.certificate_verifier = <span class="prelude-val">Some</span>(Arc::new(certificate_verifier));
         dep_builder.immutable_digester = <span class="prelude-val">Some</span>(Arc::new(immutable_digester));
         <span class="kw">let </span>snapshot_service = dep_builder.get_snapshot_service().<span class="kw">await</span>.unwrap();
-        <span class="kw">let </span><span class="kw-2">mut </span>snapshot = FromSnapshotMessageAdapter::adapt(get_snapshot_message());
-        snapshot.digest = <span class="string">&quot;digest-10&quot;</span>.to_string();
+        <span class="kw">let </span><span class="kw-2">mut </span>signed_entity = FromSnapshotMessageAdapter::adapt(get_snapshot_message());
+        signed_entity.artifact.digest = <span class="string">&quot;digest-10&quot;</span>.to_string();
 
         <span class="kw">let </span>(<span class="kw">_</span>, verifier) = setup_genesis();
         <span class="kw">let </span>genesis_verification_key = verifier.to_verification_key();
         build_dummy_snapshot(<span class="string">&quot;digest-10&quot;</span>, <span class="string">&quot;1234567890&quot;</span>.repeat(<span class="number">124</span>).as_str(), <span class="kw-2">&amp;</span>test_path);
         <span class="kw">let </span>err = snapshot_service
             .download(
-                <span class="kw-2">&amp;</span>snapshot,
+                <span class="kw-2">&amp;</span>signed_entity,
                 <span class="kw-2">&amp;</span>test_path,
                 <span class="kw-2">&amp;</span>key_encode_hex(genesis_verification_key).unwrap(),
                 ProgressDrawTarget::hidden(),

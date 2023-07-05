@@ -61,18 +61,7 @@
 <a href="#61" id="61">61</a>
 <a href="#62" id="62">62</a>
 <a href="#63" id="63">63</a>
-<a href="#64" id="64">64</a>
-<a href="#65" id="65">65</a>
-<a href="#66" id="66">66</a>
-<a href="#67" id="67">67</a>
-<a href="#68" id="68">68</a>
-<a href="#69" id="69">69</a>
-<a href="#70" id="70">70</a>
-<a href="#71" id="71">71</a>
-<a href="#72" id="72">72</a>
-<a href="#73" id="73">73</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>chrono::{DateTime, Utc};
-<span class="kw">use </span>serde::{Deserialize, Serialize};
+</pre></div><pre class="rust"><code><span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>sha2::{Digest, Sha256};
 
 <span class="kw">use crate</span>::{
@@ -94,12 +83,6 @@
     <span class="doccomment">/// Hash of the Mithril Stake Distribution (different from the AVK).
     </span><span class="kw">pub </span>hash: String,
 
-    <span class="doccomment">/// Hash of the associated certificate
-    </span><span class="kw">pub </span>certificate_hash: String,
-
-    <span class="doccomment">/// Creation time
-    </span><span class="kw">pub </span>created_at: DateTime&lt;Utc&gt;,
-
     <span class="doccomment">/// Protocol parameters used to sign this stake distribution
     </span><span class="kw">pub </span>protocol_parameters: ProtocolParameters,
 }
@@ -109,31 +92,28 @@
     </span><span class="kw">pub fn </span>new(
         epoch: Epoch,
         signers_with_stake: Vec&lt;SignerWithStake&gt;,
-        certificate_hash: String,
-        created_at: DateTime&lt;Utc&gt;,
         protocol_parameters: <span class="kw-2">&amp;</span>ProtocolParameters,
     ) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span><span class="kw-2">mut </span>signers_with_stake_sorted = signers_with_stake;
         signers_with_stake_sorted.sort();
-        <span class="kw">let </span><span class="kw-2">mut </span>mithril_stake_distribution = <span class="self">Self </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>mithril_stake_distribution: MithrilStakeDistribution = <span class="self">Self </span>{
             epoch,
             signers_with_stake: signers_with_stake_sorted,
             hash: <span class="string">&quot;&quot;</span>.to_string(),
-            certificate_hash,
-            created_at,
             protocol_parameters: protocol_parameters.to_owned(),
         };
         mithril_stake_distribution.hash = mithril_stake_distribution.compute_hash();
         mithril_stake_distribution
     }
 
-    <span class="kw">fn </span>compute_hash(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; String {
+    <span class="doccomment">/// Do not add other parameters to the compute hash.
+    /// Mithril Stake Distribution is defined by the epoch and signers
+    </span><span class="kw">fn </span>compute_hash(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; String {
         <span class="kw">let </span><span class="kw-2">mut </span>hasher = Sha256::new();
         hasher.update(<span class="self">self</span>.epoch.<span class="number">0</span>.to_be_bytes());
         <span class="kw">for </span>signer_with_stake <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.signers_with_stake {
             hasher.update(signer_with_stake.compute_hash().as_bytes());
         }
-        hasher.update(<span class="self">self</span>.certificate_hash.as_bytes());
         hex::encode(hasher.finalize())
     }
 }

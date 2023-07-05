@@ -69,15 +69,17 @@
 <a href="#69" id="69">69</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>mithril_common::entities::{MithrilStakeDistribution, SignedEntity};
 <span class="kw">use </span>mithril_common::messages::{
-    MessageAdapter, MithrilStakeDistributionListItemMessage, MithrilStakeDistributionListMessage,
+    MithrilStakeDistributionListItemMessage, MithrilStakeDistributionListMessage, ToMessageAdapter,
 };
 
 <span class="doccomment">/// Adapter to convert a list of [MithrilStakeDistribution] to [MithrilStakeDistributionListMessage] instances
 </span><span class="kw">pub struct </span>ToMithrilStakeDistributionListMessageAdapter;
 
 <span class="kw">impl
-    </span>MessageAdapter&lt;Vec&lt;SignedEntity&lt;MithrilStakeDistribution&gt;&gt;, MithrilStakeDistributionListMessage&gt;
-    <span class="kw">for </span>ToMithrilStakeDistributionListMessageAdapter
+    </span>ToMessageAdapter&lt;
+        Vec&lt;SignedEntity&lt;MithrilStakeDistribution&gt;&gt;,
+        MithrilStakeDistributionListMessage,
+    &gt; <span class="kw">for </span>ToMithrilStakeDistributionListMessageAdapter
 {
     <span class="doccomment">/// Method to trigger the conversion
     </span><span class="kw">fn </span>adapt(
@@ -110,8 +112,6 @@
             epoch: Epoch(<span class="number">1</span>),
             signers_with_stake: fake_data::signers_with_stakes(<span class="number">1</span>),
             hash: <span class="string">&quot;hash-123&quot;</span>.to_string(),
-            certificate_hash: <span class="string">&quot;certificate-hash-123&quot;</span>.to_string(),
-            created_at: DateTime::&lt;Utc&gt;::default(),
             protocol_parameters: fake_data::protocol_parameters(),
         };
         <span class="kw">let </span>signed_entity = SignedEntity {

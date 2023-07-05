@@ -113,11 +113,17 @@
 <a href="#113" id="113">113</a>
 <a href="#114" id="114">114</a>
 <a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>mithril_common::{
-    entities::MithrilStakeDistribution,
-    messages::{MessageAdapter, MithrilStakeDistributionMessage},
+    entities::{MithrilStakeDistribution, SignedEntity},
+    messages::{FromMessageAdapter, MithrilStakeDistributionMessage},
     messages::{MithrilStakeDistributionListItemMessage, MithrilStakeDistributionListMessage},
     StdResult,
 };
@@ -147,16 +153,19 @@
     }
 
     <span class="doccomment">/// Download the given stake distribution. If it cannot be found, a None is returned.
-    </span><span class="kw">pub async fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>, hash: <span class="kw-2">&amp;</span>str) -&gt; StdResult&lt;<span class="prelude-ty">Option</span>&lt;MithrilStakeDistribution&gt;&gt; {
+    </span><span class="kw">pub async fn </span>get(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        hash: <span class="kw-2">&amp;</span>str,
+    ) -&gt; StdResult&lt;<span class="prelude-ty">Option</span>&lt;SignedEntity&lt;MithrilStakeDistribution&gt;&gt;&gt; {
         <span class="kw">let </span>url = <span class="macro">format!</span>(<span class="string">&quot;artifact/mithril-stake-distribution/{hash}&quot;</span>);
 
         <span class="kw">match </span><span class="self">self</span>.http_client.get_content(<span class="kw-2">&amp;</span>url).<span class="kw">await </span>{
             <span class="prelude-val">Ok</span>(content) =&gt; {
                 <span class="kw">let </span>message: MithrilStakeDistributionMessage = serde_json::from_str(<span class="kw-2">&amp;</span>content)<span class="question-mark">?</span>;
-                <span class="kw">let </span>stake_distribution: MithrilStakeDistribution =
+                <span class="kw">let </span>stake_distribution_entity =
                     FromMithrilStakeDistributionMessageAdapter::adapt(message);
 
-                <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(stake_distribution))
+                <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(stake_distribution_entity))
             }
             <span class="prelude-val">Err</span>(e) <span class="kw">if </span><span class="macro">matches!</span>(e, AggregatorHTTPClientError::RemoteServerLogical(<span class="kw">_</span>)) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
             <span class="prelude-val">Err</span>(e) =&gt; <span class="prelude-val">Err</span>(e.into()),
@@ -218,14 +227,17 @@
             .expect_get_content()
             .return_once(<span class="kw">move </span>|<span class="kw">_</span>| <span class="prelude-val">Ok</span>(serde_json::to_string(<span class="kw-2">&amp;</span>message).unwrap()));
         <span class="kw">let </span>client = MithrilStakeDistributionClient::new(Arc::new(http_client));
-        <span class="kw">let </span>stake_distribution = client
+        <span class="kw">let </span>stake_distribution_entity = client
             .get(<span class="string">&quot;hash&quot;</span>)
             .<span class="kw">await
             </span>.unwrap()
             .expect(<span class="string">&quot;This test returns a stake distribution&quot;</span>);
 
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;hash&quot;</span>.to_string(), stake_distribution.hash);
-        <span class="macro">assert_eq!</span>(<span class="number">2</span>, stake_distribution.signers_with_stake.len(),);
+        <span class="macro">assert_eq!</span>(<span class="string">&quot;hash&quot;</span>.to_string(), stake_distribution_entity.artifact.hash);
+        <span class="macro">assert_eq!</span>(
+            <span class="number">2</span>,
+            stake_distribution_entity.artifact.signers_with_stake.len(),
+        );
     }
 }
 </code></pre></div></section></main></body></html>
