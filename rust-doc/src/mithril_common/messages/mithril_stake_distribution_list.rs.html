@@ -56,7 +56,19 @@
 <a href="#56" id="56">56</a>
 <a href="#57" id="57">57</a>
 <a href="#58" id="58">58</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>serde::{Deserialize, Serialize};
+<a href="#59" id="59">59</a>
+<a href="#60" id="60">60</a>
+<a href="#61" id="61">61</a>
+<a href="#62" id="62">62</a>
+<a href="#63" id="63">63</a>
+<a href="#64" id="64">64</a>
+<a href="#65" id="65">65</a>
+<a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>chrono::{DateTime, Utc};
+<span class="kw">use </span>serde::{Deserialize, Serialize};
 
 <span class="kw">use </span><span class="kw">crate</span>::entities::Epoch;
 
@@ -74,6 +86,9 @@
 
     <span class="doccomment">/// Hash of the associated certificate
     </span><span class="kw">pub </span>certificate_hash: String,
+
+    <span class="doccomment">/// Date and time at which the Mithril Stake Distribution was created
+    </span><span class="kw">pub </span>created_at: DateTime&lt;Utc&gt;,
 }
 
 <span class="kw">impl </span>MithrilStakeDistributionListItemMessage {
@@ -83,6 +98,9 @@
             epoch: Epoch(<span class="number">1</span>),
             hash: <span class="string">&quot;hash-123&quot;</span>.to_string(),
             certificate_hash: <span class="string">&quot;certificate-hash-123&quot;</span>.to_string(),
+            created_at: DateTime::parse_from_rfc3339(<span class="string">&quot;2023-01-19T13:43:05.618857482Z&quot;</span>)
+                .unwrap()
+                .with_timezone(<span class="kw-2">&amp;</span>Utc),
         }
     }
 }
@@ -96,6 +114,9 @@
             epoch: Epoch(<span class="number">1</span>),
             hash: <span class="string">&quot;hash-123&quot;</span>.to_string(),
             certificate_hash: <span class="string">&quot;certificate-hash-123&quot;</span>.to_string(),
+            created_at: DateTime::parse_from_rfc3339(<span class="string">&quot;2023-01-19T13:43:05.618857482Z&quot;</span>)
+                .unwrap()
+                .with_timezone(<span class="kw-2">&amp;</span>Utc),
         }]
     }
 
@@ -105,7 +126,8 @@
         <span class="kw">let </span>json = <span class="string">r#&quot;[{
         &quot;epoch&quot;: 1,
         &quot;hash&quot;: &quot;hash-123&quot;,
-        &quot;certificate_hash&quot;: &quot;certificate-hash-123&quot;
+        &quot;certificate_hash&quot;: &quot;certificate-hash-123&quot;,
+        &quot;created_at&quot;: &quot;2023-01-19T13:43:05.618857482Z&quot;
         }]&quot;#</span>;
         <span class="kw">let </span>message: MithrilStakeDistributionListMessage = serde_json::from_str(json).expect(
                     <span class="string">&quot;This JSON is expected to be succesfully parsed into a MithrilStakeDistributionListMessage instance.&quot;</span>,
