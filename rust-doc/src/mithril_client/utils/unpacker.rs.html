@@ -109,8 +109,14 @@
 <a href="#109" id="109">109</a>
 <a href="#110" id="110">110</a>
 <a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     fs::{create_dir_all, remove_dir, File},
+    io::{Seek, SeekFrom},
     path::{Path, PathBuf},
 };
 
@@ -201,12 +207,16 @@
 
     <span class="doccomment">/// Unpack the snapshot pointed at the given filepath into the given directory.
     </span><span class="kw">pub async fn </span>unpack_snapshot(<span class="kw-2">&amp;</span><span class="self">self</span>, filepath: <span class="kw-2">&amp;</span>Path, unpack_dir: <span class="kw-2">&amp;</span>Path) -&gt; StdResult&lt;()&gt; {
-        <span class="kw">let </span>snapshot_file_tar_gz =
+        <span class="kw">let </span><span class="kw-2">mut </span>snapshot_file_tar_gz =
             File::open(filepath).map_err(|e| SnapshotUnpackerError::UnpackFailed {
                 filepath: filepath.to_owned(),
                 dirpath: unpack_dir.to_owned(),
                 error: e.into(),
             })<span class="question-mark">?</span>;
+        <span class="comment">// Try to force the file read to start at 0.
+        // This seems to fix a crash when the unpacker tries to iterate
+        // over archive content.
+        </span>snapshot_file_tar_gz.seek(SeekFrom::Start(<span class="number">0</span>))<span class="question-mark">?</span>;
         <span class="kw">let </span>snapshot_file_tar = GzDecoder::new(snapshot_file_tar_gz);
         <span class="kw">let </span><span class="kw-2">mut </span>snapshot_archive = Archive::new(snapshot_file_tar);
         snapshot_archive
