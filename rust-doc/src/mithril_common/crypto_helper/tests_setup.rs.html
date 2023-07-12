@@ -275,11 +275,37 @@
 <a href="#275" id="275">275</a>
 <a href="#276" id="276">276</a>
 <a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
+<a href="#279" id="279">279</a>
+<a href="#280" id="280">280</a>
+<a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
+<a href="#283" id="283">283</a>
+<a href="#284" id="284">284</a>
+<a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a>
+<a href="#287" id="287">287</a>
+<a href="#288" id="288">288</a>
+<a href="#289" id="289">289</a>
+<a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
+<a href="#293" id="293">293</a>
+<a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
+<a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
+<a href="#299" id="299">299</a>
+<a href="#300" id="300">300</a>
+<a href="#301" id="301">301</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Test data builders for Mithril STM types, for testing purpose.
 </span><span class="kw">use super</span>::{genesis::<span class="kw-2">*</span>, key_encode_hex, types::<span class="kw-2">*</span>, OpCert, SerDeShelleyFileFormat};
 <span class="kw">use crate</span>::{
     certificate_chain::CertificateGenesisProducer,
-    entities::{Certificate, Epoch, ProtocolMessage, ProtocolMessagePartKey, SignerWithStake},
+    entities::{
+        Certificate, Epoch, ProtocolMessage, ProtocolMessagePartKey, SignerWithStake, Stake,
+    },
     test_utils::{fake_data, MithrilFixtureBuilder, SignerFixture},
 };
 
@@ -326,100 +352,122 @@
     }
 }
 
+<span class="kw">fn </span>setup_protocol_initializer(
+    party_id: <span class="kw-2">&amp;</span>str,
+    kes_secret_key_path: <span class="prelude-ty">Option</span>&lt;PathBuf&gt;,
+    stake: Stake,
+    protocol_parameters: <span class="kw-2">&amp;</span>ProtocolParameters,
+) -&gt; ProtocolInitializer {
+    <span class="kw">let </span>protocol_initializer_seed: [u8; <span class="number">32</span>] = party_id.as_bytes()[..<span class="number">32</span>].try_into().unwrap();
+    <span class="kw">let </span><span class="kw-2">mut </span>protocol_initializer_rng = ChaCha20Rng::from_seed(protocol_initializer_seed);
+    <span class="kw">let </span>kes_period = kes_secret_key_path.as_ref().map(|<span class="kw">_</span>| <span class="number">0</span>);
+    <span class="kw">let </span>protocol_initializer: ProtocolInitializer = ProtocolInitializer::setup(
+        <span class="kw-2">*</span>protocol_parameters,
+        kes_secret_key_path,
+        kes_period,
+        stake,
+        <span class="kw-2">&amp;mut </span>protocol_initializer_rng,
+    )
+    .expect(<span class="string">&quot;protocol initializer setup should not fail&quot;</span>);
+
+    protocol_initializer
+}
+
+<span class="kw">fn </span>setup_signer_with_stake(
+    party_id: <span class="kw-2">&amp;</span>str,
+    stake: Stake,
+    protocol_initializer: <span class="kw-2">&amp;</span>ProtocolInitializer,
+    operational_certificate: <span class="prelude-ty">Option</span>&lt;OpCert&gt;,
+    kes_period: u32,
+) -&gt; SignerWithStake {
+    SignerWithStake::new(
+        party_id.to_owned(),
+        key_encode_hex(protocol_initializer.verification_key())
+            .expect(<span class="string">&quot;key_encode_hex of verification_key should not fail&quot;</span>),
+        protocol_initializer
+            .verification_key_signature()
+            .as_ref()
+            .map(|verification_key_signature| {
+                key_encode_hex(verification_key_signature)
+                    .expect(<span class="string">&quot;key_encode_hex of verification_key_signature should not fail&quot;</span>)
+            }),
+        operational_certificate
+            .as_ref()
+            .map(|operational_certificate| {
+                key_encode_hex(operational_certificate)
+                    .expect(<span class="string">&quot;key_encode_hex of operational_certificate should not fail&quot;</span>)
+            }),
+        operational_certificate.as_ref().map(|<span class="kw">_</span>| kes_period),
+        stake,
+    )
+}
+
+<span class="kw">fn </span>decode_op_cert_in_dir(dir: <span class="prelude-ty">Option</span>&lt;PathBuf&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;OpCert&gt; {
+    dir.as_ref().map(|dir| {
+        OpCert::from_file(dir.join(<span class="string">&quot;opcert.cert&quot;</span>))
+            .expect(<span class="string">&quot;operational certificate decoding should not fail&quot;</span>)
+    })
+}
+
 <span class="doccomment">/// Instantiate a list of protocol signers based on the given [ProtocolStakeDistribution] and [ProtocolParameters], use this for tests only.
 </span><span class="kw">pub fn </span>setup_signers_from_stake_distribution(
     stake_distribution: <span class="kw-2">&amp;</span>ProtocolStakeDistribution,
     protocol_parameters: <span class="kw-2">&amp;</span>ProtocolParameters,
 ) -&gt; Vec&lt;SignerFixture&gt; {
-    <span class="kw">let </span>signers = stake_distribution
-        .iter()
-        .map(|(party_id, stake)| {
-            <span class="kw">let </span>temp_dir = setup_temp_directory_for_signer(party_id, <span class="bool-val">false</span>);
-            <span class="kw">let </span>protocol_initializer_seed: [u8; <span class="number">32</span>] = party_id.as_bytes()[..<span class="number">32</span>].try_into().unwrap();
-            <span class="kw">let </span><span class="kw-2">mut </span>protocol_initializer_rng = ChaCha20Rng::from_seed(protocol_initializer_seed);
-            <span class="kw">let </span>kes_secret_key_path: <span class="prelude-ty">Option</span>&lt;PathBuf&gt; =
-                temp_dir.as_ref().map(|dir| dir.join(<span class="string">&quot;kes.sk&quot;</span>));
-            <span class="kw">let </span>kes_period = temp_dir.as_ref().map(|<span class="kw">_</span>| <span class="number">0</span>);
-            <span class="kw">let </span>protocol_initializer: ProtocolInitializer = ProtocolInitializer::setup(
-                <span class="kw-2">*</span>protocol_parameters,
-                kes_secret_key_path,
-                kes_period,
-                <span class="kw-2">*</span>stake,
-                <span class="kw-2">&amp;mut </span>protocol_initializer_rng,
-            )
-            .expect(<span class="string">&quot;protocol initializer setup should not fail&quot;</span>);
-            (
-                party_id.clone() <span class="kw">as </span>ProtocolPartyId,
-                <span class="kw-2">*</span>stake <span class="kw">as </span>ProtocolStake,
-                protocol_initializer,
-            )
-        })
-        .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-
     <span class="kw">let </span><span class="kw-2">mut </span>key_registration = ProtocolKeyRegistration::init(stake_distribution);
-    signers
-        .iter()
-        .for_each(|(party_id, _stake, protocol_initializer)| {
-            <span class="kw">let </span>temp_dir = setup_temp_directory_for_signer(party_id, <span class="bool-val">false</span>);
-            <span class="kw">let </span>operational_certificate = temp_dir.as_ref().map(|dir| {
-                OpCert::from_file(dir.join(<span class="string">&quot;opcert.cert&quot;</span>))
-                    .expect(<span class="string">&quot;operational certificate decoding should not fail&quot;</span>)
-            });
-            <span class="kw">let </span>verification_key = protocol_initializer.verification_key();
-            <span class="kw">let </span>kes_signature = protocol_initializer.verification_key_signature();
-            <span class="kw">let </span>kes_period = <span class="number">0</span>;
-            key_registration
-                .register(
-                    <span class="prelude-val">Some</span>(party_id.to_owned()),
-                    operational_certificate,
-                    kes_signature,
-                    <span class="prelude-val">Some</span>(kes_period),
-                    verification_key,
-                )
-                .expect(<span class="string">&quot;key registration should have succeeded&quot;</span>);
-        });
+    <span class="kw">let </span><span class="kw-2">mut </span>signers: Vec&lt;(SignerWithStake, ProtocolInitializer, <span class="prelude-ty">Option</span>&lt;PathBuf&gt;)&gt; = <span class="macro">vec!</span>[];
+
+    <span class="kw">for </span>(party_id, stake) <span class="kw">in </span>stake_distribution {
+        <span class="kw">let </span>kes_period = <span class="number">0</span>;
+        <span class="kw">let </span>temp_dir = setup_temp_directory_for_signer(party_id, <span class="bool-val">false</span>);
+        <span class="kw">let </span>kes_secret_key_path: <span class="prelude-ty">Option</span>&lt;PathBuf&gt; = temp_dir.as_ref().map(|dir| dir.join(<span class="string">&quot;kes.sk&quot;</span>));
+        <span class="kw">let </span>protocol_initializer = setup_protocol_initializer(
+            party_id,
+            kes_secret_key_path.clone(),
+            <span class="kw-2">*</span>stake,
+            protocol_parameters,
+        );
+        <span class="kw">let </span>operational_certificate = decode_op_cert_in_dir(temp_dir);
+        <span class="kw">let </span>signer_with_stake = setup_signer_with_stake(
+            party_id,
+            <span class="kw-2">*</span>stake,
+            <span class="kw-2">&amp;</span>protocol_initializer,
+            operational_certificate.clone(),
+            kes_period,
+        );
+
+        key_registration
+            .register(
+                <span class="prelude-val">Some</span>(signer_with_stake.party_id.to_owned()),
+                operational_certificate,
+                protocol_initializer.verification_key_signature(),
+                <span class="prelude-val">Some</span>(kes_period),
+                protocol_initializer.verification_key(),
+            )
+            .expect(<span class="string">&quot;key registration should have succeeded&quot;</span>);
+
+        signers.push((signer_with_stake, protocol_initializer, kes_secret_key_path));
+    }
+
     <span class="kw">let </span>closed_key_registration = key_registration.close();
+
     signers
         .into_iter()
-        .map(|(party_id, stake, protocol_initializer)| {
-            <span class="kw">let </span>temp_dir = setup_temp_directory_for_signer(<span class="kw-2">&amp;</span>party_id, <span class="bool-val">false</span>);
-            <span class="kw">let </span>operational_certificate: <span class="prelude-ty">Option</span>&lt;OpCert&gt; = temp_dir.as_ref().map(|dir| {
-                OpCert::from_file(dir.join(<span class="string">&quot;opcert.cert&quot;</span>))
-                    .expect(<span class="string">&quot;operational certificate decoding should not fail&quot;</span>)
-            });
-            <span class="kw">let </span>kes_period = <span class="number">0</span>;
+        .map(
+            |(signer_with_stake, protocol_initializer, kes_secret_key_path)| {
+                <span class="kw">let </span>protocol_signer = protocol_initializer
+                    .clone()
+                    .new_signer(closed_key_registration.clone())
+                    .expect(<span class="string">&quot;creating a new protocol signer should not fail&quot;</span>);
 
-            <span class="kw">let </span>signer_with_stake = SignerWithStake::new(
-                party_id,
-                key_encode_hex(protocol_initializer.verification_key())
-                    .expect(<span class="string">&quot;key_encode_hex of verification_key should not fail&quot;</span>),
-                protocol_initializer
-                    .verification_key_signature()
-                    .as_ref()
-                    .map(|verification_key_signature| {
-                        key_encode_hex(verification_key_signature)
-                            .expect(<span class="string">&quot;key_encode_hex of verification_key_signature should not fail&quot;</span>)
-                    }),
-                operational_certificate
-                    .as_ref()
-                    .map(|operational_certificate| {
-                        key_encode_hex(operational_certificate)
-                            .expect(<span class="string">&quot;key_encode_hex of operational_certificate should not fail&quot;</span>)
-                    }),
-                operational_certificate.as_ref().map(|<span class="kw">_</span>| kes_period),
-                stake,
-            );
-            <span class="kw">let </span>protocol_signer = protocol_initializer
-                .clone()
-                .new_signer(closed_key_registration.clone())
-                .expect(<span class="string">&quot;creating a new protocol signer should not fail&quot;</span>);
-
-            SignerFixture {
-                signer_with_stake,
-                protocol_signer,
-                protocol_initializer,
-            }
-        })
+                SignerFixture {
+                    signer_with_stake,
+                    protocol_signer,
+                    protocol_initializer,
+                    kes_secret_key_path,
+                }
+            },
+        )
         .collect::&lt;<span class="kw">_</span>&gt;()
 }
 
