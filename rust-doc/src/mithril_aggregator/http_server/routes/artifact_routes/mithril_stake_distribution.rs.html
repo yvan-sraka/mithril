@@ -303,12 +303,12 @@
 <a href="#303" id="303">303</a>
 <a href="#304" id="304">304</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::http_server::routes::middlewares;
-<span class="kw">use </span><span class="kw">crate</span>::DependencyManager;
+<span class="kw">use </span><span class="kw">crate</span>::DependencyContainer;
 <span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>warp::Filter;
 
 <span class="kw">pub fn </span>routes(
-    dependency_manager: Arc&lt;DependencyManager&gt;,
+    dependency_manager: Arc&lt;DependencyContainer&gt;,
 ) -&gt; <span class="kw">impl </span>Filter&lt;Extract = (<span class="kw">impl </span>warp::Reply,), Error = warp::Rejection&gt; + Clone {
     artifact_mithril_stake_distributions(dependency_manager.clone()).or(
         artifact_mithril_stake_distribution_by_id(dependency_manager),
@@ -317,7 +317,7 @@
 
 <span class="doccomment">/// GET /artifact/mithril-stake-distributions
 </span><span class="kw">fn </span>artifact_mithril_stake_distributions(
-    dependency_manager: Arc&lt;DependencyManager&gt;,
+    dependency_manager: Arc&lt;DependencyContainer&gt;,
 ) -&gt; <span class="kw">impl </span>Filter&lt;Extract = (<span class="kw">impl </span>warp::Reply,), Error = warp::Rejection&gt; + Clone {
     <span class="macro">warp::path!</span>(<span class="string">&quot;artifact&quot; </span>/ <span class="string">&quot;mithril-stake-distributions&quot;</span>)
         .and(warp::get())
@@ -327,7 +327,7 @@
 
 <span class="doccomment">/// GET /artifact/mithril-stake-distribution/:id
 </span><span class="kw">fn </span>artifact_mithril_stake_distribution_by_id(
-    dependency_manager: Arc&lt;DependencyManager&gt;,
+    dependency_manager: Arc&lt;DependencyContainer&gt;,
 ) -&gt; <span class="kw">impl </span>Filter&lt;Extract = (<span class="kw">impl </span>warp::Reply,), Error = warp::Rejection&gt; + Clone {
     <span class="macro">warp::path!</span>(<span class="string">&quot;artifact&quot; </span>/ <span class="string">&quot;mithril-stake-distribution&quot; </span>/ String)
         .and(warp::get())
@@ -340,7 +340,8 @@
     <span class="kw">use </span><span class="kw">crate</span>::message_adapters::{
         ToMithrilStakeDistributionListMessageAdapter, ToMithrilStakeDistributionMessageAdapter,
     };
-    <span class="kw">use </span><span class="kw">crate</span>::signed_entity_service::SignedEntityService;
+    <span class="kw">use </span><span class="kw">crate</span>::services::SignedEntityService;
+
     <span class="kw">use </span>mithril_common::messages::ToMessageAdapter;
     <span class="kw">use </span>slog_scope::{debug, warn};
     <span class="kw">use </span>std::convert::Infallible;
@@ -400,8 +401,7 @@
 <span class="attr">#[cfg(test)]
 </span><span class="kw">pub mod </span>tests {
     <span class="kw">use crate</span>::{
-        http_server::SERVER_BASE_PATH, initialize_dependencies,
-        signed_entity_service::MockSignedEntityService,
+        http_server::SERVER_BASE_PATH, initialize_dependencies, services::MockSignedEntityService,
     };
     <span class="kw">use </span>chrono::{DateTime, Utc};
     <span class="kw">use </span>mithril_common::{
@@ -416,7 +416,7 @@
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
     <span class="kw">fn </span>setup_router(
-        dependency_manager: Arc&lt;DependencyManager&gt;,
+        dependency_manager: Arc&lt;DependencyContainer&gt;,
     ) -&gt; <span class="kw">impl </span>Filter&lt;Extract = (<span class="kw">impl </span>warp::Reply,), Error = warp::Rejection&gt; + Clone {
         <span class="kw">let </span>cors = warp::cors()
             .allow_any_origin()

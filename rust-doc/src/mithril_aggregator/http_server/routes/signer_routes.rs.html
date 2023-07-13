@@ -304,21 +304,21 @@
 <a href="#304" id="304">304</a>
 <a href="#305" id="305">305</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::http_server::routes::middlewares;
-<span class="kw">use </span><span class="kw">crate</span>::DependencyManager;
+<span class="kw">use </span><span class="kw">crate</span>::DependencyContainer;
 <span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>warp::Filter;
 
 <span class="kw">const </span>MITHRIL_SIGNER_VERSION_HEADER: <span class="kw-2">&amp;</span>str = <span class="string">&quot;signer-node-version&quot;</span>;
 
 <span class="kw">pub fn </span>routes(
-    dependency_manager: Arc&lt;DependencyManager&gt;,
+    dependency_manager: Arc&lt;DependencyContainer&gt;,
 ) -&gt; <span class="kw">impl </span>Filter&lt;Extract = (<span class="kw">impl </span>warp::Reply,), Error = warp::Rejection&gt; + Clone {
     register_signer(dependency_manager)
 }
 
 <span class="doccomment">/// POST /register-signer
 </span><span class="kw">fn </span>register_signer(
-    dependency_manager: Arc&lt;DependencyManager&gt;,
+    dependency_manager: Arc&lt;DependencyContainer&gt;,
 ) -&gt; <span class="kw">impl </span>Filter&lt;Extract = (<span class="kw">impl </span>warp::Reply,), Error = warp::Rejection&gt; + Clone {
     <span class="macro">warp::path!</span>(<span class="string">&quot;register-signer&quot;</span>)
         .and(warp::post())
@@ -451,7 +451,7 @@
     <span class="kw">use crate</span>::{initialize_dependencies, SignerRegistrationError};
 
     <span class="kw">fn </span>setup_router(
-        dependency_manager: Arc&lt;DependencyManager&gt;,
+        dependency_manager: Arc&lt;DependencyContainer&gt;,
     ) -&gt; <span class="kw">impl </span>Filter&lt;Extract = (<span class="kw">impl </span>warp::Reply,), Error = warp::Rejection&gt; + Clone {
         <span class="kw">let </span>cors = warp::cors()
             .allow_any_origin()

@@ -1116,6 +1116,7 @@
 <a href="#1116" id="1116">1116</a>
 <a href="#1117" id="1117">1117</a>
 <a href="#1118" id="1118">1118</a>
+<a href="#1119" id="1119">1119</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>mithril_common::{
@@ -1157,7 +1158,6 @@
     artifact_builder::{
         CardanoImmutableFilesFullArtifactBuilder, MithrilStakeDistributionArtifactBuilder,
     },
-    certifier_service::{CertifierService, MithrilCertifierService},
     configuration::ExecutionEnvironment,
     database::{
         provider::SignerRegistrationStore,
@@ -1169,13 +1169,15 @@
     },
     event_store::{EventMessage, EventStore, TransmitterService},
     http_server::routes::router,
-    signed_entity_service::{MithrilSignedEntityService, SignedEntityService},
+    services::{
+        CertifierService, MithrilCertifierService, MithrilSignedEntityService,
+        MithrilStakeDistributionService, MithrilTickerService, SignedEntityService,
+        StakeDistributionService, TickerService,
+    },
     signer_registerer::SignerRecorder,
-    stake_distribution_service::{MithrilStakeDistributionService, StakeDistributionService},
-    ticker_service::{MithrilTickerService, TickerService},
     tools::{GcpFileUploader, GenesisToolsDependency},
     AggregatorConfig, AggregatorRunner, AggregatorRuntime, CertificatePendingStore,
-    CertificateStore, Configuration, DependencyManager, DumbSnapshotUploader, DumbSnapshotter,
+    CertificateStore, Configuration, DependencyContainer, DumbSnapshotUploader, DumbSnapshotter,
     GzipSnapshotter, LocalSnapshotUploader, MithrilSignerRegisterer, MultiSigner, MultiSignerImpl,
     ProtocolParametersStore, ProtocolParametersStorer, RemoteSnapshotUploader, SnapshotUploader,
     SnapshotUploaderType, Snapshotter, VerificationKeyStorer,
@@ -2032,9 +2034,9 @@
         <span class="prelude-val">Ok</span>(<span class="self">self</span>.signed_entity_storer.as_ref().cloned().unwrap())
     }
 
-    <span class="doccomment">/// Return an unconfigured [DependencyManager]
-    </span><span class="kw">pub async fn </span>build_dependency_container(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;DependencyManager&gt; {
-        <span class="kw">let </span>dependency_manager = DependencyManager {
+    <span class="doccomment">/// Return an unconfigured [DependencyContainer]
+    </span><span class="kw">pub async fn </span>build_dependency_container(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;DependencyContainer&gt; {
+        <span class="kw">let </span>dependency_manager = DependencyContainer {
             config: <span class="self">self</span>.configuration.clone(),
             sqlite_connection: <span class="self">self</span>.get_sqlite_connection().<span class="kw">await</span><span class="question-mark">?</span>,
             stake_store: <span class="self">self</span>.get_stake_store().<span class="kw">await</span><span class="question-mark">?</span>,

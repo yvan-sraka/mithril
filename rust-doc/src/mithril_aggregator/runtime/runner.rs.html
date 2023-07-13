@@ -1131,7 +1131,6 @@
 <a href="#1131" id="1131">1131</a>
 <a href="#1132" id="1132">1132</a>
 <a href="#1133" id="1133">1133</a>
-<a href="#1134" id="1134">1134</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>mithril_common::entities::Epoch;
 <span class="kw">use </span>mithril_common::entities::SignedEntityType;
@@ -1151,7 +1150,7 @@
 
 <span class="kw">use </span><span class="kw">crate</span>::entities::OpenMessage;
 <span class="kw">use </span><span class="kw">crate</span>::RuntimeError;
-<span class="kw">use crate</span>::{DependencyManager, ProtocolError};
+<span class="kw">use crate</span>::{DependencyContainer, ProtocolError};
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">use </span>mockall::automock;
@@ -1293,12 +1292,12 @@
 <span class="doccomment">/// The runner responsibility is to expose a code API for the state machine. It
 /// holds services and configuration.
 </span><span class="kw">pub struct </span>AggregatorRunner {
-    dependencies: Arc&lt;DependencyManager&gt;,
+    dependencies: Arc&lt;DependencyContainer&gt;,
 }
 
 <span class="kw">impl </span>AggregatorRunner {
     <span class="doccomment">/// Create a new instance of the Aggrergator Runner.
-    </span><span class="kw">pub fn </span>new(dependencies: Arc&lt;DependencyManager&gt;) -&gt; <span class="self">Self </span>{
+    </span><span class="kw">pub fn </span>new(dependencies: Arc&lt;DependencyContainer&gt;) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{ dependencies }
     }
 }
@@ -1708,26 +1707,25 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">pub mod </span>tests {
-    <span class="kw">use </span><span class="kw">crate</span>::certifier_service::MockCertifierService;
-    <span class="kw">use </span><span class="kw">crate</span>::entities::OpenMessage;
     <span class="kw">use crate</span>::{
+        entities::OpenMessage,
         initialize_dependencies,
         runtime::{AggregatorRunner, AggregatorRunnerTrait},
-    };
-    <span class="kw">use crate</span>::{
-        DependencyManager, MithrilSignerRegisterer, ProtocolParametersStorer,
+        services::MockCertifierService,
+        DependencyContainer, MithrilSignerRegisterer, ProtocolParametersStorer,
         SignerRegistrationRound,
     };
     <span class="kw">use </span>async_trait::async_trait;
-    <span class="kw">use </span>mithril_common::chain_observer::FakeObserver;
-    <span class="kw">use </span>mithril_common::digesters::DumbImmutableFileObserver;
-    <span class="kw">use </span>mithril_common::entities::{
-        Beacon, CertificatePending, Epoch, ProtocolMessage, SignedEntityType, StakeDistribution,
+    <span class="kw">use </span>mithril_common::{
+        chain_observer::FakeObserver,
+        digesters::DumbImmutableFileObserver,
+        entities::{
+            Beacon, CertificatePending, Epoch, ProtocolMessage, SignedEntityType, StakeDistribution,
+        },
+        signable_builder::SignableBuilderService,
+        store::StakeStorer,
+        test_utils::{fake_data, MithrilFixtureBuilder},
     };
-    <span class="kw">use </span>mithril_common::signable_builder::SignableBuilderService;
-    <span class="kw">use </span>mithril_common::store::StakeStorer;
-    <span class="kw">use </span>mithril_common::test_utils::fake_data;
-    <span class="kw">use </span>mithril_common::test_utils::MithrilFixtureBuilder;
     <span class="kw">use </span>mithril_common::{BeaconProviderImpl, CardanoNetwork, StdResult};
     <span class="kw">use </span>mockall::{mock, predicate::eq};
     <span class="kw">use </span>std::sync::Arc;
@@ -1746,7 +1744,7 @@
         }
     }
 
-    <span class="kw">async fn </span>init_runner_from_dependencies(deps: DependencyManager) -&gt; AggregatorRunner {
+    <span class="kw">async fn </span>init_runner_from_dependencies(deps: DependencyContainer) -&gt; AggregatorRunner {
         <span class="kw">let </span>fixture = MithrilFixtureBuilder::default().with_signers(<span class="number">5</span>).build();
         deps.init_state_from_fixture(
             <span class="kw-2">&amp;</span>fixture,

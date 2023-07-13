@@ -278,20 +278,30 @@
 <a href="#278" id="278">278</a>
 <a href="#279" id="279">279</a>
 <a href="#280" id="280">280</a>
+<a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
+<a href="#283" id="283">283</a>
+<a href="#284" id="284">284</a>
+<a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a>
+<a href="#287" id="287">287</a>
+<a href="#288" id="288">288</a>
+<a href="#289" id="289">289</a>
+<a href="#290" id="290">290</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::http_server::routes::middlewares;
-<span class="kw">use </span><span class="kw">crate</span>::DependencyManager;
+<span class="kw">use </span><span class="kw">crate</span>::DependencyContainer;
 <span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>warp::Filter;
 
 <span class="kw">pub fn </span>routes(
-    dependency_manager: Arc&lt;DependencyManager&gt;,
+    dependency_manager: Arc&lt;DependencyContainer&gt;,
 ) -&gt; <span class="kw">impl </span>Filter&lt;Extract = (<span class="kw">impl </span>warp::Reply,), Error = warp::Rejection&gt; + Clone {
     register_signatures(dependency_manager)
 }
 
 <span class="doccomment">/// POST /register-signatures
 </span><span class="kw">fn </span>register_signatures(
-    dependency_manager: Arc&lt;DependencyManager&gt;,
+    dependency_manager: Arc&lt;DependencyContainer&gt;,
 ) -&gt; <span class="kw">impl </span>Filter&lt;Extract = (<span class="kw">impl </span>warp::Reply,), Error = warp::Rejection&gt; + Clone {
     <span class="macro">warp::path!</span>(<span class="string">&quot;register-signatures&quot;</span>)
         .and(warp::post())
@@ -304,16 +314,21 @@
 }
 
 <span class="kw">mod </span>handlers {
-    <span class="kw">use </span><span class="kw">crate</span>::certifier_service::{CertifierService, CertifierServiceError};
-    <span class="kw">use </span><span class="kw">crate</span>::http_server::routes::reply;
-    <span class="kw">use </span><span class="kw">crate</span>::message_adapters::FromRegisterSingleSignatureAdapter;
-    <span class="kw">use </span><span class="kw">crate</span>::ticker_service::TickerService;
-    <span class="kw">use </span>mithril_common::entities::SignedEntityType;
-    <span class="kw">use </span>mithril_common::messages::{FromMessageAdapter, RegisterSignatureMessage};
+    <span class="kw">use </span>mithril_common::{
+        entities::SignedEntityType,
+        messages::{FromMessageAdapter, RegisterSignatureMessage},
+    };
+
     <span class="kw">use </span>slog_scope::{debug, warn};
     <span class="kw">use </span>std::convert::Infallible;
     <span class="kw">use </span>std::sync::Arc;
     <span class="kw">use </span>warp::http::StatusCode;
+
+    <span class="kw">use crate</span>::{
+        http_server::routes::reply,
+        message_adapters::FromRegisterSingleSignatureAdapter,
+        services::{CertifierService, CertifierServiceError, TickerService},
+    };
 
     <span class="doccomment">/// Register Signatures
     </span><span class="kw">pub async fn </span>register_signatures(
@@ -365,20 +380,25 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
-
-    <span class="kw">use </span><span class="kw">crate</span>::http_server::SERVER_BASE_PATH;
-    <span class="kw">use </span>mithril_common::entities::SignedEntityType;
-    <span class="kw">use </span>mithril_common::messages::RegisterSignatureMessage;
-    <span class="kw">use </span>mithril_common::test_utils::apispec::APISpec;
     <span class="kw">use </span>warp::http::Method;
     <span class="kw">use </span>warp::test::request;
 
+    <span class="kw">use </span>mithril_common::{
+        entities::SignedEntityType, messages::RegisterSignatureMessage,
+        test_utils::apispec::APISpec,
+    };
+
+    <span class="kw">use crate</span>::{
+        http_server::SERVER_BASE_PATH,
+        initialize_dependencies,
+        services::{CertifierServiceError, MockCertifierService},
+        ProtocolError,
+    };
+
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
-    <span class="kw">use </span><span class="kw">crate</span>::certifier_service::{CertifierServiceError, MockCertifierService};
-    <span class="kw">use crate</span>::{initialize_dependencies, ProtocolError};
 
     <span class="kw">fn </span>setup_router(
-        dependency_manager: Arc&lt;DependencyManager&gt;,
+        dependency_manager: Arc&lt;DependencyContainer&gt;,
     ) -&gt; <span class="kw">impl </span>Filter&lt;Extract = (<span class="kw">impl </span>warp::Reply,), Error = warp::Rejection&gt; + Clone {
         <span class="kw">let </span>cors = warp::cors()
             .allow_any_origin()

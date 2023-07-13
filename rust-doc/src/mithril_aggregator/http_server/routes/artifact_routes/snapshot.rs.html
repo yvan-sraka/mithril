@@ -527,16 +527,15 @@
 <a href="#527" id="527">527</a>
 <a href="#528" id="528">528</a>
 <a href="#529" id="529">529</a>
-<a href="#530" id="530">530</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::http_server::routes::middlewares;
 <span class="kw">use </span><span class="kw">crate</span>::http_server::SERVER_BASE_PATH;
-<span class="kw">use </span><span class="kw">crate</span>::DependencyManager;
+<span class="kw">use </span><span class="kw">crate</span>::DependencyContainer;
 <span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>warp::hyper::Uri;
 <span class="kw">use </span>warp::Filter;
 
 <span class="kw">pub fn </span>routes(
-    dependency_manager: Arc&lt;DependencyManager&gt;,
+    dependency_manager: Arc&lt;DependencyContainer&gt;,
 ) -&gt; <span class="kw">impl </span>Filter&lt;Extract = (<span class="kw">impl </span>warp::Reply,), Error = warp::Rejection&gt; + Clone {
     artifact_cardano_full_immutable_snapshots(dependency_manager.clone())
         .or(artifact_cardano_full_immutable_snapshot_by_id(
@@ -550,7 +549,7 @@
 
 <span class="doccomment">/// GET /artifact/snapshots
 </span><span class="kw">fn </span>artifact_cardano_full_immutable_snapshots(
-    dependency_manager: Arc&lt;DependencyManager&gt;,
+    dependency_manager: Arc&lt;DependencyContainer&gt;,
 ) -&gt; <span class="kw">impl </span>Filter&lt;Extract = (<span class="kw">impl </span>warp::Reply,), Error = warp::Rejection&gt; + Clone {
     <span class="macro">warp::path!</span>(<span class="string">&quot;artifact&quot; </span>/ <span class="string">&quot;snapshots&quot;</span>)
         .and(warp::get())
@@ -560,7 +559,7 @@
 
 <span class="doccomment">/// GET /artifact/snapshot/:id
 </span><span class="kw">fn </span>artifact_cardano_full_immutable_snapshot_by_id(
-    dependency_manager: Arc&lt;DependencyManager&gt;,
+    dependency_manager: Arc&lt;DependencyContainer&gt;,
 ) -&gt; <span class="kw">impl </span>Filter&lt;Extract = (<span class="kw">impl </span>warp::Reply,), Error = warp::Rejection&gt; + Clone {
     <span class="macro">warp::path!</span>(<span class="string">&quot;artifact&quot; </span>/ <span class="string">&quot;snapshot&quot; </span>/ String)
         .and(warp::get())
@@ -570,7 +569,7 @@
 
 <span class="doccomment">/// GET /artifact/snapshots/{digest}/download
 </span><span class="kw">fn </span>snapshot_download(
-    dependency_manager: Arc&lt;DependencyManager&gt;,
+    dependency_manager: Arc&lt;DependencyContainer&gt;,
 ) -&gt; <span class="kw">impl </span>Filter&lt;Extract = (<span class="kw">impl </span>warp::Reply,), Error = warp::Rejection&gt; + Clone {
     <span class="macro">warp::path!</span>(<span class="string">&quot;artifact&quot; </span>/ <span class="string">&quot;snapshot&quot; </span>/ String / <span class="string">&quot;download&quot;</span>)
         .and(warp::get().or(warp::head()).unify())
@@ -580,7 +579,7 @@
 }
 
 <span class="kw">fn </span>serve_snapshots_dir(
-    dependency_manager: Arc&lt;DependencyManager&gt;,
+    dependency_manager: Arc&lt;DependencyContainer&gt;,
 ) -&gt; <span class="kw">impl </span>Filter&lt;Extract = (<span class="kw">impl </span>warp::Reply,), Error = warp::Rejection&gt; + Clone {
     <span class="kw">let </span>config = dependency_manager.config.clone();
 
@@ -623,7 +622,7 @@
     <span class="kw">use </span><span class="kw">crate</span>::http_server::SERVER_BASE_PATH;
     <span class="kw">use </span><span class="kw">crate</span>::message_adapters::ToSnapshotListMessageAdapter;
     <span class="kw">use </span><span class="kw">crate</span>::message_adapters::ToSnapshotMessageAdapter;
-    <span class="kw">use crate</span>::{signed_entity_service::SignedEntityService, Configuration};
+    <span class="kw">use crate</span>::{services::SignedEntityService, Configuration};
     <span class="kw">use </span>mithril_common::messages::ToMessageAdapter;
     <span class="kw">use </span>slog_scope::{debug, warn};
     <span class="kw">use </span>std::convert::Infallible;
@@ -758,8 +757,7 @@
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
     <span class="kw">use crate</span>::{
-        http_server::SERVER_BASE_PATH, initialize_dependencies,
-        signed_entity_service::MockSignedEntityService,
+        http_server::SERVER_BASE_PATH, initialize_dependencies, services::MockSignedEntityService,
     };
     <span class="kw">use </span>chrono::{DateTime, Utc};
     <span class="kw">use </span>mithril_common::{
@@ -774,7 +772,7 @@
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
     <span class="kw">fn </span>setup_router(
-        dependency_manager: Arc&lt;DependencyManager&gt;,
+        dependency_manager: Arc&lt;DependencyContainer&gt;,
     ) -&gt; <span class="kw">impl </span>Filter&lt;Extract = (<span class="kw">impl </span>warp::Reply,), Error = warp::Rejection&gt; + Clone {
         <span class="kw">let </span>cors = warp::cors()
             .allow_any_origin()

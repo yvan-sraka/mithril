@@ -352,13 +352,16 @@
 <a href="#352" id="352">352</a>
 <a href="#353" id="353">353</a>
 <a href="#354" id="354">354</a>
+<a href="#355" id="355">355</a>
+<a href="#356" id="356">356</a>
+<a href="#357" id="357">357</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::http_server::routes::middlewares;
-<span class="kw">use </span><span class="kw">crate</span>::DependencyManager;
+<span class="kw">use </span><span class="kw">crate</span>::DependencyContainer;
 <span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>warp::Filter;
 
 <span class="kw">pub fn </span>routes(
-    dependency_manager: Arc&lt;DependencyManager&gt;,
+    dependency_manager: Arc&lt;DependencyContainer&gt;,
 ) -&gt; <span class="kw">impl </span>Filter&lt;Extract = (<span class="kw">impl </span>warp::Reply,), Error = warp::Rejection&gt; + Clone {
     certificate_pending(dependency_manager.clone())
         .or(certificate_certificates(dependency_manager.clone()))
@@ -367,7 +370,7 @@
 
 <span class="doccomment">/// GET /certificate-pending
 </span><span class="kw">fn </span>certificate_pending(
-    dependency_manager: Arc&lt;DependencyManager&gt;,
+    dependency_manager: Arc&lt;DependencyContainer&gt;,
 ) -&gt; <span class="kw">impl </span>Filter&lt;Extract = (<span class="kw">impl </span>warp::Reply,), Error = warp::Rejection&gt; + Clone {
     <span class="macro">warp::path!</span>(<span class="string">&quot;certificate-pending&quot;</span>)
         .and(warp::get())
@@ -379,7 +382,7 @@
 
 <span class="doccomment">/// GET /certificates
 </span><span class="kw">fn </span>certificate_certificates(
-    dependency_manager: Arc&lt;DependencyManager&gt;,
+    dependency_manager: Arc&lt;DependencyContainer&gt;,
 ) -&gt; <span class="kw">impl </span>Filter&lt;Extract = (<span class="kw">impl </span>warp::Reply,), Error = warp::Rejection&gt; + Clone {
     <span class="macro">warp::path!</span>(<span class="string">&quot;certificates&quot;</span>)
         .and(warp::get())
@@ -389,7 +392,7 @@
 
 <span class="doccomment">/// GET /certificate/{certificate_hash}
 </span><span class="kw">fn </span>certificate_certificate_hash(
-    dependency_manager: Arc&lt;DependencyManager&gt;,
+    dependency_manager: Arc&lt;DependencyContainer&gt;,
 ) -&gt; <span class="kw">impl </span>Filter&lt;Extract = (<span class="kw">impl </span>warp::Reply,), Error = warp::Rejection&gt; + Clone {
     <span class="macro">warp::path!</span>(<span class="string">&quot;certificate&quot; </span>/ String)
         .and(warp::get())
@@ -398,10 +401,13 @@
 }
 
 <span class="kw">mod </span>handlers {
-    <span class="kw">use </span><span class="kw">crate</span>::certifier_service::CertifierService;
-    <span class="kw">use </span><span class="kw">crate</span>::http_server::routes::reply;
-    <span class="kw">use </span><span class="kw">crate</span>::message_adapters::{ToCertificateListMessageAdapter, ToCertificateMessageAdapter};
-    <span class="kw">use crate</span>::{CertificatePendingStore, ToCertificatePendingMessageAdapter};
+    <span class="kw">use crate</span>::{
+        http_server::routes::reply,
+        message_adapters::{ToCertificateListMessageAdapter, ToCertificateMessageAdapter},
+        services::CertifierService,
+        CertificatePendingStore, ToCertificatePendingMessageAdapter,
+    };
+
     <span class="kw">use </span>mithril_common::messages::ToMessageAdapter;
     <span class="kw">use </span>slog_scope::{debug, warn};
     <span class="kw">use </span>std::convert::Infallible;
@@ -492,7 +498,7 @@
     <span class="kw">use </span><span class="kw">crate</span>::store::CertificateStore;
 
     <span class="kw">fn </span>setup_router(
-        dependency_manager: Arc&lt;DependencyManager&gt;,
+        dependency_manager: Arc&lt;DependencyContainer&gt;,
     ) -&gt; <span class="kw">impl </span>Filter&lt;Extract = (<span class="kw">impl </span>warp::Reply,), Error = warp::Rejection&gt; + Clone {
         <span class="kw">let </span>cors = warp::cors()
             .allow_any_origin()

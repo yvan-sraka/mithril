@@ -80,14 +80,16 @@
 <a href="#80" id="80">80</a>
 <a href="#81" id="81">81</a>
 <a href="#82" id="82">82</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::certifier_service::CertifierService;
-<span class="kw">use </span><span class="kw">crate</span>::event_store::{EventMessage, TransmitterService};
-<span class="kw">use </span><span class="kw">crate</span>::signed_entity_service::SignedEntityService;
-<span class="kw">use </span><span class="kw">crate</span>::ticker_service::TickerService;
-<span class="kw">use crate</span>::{
-    dependency::MultiSignerWrapper, CertificatePendingStore, Configuration, DependencyManager,
-    ProtocolParametersStore, SignerRegisterer,
+<a href="#83" id="83">83</a>
+</pre></div><pre class="rust"><code><span class="kw">use crate</span>::{
+    dependency_injection::MultiSignerWrapper,
+    event_store::{EventMessage, TransmitterService},
+    services::CertifierService,
+    services::{SignedEntityService, TickerService},
+    CertificatePendingStore, Configuration, DependencyContainer, ProtocolParametersStore,
+    SignerRegisterer,
 };
+
 <span class="kw">use </span>mithril_common::BeaconProvider;
 <span class="kw">use </span>std::convert::Infallible;
 <span class="kw">use </span>std::sync::Arc;
@@ -95,70 +97,70 @@
 
 <span class="doccomment">/// With certificate pending store
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>with_certificate_pending_store(
-    dependency_manager: Arc&lt;DependencyManager&gt;,
+    dependency_manager: Arc&lt;DependencyContainer&gt;,
 ) -&gt; <span class="kw">impl </span>Filter&lt;Extract = (Arc&lt;CertificatePendingStore&gt;,), Error = Infallible&gt; + Clone {
     warp::any().map(<span class="kw">move </span>|| dependency_manager.certificate_pending_store.clone())
 }
 
 <span class="doccomment">/// With protocol parameters store
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>with_protocol_parameters_store(
-    dependency_manager: Arc&lt;DependencyManager&gt;,
+    dependency_manager: Arc&lt;DependencyContainer&gt;,
 ) -&gt; <span class="kw">impl </span>Filter&lt;Extract = (Arc&lt;ProtocolParametersStore&gt;,), Error = Infallible&gt; + Clone {
     warp::any().map(<span class="kw">move </span>|| dependency_manager.protocol_parameters_store.clone())
 }
 
 <span class="doccomment">/// With multi signer middleware
 </span><span class="kw">pub fn </span>with_multi_signer(
-    dependency_manager: Arc&lt;DependencyManager&gt;,
+    dependency_manager: Arc&lt;DependencyContainer&gt;,
 ) -&gt; <span class="kw">impl </span>Filter&lt;Extract = (MultiSignerWrapper,), Error = Infallible&gt; + Clone {
     warp::any().map(<span class="kw">move </span>|| dependency_manager.multi_signer.clone())
 }
 
 <span class="doccomment">/// With signer registerer middleware
 </span><span class="kw">pub fn </span>with_signer_registerer(
-    dependency_manager: Arc&lt;DependencyManager&gt;,
+    dependency_manager: Arc&lt;DependencyContainer&gt;,
 ) -&gt; <span class="kw">impl </span>Filter&lt;Extract = (Arc&lt;<span class="kw">dyn </span>SignerRegisterer&gt;,), Error = Infallible&gt; + Clone {
     warp::any().map(<span class="kw">move </span>|| dependency_manager.signer_registerer.clone())
 }
 
 <span class="doccomment">/// With config middleware
 </span><span class="kw">pub fn </span>with_config(
-    dependency_manager: Arc&lt;DependencyManager&gt;,
+    dependency_manager: Arc&lt;DependencyContainer&gt;,
 ) -&gt; <span class="kw">impl </span>Filter&lt;Extract = (Configuration,), Error = Infallible&gt; + Clone {
     warp::any().map(<span class="kw">move </span>|| dependency_manager.config.clone())
 }
 
 <span class="doccomment">/// With Event transmitter middleware
 </span><span class="kw">pub fn </span>with_event_transmitter(
-    dependency_manager: Arc&lt;DependencyManager&gt;,
+    dependency_manager: Arc&lt;DependencyContainer&gt;,
 ) -&gt; <span class="kw">impl </span>Filter&lt;Extract = (Arc&lt;TransmitterService&lt;EventMessage&gt;&gt;,), Error = Infallible&gt; + Clone {
     warp::any().map(<span class="kw">move </span>|| dependency_manager.event_transmitter.clone())
 }
 
 <span class="doccomment">/// With round_opener middleware
 </span><span class="kw">pub fn </span>with_beacon_provider(
-    dependency_manager: Arc&lt;DependencyManager&gt;,
+    dependency_manager: Arc&lt;DependencyContainer&gt;,
 ) -&gt; <span class="kw">impl </span>Filter&lt;Extract = (Arc&lt;<span class="kw">dyn </span>BeaconProvider&gt;,), Error = Infallible&gt; + Clone {
     warp::any().map(<span class="kw">move </span>|| dependency_manager.beacon_provider.clone())
 }
 
 <span class="doccomment">/// With certifier service middleware
 </span><span class="kw">pub fn </span>with_certifier_service(
-    dependency_manager: Arc&lt;DependencyManager&gt;,
+    dependency_manager: Arc&lt;DependencyContainer&gt;,
 ) -&gt; <span class="kw">impl </span>Filter&lt;Extract = (Arc&lt;<span class="kw">dyn </span>CertifierService&gt;,), Error = Infallible&gt; + Clone {
     warp::any().map(<span class="kw">move </span>|| dependency_manager.certifier_service.clone())
 }
 
 <span class="doccomment">/// With ticker service middleware
 </span><span class="kw">pub fn </span>with_ticker_service(
-    dependency_manager: Arc&lt;DependencyManager&gt;,
+    dependency_manager: Arc&lt;DependencyContainer&gt;,
 ) -&gt; <span class="kw">impl </span>Filter&lt;Extract = (Arc&lt;<span class="kw">dyn </span>TickerService&gt;,), Error = Infallible&gt; + Clone {
     warp::any().map(<span class="kw">move </span>|| dependency_manager.ticker_service.clone())
 }
 
 <span class="doccomment">/// With signed entity service
 </span><span class="kw">pub fn </span>with_signed_entity_service(
-    dependency_manager: Arc&lt;DependencyManager&gt;,
+    dependency_manager: Arc&lt;DependencyContainer&gt;,
 ) -&gt; <span class="kw">impl </span>Filter&lt;Extract = (Arc&lt;<span class="kw">dyn </span>SignedEntityService&gt;,), Error = Infallible&gt; + Clone {
     warp::any().map(<span class="kw">move </span>|| dependency_manager.signed_entity_service.clone())
 }

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["DependenciesBuilderError"],"struct":["DependenciesBuilder"],"type":["Result"]};
+window.SIDEBAR_ITEMS = {"enum":["DependenciesBuilderError"],"struct":["DependenciesBuilder","DependencyContainer"],"type":["MultiSignerWrapper","Result"]};
