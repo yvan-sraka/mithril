@@ -151,6 +151,8 @@
 <a href="#151" id="151">151</a>
 <a href="#152" id="152">152</a>
 <a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>async_trait::async_trait;
@@ -158,7 +160,7 @@
 <span class="kw">use </span>mithril_common::{
     certificate_chain::{CertificateRetriever, CertificateRetrieverError},
     entities::Certificate,
-    messages::{CertificateMessage, FromMessageAdapter},
+    messages::{CertificateMessage, TryFromMessageAdapter},
     StdResult,
 };
 <span class="kw">use </span>slog_scope::{crit, debug};
@@ -194,7 +196,7 @@
                         e
                     })<span class="question-mark">?</span>;
 
-                <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(FromCertificateMessageAdapter::adapt(message)))
+                <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(FromCertificateMessageAdapter::try_adapt(message)<span class="question-mark">?</span>))
             }
         }
     }
@@ -219,7 +221,7 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
-    <span class="kw">use </span>mithril_common::messages::CertificateMetadataMessage;
+    <span class="kw">use </span>mithril_common::messages::{CertificateMetadataMessage, SignerWithStakeMessagePart};
     <span class="kw">use </span>mithril_common::test_utils::fake_data;
 
     <span class="kw">use </span><span class="kw">crate</span>::aggregator_client::MockAggregatorHTTPClient;
@@ -245,7 +247,9 @@
                         protocol_parameters: certificate.metadata.protocol_parameters.clone(),
                         initiated_at: certificate.metadata.initiated_at,
                         sealed_at: certificate.metadata.sealed_at,
-                        signers: certificate.metadata.signers.clone(),
+                        signers: SignerWithStakeMessagePart::from_signers(
+                            certificate.metadata.signers.clone(),
+                        ),
                     },
                     protocol_message: certificate.protocol_message.clone(),
                     signed_message: certificate.signed_message.clone(),

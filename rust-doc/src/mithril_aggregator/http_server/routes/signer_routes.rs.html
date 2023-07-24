@@ -303,6 +303,20 @@
 <a href="#303" id="303">303</a>
 <a href="#304" id="304">304</a>
 <a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
+<a href="#308" id="308">308</a>
+<a href="#309" id="309">309</a>
+<a href="#310" id="310">310</a>
+<a href="#311" id="311">311</a>
+<a href="#312" id="312">312</a>
+<a href="#313" id="313">313</a>
+<a href="#314" id="314">314</a>
+<a href="#315" id="315">315</a>
+<a href="#316" id="316">316</a>
+<a href="#317" id="317">317</a>
+<a href="#318" id="318">318</a>
+<a href="#319" id="319">319</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::http_server::routes::middlewares;
 <span class="kw">use </span><span class="kw">crate</span>::DependencyContainer;
 <span class="kw">use </span>std::sync::Arc;
@@ -340,7 +354,7 @@
     <span class="kw">use </span><span class="kw">crate</span>::event_store::{EventMessage, TransmitterService};
     <span class="kw">use </span><span class="kw">crate</span>::FromRegisterSignerAdapter;
     <span class="kw">use crate</span>::{http_server::routes::reply, SignerRegisterer, SignerRegistrationError};
-    <span class="kw">use </span>mithril_common::messages::{FromMessageAdapter, RegisterSignerMessage};
+    <span class="kw">use </span>mithril_common::messages::{RegisterSignerMessage, TryFromMessageAdapter};
     <span class="kw">use </span>mithril_common::BeaconProvider;
     <span class="kw">use </span>slog_scope::{debug, warn};
     <span class="kw">use </span>std::convert::Infallible;
@@ -372,7 +386,17 @@
             },
         };
 
-        <span class="kw">let </span>signer = FromRegisterSignerAdapter::adapt(register_signer_message);
+        <span class="kw">let </span>signer = <span class="kw">match </span>FromRegisterSignerAdapter::try_adapt(register_signer_message) {
+            <span class="prelude-val">Ok</span>(signer) =&gt; signer,
+            <span class="prelude-val">Err</span>(err) =&gt; {
+                <span class="macro">warn!</span>(<span class="string">&quot;register_signer::payload decoding error&quot;</span>; <span class="string">&quot;error&quot; </span>=&gt; <span class="question-mark">?</span>err);
+                <span class="kw">return </span><span class="prelude-val">Ok</span>(reply::bad_request(
+                    <span class="string">&quot;Could not decode signer payload&quot;</span>.to_string(),
+                    err.to_string(),
+                ));
+            }
+        };
+
         <span class="kw">let </span><span class="kw-2">mut </span>headers: Vec&lt;(<span class="kw-2">&amp;</span>str, <span class="kw-2">&amp;</span>str)&gt; = <span class="kw">match </span>signer_node_version.as_ref() {
             <span class="prelude-val">Some</span>(version) =&gt; <span class="macro">vec!</span>[(<span class="string">&quot;signer-node-version&quot;</span>, version)],
             <span class="prelude-val">None </span>=&gt; Vec::new(),
@@ -504,7 +528,11 @@
         <span class="kw">let </span><span class="kw-2">mut </span>mock_signer_registerer = MockSignerRegisterer::new();
         mock_signer_registerer
             .expect_register_signer()
-            .return_once(|<span class="kw">_</span>, <span class="kw">_</span>| <span class="prelude-val">Err</span>(SignerRegistrationError::ExistingSigner(signer_with_stake)));
+            .return_once(|<span class="kw">_</span>, <span class="kw">_</span>| {
+                <span class="prelude-val">Err</span>(SignerRegistrationError::ExistingSigner(Box::new(
+                    signer_with_stake,
+                )))
+            });
         mock_signer_registerer
             .expect_get_current_round()
             .return_once(|| <span class="prelude-val">None</span>);

@@ -52,25 +52,43 @@
 <a href="#52" id="52">52</a>
 <a href="#53" id="53">53</a>
 <a href="#54" id="54">54</a>
+<a href="#55" id="55">55</a>
+<a href="#56" id="56">56</a>
+<a href="#57" id="57">57</a>
+<a href="#58" id="58">58</a>
+<a href="#59" id="59">59</a>
+<a href="#60" id="60">60</a>
+<a href="#61" id="61">61</a>
+<a href="#62" id="62">62</a>
+<a href="#63" id="63">63</a>
+<a href="#64" id="64">64</a>
+<a href="#65" id="65">65</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>mithril_common::{
     entities::{MithrilStakeDistribution, SignedEntity, SignedEntityType},
-    messages::{FromMessageAdapter, MithrilStakeDistributionMessage},
+    messages::{
+        MithrilStakeDistributionMessage, SignerWithStakeMessagePart, TryFromMessageAdapter,
+    },
+    StdResult,
 };
 
 <span class="kw">pub struct </span>FromMithrilStakeDistributionMessageAdapter;
 
-<span class="kw">impl </span>FromMessageAdapter&lt;MithrilStakeDistributionMessage, SignedEntity&lt;MithrilStakeDistribution&gt;&gt;
+<span class="kw">impl </span>TryFromMessageAdapter&lt;MithrilStakeDistributionMessage, SignedEntity&lt;MithrilStakeDistribution&gt;&gt;
     <span class="kw">for </span>FromMithrilStakeDistributionMessageAdapter
 {
-    <span class="kw">fn </span>adapt(from: MithrilStakeDistributionMessage) -&gt; SignedEntity&lt;MithrilStakeDistribution&gt; {
+    <span class="kw">fn </span>try_adapt(
+        from: MithrilStakeDistributionMessage,
+    ) -&gt; StdResult&lt;SignedEntity&lt;MithrilStakeDistribution&gt;&gt; {
         <span class="kw">let </span>mithril_stake_distribution = MithrilStakeDistribution {
             epoch: from.epoch,
-            signers_with_stake: from.signers_with_stake,
+            signers_with_stake: SignerWithStakeMessagePart::try_into_signers(
+                from.signers_with_stake,
+            )<span class="question-mark">?</span>,
             hash: from.hash,
             protocol_parameters: from.protocol_parameters,
         };
 
-        SignedEntity {
+        <span class="kw">let </span>entity = SignedEntity {
             signed_entity_id: mithril_stake_distribution.hash.clone(),
             signed_entity_type: SignedEntityType::MithrilStakeDistribution(
                 mithril_stake_distribution.epoch,
@@ -78,7 +96,9 @@
             certificate_id: from.certificate_hash,
             artifact: mithril_stake_distribution,
             created_at: from.created_at,
-        }
+        };
+
+        <span class="prelude-val">Ok</span>(entity)
     }
 }
 
@@ -93,14 +113,16 @@
     </span><span class="kw">fn </span>test_adapt() {
         <span class="kw">let </span>message = MithrilStakeDistributionMessage {
             epoch: Epoch(<span class="number">1</span>),
-            signers_with_stake: fake_data::signers_with_stakes(<span class="number">2</span>),
+            signers_with_stake: SignerWithStakeMessagePart::from_signers(
+                fake_data::signers_with_stakes(<span class="number">2</span>),
+            ),
             hash: <span class="string">&quot;hash-123&quot;</span>.to_string(),
             certificate_hash: <span class="string">&quot;certificate-hash-123&quot;</span>.to_string(),
             created_at: DateTime::&lt;Utc&gt;::default(),
             protocol_parameters: fake_data::protocol_parameters(),
         };
 
-        <span class="kw">let </span>signed_entity = FromMithrilStakeDistributionMessageAdapter::adapt(message);
+        <span class="kw">let </span>signed_entity = FromMithrilStakeDistributionMessageAdapter::try_adapt(message).unwrap();
 
         <span class="macro">assert_eq!</span>(<span class="number">2</span>, signed_entity.artifact.signers_with_stake.len());
         <span class="macro">assert_eq!</span>(<span class="string">&quot;hash-123&quot;</span>.to_string(), signed_entity.artifact.hash);

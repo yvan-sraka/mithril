@@ -918,9 +918,7 @@
 <span class="attr">#[cfg(test)]
 </span><span class="kw">use </span>mockall::automock;
 
-<span class="kw">use </span>mithril_common::crypto_helper::{
-    key_decode_hex, KESPeriod, OpCert, ProtocolSignerVerificationKey, SerDeShelleyFileFormat,
-};
+<span class="kw">use </span>mithril_common::crypto_helper::{KESPeriod, OpCert, SerDeShelleyFileFormat};
 <span class="kw">use </span>mithril_common::entities::{PartyId, ProtocolParameters, SignedEntityType};
 <span class="kw">use </span>mithril_common::{
     crypto_helper::key_encode_hex,
@@ -1122,7 +1120,6 @@
             <span class="self">self</span>.config.kes_secret_key_path.clone(),
             kes_period,
         )<span class="question-mark">?</span>;
-        <span class="kw">let </span>verification_key_encoded = key_encode_hex(protocol_initializer.verification_key())<span class="question-mark">?</span>;
         <span class="kw">let </span>verification_key_signature_encoded =
             <span class="kw">match </span>protocol_initializer.verification_key_signature() {
                 <span class="prelude-val">Some</span>(verification_signature) =&gt; <span class="prelude-val">Some</span>(key_encode_hex(verification_signature)<span class="question-mark">?</span>),
@@ -1130,7 +1127,7 @@
             };
         <span class="kw">let </span>signer = Signer::new(
             <span class="self">self</span>.services.single_signer.get_party_id(),
-            verification_key_encoded,
+            protocol_initializer.verification_key().into(),
             verification_key_signature_encoded,
             operational_certificate_encoded,
             kes_period,
@@ -1204,10 +1201,8 @@
                     <span class="string">&quot; &gt; got protocol initializer for this epoch ({})&quot;</span>,
                     pending_certificate.beacon.epoch
                 );
-                <span class="kw">let </span>recorded_verification_key =
-                    key_decode_hex::&lt;ProtocolSignerVerificationKey&gt;(<span class="kw-2">&amp;</span>signer.verification_key)<span class="question-mark">?</span>;
 
-                <span class="kw">if </span>recorded_verification_key == protocol_initializer.verification_key() {
+                <span class="kw">if </span>signer.verification_key == protocol_initializer.verification_key().into() {
                     <span class="macro">debug!</span>(<span class="string">&quot;verification keys match, we can sign&quot;</span>);
 
                     <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="bool-val">true</span>);
@@ -1438,7 +1433,11 @@
 
     <span class="kw">async fn </span>init_services() -&gt; SignerServices {
         <span class="kw">let </span>adapter: MemoryAdapter&lt;Epoch, ProtocolInitializer&gt; = MemoryAdapter::new(<span class="prelude-val">None</span>).unwrap();
-        <span class="kw">let </span>chain_observer = Arc::new(FakeObserver::default());
+        <span class="kw">let </span>stake_distribution_signers = fake_data::signers_with_stakes(<span class="number">2</span>);
+        <span class="kw">let </span>party_id = stake_distribution_signers[<span class="number">1</span>].party_id.clone();
+        <span class="kw">let </span>fake_observer = FakeObserver::default();
+        fake_observer.set_signers(stake_distribution_signers).<span class="kw">await</span>;
+        <span class="kw">let </span>chain_observer = Arc::new(fake_observer);
         <span class="kw">let </span>beacon_provider = Arc::new(BeaconProviderImpl::new(
             chain_observer.clone(),
             Arc::new(DumbImmutableFileObserver::default()),
@@ -1474,7 +1473,7 @@
             certificate_handler: Arc::new(DumbAggregatorClient::default()),
             chain_observer,
             digester,
-            single_signer: Arc::new(MithrilSingleSigner::new(<span class="string">&quot;1&quot;</span>.to_string())),
+            single_signer: Arc::new(MithrilSingleSigner::new(party_id)),
             beacon_provider,
             protocol_initializer_store: Arc::new(ProtocolInitializerStore::new(
                 Box::new(adapter),
@@ -1630,12 +1629,13 @@
 
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>test_can_i_sign() {
-        <span class="kw">let </span>services = init_services().<span class="kw">await</span>;
-        <span class="kw">let </span>protocol_initializer_store = services.protocol_initializer_store.clone();
-        <span class="kw">let </span>runner = init_runner(<span class="prelude-val">Some</span>(services), <span class="prelude-val">None</span>).<span class="kw">await</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>pending_certificate = fake_data::certificate_pending();
         <span class="kw">let </span>epoch = pending_certificate.beacon.epoch;
         <span class="kw">let </span>signer = <span class="kw-2">&amp;mut </span>pending_certificate.signers[<span class="number">0</span>];
+        <span class="kw">let </span><span class="kw-2">mut </span>services = init_services().<span class="kw">await</span>;
+        <span class="kw">let </span>protocol_initializer_store = services.protocol_initializer_store.clone();
+        services.single_signer = Arc::new(MithrilSingleSigner::new(signer.party_id.to_owned()));
+        <span class="kw">let </span>runner = init_runner(<span class="prelude-val">Some</span>(services), <span class="prelude-val">None</span>).<span class="kw">await</span>;
 
         <span class="kw">let </span>protocol_initializer = MithrilProtocolInitializerBuilder::build(
             <span class="kw-2">&amp;</span><span class="number">100</span>,
@@ -1644,7 +1644,7 @@
             <span class="prelude-val">None</span>,
         )
         .expect(<span class="string">&quot;build protocol initializer should not fail&quot;</span>);
-        signer.verification_key = key_encode_hex(protocol_initializer.verification_key()).unwrap();
+        signer.verification_key = protocol_initializer.verification_key().into();
         protocol_initializer_store
             .save_protocol_initializer(
                 epoch

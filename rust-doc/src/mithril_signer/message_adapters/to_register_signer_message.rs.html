@@ -35,6 +35,7 @@
 <a href="#35" id="35">35</a>
 <a href="#36" id="36">36</a>
 <a href="#37" id="37">37</a>
+<a href="#38" id="38">38</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>mithril_common::{
     entities::{Epoch, Signer},
     messages::{RegisterSignerMessage, ToMessageAdapter},
@@ -49,7 +50,7 @@
         RegisterSignerMessage {
             epoch: <span class="prelude-val">Some</span>(epoch),
             party_id: signer.party_id,
-            verification_key: signer.verification_key,
+            verification_key: signer.verification_key.try_into().unwrap(),
             verification_key_signature: signer.verification_key_signature,
             operational_certificate: signer.operational_certificate,
             kes_period: signer.kes_period,
@@ -66,7 +67,8 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>adapt_ok() {
         <span class="kw">let </span>epoch = Epoch(<span class="number">1</span>);
-        <span class="kw">let </span>signer = fake_data::signers(<span class="number">1</span>)[<span class="number">0</span>].to_owned();
+        <span class="kw">let </span><span class="kw-2">mut </span>signer = fake_data::signers(<span class="number">1</span>)[<span class="number">0</span>].to_owned();
+        signer.party_id = <span class="string">&quot;0&quot;</span>.to_string();
         <span class="kw">let </span>message = ToRegisterSignerMessageAdapter::adapt((epoch, signer));
 
         <span class="macro">assert_eq!</span>(<span class="string">&quot;0&quot;</span>.to_string(), message.party_id);

@@ -43,8 +43,12 @@
 <a href="#43" id="43">43</a>
 <a href="#44" id="44">44</a>
 <a href="#45" id="45">45</a>
+<a href="#46" id="46">46</a>
+<a href="#47" id="47">47</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>mithril_common::entities::Certificate;
-<span class="kw">use </span>mithril_common::messages::{CertificateMessage, CertificateMetadataMessage, ToMessageAdapter};
+<span class="kw">use </span>mithril_common::messages::{
+    CertificateMessage, CertificateMetadataMessage, SignerWithStakeMessagePart, ToMessageAdapter,
+};
 
 <span class="doccomment">/// Adapter to convert [Certificate] to [CertificateMessage] instances
 </span><span class="kw">pub struct </span>ToCertificateMessageAdapter;
@@ -57,7 +61,7 @@
             protocol_parameters: certificate.metadata.protocol_parameters,
             initiated_at: certificate.metadata.initiated_at,
             sealed_at: certificate.metadata.sealed_at,
-            signers: certificate.metadata.signers,
+            signers: SignerWithStakeMessagePart::from_signers(certificate.metadata.signers),
         };
 
         CertificateMessage {

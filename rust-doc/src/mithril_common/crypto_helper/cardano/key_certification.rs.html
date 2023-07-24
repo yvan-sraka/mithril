@@ -390,6 +390,7 @@
 <a href="#390" id="390">390</a>
 <a href="#391" id="391">391</a>
 <a href="#392" id="392">392</a>
+<a href="#393" id="393">393</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! API for mithril key certification.
 //! Includes the wrappers for StmInitializer and KeyReg, and ProtocolRegistrationErrorWrapper.
 //! These wrappers allows keeping mithril-stm agnostic to Cardano, while providing some
@@ -398,9 +399,10 @@
 </span><span class="kw">use </span><span class="kw">crate</span>::crypto_helper::{
     cardano::{OpCert, ParseError, SerDeShelleyFileFormat},
     types::{
-        ProtocolParameters, ProtocolPartyId, ProtocolSignerVerificationKey,
-        ProtocolSignerVerificationKeySignature, ProtocolStakeDistribution,
+        ProtocolParameters, ProtocolPartyId, ProtocolSignerVerificationKeySignature,
+        ProtocolStakeDistribution,
     },
+    verification_key::ProtocolSignerVerificationKey,
 };
 
 <span class="kw">use </span>mithril_stm::key_reg::{ClosedKeyReg, KeyReg};
@@ -669,7 +671,7 @@
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>stake) = <span class="self">self</span>.stake_distribution.get(<span class="kw-2">&amp;</span>pool_id_bech32) {
             <span class="self">self</span>.stm_key_reg
-                .register(stake, pk)
+                .register(stake, pk.into())
                 .map_err(ProtocolRegistrationErrorWrapper::CoreRegister)<span class="question-mark">?</span>;
             <span class="kw">return </span><span class="prelude-val">Ok</span>(pool_id_bech32);
         }
@@ -756,7 +758,7 @@
             <span class="prelude-val">Some</span>(opcert1),
             initializer_1.kes_signature,
             <span class="prelude-val">Some</span>(<span class="number">0</span>),
-            initializer_1.stm_initializer.verification_key(),
+            initializer_1.stm_initializer.verification_key().into(),
         );
         <span class="macro">assert!</span>(key_registration_1.is_ok());
 
@@ -777,7 +779,7 @@
             <span class="prelude-val">Some</span>(opcert2),
             initializer_2.kes_signature,
             <span class="prelude-val">Some</span>(<span class="number">0</span>),
-            initializer_2.stm_initializer.verification_key(),
+            initializer_2.stm_initializer.verification_key().into(),
         );
         <span class="macro">assert!</span>(key_registration_2.is_ok())
     }

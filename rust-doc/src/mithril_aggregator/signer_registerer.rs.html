@@ -514,7 +514,7 @@
 
     <span class="doccomment">/// Signer is already registered.
     </span><span class="attr">#[error(<span class="string">&quot;signer already registered&quot;</span>)]
-    </span>ExistingSigner(SignerWithStake),
+    </span>ExistingSigner(Box&lt;SignerWithStake&gt;),
 
     <span class="doccomment">/// Store error.
     </span><span class="attr">#[error(<span class="string">&quot;store error: {0}&quot;</span>)]
@@ -694,8 +694,6 @@
             <span class="string">&quot;&quot; </span>=&gt; <span class="prelude-val">None</span>,
             party_id =&gt; <span class="prelude-val">Some</span>(party_id.to_string()),
         };
-        <span class="kw">let </span>verification_key =
-            key_decode_hex(<span class="kw-2">&amp;</span>signer.verification_key).map_err(SignerRegistrationError::Codec)<span class="question-mark">?</span>;
         <span class="kw">let </span>verification_key_signature = <span class="kw">match </span><span class="kw-2">&amp;</span>signer.verification_key_signature {
             <span class="prelude-val">Some</span>(verification_key_signature) =&gt; <span class="prelude-val">Some</span>(
                 key_decode_hex(verification_key_signature)
@@ -725,7 +723,7 @@
             operational_certificate,
             verification_key_signature,
             kes_period,
-            verification_key,
+            signer.verification_key.clone(),
         )<span class="question-mark">?</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>signer_save = SignerWithStake::from_signer(
             signer.to_owned(),
@@ -746,7 +744,9 @@
             .save_verification_key(registration_round.epoch, signer_save.clone())
             .<span class="kw">await</span><span class="question-mark">?
         </span>{
-            <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Err</span>(SignerRegistrationError::ExistingSigner(signer_save)),
+            <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Err</span>(SignerRegistrationError::ExistingSigner(Box::new(
+                signer_save,
+            ))),
             <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Ok</span>(signer_save),
         }
     }

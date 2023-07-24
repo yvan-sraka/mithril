@@ -60,42 +60,54 @@
 <a href="#60" id="60">60</a>
 <a href="#61" id="61">61</a>
 <a href="#62" id="62">62</a>
+<a href="#63" id="63">63</a>
+<a href="#64" id="64">64</a>
+<a href="#65" id="65">65</a>
+<a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>mithril_common::{
+    crypto_helper::ProtocolSignerVerificationKey,
     entities::{CertificatePending, Signer},
-    messages::{CertificatePendingMessage, FromMessageAdapter, SignerMessage},
+    messages::{CertificatePendingMessage, SignerMessage, TryFromMessageAdapter},
+    StdResult,
 };
 
 <span class="doccomment">/// Adapter to turn [CertificatePendingMessage] instances into [CertificatePending].
 </span><span class="kw">pub struct </span>FromPendingCertificateMessageAdapter;
 
-<span class="kw">impl </span>FromMessageAdapter&lt;CertificatePendingMessage, CertificatePending&gt;
+<span class="kw">fn </span>to_signers(messages: <span class="kw-2">&amp;</span>[SignerMessage]) -&gt; StdResult&lt;Vec&lt;Signer&gt;&gt; {
+    <span class="kw">let </span><span class="kw-2">mut </span>signers: Vec&lt;Signer&gt; = Vec::new();
+
+    <span class="kw">for </span>msg <span class="kw">in </span>messages {
+        <span class="kw">let </span>signer = Signer::new(
+            msg.party_id.to_owned(),
+            ProtocolSignerVerificationKey::from_json_hex(<span class="kw-2">&amp;</span>msg.verification_key)<span class="question-mark">?</span>,
+            msg.verification_key_signature.to_owned(),
+            msg.operational_certificate.to_owned(),
+            msg.kes_period,
+        );
+        signers.push(signer);
+    }
+
+    <span class="prelude-val">Ok</span>(signers)
+}
+
+<span class="kw">impl </span>TryFromMessageAdapter&lt;CertificatePendingMessage, CertificatePending&gt;
     <span class="kw">for </span>FromPendingCertificateMessageAdapter
 {
     <span class="doccomment">/// Adapter method
-    </span><span class="kw">fn </span>adapt(message: CertificatePendingMessage) -&gt; CertificatePending {
-        CertificatePending {
+    </span><span class="kw">fn </span>try_adapt(message: CertificatePendingMessage) -&gt; StdResult&lt;CertificatePending&gt; {
+        <span class="kw">let </span>certificate = CertificatePending {
             beacon: message.beacon,
             signed_entity_type: message.signed_entity_type,
             protocol_parameters: message.protocol_parameters,
             next_protocol_parameters: message.next_protocol_parameters,
-            signers: <span class="self">Self</span>::adapt_signers(message.signers),
-            next_signers: <span class="self">Self</span>::adapt_signers(message.next_signers),
-        }
-    }
-}
+            signers: to_signers(<span class="kw-2">&amp;</span>message.signers)<span class="question-mark">?</span>,
+            next_signers: to_signers(<span class="kw-2">&amp;</span>message.next_signers)<span class="question-mark">?</span>,
+        };
 
-<span class="kw">impl </span>FromPendingCertificateMessageAdapter {
-    <span class="kw">fn </span>adapt_signers(signer_messages: Vec&lt;SignerMessage&gt;) -&gt; Vec&lt;Signer&gt; {
-        signer_messages
-            .into_iter()
-            .map(|msg| Signer {
-                party_id: msg.party_id,
-                verification_key: msg.verification_key,
-                verification_key_signature: msg.verification_key_signature,
-                kes_period: msg.kes_period,
-                operational_certificate: msg.operational_certificate,
-            })
-            .collect()
+        <span class="prelude-val">Ok</span>(certificate)
     }
 }
 
@@ -107,7 +119,7 @@
     </span><span class="kw">fn </span>adapt_ok() {
         <span class="kw">let </span>message = CertificatePendingMessage::dummy();
         <span class="kw">let </span>epoch = message.beacon.epoch;
-        <span class="kw">let </span>certificate_pending = FromPendingCertificateMessageAdapter::adapt(message);
+        <span class="kw">let </span>certificate_pending = FromPendingCertificateMessageAdapter::try_adapt(message).unwrap();
 
         <span class="macro">assert_eq!</span>(epoch, certificate_pending.beacon.epoch);
     }
@@ -116,7 +128,7 @@
     </span><span class="kw">fn </span>adapt_signers() {
         <span class="kw">let </span><span class="kw-2">mut </span>message = CertificatePendingMessage::dummy();
         message.signers = <span class="macro">vec!</span>[SignerMessage::dummy(), SignerMessage::dummy()];
-        <span class="kw">let </span>certificate_pending = FromPendingCertificateMessageAdapter::adapt(message);
+        <span class="kw">let </span>certificate_pending = FromPendingCertificateMessageAdapter::try_adapt(message).unwrap();
 
         <span class="macro">assert_eq!</span>(<span class="number">2</span>, certificate_pending.signers.len());
         <span class="macro">assert_eq!</span>(<span class="number">1</span>, certificate_pending.next_signers.len());
