@@ -278,10 +278,8 @@
 <a href="#278" id="278">278</a>
 <a href="#279" id="279">279</a>
 <a href="#280" id="280">280</a>
-<a href="#281" id="281">281</a>
-<a href="#282" id="282">282</a>
-<a href="#283" id="283">283</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>std::{error::Error, fs::File, io::prelude::<span class="kw-2">*</span>, io::Write, path::Path, sync::Arc};
+</pre></div><pre class="rust"><code><span class="kw">use </span>std::{fs::File, io::prelude::<span class="kw-2">*</span>, io::Write, path::Path, sync::Arc};
+<span class="kw">use </span>tokio::sync::RwLock;
 
 <span class="kw">use </span>mithril_common::{
     certificate_chain::{CertificateGenesisProducer, CertificateVerifier},
@@ -290,13 +288,11 @@
         ProtocolGenesisSigner, ProtocolGenesisVerifier,
     },
     entities::{Beacon, ProtocolParameters},
-    BeaconProvider,
+    BeaconProvider, StdResult,
 };
-<span class="kw">use </span>tokio::sync::RwLock;
 
-<span class="kw">use crate</span>::{CertificateStore, MultiSigner, ProtocolParametersStore, ProtocolParametersStorer};
-
-<span class="kw">type </span>GenesisToolsResult&lt;R&gt; = <span class="prelude-ty">Result</span>&lt;R, Box&lt;<span class="kw">dyn </span>Error&gt;&gt;;
+<span class="kw">use </span><span class="kw">crate</span>::database::provider::CertificateRepository;
+<span class="kw">use crate</span>::{MultiSigner, ProtocolParametersStorer};
 
 <span class="kw">pub struct </span>GenesisToolsDependency {
     <span class="doccomment">/// Multisigner service.
@@ -312,10 +308,10 @@
     </span><span class="kw">pub </span>certificate_verifier: Arc&lt;<span class="kw">dyn </span>CertificateVerifier&gt;,
 
     <span class="doccomment">/// Protocol parameter store.
-    </span><span class="kw">pub </span>protocol_parameters_store: Arc&lt;ProtocolParametersStore&gt;,
+    </span><span class="kw">pub </span>protocol_parameters_store: Arc&lt;<span class="kw">dyn </span>ProtocolParametersStorer&gt;,
 
     <span class="doccomment">/// Certificate store.
-    </span><span class="kw">pub </span>certificate_store: Arc&lt;CertificateStore&gt;,
+    </span><span class="kw">pub </span>certificate_repository: Arc&lt;CertificateRepository&gt;,
 }
 
 <span class="kw">pub struct </span>GenesisTools {
@@ -324,7 +320,7 @@
     genesis_avk: ProtocolAggregateVerificationKey,
     genesis_verifier: Arc&lt;ProtocolGenesisVerifier&gt;,
     certificate_verifier: Arc&lt;<span class="kw">dyn </span>CertificateVerifier&gt;,
-    certificate_store: Arc&lt;CertificateStore&gt;,
+    certificate_repository: Arc&lt;CertificateRepository&gt;,
 }
 
 <span class="kw">impl </span>GenesisTools {
@@ -334,7 +330,7 @@
         genesis_avk: ProtocolAggregateVerificationKey,
         genesis_verifier: Arc&lt;ProtocolGenesisVerifier&gt;,
         certificate_verifier: Arc&lt;<span class="kw">dyn </span>CertificateVerifier&gt;,
-        certificate_store: Arc&lt;CertificateStore&gt;,
+        certificate_repository: Arc&lt;CertificateRepository&gt;,
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             protocol_parameters,
@@ -342,13 +338,11 @@
             genesis_avk,
             genesis_verifier,
             certificate_verifier,
-            certificate_store,
+            certificate_repository,
         }
     }
 
-    <span class="kw">pub async fn </span>from_dependencies(
-        dependencies: GenesisToolsDependency,
-    ) -&gt; GenesisToolsResult&lt;<span class="self">Self</span>&gt; {
+    <span class="kw">pub async fn </span>from_dependencies(dependencies: GenesisToolsDependency) -&gt; StdResult&lt;<span class="self">Self</span>&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>multi_signer = dependencies.multi_signer.write().<span class="kw">await</span>;
         <span class="kw">let </span>beacon_provider = dependencies.beacon_provider.clone();
         <span class="kw">let </span>beacon = beacon_provider.get_current_beacon().<span class="kw">await</span><span class="question-mark">?</span>;
@@ -356,7 +350,7 @@
 
         <span class="kw">let </span>genesis_verifier = dependencies.genesis_verifier.clone();
         <span class="kw">let </span>certificate_verifier = dependencies.certificate_verifier.clone();
-        <span class="kw">let </span>certificate_store = dependencies.certificate_store.clone();
+        <span class="kw">let </span>certificate_repository = dependencies.certificate_repository.clone();
         <span class="kw">let </span>protocol_parameters_store = dependencies.protocol_parameters_store.clone();
 
         <span class="kw">let </span>protocol_parameters = protocol_parameters_store
@@ -375,12 +369,12 @@
             genesis_avk,
             genesis_verifier,
             certificate_verifier,
-            certificate_store,
+            certificate_repository,
         ))
     }
 
     <span class="doccomment">/// Export AVK of the genesis stake distribution to a payload file
-    </span><span class="kw">pub fn </span>export_payload_to_sign(<span class="kw-2">&amp;</span><span class="self">self</span>, target_path: <span class="kw-2">&amp;</span>Path) -&gt; GenesisToolsResult&lt;()&gt; {
+    </span><span class="kw">pub fn </span>export_payload_to_sign(<span class="kw-2">&amp;</span><span class="self">self</span>, target_path: <span class="kw-2">&amp;</span>Path) -&gt; StdResult&lt;()&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>target_file = File::create(target_path)<span class="question-mark">?</span>;
         <span class="kw">let </span>protocol_message =
             CertificateGenesisProducer::create_genesis_protocol_message(<span class="kw-2">&amp;</span><span class="self">self</span>.genesis_avk)<span class="question-mark">?</span>;
@@ -389,10 +383,7 @@
     }
 
     <span class="doccomment">/// Import signature of the AVK of the genesis stake distribution from a file
-    </span><span class="kw">pub async fn </span>import_payload_signature(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        signed_payload_path: <span class="kw-2">&amp;</span>Path,
-    ) -&gt; GenesisToolsResult&lt;()&gt; {
+    </span><span class="kw">pub async fn </span>import_payload_signature(<span class="kw-2">&amp;</span><span class="self">self</span>, signed_payload_path: <span class="kw-2">&amp;</span>Path) -&gt; StdResult&lt;()&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>signed_payload_file = File::open(signed_payload_path).unwrap();
         <span class="kw">let </span><span class="kw-2">mut </span>signed_payload_buffer = Vec::new();
         signed_payload_file.read_to_end(<span class="kw-2">&amp;mut </span>signed_payload_buffer)<span class="question-mark">?</span>;
@@ -406,7 +397,7 @@
     </span><span class="kw">pub async fn </span>bootstrap_test_genesis_certificate(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         genesis_signer: ProtocolGenesisSigner,
-    ) -&gt; GenesisToolsResult&lt;()&gt; {
+    ) -&gt; StdResult&lt;()&gt; {
         <span class="kw">let </span>genesis_producer = CertificateGenesisProducer::new(<span class="prelude-val">Some</span>(Arc::new(genesis_signer)));
         <span class="kw">let </span>genesis_protocol_message =
             CertificateGenesisProducer::create_genesis_protocol_message(<span class="kw-2">&amp;</span><span class="self">self</span>.genesis_avk)<span class="question-mark">?</span>;
@@ -419,7 +410,7 @@
     <span class="kw">async fn </span>create_and_save_genesis_certificate(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         genesis_signature: ProtocolGenesisSignature,
-    ) -&gt; GenesisToolsResult&lt;()&gt; {
+    ) -&gt; StdResult&lt;()&gt; {
         <span class="kw">let </span>genesis_certificate = CertificateGenesisProducer::create_genesis_certificate(
             <span class="self">self</span>.protocol_parameters.clone(),
             <span class="self">self</span>.beacon.clone(),
@@ -429,22 +420,24 @@
         <span class="self">self</span>.certificate_verifier
             .verify_genesis_certificate(<span class="kw-2">&amp;</span>genesis_certificate, <span class="kw-2">&amp;</span><span class="self">self</span>.genesis_verifier)
             .<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="self">self</span>.certificate_store.save(genesis_certificate).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="self">self</span>.certificate_repository
+            .create_certificate(genesis_certificate)
+            .<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
 }
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
-    <span class="kw">use </span>std::fs;
-    <span class="kw">use </span>std::path::PathBuf;
-
+    <span class="kw">use </span><span class="kw">crate</span>::database::provider::apply_all_migrations_to_db;
     <span class="kw">use </span>mithril_common::{
         certificate_chain::MithrilCertificateVerifier,
         crypto_helper::{ProtocolClerk, ProtocolGenesisSigner},
-        store::adapter::MemoryAdapter,
         test_utils::{fake_data, MithrilFixtureBuilder},
     };
+    <span class="kw">use </span>sqlite::Connection;
+    <span class="kw">use </span>std::{fs, path::PathBuf};
+    <span class="kw">use </span>tokio::sync::Mutex;
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
@@ -471,7 +464,7 @@
         payload_path: <span class="kw-2">&amp;</span>Path,
         target_path: <span class="kw-2">&amp;</span>Path,
         genesis_signer: <span class="kw-2">&amp;</span>ProtocolGenesisSigner,
-    ) -&gt; GenesisToolsResult&lt;()&gt; {
+    ) -&gt; StdResult&lt;()&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>payload_file = File::open(payload_path).unwrap();
         <span class="kw">let </span><span class="kw-2">mut </span>payload_buffer = Vec::new();
         payload_file.read_to_end(<span class="kw-2">&amp;mut </span>payload_buffer)<span class="question-mark">?</span>;
@@ -485,14 +478,15 @@
         genesis_signer: <span class="kw-2">&amp;</span>ProtocolGenesisSigner,
     ) -&gt; (
         GenesisTools,
-        Arc&lt;CertificateStore&gt;,
+        Arc&lt;CertificateRepository&gt;,
         Arc&lt;ProtocolGenesisVerifier&gt;,
         Arc&lt;<span class="kw">dyn </span>CertificateVerifier&gt;,
     ) {
+        <span class="kw">let </span>connection = Connection::open(<span class="string">&quot;:memory:&quot;</span>).unwrap();
+        apply_all_migrations_to_db(<span class="kw-2">&amp;</span>connection).unwrap();
+        <span class="kw">let </span>certificate_store =
+            Arc::new(CertificateRepository::new(Arc::new(Mutex::new(connection))));
         <span class="kw">let </span>certificate_verifier = Arc::new(MithrilCertificateVerifier::new(slog_scope::logger()));
-        <span class="kw">let </span>certificate_store = Arc::new(CertificateStore::new(Box::new(
-            MemoryAdapter::new(<span class="prelude-val">None</span>).unwrap(),
-        )));
         <span class="kw">let </span>genesis_avk = create_fake_genesis_avk();
         <span class="kw">let </span>genesis_verifier = Arc::new(genesis_signer.create_genesis_verifier());
         <span class="kw">let </span>genesis_tools = GenesisTools::new(
@@ -531,14 +525,14 @@
             .<span class="kw">await
             </span>.expect(<span class="string">&quot;import_payload_signature should not fail&quot;</span>);
 
-        <span class="kw">let </span>last_certificates = certificate_store.get_list(<span class="number">10</span>).<span class="kw">await</span>.unwrap();
+        <span class="kw">let </span>last_certificates = certificate_store.get_latest_certificates(<span class="number">10</span>).<span class="kw">await</span>.unwrap();
 
         <span class="macro">assert_eq!</span>(<span class="number">1</span>, last_certificates.len());
         certificate_verifier
             .verify_genesis_certificate(<span class="kw-2">&amp;</span>last_certificates[<span class="number">0</span>], <span class="kw-2">&amp;</span>genesis_verifier)
             .<span class="kw">await
             </span>.expect(
-                <span class="string">&quot;verify_genesis_certificate should successully validate the genesis certificate&quot;</span>,
+                <span class="string">&quot;verify_genesis_certificate should successfully validate the genesis certificate&quot;</span>,
             );
     }
 
@@ -553,14 +547,14 @@
             .<span class="kw">await
             </span>.expect(<span class="string">&quot;bootstrap test genesis certificate should not fail&quot;</span>);
 
-        <span class="kw">let </span>last_certificates = certificate_store.get_list(<span class="number">10</span>).<span class="kw">await</span>.unwrap();
+        <span class="kw">let </span>last_certificates = certificate_store.get_latest_certificates(<span class="number">10</span>).<span class="kw">await</span>.unwrap();
 
         <span class="macro">assert_eq!</span>(<span class="number">1</span>, last_certificates.len());
         certificate_verifier
             .verify_genesis_certificate(<span class="kw-2">&amp;</span>last_certificates[<span class="number">0</span>], <span class="kw-2">&amp;</span>genesis_verifier)
             .<span class="kw">await
             </span>.expect(
-                <span class="string">&quot;verify_genesis_certificate should successully validate the genesis certificate&quot;</span>,
+                <span class="string">&quot;verify_genesis_certificate should successfully validate the genesis certificate&quot;</span>,
             );
     }
 }

@@ -1117,6 +1117,8 @@
 <a href="#1117" id="1117">1117</a>
 <a href="#1118" id="1118">1118</a>
 <a href="#1119" id="1119">1119</a>
+<a href="#1120" id="1120">1120</a>
+<a href="#1121" id="1121">1121</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>mithril_common::{
@@ -1159,13 +1161,10 @@
         CardanoImmutableFilesFullArtifactBuilder, MithrilStakeDistributionArtifactBuilder,
     },
     configuration::ExecutionEnvironment,
-    database::{
-        provider::SignerRegistrationStore,
-        provider::{
-            CertificateRepository, CertificateStoreAdapter, EpochSettingStore,
-            OpenMessageRepository, SignedEntityStoreAdapter, SignedEntityStorer, SignerStore,
-            SingleSignatureRepository, StakePoolStore,
-        },
+    database::provider::{
+        CertificateRepository, EpochSettingStore, OpenMessageRepository, SignedEntityStoreAdapter,
+        SignedEntityStorer, SignerRegistrationStore, SignerStore, SingleSignatureRepository,
+        StakePoolStore,
     },
     event_store::{EventMessage, EventStore, TransmitterService},
     http_server::routes::router,
@@ -1176,11 +1175,11 @@
     },
     signer_registerer::SignerRecorder,
     tools::{GcpFileUploader, GenesisToolsDependency},
-    AggregatorConfig, AggregatorRunner, AggregatorRuntime, CertificatePendingStore,
-    CertificateStore, Configuration, DependencyContainer, DumbSnapshotUploader, DumbSnapshotter,
-    GzipSnapshotter, LocalSnapshotUploader, MithrilSignerRegisterer, MultiSigner, MultiSignerImpl,
-    ProtocolParametersStore, ProtocolParametersStorer, RemoteSnapshotUploader, SnapshotUploader,
-    SnapshotUploaderType, Snapshotter, VerificationKeyStorer,
+    AggregatorConfig, AggregatorRunner, AggregatorRuntime, CertificatePendingStore, Configuration,
+    DependencyContainer, DumbSnapshotUploader, DumbSnapshotter, GzipSnapshotter,
+    LocalSnapshotUploader, MithrilSignerRegisterer, MultiSigner, MultiSignerImpl,
+    ProtocolParametersStorer, RemoteSnapshotUploader, SnapshotUploader, SnapshotUploaderType,
+    Snapshotter, VerificationKeyStorer,
 };
 
 <span class="kw">use super</span>::{DependenciesBuilderError, <span class="prelude-ty">Result</span>};
@@ -1218,14 +1217,14 @@
     <span class="doccomment">/// Certificate pending store.
     </span><span class="kw">pub </span>certificate_pending_store: <span class="prelude-ty">Option</span>&lt;Arc&lt;CertificatePendingStore&gt;&gt;,
 
-    <span class="doccomment">/// Certificate store.
-    </span><span class="kw">pub </span>certificate_store: <span class="prelude-ty">Option</span>&lt;Arc&lt;CertificateStore&gt;&gt;,
+    <span class="doccomment">/// Certificate repository.
+    </span><span class="kw">pub </span>certificate_repository: <span class="prelude-ty">Option</span>&lt;Arc&lt;CertificateRepository&gt;&gt;,
 
     <span class="doccomment">/// Verification key store.
     </span><span class="kw">pub </span>verification_key_store: <span class="prelude-ty">Option</span>&lt;Arc&lt;<span class="kw">dyn </span>VerificationKeyStorer&gt;&gt;,
 
     <span class="doccomment">/// Protocol parameter store.
-    </span><span class="kw">pub </span>protocol_parameters_store: <span class="prelude-ty">Option</span>&lt;Arc&lt;ProtocolParametersStore&gt;&gt;,
+    </span><span class="kw">pub </span>protocol_parameters_store: <span class="prelude-ty">Option</span>&lt;Arc&lt;<span class="kw">dyn </span>ProtocolParametersStorer&gt;&gt;,
 
     <span class="doccomment">/// Cardano CLI Runner for the [ChainObserver]
     </span><span class="kw">pub </span>cardano_cli_runner: <span class="prelude-ty">Option</span>&lt;Box&lt;CardanoCliRunner&gt;&gt;,
@@ -1313,7 +1312,7 @@
             snapshot_uploader: <span class="prelude-val">None</span>,
             multi_signer: <span class="prelude-val">None</span>,
             certificate_pending_store: <span class="prelude-val">None</span>,
-            certificate_store: <span class="prelude-val">None</span>,
+            certificate_repository: <span class="prelude-val">None</span>,
             verification_key_store: <span class="prelude-val">None</span>,
             protocol_parameters_store: <span class="prelude-val">None</span>,
             cardano_cli_runner: <span class="prelude-val">None</span>,
@@ -1395,7 +1394,10 @@
     }
 
     <span class="kw">async fn </span>build_stake_store(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;StakePoolStore&gt;&gt; {
-        <span class="kw">let </span>stake_pool_store = Arc::new(StakePoolStore::new(<span class="self">self</span>.get_sqlite_connection().<span class="kw">await</span><span class="question-mark">?</span>));
+        <span class="kw">let </span>stake_pool_store = Arc::new(StakePoolStore::new(
+            <span class="self">self</span>.get_sqlite_connection().<span class="kw">await</span><span class="question-mark">?</span>,
+            <span class="self">self</span>.configuration.safe_epoch_retention_limit(),
+        ));
 
         <span class="prelude-val">Ok</span>(stake_pool_store)
     }
@@ -1506,19 +1508,19 @@
         <span class="prelude-val">Ok</span>(<span class="self">self</span>.certificate_pending_store.as_ref().cloned().unwrap())
     }
 
-    <span class="kw">async fn </span>build_certificate_store(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;CertificateStore&gt;&gt; {
-        <span class="prelude-val">Ok</span>(Arc::new(CertificateStore::new(Box::new(
-            CertificateStoreAdapter::new(<span class="self">self</span>.get_sqlite_connection().<span class="kw">await</span><span class="question-mark">?</span>),
-        ))))
+    <span class="kw">async fn </span>build_certificate_repository(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;CertificateRepository&gt;&gt; {
+        <span class="prelude-val">Ok</span>(Arc::new(CertificateRepository::new(
+            <span class="self">self</span>.get_sqlite_connection().<span class="kw">await</span><span class="question-mark">?</span>,
+        )))
     }
 
-    <span class="doccomment">/// Get a configured [CertificateStore].
-    </span><span class="kw">pub async fn </span>get_certificate_store(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;CertificateStore&gt;&gt; {
-        <span class="kw">if </span><span class="self">self</span>.certificate_store.is_none() {
-            <span class="self">self</span>.certificate_store = <span class="prelude-val">Some</span>(<span class="self">self</span>.build_certificate_store().<span class="kw">await</span><span class="question-mark">?</span>);
+    <span class="doccomment">/// Get a configured [CertificateRepository].
+    </span><span class="kw">pub async fn </span>get_certificate_repository(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;CertificateRepository&gt;&gt; {
+        <span class="kw">if </span><span class="self">self</span>.certificate_repository.is_none() {
+            <span class="self">self</span>.certificate_repository = <span class="prelude-val">Some</span>(<span class="self">self</span>.build_certificate_repository().<span class="kw">await</span><span class="question-mark">?</span>);
         }
 
-        <span class="prelude-val">Ok</span>(<span class="self">self</span>.certificate_store.as_ref().cloned().unwrap())
+        <span class="prelude-val">Ok</span>(<span class="self">self</span>.certificate_repository.as_ref().cloned().unwrap())
     }
 
     <span class="kw">async fn </span>build_verification_key_store(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;<span class="kw">dyn </span>VerificationKeyStorer&gt;&gt; {
@@ -1536,15 +1538,19 @@
         <span class="prelude-val">Ok</span>(<span class="self">self</span>.verification_key_store.as_ref().cloned().unwrap())
     }
 
-    <span class="kw">async fn </span>build_protocol_parameters_store(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;ProtocolParametersStore&gt;&gt; {
-        <span class="prelude-val">Ok</span>(Arc::new(ProtocolParametersStore::new(
-            Box::new(EpochSettingStore::new(<span class="self">self</span>.get_sqlite_connection().<span class="kw">await</span><span class="question-mark">?</span>)),
-            <span class="self">self</span>.configuration.store_retention_limit,
+    <span class="kw">async fn </span>build_protocol_parameters_store(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;<span class="kw">dyn </span>ProtocolParametersStorer&gt;&gt; {
+        <span class="prelude-val">Ok</span>(Arc::new(EpochSettingStore::new(
+            <span class="self">self</span>.get_sqlite_connection().<span class="kw">await</span><span class="question-mark">?</span>,
+            <span class="self">self</span>.configuration.safe_epoch_retention_limit(),
         )))
     }
 
-    <span class="doccomment">/// Get a configured [ProtocolParametersStore].
-    </span><span class="kw">pub async fn </span>get_protocol_parameters_store(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;ProtocolParametersStore&gt;&gt; {
+    <span class="doccomment">/// Get a configured [ProtocolParametersStorer].
+    </span><span class="kw">pub async fn </span>get_protocol_parameters_store(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;<span class="kw">dyn </span>ProtocolParametersStorer&gt;&gt; {
         <span class="kw">if </span><span class="self">self</span>.protocol_parameters_store.is_none() {
             <span class="self">self</span>.protocol_parameters_store = <span class="prelude-val">Some</span>(<span class="self">self</span>.build_protocol_parameters_store().<span class="kw">await</span><span class="question-mark">?</span>);
         }
@@ -1763,7 +1769,7 @@
             <span class="self">self</span>.get_chain_observer().<span class="kw">await</span><span class="question-mark">?</span>,
             <span class="self">self</span>.get_verification_key_store().<span class="kw">await</span><span class="question-mark">?</span>,
             <span class="self">self</span>.get_signer_recorder().<span class="kw">await</span><span class="question-mark">?</span>,
-            <span class="self">self</span>.configuration.store_retention_limit.map(|l| l <span class="kw">as </span>u64),
+            <span class="self">self</span>.configuration.safe_epoch_retention_limit(),
         );
 
         <span class="prelude-val">Ok</span>(Arc::new(registerer))
@@ -2043,7 +2049,7 @@
             snapshot_uploader: <span class="self">self</span>.get_snapshot_uploader().<span class="kw">await</span><span class="question-mark">?</span>,
             multi_signer: <span class="self">self</span>.get_multi_signer().<span class="kw">await</span><span class="question-mark">?</span>,
             certificate_pending_store: <span class="self">self</span>.get_certificate_pending_store().<span class="kw">await</span><span class="question-mark">?</span>,
-            certificate_store: <span class="self">self</span>.get_certificate_store().<span class="kw">await</span><span class="question-mark">?</span>,
+            certificate_repository: <span class="self">self</span>.get_certificate_repository().<span class="kw">await</span><span class="question-mark">?</span>,
             verification_key_store: <span class="self">self</span>.get_verification_key_store().<span class="kw">await</span><span class="question-mark">?</span>,
             protocol_parameters_store: <span class="self">self</span>.get_protocol_parameters_store().<span class="kw">await</span><span class="question-mark">?</span>,
             chain_observer: <span class="self">self</span>.get_chain_observer().<span class="kw">await</span><span class="question-mark">?</span>,
@@ -2165,7 +2171,7 @@
     </span><span class="kw">pub async fn </span>create_genesis_container(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;GenesisToolsDependency&gt; {
         <span class="kw">let </span>dependencies = GenesisToolsDependency {
             beacon_provider: <span class="self">self</span>.get_beacon_provider().<span class="kw">await</span><span class="question-mark">?</span>,
-            certificate_store: <span class="self">self</span>.get_certificate_store().<span class="kw">await</span><span class="question-mark">?</span>,
+            certificate_repository: <span class="self">self</span>.get_certificate_repository().<span class="kw">await</span><span class="question-mark">?</span>,
             certificate_verifier: <span class="self">self</span>.get_certificate_verifier().<span class="kw">await</span><span class="question-mark">?</span>,
             genesis_verifier: <span class="self">self</span>.get_genesis_verifier().<span class="kw">await</span><span class="question-mark">?</span>,
             protocol_parameters_store: <span class="self">self</span>.get_protocol_parameters_store().<span class="kw">await</span><span class="question-mark">?</span>,
@@ -2205,9 +2211,7 @@
         <span class="kw">let </span>single_signature_repository = Arc::new(SingleSignatureRepository::new(
             <span class="self">self</span>.get_sqlite_connection().<span class="kw">await</span><span class="question-mark">?</span>,
         ));
-        <span class="kw">let </span>certificate_repository = Arc::new(CertificateRepository::new(
-            <span class="self">self</span>.get_sqlite_connection().<span class="kw">await</span><span class="question-mark">?</span>,
-        ));
+        <span class="kw">let </span>certificate_repository = <span class="self">self</span>.get_certificate_repository().<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let </span>certificate_verifier = <span class="self">self</span>.get_certificate_verifier().<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let </span>genesis_verifier = <span class="self">self</span>.get_genesis_verifier().<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let </span>multi_signer = <span class="self">self</span>.get_multi_signer().<span class="kw">await</span><span class="question-mark">?</span>;

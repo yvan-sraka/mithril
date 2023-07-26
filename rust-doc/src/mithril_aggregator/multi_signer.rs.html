@@ -756,9 +756,6 @@
 <a href="#756" id="756">756</a>
 <a href="#757" id="757">757</a>
 <a href="#758" id="758">758</a>
-<a href="#759" id="759">759</a>
-<a href="#760" id="760">760</a>
-<a href="#761" id="761">761</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>slog_scope::{debug, warn};
 <span class="kw">use </span>std::sync::Arc;
@@ -775,10 +772,7 @@
     store::{StakeStorer, StoreError},
 };
 
-<span class="kw">use crate</span>::{
-    entities::OpenMessage, store::VerificationKeyStorer, ProtocolParametersStore,
-    ProtocolParametersStorer,
-};
+<span class="kw">use crate</span>::{entities::OpenMessage, store::VerificationKeyStorer, ProtocolParametersStorer};
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">use </span>mockall::automock;
@@ -956,7 +950,7 @@
     </span>stake_store: Arc&lt;<span class="kw">dyn </span>StakeStorer&gt;,
 
     <span class="doccomment">/// Protocol parameters store
-    </span>protocol_parameters_store: Arc&lt;ProtocolParametersStore&gt;,
+    </span>protocol_parameters_store: Arc&lt;<span class="kw">dyn </span>ProtocolParametersStorer&gt;,
 }
 
 <span class="kw">impl </span>MultiSignerImpl {
@@ -964,7 +958,7 @@
     </span><span class="kw">pub fn </span>new(
         verification_key_store: Arc&lt;<span class="kw">dyn </span>VerificationKeyStorer&gt;,
         stake_store: Arc&lt;<span class="kw">dyn </span>StakeStorer&gt;,
-        protocol_parameters_store: Arc&lt;ProtocolParametersStore&gt;,
+        protocol_parameters_store: Arc&lt;<span class="kw">dyn </span>ProtocolParametersStorer&gt;,
     ) -&gt; <span class="self">Self </span>{
         <span class="macro">debug!</span>(<span class="string">&quot;New MultiSignerImpl created&quot;</span>);
         <span class="self">Self </span>{
