@@ -278,6 +278,30 @@
 <a href="#278" id="278">278</a>
 <a href="#279" id="279">279</a>
 <a href="#280" id="280">280</a>
+<a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
+<a href="#283" id="283">283</a>
+<a href="#284" id="284">284</a>
+<a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a>
+<a href="#287" id="287">287</a>
+<a href="#288" id="288">288</a>
+<a href="#289" id="289">289</a>
+<a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
+<a href="#293" id="293">293</a>
+<a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
+<a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
+<a href="#299" id="299">299</a>
+<a href="#300" id="300">300</a>
+<a href="#301" id="301">301</a>
+<a href="#302" id="302">302</a>
+<a href="#303" id="303">303</a>
+<a href="#304" id="304">304</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{fs::File, io::prelude::<span class="kw-2">*</span>, io::Write, path::Path, sync::Arc};
 <span class="kw">use </span>tokio::sync::RwLock;
 
@@ -407,6 +431,32 @@
             .<span class="kw">await
     </span>}
 
+    <span class="doccomment">/// Sign the genesis certificate
+    </span><span class="kw">pub async fn </span>sign_genesis_certificate(
+        to_sign_payload_path: <span class="kw-2">&amp;</span>Path,
+        target_signed_payload_path: <span class="kw-2">&amp;</span>Path,
+        genesis_secret_key_path: <span class="kw-2">&amp;</span>Path,
+    ) -&gt; StdResult&lt;()&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>genesis_secret_key_file = File::open(genesis_secret_key_path).unwrap();
+        <span class="kw">let </span><span class="kw-2">mut </span>genesis_secret_key_serialized = String::new();
+        genesis_secret_key_file.read_to_string(<span class="kw-2">&amp;mut </span>genesis_secret_key_serialized)<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>genesis_secret_key = key_decode_hex(<span class="kw-2">&amp;</span>genesis_secret_key_serialized.trim().to_string())<span class="question-mark">?</span>;
+        <span class="kw">let </span>genesis_signer = ProtocolGenesisSigner::from_secret_key(genesis_secret_key);
+
+        <span class="kw">let </span><span class="kw-2">mut </span>to_sign_payload_file = File::open(to_sign_payload_path).unwrap();
+        <span class="kw">let </span><span class="kw-2">mut </span>to_sign_payload_buffer = Vec::new();
+        to_sign_payload_file.read_to_end(<span class="kw-2">&amp;mut </span>to_sign_payload_buffer)<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>genesis_signature = genesis_signer.sign(<span class="kw-2">&amp;</span>to_sign_payload_buffer);
+        <span class="kw">let </span>signed_payload = genesis_signature.to_bytes();
+
+        <span class="kw">let </span><span class="kw-2">mut </span>target_signed_payload_file = File::create(target_signed_payload_path)<span class="question-mark">?</span>;
+        target_signed_payload_file.write_all(<span class="kw-2">&amp;</span>signed_payload)<span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(())
+    }
+
     <span class="kw">async fn </span>create_and_save_genesis_certificate(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         genesis_signature: ProtocolGenesisSignature,
@@ -442,7 +492,10 @@
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
     <span class="kw">fn </span>get_temp_dir(dir_name: <span class="kw-2">&amp;</span>str) -&gt; PathBuf {
-        <span class="kw">let </span>dir = std::env::temp_dir().join(<span class="string">&quot;mithril_test&quot;</span>).join(dir_name);
+        <span class="kw">let </span>dir = std::env::temp_dir()
+            .join(<span class="string">&quot;mithril_test&quot;</span>)
+            .join(<span class="string">&quot;genesis&quot;</span>)
+            .join(dir_name);
 
         <span class="kw">if </span>dir.exists() {
             <span class="kw">let _ </span>= fs::remove_dir_all(<span class="kw-2">&amp;</span>dir);
@@ -458,20 +511,6 @@
         <span class="kw">let </span>first_signer = fixture.signers_fixture()[<span class="number">0</span>].clone().protocol_signer;
         <span class="kw">let </span>clerk = ProtocolClerk::from_signer(<span class="kw-2">&amp;</span>first_signer);
         clerk.compute_avk()
-    }
-
-    <span class="kw">fn </span>sign_avk_payload(
-        payload_path: <span class="kw-2">&amp;</span>Path,
-        target_path: <span class="kw-2">&amp;</span>Path,
-        genesis_signer: <span class="kw-2">&amp;</span>ProtocolGenesisSigner,
-    ) -&gt; StdResult&lt;()&gt; {
-        <span class="kw">let </span><span class="kw-2">mut </span>payload_file = File::open(payload_path).unwrap();
-        <span class="kw">let </span><span class="kw-2">mut </span>payload_buffer = Vec::new();
-        payload_file.read_to_end(<span class="kw-2">&amp;mut </span>payload_buffer)<span class="question-mark">?</span>;
-        <span class="kw">let </span>payload_signed = genesis_signer.sign(<span class="kw-2">&amp;</span>payload_buffer).to_bytes();
-        <span class="kw">let </span><span class="kw-2">mut </span>target_file = File::create(target_path)<span class="question-mark">?</span>;
-        target_file.write_all(<span class="kw-2">&amp;</span>payload_signed)<span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(())
     }
 
     <span class="kw">fn </span>build_tools(
@@ -509,17 +548,26 @@
     <span class="attr">#[tokio::test]
     </span><span class="kw">async fn </span>export_sign_then_import_genesis_payload() {
         <span class="kw">let </span>test_dir = get_temp_dir(<span class="string">&quot;export_payload_to_sign&quot;</span>);
-        <span class="kw">let </span>path = test_dir.join(<span class="string">&quot;payload.txt&quot;</span>);
+        <span class="kw">let </span>payload_path = test_dir.join(<span class="string">&quot;payload.txt&quot;</span>);
         <span class="kw">let </span>signed_payload_path = test_dir.join(<span class="string">&quot;payload-signed.txt&quot;</span>);
+        <span class="kw">let </span>genesis_secret_key_path = test_dir.join(<span class="string">&quot;genesis.sk&quot;</span>);
         <span class="kw">let </span>genesis_signer = ProtocolGenesisSigner::create_deterministic_genesis_signer();
         <span class="kw">let </span>(genesis_tools, certificate_store, genesis_verifier, certificate_verifier) =
             build_tools(<span class="kw-2">&amp;</span>genesis_signer);
 
+        genesis_signer
+            .export_to_file(<span class="kw-2">&amp;</span>genesis_secret_key_path)
+            .expect(<span class="string">&quot;exporting the secret key should not fail&quot;</span>);
         genesis_tools
-            .export_payload_to_sign(<span class="kw-2">&amp;</span>path)
+            .export_payload_to_sign(<span class="kw-2">&amp;</span>payload_path)
             .expect(<span class="string">&quot;export_payload_to_sign should not fail&quot;</span>);
-        sign_avk_payload(<span class="kw-2">&amp;</span>path, <span class="kw-2">&amp;</span>signed_payload_path, <span class="kw-2">&amp;</span>genesis_signer)
-            .expect(<span class="string">&quot;sign avk payload should not fail&quot;</span>);
+        GenesisTools::sign_genesis_certificate(
+            <span class="kw-2">&amp;</span>payload_path,
+            <span class="kw-2">&amp;</span>signed_payload_path,
+            <span class="kw-2">&amp;</span>genesis_secret_key_path,
+        )
+        .<span class="kw">await
+        </span>.expect(<span class="string">&quot;sign_genesis_certificate should not fail&quot;</span>);
         genesis_tools
             .import_payload_signature(<span class="kw-2">&amp;</span>signed_payload_path)
             .<span class="kw">await
