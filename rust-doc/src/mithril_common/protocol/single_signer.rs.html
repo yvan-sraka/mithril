@@ -74,18 +74,10 @@
 <a href="#74" id="74">74</a>
 <a href="#75" id="75">75</a>
 <a href="#76" id="76">76</a>
-<a href="#77" id="77">77</a>
-<a href="#78" id="78">78</a>
-<a href="#79" id="79">79</a>
-<a href="#80" id="80">80</a>
-<a href="#81" id="81">81</a>
-<a href="#82" id="82">82</a>
-<a href="#83" id="83">83</a>
-<a href="#84" id="84">84</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>anyhow::{anyhow, Context, <span class="prelude-ty">Result</span>};
+</pre></div><pre class="rust"><code><span class="kw">use </span>anyhow::Result;
 
 <span class="kw">use crate</span>::{
-    crypto_helper::{key_encode_hex, ProtocolSigner},
+    crypto_helper::ProtocolSigner,
     entities::{PartyId, ProtocolMessage, SingleSignatures},
 };
 
@@ -111,18 +103,10 @@
         <span class="kw">match </span><span class="self">self</span>.protocol_signer.sign(message.compute_hash().as_bytes()) {
             <span class="prelude-val">Some</span>(signature) =&gt; {
                 <span class="kw">let </span>won_indexes = signature.indexes.clone();
-                <span class="kw">let </span>encoded_signature = key_encode_hex(signature)
-                    .map_err(|err| <span class="macro">anyhow!</span>(err))
-                    .with_context(|| {
-                        <span class="macro">format!</span>(
-                            <span class="string">&quot;Could not encode protocol signature issued by party: {}&quot;</span>,
-                            <span class="self">self</span>.party_id
-                        )
-                    })<span class="question-mark">?</span>;
 
                 <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(SingleSignatures::new(
                     <span class="self">self</span>.party_id.to_owned(),
-                    encoded_signature,
+                    signature.into(),
                     won_indexes,
                 )))
             }

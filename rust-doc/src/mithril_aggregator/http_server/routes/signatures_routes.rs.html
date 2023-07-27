@@ -288,6 +288,17 @@
 <a href="#288" id="288">288</a>
 <a href="#289" id="289">289</a>
 <a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
+<a href="#293" id="293">293</a>
+<a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
+<a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
+<a href="#299" id="299">299</a>
+<a href="#300" id="300">300</a>
+<a href="#301" id="301">301</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::http_server::routes::middlewares;
 <span class="kw">use </span><span class="kw">crate</span>::DependencyContainer;
 <span class="kw">use </span>std::sync::Arc;
@@ -316,7 +327,7 @@
 <span class="kw">mod </span>handlers {
     <span class="kw">use </span>mithril_common::{
         entities::SignedEntityType,
-        messages::{FromMessageAdapter, RegisterSignatureMessage},
+        messages::{RegisterSignatureMessage, TryFromMessageAdapter},
     };
 
     <span class="kw">use </span>slog_scope::{debug, warn};
@@ -348,9 +359,20 @@
 
         <span class="kw">match </span>signed_entity_type {
             <span class="prelude-val">Ok</span>(signed_entity_type) =&gt; {
-                <span class="kw">let </span>signature = FromRegisterSingleSignatureAdapter::adapt(message);
+                <span class="kw">let </span>signatures = <span class="kw">match </span>FromRegisterSingleSignatureAdapter::try_adapt(message) {
+                    <span class="prelude-val">Ok</span>(signature) =&gt; signature,
+                    <span class="prelude-val">Err</span>(err) =&gt; {
+                        <span class="macro">warn!</span>(<span class="string">&quot;register_signatures::payload decoding error&quot;</span>; <span class="string">&quot;error&quot; </span>=&gt; <span class="question-mark">?</span>err);
+
+                        <span class="kw">return </span><span class="prelude-val">Ok</span>(reply::bad_request(
+                            <span class="string">&quot;Could not decode signature payload&quot;</span>.to_string(),
+                            err.to_string(),
+                        ));
+                    }
+                };
+
                 <span class="kw">match </span>certifier_service
-                    .register_single_signature(<span class="kw-2">&amp;</span>signed_entity_type, <span class="kw-2">&amp;</span>signature)
+                    .register_single_signature(<span class="kw-2">&amp;</span>signed_entity_type, <span class="kw-2">&amp;</span>signatures)
                     .<span class="kw">await
                 </span>{
                     <span class="prelude-val">Err</span>(err) =&gt; <span class="kw">match </span>err.downcast_ref::&lt;CertifierServiceError&gt;() {

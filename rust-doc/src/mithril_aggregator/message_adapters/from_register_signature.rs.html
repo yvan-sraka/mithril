@@ -29,22 +29,32 @@
 <a href="#29" id="29">29</a>
 <a href="#30" id="30">30</a>
 <a href="#31" id="31">31</a>
+<a href="#32" id="32">32</a>
+<a href="#33" id="33">33</a>
+<a href="#34" id="34">34</a>
+<a href="#35" id="35">35</a>
+<a href="#36" id="36">36</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>mithril_common::{
     entities::SingleSignatures,
-    messages::{FromMessageAdapter, RegisterSignatureMessage},
+    messages::{RegisterSignatureMessage, TryFromMessageAdapter},
+    StdResult,
 };
 
 <span class="kw">pub struct </span>FromRegisterSingleSignatureAdapter;
 
-<span class="kw">impl </span>FromMessageAdapter&lt;RegisterSignatureMessage, SingleSignatures&gt;
+<span class="kw">impl </span>TryFromMessageAdapter&lt;RegisterSignatureMessage, SingleSignatures&gt;
     <span class="kw">for </span>FromRegisterSingleSignatureAdapter
 {
-    <span class="kw">fn </span>adapt(register_single_signature_message: RegisterSignatureMessage) -&gt; SingleSignatures {
-        SingleSignatures {
+    <span class="kw">fn </span>try_adapt(
+        register_single_signature_message: RegisterSignatureMessage,
+    ) -&gt; StdResult&lt;SingleSignatures&gt; {
+        <span class="kw">let </span>signatures = SingleSignatures {
             party_id: register_single_signature_message.party_id,
-            signature: register_single_signature_message.signature,
+            signature: register_single_signature_message.signature.try_into()<span class="question-mark">?</span>,
             won_indexes: register_single_signature_message.won_indexes,
-        }
+        };
+
+        <span class="prelude-val">Ok</span>(signatures)
     }
 }
 
@@ -55,7 +65,7 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_simple_message() {
         <span class="kw">let </span>message = RegisterSignatureMessage::dummy();
-        <span class="kw">let </span>signatures = FromRegisterSingleSignatureAdapter::adapt(message);
+        <span class="kw">let </span>signatures = FromRegisterSingleSignatureAdapter::try_adapt(message).unwrap();
 
         <span class="macro">assert_eq!</span>(<span class="string">&quot;party_id&quot;</span>.to_string(), signatures.party_id);
     }

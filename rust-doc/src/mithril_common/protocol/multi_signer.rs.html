@@ -242,68 +242,13 @@
 <a href="#242" id="242">242</a>
 <a href="#243" id="243">243</a>
 <a href="#244" id="244">244</a>
-<a href="#245" id="245">245</a>
-<a href="#246" id="246">246</a>
-<a href="#247" id="247">247</a>
-<a href="#248" id="248">248</a>
-<a href="#249" id="249">249</a>
-<a href="#250" id="250">250</a>
-<a href="#251" id="251">251</a>
-<a href="#252" id="252">252</a>
-<a href="#253" id="253">253</a>
-<a href="#254" id="254">254</a>
-<a href="#255" id="255">255</a>
-<a href="#256" id="256">256</a>
-<a href="#257" id="257">257</a>
-<a href="#258" id="258">258</a>
-<a href="#259" id="259">259</a>
-<a href="#260" id="260">260</a>
-<a href="#261" id="261">261</a>
-<a href="#262" id="262">262</a>
-<a href="#263" id="263">263</a>
-<a href="#264" id="264">264</a>
-<a href="#265" id="265">265</a>
-<a href="#266" id="266">266</a>
-<a href="#267" id="267">267</a>
-<a href="#268" id="268">268</a>
-<a href="#269" id="269">269</a>
-<a href="#270" id="270">270</a>
-<a href="#271" id="271">271</a>
-<a href="#272" id="272">272</a>
-<a href="#273" id="273">273</a>
-<a href="#274" id="274">274</a>
-<a href="#275" id="275">275</a>
-<a href="#276" id="276">276</a>
-<a href="#277" id="277">277</a>
-<a href="#278" id="278">278</a>
-<a href="#279" id="279">279</a>
-<a href="#280" id="280">280</a>
-<a href="#281" id="281">281</a>
-<a href="#282" id="282">282</a>
-<a href="#283" id="283">283</a>
-<a href="#284" id="284">284</a>
-<a href="#285" id="285">285</a>
-<a href="#286" id="286">286</a>
-<a href="#287" id="287">287</a>
-<a href="#288" id="288">288</a>
-<a href="#289" id="289">289</a>
-<a href="#290" id="290">290</a>
-<a href="#291" id="291">291</a>
-<a href="#292" id="292">292</a>
-<a href="#293" id="293">293</a>
-<a href="#294" id="294">294</a>
-<a href="#295" id="295">295</a>
-<a href="#296" id="296">296</a>
-<a href="#297" id="297">297</a>
-<a href="#298" id="298">298</a>
-<a href="#299" id="299">299</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>anyhow::{anyhow, Context, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span>mithril_stm::stm::StmParameters;
 
 <span class="kw">use crate</span>::{
     crypto_helper::{
         ProtocolAggregateVerificationKey, ProtocolAggregationError, ProtocolClerk,
-        ProtocolMultiSignature, ProtocolSingleSignature,
+        ProtocolMultiSignature,
     },
     entities::{ProtocolMessage, SingleSignatures},
 };
@@ -328,10 +273,10 @@
         single_signatures: <span class="kw-2">&amp;</span>[SingleSignatures],
         protocol_message: <span class="kw-2">&amp;</span>ProtocolMessage,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;ProtocolMultiSignature, ProtocolAggregationError&gt; {
-        <span class="kw">let </span>protocol_signatures: Vec&lt;ProtocolSingleSignature&gt; = single_signatures
+        <span class="kw">let </span>protocol_signatures: Vec&lt;<span class="kw">_</span>&gt; = single_signatures
             .iter()
-            .filter_map(|single_signature| single_signature.to_protocol_signature().ok())
-            .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+            .map(|single_signature| single_signature.to_protocol_signature())
+            .collect();
 
         <span class="self">self</span>.protocol_clerk.aggregate(
             <span class="kw-2">&amp;</span>protocol_signatures,
@@ -350,15 +295,7 @@
         message: <span class="kw-2">&amp;</span>ProtocolMessage,
         single_signature: <span class="kw-2">&amp;</span>SingleSignatures,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-        <span class="kw">let </span>protocol_signature = single_signature
-            .to_protocol_signature()
-            .map_err(|e| <span class="macro">anyhow!</span>(e))
-            .with_context(|| {
-                <span class="macro">format!</span>(
-                    <span class="string">&quot;Error while decoding single signature for party: &#39;{}&#39;&quot;</span>,
-                    single_signature.party_id
-                )
-            })<span class="question-mark">?</span>;
+        <span class="kw">let </span>protocol_signature = single_signature.to_protocol_signature();
 
         <span class="kw">let </span>avk = <span class="self">self</span>.compute_aggregate_verification_key();
 
@@ -432,29 +369,6 @@
     }
 
     <span class="attr">#[test]
-    </span><span class="kw">fn </span>cant_aggregate_if_no_valid_signatures_given() {
-        <span class="kw">let </span>fixture = MithrilFixtureBuilder::default().with_signers(<span class="number">1</span>).build();
-        <span class="kw">let </span>multi_signer = build_multi_signer(<span class="kw-2">&amp;</span>fixture);
-        <span class="kw">let </span>message = ProtocolMessage::default();
-        <span class="kw">let </span><span class="kw-2">mut </span>sig = fixture
-            .signers_fixture()
-            .first()
-            .unwrap()
-            .sign(<span class="kw-2">&amp;</span>message)
-            .unwrap();
-        sig.signature = <span class="string">&quot;invalid&quot;</span>.to_string();
-
-        <span class="kw">let </span>error = multi_signer
-            .aggregate_single_signatures(<span class="kw-2">&amp;</span>[sig], <span class="kw-2">&amp;</span>message)
-            .expect_err(<span class="string">&quot;Multi-signature should not be created if no valid signatures given&quot;</span>);
-
-        <span class="macro">assert!</span>(
-            <span class="macro">matches!</span>(error, ProtocolAggregationError::NotEnoughSignatures(<span class="kw">_</span>, <span class="kw">_</span>)),
-            <span class="string">&quot;Expected ProtocolAggregationError::NotEnoughSignatures, got: {error:?}&quot;
-        </span>)
-    }
-
-    <span class="attr">#[test]
     </span><span class="kw">fn </span>can_aggregate_if_valid_signatures_and_quorum_reached() {
         <span class="kw">let </span>fixture = MithrilFixtureBuilder::default().with_signers(<span class="number">10</span>).build();
         <span class="kw">let </span>multi_signer = build_multi_signer(<span class="kw-2">&amp;</span>fixture);
@@ -484,38 +398,14 @@
             .iter()
             .map(|s| s.sign(<span class="kw-2">&amp;</span>message).unwrap())
             .collect();
-        signatures[<span class="number">4</span>].signature = <span class="string">&quot;invalid&quot;</span>.to_string();
+        signatures[<span class="number">4</span>].signature = <span class="string">&quot;7b227369676d61223a5b3133302c32382c3134332c31372c38302c31302c3231352c3138382c3230352c3132322c31312c3233392c34362c3234352c32312c3139332c32382c3232312c3133302c34302c3131362c39322c3139362c33352c3235342c34332c3138382c362c38372c3136392c37312c3134352c3130342c3137382c392c3136362c39342c31332c3234372c3139302c3130322c37312c3232362c3230392c312c3230392c3235312c3137305d2c22696e6465786573223a5b302c312c382c31322c31332c31342c31382c31392c32332c32352c32362c32372c32382c33322c33332c33342c33352c33372c33382c33392c34312c34322c34332c34342c34352c34362c34372c34382c34392c35302c35312c35322c35332c35342c35352c35362c35372c35382c35392c36302c36312c36332c36342c36352c36372c36382c37302c37312c37352c37362c37372c37392c38302c38312c38322c38342c38352c38392c39302c39312c39332c39352c39372c39382c39395d2c227369676e65725f696e646578223a337d&quot;
+            </span>.to_string()
+            .try_into()
+            .unwrap();
 
         multi_signer
             .aggregate_single_signatures(<span class="kw-2">&amp;</span>signatures, <span class="kw-2">&amp;</span>message)
             .expect(<span class="string">&quot;Multi-signature should be created even with one invalid signature&quot;</span>);
-    }
-
-    <span class="attr">#[test]
-    </span><span class="kw">fn </span>verify_single_signature_fail_if_given_signature_is_invalid() {
-        <span class="kw">let </span>fixture = MithrilFixtureBuilder::default().with_signers(<span class="number">1</span>).build();
-        <span class="kw">let </span>multi_signer = build_multi_signer(<span class="kw-2">&amp;</span>fixture);
-        <span class="kw">let </span>message = ProtocolMessage::default();
-        <span class="kw">let </span><span class="kw-2">mut </span>single_signature = fixture
-            .signers_fixture()
-            .first()
-            .unwrap()
-            .sign(<span class="kw-2">&amp;</span>message)
-            .unwrap();
-
-        single_signature.signature = <span class="string">&quot;invalid&quot;</span>.to_string();
-
-        <span class="kw">let </span>error = multi_signer
-            .verify_single_signature(<span class="kw-2">&amp;</span>message, <span class="kw-2">&amp;</span>single_signature)
-            .expect_err(<span class="string">&quot;Verify single signature should fail&quot;</span>);
-
-        <span class="macro">assert!</span>(
-            error
-                .to_string()
-                .contains(<span class="string">&quot;Error while decoding single signature for party&quot;</span>),
-            <span class="string">&quot;Expected decoding single signature error, got: {error}, cause: {}&quot;</span>,
-            error.root_cause()
-        )
     }
 
     <span class="attr">#[test]
