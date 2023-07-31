@@ -349,9 +349,6 @@
 <a href="#349" id="349">349</a>
 <a href="#350" id="350">350</a>
 <a href="#351" id="351">351</a>
-<a href="#352" id="352">352</a>
-<a href="#353" id="353">353</a>
-<a href="#354" id="354">354</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>std::{
     path::{Path, PathBuf},
@@ -485,15 +482,12 @@
                 )
             })<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>genesis_verification_key = key_decode_hex(<span class="kw-2">&amp;</span>genesis_verification_key.to_string())
-            .map_err(
-                |e| MithrilStakeDistributionServiceError::InvalidParameters {
-                    context: <span class="macro">format!</span>(
-                        <span class="string">&quot;Invalid genesis verification key &#39;{genesis_verification_key}&#39;&quot;
-                    </span>),
-                    error: e.into(),
-                },
-            )<span class="question-mark">?</span>;
+        <span class="kw">let </span>genesis_verification_key = key_decode_hex(genesis_verification_key).map_err(|e| {
+            MithrilStakeDistributionServiceError::InvalidParameters {
+                context: <span class="macro">format!</span>(<span class="string">&quot;Invalid genesis verification key &#39;{genesis_verification_key}&#39;&quot;</span>),
+                error: e.into(),
+            }
+        })<span class="question-mark">?</span>;
         <span class="self">self</span>.certificate_verifier
             .verify_certificate_chain(
                 certificate.clone(),
