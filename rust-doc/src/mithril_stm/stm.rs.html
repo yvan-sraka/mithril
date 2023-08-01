@@ -1324,6 +1324,14 @@
 <a href="#1324" id="1324">1324</a>
 <a href="#1325" id="1325">1325</a>
 <a href="#1326" id="1326">1326</a>
+<a href="#1327" id="1327">1327</a>
+<a href="#1328" id="1328">1328</a>
+<a href="#1329" id="1329">1329</a>
+<a href="#1330" id="1330">1330</a>
+<a href="#1331" id="1331">1331</a>
+<a href="#1332" id="1332">1332</a>
+<a href="#1333" id="1333">1333</a>
+<a href="#1334" id="1334">1334</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Top-level API for Mithril Stake-based Threshold Multisignature scheme.
 //! See figure 6 of [the paper](https://eprint.iacr.org/2021/916) for most of the
 //! protocol.
@@ -2403,10 +2411,18 @@
                 <span class="kw">let </span>sigs = find_signatures(<span class="kw-2">&amp;</span>msg, <span class="kw-2">&amp;</span>ps, <span class="kw-2">&amp;</span>all_ps);
                 <span class="kw">let </span>msig = clerk.aggregate(<span class="kw-2">&amp;</span>sigs, <span class="kw-2">&amp;</span>msg);
 
-                aggr_avks.push(clerk.compute_avk());
-                aggr_stms.push(msig.unwrap());
-                batch_msgs.push(msg.to_vec());
-                batch_params.push(params);
+                <span class="kw">match </span>msig {
+                    <span class="prelude-val">Ok</span>(aggr) =&gt; {
+                        aggr_avks.push(clerk.compute_avk());
+                        aggr_stms.push(aggr);
+                        batch_msgs.push(msg.to_vec());
+                        batch_params.push(params);
+                    }
+                    <span class="prelude-val">Err</span>(AggregationError::NotEnoughSignatures(_n, _k)) =&gt; {
+                        <span class="macro">assert!</span>(sigs.len() &lt; params.k <span class="kw">as </span>usize)
+                    }
+                    <span class="prelude-val">Err</span>(AggregationError::UsizeConversionInvalid) =&gt; <span class="macro">unreachable!</span>(),
+                }
             }
 
             <span class="macro">assert!</span>(StmAggrSig::batch_verify(<span class="kw-2">&amp;</span>aggr_stms, <span class="kw-2">&amp;</span>batch_msgs, <span class="kw-2">&amp;</span>aggr_avks, <span class="kw-2">&amp;</span>batch_params).is_ok());
