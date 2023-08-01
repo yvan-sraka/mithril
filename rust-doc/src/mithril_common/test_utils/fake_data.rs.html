@@ -207,10 +207,10 @@
 </span><span class="kw">use </span>chrono::{DateTime, Utc};
 
 <span class="kw">use crate</span>::{
-    crypto_helper, entities,
+    crypto_helper,
     entities::{
-        CertificateMetadata, Epoch, LotteryIndex, ProtocolMessage, ProtocolMessagePartKey,
-        SignedEntityType, SingleSignatures,
+        <span class="self">self</span>, CertificateMetadata, CertificateSignature, Epoch, LotteryIndex, ProtocolMessage,
+        ProtocolMessagePartKey, SignedEntityType, SingleSignatures,
     },
     test_utils::MithrilFixtureBuilder,
 };
@@ -290,12 +290,13 @@
 
 <span class="doccomment">/// Fake Genesis Certificate
 </span><span class="kw">pub fn </span>genesis_certificate(certificate_hash: <span class="kw-2">&amp;</span>str) -&gt; entities::Certificate {
-    <span class="kw">let </span><span class="kw-2">mut </span>certificate = certificate(certificate_hash.to_string());
-    certificate.previous_hash = String::new();
-    certificate.genesis_signature = certificate.multi_signature;
-    certificate.multi_signature = String::new();
+    <span class="kw">let </span>multi_signature = fake_keys::genesis_signature()[<span class="number">1</span>].to_string();
 
-    certificate
+    entities::Certificate {
+        previous_hash: String::new(),
+        signature: CertificateSignature::GenesisSignature(multi_signature.try_into().unwrap()),
+        ..certificate(certificate_hash.to_string())
+    }
 }
 
 <span class="doccomment">/// Fake Certificate
@@ -338,19 +339,18 @@
     <span class="comment">// Certificate
     </span><span class="kw">let </span>previous_hash = <span class="macro">format!</span>(<span class="string">&quot;{certificate_hash}0&quot;</span>);
     <span class="kw">let </span>aggregate_verification_key = <span class="macro">format!</span>(<span class="string">&quot;AVK{}&quot;</span>, beacon.immutable_file_number).repeat(<span class="number">5</span>);
-    <span class="kw">let </span>multi_signature = <span class="macro">format!</span>(<span class="string">&quot;MSIG{}&quot;</span>, beacon.immutable_file_number).repeat(<span class="number">200</span>);
-    <span class="kw">let </span>genesis_signature = String::new();
-    <span class="kw">let </span><span class="kw-2">mut </span>certificate = entities::Certificate::new(
+    <span class="kw">let </span>multi_signature = fake_keys::multi_signature()[<span class="number">0</span>].try_into().unwrap();
+
+    entities::Certificate {
+        hash: certificate_hash,
         previous_hash,
         beacon,
         metadata,
         protocol_message,
+        signed_message: <span class="string">&quot;&quot;</span>.to_string(),
         aggregate_verification_key,
-        multi_signature,
-        genesis_signature,
-    );
-    certificate.hash = certificate_hash;
-    certificate
+        signature: CertificateSignature::MultiSignature(multi_signature),
+    }
 }
 
 <span class="doccomment">/// Fake SignersWithStake
@@ -402,7 +402,7 @@
             epoch: Epoch(epoch_idx),
             signers_with_stake: signers.clone(),
             hash: <span class="macro">format!</span>(<span class="string">&quot;hash-epoch-{epoch_idx}&quot;</span>),
-            protocol_parameters: <span class="self">self</span>::protocol_parameters(),
+            protocol_parameters: protocol_parameters(),
         })
         .collect::&lt;Vec&lt;entities::MithrilStakeDistribution&gt;&gt;()
 }

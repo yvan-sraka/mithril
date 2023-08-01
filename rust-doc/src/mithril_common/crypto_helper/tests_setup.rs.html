@@ -298,12 +298,14 @@
 <a href="#298" id="298">298</a>
 <a href="#299" id="299">299</a>
 <a href="#300" id="300">300</a>
+<a href="#301" id="301">301</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Test data builders for Mithril STM types, for testing purpose.
 </span><span class="kw">use super</span>::{genesis::<span class="kw-2">*</span>, key_encode_hex, types::<span class="kw-2">*</span>, OpCert, SerDeShelleyFileFormat};
 <span class="kw">use crate</span>::{
     certificate_chain::CertificateGenesisProducer,
     entities::{
-        Certificate, Epoch, ProtocolMessage, ProtocolMessagePartKey, SignerWithStake, Stake,
+        Certificate, CertificateSignature, Epoch, ProtocolMessage, ProtocolMessagePartKey,
+        SignerWithStake, Stake,
     },
     test_utils::{fake_data, MithrilFixtureBuilder, SignerFixture},
 };
@@ -574,8 +576,8 @@
                             fake_certificate.signed_message.as_bytes(),
                         )
                         .unwrap();
-                    fake_certificate.multi_signature = key_encode_hex(multi_signature).unwrap();
-                    fake_certificate.genesis_signature = <span class="string">&quot;&quot;</span>.to_string()
+                    fake_certificate.signature =
+                        CertificateSignature::MultiSignature(multi_signature.into());
                 }
             }
             fake_certificate

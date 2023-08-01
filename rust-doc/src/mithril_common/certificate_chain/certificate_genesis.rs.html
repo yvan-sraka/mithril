@@ -98,16 +98,11 @@
 <a href="#98" id="98">98</a>
 <a href="#99" id="99">99</a>
 <a href="#100" id="100">100</a>
-<a href="#101" id="101">101</a>
-<a href="#102" id="102">102</a>
-<a href="#103" id="103">103</a>
-<a href="#104" id="104">104</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! A module used to create a Genesis Certificate
 //!
 </span><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>chrono::prelude::<span class="kw-2">*</span>;
-<span class="kw">use </span>hex::ToHex;
 <span class="kw">use </span>thiserror::Error;
 
 <span class="kw">use crate</span>::{
@@ -116,8 +111,8 @@
         ProtocolGenesisSigner, PROTOCOL_VERSION,
     },
     entities::{
-        Beacon, Certificate, CertificateMetadata, ProtocolMessage, ProtocolMessagePartKey,
-        ProtocolParameters,
+        Beacon, Certificate, CertificateMetadata, CertificateSignature, ProtocolMessage,
+        ProtocolMessagePartKey, ProtocolParameters,
     },
 };
 
@@ -190,19 +185,16 @@
             signers,
         );
         <span class="kw">let </span>previous_hash = <span class="string">&quot;&quot;</span>.to_string();
-        <span class="kw">let </span>multi_signature = <span class="string">&quot;&quot;</span>.to_string();
         <span class="kw">let </span>genesis_protocol_message = <span class="self">Self</span>::create_genesis_protocol_message(<span class="kw-2">&amp;</span>genesis_avk)<span class="question-mark">?</span>;
         <span class="kw">let </span>genesis_avk =
             key_encode_hex(<span class="kw-2">&amp;</span>genesis_avk).map_err(CertificateGenesisProducerError::Codec)<span class="question-mark">?</span>;
-        <span class="kw">let </span>genesis_signature = genesis_signature.to_bytes().encode_hex::&lt;String&gt;();
         <span class="prelude-val">Ok</span>(Certificate::new(
             previous_hash,
             beacon,
             metadata,
             genesis_protocol_message,
             genesis_avk,
-            multi_signature,
-            genesis_signature,
+            CertificateSignature::GenesisSignature(genesis_signature),
         ))
     }
 }

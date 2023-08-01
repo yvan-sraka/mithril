@@ -153,6 +153,16 @@
 <a href="#153" id="153">153</a>
 <a href="#154" id="154">154</a>
 <a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>async_trait::async_trait;
@@ -221,6 +231,7 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
+    <span class="kw">use </span>mithril_common::entities::CertificateSignature;
     <span class="kw">use </span>mithril_common::messages::{CertificateMetadataMessage, SignerWithStakeMessagePart};
     <span class="kw">use </span>mithril_common::test_utils::fake_data;
 
@@ -238,6 +249,15 @@
         http_client
             .expect_get_content()
             .return_once(<span class="kw">move </span>|<span class="kw">_</span>| {
+                <span class="kw">let </span>(multi_signature, genesis_signature) = <span class="kw">match </span>certificate.signature {
+                    CertificateSignature::GenesisSignature(signature) =&gt; {
+                        (String::new(), signature.try_into().unwrap())
+                    }
+                    CertificateSignature::MultiSignature(signature) =&gt; {
+                        (signature.to_json_hex().unwrap(), String::new())
+                    }
+                };
+
                 <span class="kw">let </span>message = CertificateMessage {
                     hash: certificate_hash.clone(),
                     previous_hash: previous_hash.clone(),
@@ -254,8 +274,8 @@
                     protocol_message: certificate.protocol_message.clone(),
                     signed_message: certificate.signed_message.clone(),
                     aggregate_verification_key: certificate.aggregate_verification_key.clone(),
-                    multi_signature: certificate.multi_signature.clone(),
-                    genesis_signature: certificate.genesis_signature,
+                    multi_signature,
+                    genesis_signature,
                 };
                 <span class="prelude-val">Ok</span>(serde_json::to_string(<span class="kw-2">&amp;</span>message).unwrap())
             })

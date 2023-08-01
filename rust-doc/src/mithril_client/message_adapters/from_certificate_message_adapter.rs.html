@@ -51,7 +51,14 @@
 <a href="#51" id="51">51</a>
 <a href="#52" id="52">52</a>
 <a href="#53" id="53">53</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>mithril_common::entities::{Certificate, CertificateMetadata};
+<a href="#54" id="54">54</a>
+<a href="#55" id="55">55</a>
+<a href="#56" id="56">56</a>
+<a href="#57" id="57">57</a>
+<a href="#58" id="58">58</a>
+<a href="#59" id="59">59</a>
+<a href="#60" id="60">60</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>mithril_common::entities::{Certificate, CertificateMetadata, CertificateSignature};
 <span class="kw">use </span>mithril_common::messages::{
     CertificateMessage, SignerWithStakeMessagePart, TryFromMessageAdapter,
 };
@@ -81,8 +88,15 @@
             protocol_message: certificate_message.protocol_message,
             signed_message: certificate_message.signed_message,
             aggregate_verification_key: certificate_message.aggregate_verification_key,
-            multi_signature: certificate_message.multi_signature,
-            genesis_signature: certificate_message.genesis_signature,
+            signature: <span class="kw">if </span>certificate_message.genesis_signature.is_empty() {
+                CertificateSignature::MultiSignature(
+                    certificate_message.multi_signature.try_into()<span class="question-mark">?</span>,
+                )
+            } <span class="kw">else </span>{
+                CertificateSignature::GenesisSignature(
+                    certificate_message.genesis_signature.try_into()<span class="question-mark">?</span>,
+                )
+            },
         };
 
         <span class="prelude-val">Ok</span>(certificate)
@@ -97,7 +111,7 @@
     </span><span class="kw">fn </span>adapt_ok() {
         <span class="kw">let </span>certificate_message = CertificateMessage {
             hash: <span class="string">&quot;hash123&quot;</span>.to_string(),
-            ..Default::default()
+            ..CertificateMessage::dummy()
         };
         <span class="kw">let </span>certificate = FromCertificateMessageAdapter::try_adapt(certificate_message).unwrap();
 

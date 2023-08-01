@@ -314,16 +314,29 @@
 <a href="#314" id="314">314</a>
 <a href="#315" id="315">315</a>
 <a href="#316" id="316">316</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::entities::{
-    Beacon, CertificateMetadata, HexEncodedAgregateVerificationKey, HexEncodedGenesisSignature,
-    HexEncodedMultiSignature, ProtocolMessage,
+<a href="#317" id="317">317</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::crypto_helper::{ProtocolGenesisSignature, ProtocolMultiSignature};
+<span class="kw">use </span><span class="kw">crate</span>::entities::{
+    Beacon, CertificateMetadata, HexEncodedAgregateVerificationKey, ProtocolMessage,
 };
-<span class="kw">use </span>std::ops::Not;
+<span class="kw">use </span>std::cmp::Ordering;
 
 <span class="kw">use </span>sha2::{Digest, Sha256};
 
+<span class="doccomment">/// The signature of a [Certificate]
+</span><span class="attr">#[derive(Clone, Debug)]
+</span><span class="kw">pub enum </span>CertificateSignature {
+    <span class="doccomment">/// Genesis signature created from the original stake distribution
+    /// aka GENESIS_SIG(AVK(-1))
+    </span>GenesisSignature(ProtocolGenesisSignature),
+
+    <span class="doccomment">/// STM multi signature created from a quorum of single signatures from the signers
+    /// aka MULTI_SIG(H(MSG(p,n) || AVK(n-1)))
+    </span>MultiSignature(ProtocolMultiSignature),
+}
+
 <span class="doccomment">/// Certificate represents a Mithril certificate embedding a Mithril STM multisignature
-</span><span class="attr">#[derive(Clone, Debug, PartialEq, Default)]
+</span><span class="attr">#[derive(Clone, Debug)]
 </span><span class="kw">pub struct </span>Certificate {
     <span class="doccomment">/// Hash of the current certificate
     /// Computed from the other fields of the certificate
@@ -357,14 +370,8 @@
     /// aka AVK(n-2)
     </span><span class="kw">pub </span>aggregate_verification_key: HexEncodedAgregateVerificationKey,
 
-    <span class="doccomment">/// STM multi signature created from a quorum of single signatures from the signers
-    /// aka MULTI_SIG(H(MSG(p,n) || AVK(n-1)))
-    </span><span class="kw">pub </span>multi_signature: HexEncodedMultiSignature,
-
-    <span class="comment">// @todo: Should we change this to an option since it&#39;s only filled for genesis certificates ?
-    </span><span class="doccomment">/// Genesis signature created from the original stake distribution
-    /// aka GENESIS_SIG(AVK(-1))
-    </span><span class="kw">pub </span>genesis_signature: HexEncodedGenesisSignature,
+    <span class="doccomment">/// Certificate signature
+    </span><span class="kw">pub </span>signature: CertificateSignature,
 }
 
 <span class="kw">impl </span>Certificate {
@@ -375,8 +382,7 @@
         metadata: CertificateMetadata,
         protocol_message: ProtocolMessage,
         aggregate_verification_key: HexEncodedAgregateVerificationKey,
-        multi_signature: HexEncodedMultiSignature,
-        genesis_signature: HexEncodedGenesisSignature,
+        signature: CertificateSignature,
     ) -&gt; Certificate {
         <span class="kw">let </span>signed_message = protocol_message.compute_hash();
         <span class="kw">let </span><span class="kw-2">mut </span>certificate = Certificate {
@@ -387,8 +393,7 @@
             protocol_message,
             signed_message,
             aggregate_verification_key,
-            multi_signature,
-            genesis_signature,
+            signature,
         };
         certificate.hash = certificate.compute_hash();
         certificate
@@ -403,14 +408,45 @@
         hasher.update(<span class="self">self</span>.protocol_message.compute_hash().as_bytes());
         hasher.update(<span class="self">self</span>.signed_message.as_bytes());
         hasher.update(<span class="self">self</span>.aggregate_verification_key.as_bytes());
-        hasher.update(<span class="self">self</span>.multi_signature.as_bytes());
-        hasher.update(<span class="self">self</span>.genesis_signature.as_bytes());
+        <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.signature {
+            CertificateSignature::GenesisSignature(signature) =&gt; {
+                hasher.update(signature.to_bytes_hex());
+            }
+            CertificateSignature::MultiSignature(signature) =&gt; {
+                hasher.update(<span class="kw-2">&amp;</span>signature.to_json_hex().unwrap());
+            }
+        };
         hex::encode(hasher.finalize())
     }
 
     <span class="doccomment">/// Tell if the certificate is a genesis certificate
     </span><span class="kw">pub fn </span>is_genesis(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
-        <span class="self">self</span>.genesis_signature.is_empty().not()
+        <span class="macro">matches!</span>(<span class="self">self</span>.signature, CertificateSignature::GenesisSignature(<span class="kw">_</span>))
+    }
+
+    <span class="doccomment">/// Return true if the certificate is chaining into itself (meaning that its hash and previous
+    /// hash are equal).
+    </span><span class="kw">pub fn </span>is_chaining_to_itself(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="self">self</span>.hash == <span class="self">self</span>.previous_hash
+    }
+}
+
+<span class="kw">impl </span>PartialEq <span class="kw">for </span>Certificate {
+    <span class="kw">fn </span>eq(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; bool {
+        <span class="self">self</span>.beacon.eq(<span class="kw-2">&amp;</span>other.beacon) &amp;&amp; <span class="self">self</span>.hash.eq(<span class="kw-2">&amp;</span>other.hash)
+    }
+}
+
+<span class="kw">impl </span>PartialOrd <span class="kw">for </span>Certificate {
+    <span class="kw">fn </span>partial_cmp(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Ordering&gt; {
+        <span class="comment">// Order by beacon first then per hash
+        </span><span class="kw">match </span><span class="self">self</span>.beacon.partial_cmp(<span class="kw-2">&amp;</span>other.beacon) {
+            <span class="prelude-val">Some</span>(ordering) <span class="kw">if </span>ordering == Ordering::Equal =&gt; <span class="self">self</span>.hash.partial_cmp(<span class="kw-2">&amp;</span>other.hash),
+            <span class="prelude-val">Some</span>(other) =&gt; <span class="prelude-val">Some</span>(other),
+            <span class="comment">// Beacons may be not comparable (most likely because the network isn&#39;t the same) in
+            // that case we can still order per hash
+            </span><span class="prelude-val">None </span>=&gt; <span class="self">self</span>.hash.partial_cmp(<span class="kw-2">&amp;</span>other.hash),
+        }
     }
 }
 
@@ -421,7 +457,7 @@
         entities::{ProtocolMessagePartKey, ProtocolParameters, SignerWithStake},
         test_utils::fake_keys,
     };
-    <span class="kw">use </span>chrono::{Duration, TimeZone, Timelike, Utc};
+    <span class="kw">use </span>chrono::{DateTime, Duration, Utc};
 
     <span class="kw">fn </span>get_signers_with_stake() -&gt; Vec&lt;SignerWithStake&gt; {
         <span class="macro">vec!</span>[
@@ -444,17 +480,7 @@
         ]
     }
 
-    <span class="attr">#[test]
-    </span><span class="kw">fn </span>test_certificate_compute_hash() {
-        <span class="kw">const </span>HASH_EXPECTED: <span class="kw-2">&amp;</span>str =
-            <span class="string">&quot;3b5cabc1ddc73c5dfd30064f6b9aef55c464b8359acc1649cb82fc4492be6a15&quot;</span>;
-
-        <span class="kw">let </span>initiated_at = Utc
-            .with_ymd_and_hms(<span class="number">2024</span>, <span class="number">2</span>, <span class="number">12</span>, <span class="number">13</span>, <span class="number">11</span>, <span class="number">47</span>)
-            .unwrap()
-            .with_nanosecond(<span class="number">123043</span>)
-            .unwrap();
-        <span class="kw">let </span>sealed_at = initiated_at + Duration::seconds(<span class="number">100</span>);
+    <span class="kw">fn </span>get_protocol_message() -&gt; ProtocolMessage {
         <span class="kw">let </span><span class="kw-2">mut </span>protocol_message = ProtocolMessage::new();
         protocol_message.set_message_part(
             ProtocolMessagePartKey::SnapshotDigest,
@@ -464,169 +490,145 @@
             ProtocolMessagePartKey::NextAggregateVerificationKey,
             <span class="string">&quot;next-avk-123&quot;</span>.to_string(),
         );
-        <span class="macro">assert_eq!</span>(
+
+        protocol_message
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_certificate_compute_hash() {
+        <span class="kw">const </span>HASH_EXPECTED: <span class="kw-2">&amp;</span>str =
+            <span class="string">&quot;255d59cef74aae5bc2e83e87612dea41309551dde0c770d46bf6607971bb9765&quot;</span>;
+
+        <span class="kw">let </span>initiated_at = DateTime::parse_from_rfc3339(<span class="string">&quot;2024-02-12T13:11:47.0123043Z&quot;</span>)
+            .unwrap()
+            .with_timezone(<span class="kw-2">&amp;</span>Utc);
+        <span class="kw">let </span>sealed_at = initiated_at + Duration::seconds(<span class="number">100</span>);
+
+        <span class="kw">let </span>certificate = Certificate::new(
+            <span class="string">&quot;previous_hash&quot;</span>.to_string(),
+            Beacon::new(<span class="string">&quot;testnet&quot;</span>.to_string(), <span class="number">10</span>, <span class="number">100</span>),
+            CertificateMetadata::new(
+                <span class="string">&quot;0.1.0&quot;</span>.to_string(),
+                ProtocolParameters::new(<span class="number">1000</span>, <span class="number">100</span>, <span class="number">0.123</span>),
+                initiated_at,
+                sealed_at,
+                get_signers_with_stake(),
+            ),
+            get_protocol_message(),
+            <span class="string">&quot;aggregate_verification_key&quot;</span>.to_string(),
+            CertificateSignature::MultiSignature(
+                fake_keys::multi_signature()[<span class="number">0</span>].try_into().unwrap(),
+            ),
+        );
+
+        <span class="macro">assert_eq!</span>(HASH_EXPECTED, certificate.compute_hash());
+
+        <span class="macro">assert_ne!</span>(
             HASH_EXPECTED,
-            Certificate::new(
-                <span class="string">&quot;previous_hash&quot;</span>.to_string(),
-                Beacon::new(<span class="string">&quot;testnet&quot;</span>.to_string(), <span class="number">10</span>, <span class="number">100</span>),
-                CertificateMetadata::new(
-                    <span class="string">&quot;0.1.0&quot;</span>.to_string(),
-                    ProtocolParameters::new(<span class="number">1000</span>, <span class="number">100</span>, <span class="number">0.123</span>),
-                    initiated_at,
-                    sealed_at,
-                    get_signers_with_stake(),
-                ),
-                protocol_message.clone(),
-                <span class="string">&quot;aggregate_verification_key&quot;</span>.to_string(),
-                <span class="string">&quot;multi_signature&quot;</span>.to_string(),
-                <span class="string">&quot;genesis_signature&quot;</span>.to_string(),
-            )
-            .compute_hash()
+            Certificate {
+                previous_hash: <span class="string">&quot;previous_hash-modified&quot;</span>.to_string(),
+                ..certificate.clone()
+            }
+            .compute_hash(),
         );
 
         <span class="macro">assert_ne!</span>(
             HASH_EXPECTED,
-            Certificate::new(
-                <span class="string">&quot;previous_hash-modified&quot;</span>.to_string(),
-                Beacon::new(<span class="string">&quot;testnet&quot;</span>.to_string(), <span class="number">10</span>, <span class="number">100</span>),
-                CertificateMetadata::new(
-                    <span class="string">&quot;0.1.0&quot;</span>.to_string(),
-                    ProtocolParameters::new(<span class="number">1000</span>, <span class="number">100</span>, <span class="number">0.123</span>),
-                    initiated_at,
-                    sealed_at,
-                    get_signers_with_stake(),
-                ),
-                protocol_message.clone(),
-                <span class="string">&quot;aggregate_verification_key&quot;</span>.to_string(),
-                <span class="string">&quot;multi_signature&quot;</span>.to_string(),
-                <span class="string">&quot;genesis_signature&quot;</span>.to_string(),
-            )
-            .compute_hash()
+            Certificate {
+                beacon: Beacon::new(<span class="string">&quot;testnet-modified&quot;</span>.to_string(), <span class="number">10</span>, <span class="number">100</span>),
+                ..certificate.clone()
+            }
+            .compute_hash(),
         );
 
         <span class="macro">assert_ne!</span>(
             HASH_EXPECTED,
-            Certificate::new(
-                <span class="string">&quot;previous_hash&quot;</span>.to_string(),
-                Beacon::new(<span class="string">&quot;testnet-modified&quot;</span>.to_string(), <span class="number">10</span>, <span class="number">100</span>),
-                CertificateMetadata::new(
-                    <span class="string">&quot;0.1.0&quot;</span>.to_string(),
-                    ProtocolParameters::new(<span class="number">1000</span>, <span class="number">100</span>, <span class="number">0.123</span>),
-                    initiated_at,
-                    sealed_at,
-                    get_signers_with_stake(),
-                ),
-                protocol_message.clone(),
-                <span class="string">&quot;aggregate_verification_key&quot;</span>.to_string(),
-                <span class="string">&quot;multi_signature&quot;</span>.to_string(),
-                <span class="string">&quot;genesis_signature&quot;</span>.to_string(),
-            )
-            .compute_hash()
+            Certificate {
+                metadata: CertificateMetadata {
+                    protocol_version: <span class="string">&quot;0.1.0-modified&quot;</span>.to_string(),
+                    ..certificate.metadata.clone()
+                },
+                ..certificate.clone()
+            }
+            .compute_hash(),
         );
 
         <span class="macro">assert_ne!</span>(
             HASH_EXPECTED,
-            Certificate::new(
-                <span class="string">&quot;previous_hash&quot;</span>.to_string(),
-                Beacon::new(<span class="string">&quot;testnet&quot;</span>.to_string(), <span class="number">10</span>, <span class="number">100</span>),
-                CertificateMetadata::new(
-                    <span class="string">&quot;0.1.0-modified&quot;</span>.to_string(),
-                    ProtocolParameters::new(<span class="number">1000</span>, <span class="number">100</span>, <span class="number">0.123</span>),
-                    initiated_at,
-                    sealed_at,
-                    get_signers_with_stake(),
-                ),
-                protocol_message.clone(),
-                <span class="string">&quot;aggregate_verification_key&quot;</span>.to_string(),
-                <span class="string">&quot;multi_signature&quot;</span>.to_string(),
-                <span class="string">&quot;genesis_signature&quot;</span>.to_string(),
-            )
-            .compute_hash()
-        );
+            Certificate {
+                protocol_message: {
+                    <span class="kw">let </span><span class="kw-2">mut </span>protocol_message_modified = certificate.protocol_message.clone();
+                    protocol_message_modified.set_message_part(
+                        ProtocolMessagePartKey::NextAggregateVerificationKey,
+                        <span class="string">&quot;next-avk-456&quot;</span>.to_string(),
+                    );
 
-        <span class="kw">let </span><span class="kw-2">mut </span>protocol_message_modified = protocol_message.clone();
-        protocol_message_modified.set_message_part(
-            ProtocolMessagePartKey::NextAggregateVerificationKey,
-            <span class="string">&quot;next-avk-456&quot;</span>.to_string(),
-        );
-        <span class="macro">assert_ne!</span>(
-            HASH_EXPECTED,
-            Certificate::new(
-                <span class="string">&quot;previous_hash&quot;</span>.to_string(),
-                Beacon::new(<span class="string">&quot;testnet&quot;</span>.to_string(), <span class="number">10</span>, <span class="number">100</span>),
-                CertificateMetadata::new(
-                    <span class="string">&quot;0.1.0&quot;</span>.to_string(),
-                    ProtocolParameters::new(<span class="number">1000</span>, <span class="number">100</span>, <span class="number">0.123</span>),
-                    initiated_at,
-                    sealed_at,
-                    get_signers_with_stake(),
-                ),
-                protocol_message_modified.clone(),
-                <span class="string">&quot;aggregate_verification_key&quot;</span>.to_string(),
-                <span class="string">&quot;multi_signature&quot;</span>.to_string(),
-                <span class="string">&quot;genesis_signature&quot;</span>.to_string(),
-            )
-            .compute_hash()
+                    protocol_message_modified
+                },
+                ..certificate.clone()
+            }
+            .compute_hash(),
         );
 
         <span class="macro">assert_ne!</span>(
             HASH_EXPECTED,
-            Certificate::new(
-                <span class="string">&quot;previous_hash&quot;</span>.to_string(),
-                Beacon::new(<span class="string">&quot;testnet&quot;</span>.to_string(), <span class="number">10</span>, <span class="number">100</span>),
-                CertificateMetadata::new(
-                    <span class="string">&quot;0.1.0&quot;</span>.to_string(),
-                    ProtocolParameters::new(<span class="number">1000</span>, <span class="number">100</span>, <span class="number">0.123</span>),
-                    initiated_at,
-                    sealed_at,
-                    get_signers_with_stake(),
-                ),
-                protocol_message.clone(),
-                <span class="string">&quot;aggregate_verification_key-modified&quot;</span>.to_string(),
-                <span class="string">&quot;multi_signature&quot;</span>.to_string(),
-                <span class="string">&quot;genesis_signature&quot;</span>.to_string(),
-            )
-            .compute_hash()
+            Certificate {
+                aggregate_verification_key: <span class="string">&quot;aggregate_verification_key-modified&quot;</span>.to_string(),
+                ..certificate.clone()
+            }
+            .compute_hash(),
         );
 
         <span class="macro">assert_ne!</span>(
             HASH_EXPECTED,
-            Certificate::new(
-                <span class="string">&quot;previous_hash&quot;</span>.to_string(),
-                Beacon::new(<span class="string">&quot;testnet&quot;</span>.to_string(), <span class="number">10</span>, <span class="number">100</span>),
-                CertificateMetadata::new(
-                    <span class="string">&quot;0.1.0&quot;</span>.to_string(),
-                    ProtocolParameters::new(<span class="number">1000</span>, <span class="number">100</span>, <span class="number">0.123</span>),
-                    initiated_at,
-                    sealed_at,
-                    get_signers_with_stake(),
+            Certificate {
+                signature: CertificateSignature::MultiSignature(
+                    fake_keys::multi_signature()[<span class="number">1</span>].try_into().unwrap()
                 ),
-                protocol_message.clone(),
-                <span class="string">&quot;aggregate_verification_key&quot;</span>.to_string(),
-                <span class="string">&quot;multi_signature-modified&quot;</span>.to_string(),
-                <span class="string">&quot;genesis_signature&quot;</span>.to_string(),
-            )
-            .compute_hash()
+                ..certificate.clone()
+            }
+            .compute_hash(),
         );
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_genesis_certificate_compute_hash() {
+        <span class="kw">const </span>HASH_EXPECTED: <span class="kw-2">&amp;</span>str =
+            <span class="string">&quot;bbb265e74082896873d3fbe568e4b0118ddcf9a63b4f4b369b92773439e80159&quot;</span>;
+
+        <span class="kw">let </span>initiated_at = DateTime::parse_from_rfc3339(<span class="string">&quot;2024-02-12T13:11:47.0123043Z&quot;</span>)
+            .unwrap()
+            .with_timezone(<span class="kw-2">&amp;</span>Utc);
+        <span class="kw">let </span>sealed_at = initiated_at + Duration::seconds(<span class="number">100</span>);
+
+        <span class="kw">let </span>genesis_certificate = Certificate::new(
+            <span class="string">&quot;previous_hash&quot;</span>.to_string(),
+            Beacon::new(<span class="string">&quot;testnet&quot;</span>.to_string(), <span class="number">10</span>, <span class="number">100</span>),
+            CertificateMetadata::new(
+                <span class="string">&quot;0.1.0&quot;</span>.to_string(),
+                ProtocolParameters::new(<span class="number">1000</span>, <span class="number">100</span>, <span class="number">0.123</span>),
+                initiated_at,
+                sealed_at,
+                get_signers_with_stake(),
+            ),
+            get_protocol_message(),
+            <span class="string">&quot;aggregate_verification_key&quot;</span>.to_string(),
+            CertificateSignature::GenesisSignature(
+                fake_keys::genesis_signature()[<span class="number">0</span>].try_into().unwrap(),
+            ),
+        );
+
+        <span class="macro">assert_eq!</span>(HASH_EXPECTED, genesis_certificate.compute_hash());
 
         <span class="macro">assert_ne!</span>(
             HASH_EXPECTED,
-            Certificate::new(
-                <span class="string">&quot;previous_hash&quot;</span>.to_string(),
-                Beacon::new(<span class="string">&quot;testnet&quot;</span>.to_string(), <span class="number">10</span>, <span class="number">100</span>),
-                CertificateMetadata::new(
-                    <span class="string">&quot;0.1.0&quot;</span>.to_string(),
-                    ProtocolParameters::new(<span class="number">1000</span>, <span class="number">100</span>, <span class="number">0.123</span>),
-                    initiated_at,
-                    sealed_at,
-                    get_signers_with_stake(),
+            Certificate {
+                signature: CertificateSignature::GenesisSignature(
+                    fake_keys::genesis_signature()[<span class="number">1</span>].try_into().unwrap()
                 ),
-                protocol_message.clone(),
-                <span class="string">&quot;aggregate_verification_key&quot;</span>.to_string(),
-                <span class="string">&quot;multi_signature&quot;</span>.to_string(),
-                <span class="string">&quot;genesis_signature-modified&quot;</span>.to_string(),
-            )
-            .compute_hash()
+                ..genesis_certificate.clone()
+            }
+            .compute_hash(),
         );
     }
 }
