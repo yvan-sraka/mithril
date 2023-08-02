@@ -1419,8 +1419,6 @@
 <a href="#1419" id="1419">1419</a>
 <a href="#1420" id="1420">1420</a>
 <a href="#1421" id="1421">1421</a>
-<a href="#1422" id="1422">1422</a>
-<a href="#1423" id="1423">1423</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>chrono::{DateTime, Utc};
 <span class="kw">use </span>sqlite::{Connection, Value};
@@ -1719,11 +1717,9 @@
     }
 
     <span class="kw">fn </span>condition_by_epoch(<span class="kw-2">&amp;</span><span class="self">self</span>, epoch: <span class="kw-2">&amp;</span>Epoch) -&gt; StdResult&lt;WhereCondition&gt; {
-        <span class="kw">let </span>epoch: i64 = i64::try_from(epoch.<span class="number">0</span>)<span class="question-mark">?</span>;
-
         <span class="prelude-val">Ok</span>(WhereCondition::new(
             <span class="string">&quot;epoch = ?*&quot;</span>,
-            <span class="macro">vec!</span>[Value::Integer(epoch)],
+            <span class="macro">vec!</span>[Value::Integer(epoch.try_into()<span class="question-mark">?</span>)],
         ))
     }
 
@@ -1808,7 +1804,7 @@ protocol_message, signers, initiated_at, sealed_at)&quot;</span>;
                     Value::String(certificate_record.message.to_owned()),
                     Value::String(certificate_record.signature.to_owned()),
                     Value::String(certificate_record.aggregate_verification_key.to_owned()),
-                    Value::Integer(i64::try_from(certificate_record.epoch.<span class="number">0</span>).unwrap()),
+                    Value::Integer(certificate_record.epoch.try_into().unwrap()),
                     Value::String(serde_json::to_string(<span class="kw-2">&amp;</span>certificate_record.beacon).unwrap()),
                     Value::String(certificate_record.protocol_version.to_owned()),
                     Value::String(
@@ -1879,7 +1875,7 @@ protocol_message, signers, initiated_at, sealed_at)&quot;</span>;
     }
 
     <span class="kw">pub fn </span>get_master_certificate_condition(<span class="kw-2">&amp;</span><span class="self">self</span>, epoch: Epoch) -&gt; WhereCondition {
-        <span class="kw">let </span>epoch_i64: i64 = epoch.<span class="number">0</span>.try_into().unwrap();
+        <span class="kw">let </span>epoch_i64: i64 = epoch.try_into().unwrap();
         WhereCondition::new(
             <span class="string">&quot;certificate.epoch between ?* and ?*&quot;</span>,
             <span class="macro">vec!</span>[Value::Integer(epoch_i64 - <span class="number">1</span>), Value::Integer(epoch_i64)],
@@ -2108,7 +2104,7 @@ order by certificate.ROWID desc&quot;#
                     (<span class="number">3</span>, certificate_record.message.into()),
                     (<span class="number">4</span>, certificate_record.signature.into()),
                     (<span class="number">5</span>, certificate_record.aggregate_verification_key.into()),
-                    (<span class="number">6</span>, i64::try_from(certificate_record.epoch.<span class="number">0</span>).unwrap().into()),
+                    (<span class="number">6</span>, Value::Integer(<span class="kw-2">*</span>certificate_record.epoch <span class="kw">as </span>i64)),
                     (
                         <span class="number">7</span>,
                         serde_json::to_string(<span class="kw-2">&amp;</span>certificate_record.beacon)
@@ -2301,7 +2297,7 @@ order by certificate.ROWID desc&quot;#
                 Value::String(certificate_record.message),
                 Value::String(certificate_record.signature),
                 Value::String(certificate_record.aggregate_verification_key),
-                Value::Integer(i64::try_from(certificate_record.epoch.<span class="number">0</span>).unwrap()),
+                Value::Integer(<span class="kw-2">*</span>certificate_record.epoch <span class="kw">as </span>i64),
                 Value::String(serde_json::to_string(<span class="kw-2">&amp;</span>certificate_record.beacon).unwrap()),
                 Value::String(certificate_record.protocol_version),
                 Value::String(
@@ -2348,7 +2344,7 @@ protocol_message, signers, initiated_at, sealed_at) values \
                         Value::String(certificate_record.message),
                         Value::String(certificate_record.signature),
                         Value::String(certificate_record.aggregate_verification_key),
-                        Value::Integer(i64::try_from(certificate_record.epoch.<span class="number">0</span>).unwrap()),
+                        Value::Integer(<span class="kw-2">*</span>certificate_record.epoch <span class="kw">as </span>i64),
                         Value::String(serde_json::to_string(<span class="kw-2">&amp;</span>certificate_record.beacon).unwrap()),
                         Value::String(certificate_record.protocol_version),
                         Value::String(

@@ -697,7 +697,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         registration_epoch: <span class="kw-2">&amp;</span>Epoch,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;WhereCondition, StdError&gt; {
-        <span class="kw">let </span>epoch: i64 = i64::try_from(registration_epoch.<span class="number">0</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>epoch: i64 = registration_epoch.try_into()<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(WhereCondition::new(
             <span class="string">&quot;registration_epoch_setting_id = ?*&quot;</span>,
@@ -760,7 +760,7 @@
                 Value::String(single_signature_record.open_message_id.to_string()),
                 Value::String(single_signature_record.signer_id.to_owned()),
                 Value::Integer(
-                    i64::try_from(single_signature_record.registration_epoch_setting_id.<span class="number">0</span>).unwrap(),
+                    single_signature_record.registration_epoch_setting_id.try_into().unwrap(),
                 ),
                 Value::String(serde_json::to_string(<span class="kw-2">&amp;</span>single_signature_record.lottery_indexes).unwrap()),
                 Value::String(single_signature_record.signature.to_owned()),
@@ -936,7 +936,7 @@
             <span class="macro">vec!</span>[
                 Value::String(single_signature_record.open_message_id.to_string()),
                 Value::String(single_signature_record.signer_id),
-                Value::Integer(single_signature_record.registration_epoch_setting_id.<span class="number">0 </span><span class="kw">as </span>i64),
+                Value::Integer(<span class="kw-2">*</span>single_signature_record.registration_epoch_setting_id <span class="kw">as </span>i64),
                 Value::String(
                     serde_json::to_string(<span class="kw-2">&amp;</span>single_signature_record.lottery_indexes).unwrap()
                 ),

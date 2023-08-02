@@ -815,10 +815,6 @@
 <a href="#815" id="815">815</a>
 <a href="#816" id="816">816</a>
 <a href="#817" id="817">817</a>
-<a href="#818" id="818">818</a>
-<a href="#819" id="819">819</a>
-<a href="#820" id="820">820</a>
-<a href="#821" id="821">821</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>chrono::{DateTime, Utc};
 <span class="kw">use </span>sqlite::{Connection, Value};
@@ -1015,7 +1011,7 @@
     }
 
     <span class="kw">fn </span>condition_by_epoch(<span class="kw-2">&amp;</span><span class="self">self</span>, epoch: <span class="kw-2">&amp;</span>Epoch) -&gt; <span class="prelude-ty">Result</span>&lt;WhereCondition, StdError&gt; {
-        <span class="kw">let </span>epoch: i64 = i64::try_from(epoch.<span class="number">0</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>epoch: i64 = epoch.try_into()<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(WhereCondition::new(
             <span class="string">&quot;epoch_setting_id = ?*&quot;</span>,
@@ -1091,7 +1087,7 @@
             <span class="macro">vec!</span>[
                 Value::String(signer_registration_record.signer_id),
                 Value::Integer(
-                    i64::try_from(signer_registration_record.epoch_setting_id.<span class="number">0</span>).unwrap(),
+                    signer_registration_record.epoch_setting_id.try_into().unwrap(),
                 ),
                 Value::String(signer_registration_record.verification_key),
                 signer_registration_record
@@ -1182,7 +1178,7 @@
 
     <span class="doccomment">/// Create the SQL condition to delete a record given the Epoch.
     </span><span class="kw">fn </span>get_delete_condition_by_epoch(<span class="kw-2">&amp;</span><span class="self">self</span>, epoch: Epoch) -&gt; WhereCondition {
-        <span class="kw">let </span>epoch_threshold = Value::Integer(i64::try_from(epoch.<span class="number">0</span>).unwrap());
+        <span class="kw">let </span>epoch_threshold = Value::Integer(epoch.try_into().unwrap());
 
         WhereCondition::new(<span class="string">&quot;epoch_setting_id = ?*&quot;</span>, <span class="macro">vec!</span>[epoch_threshold])
     }
@@ -1196,7 +1192,7 @@
 
     <span class="doccomment">/// Create the SQL condition to prune data older than the given Epoch.
     </span><span class="kw">fn </span>get_prune_condition(<span class="kw-2">&amp;</span><span class="self">self</span>, epoch_threshold: Epoch) -&gt; WhereCondition {
-        <span class="kw">let </span>epoch_threshold = Value::Integer(i64::try_from(epoch_threshold.<span class="number">0</span>).unwrap());
+        <span class="kw">let </span>epoch_threshold = Value::Integer(epoch_threshold.try_into().unwrap());
 
         WhereCondition::new(<span class="string">&quot;epoch_setting_id &lt; ?*&quot;</span>, <span class="macro">vec!</span>[epoch_threshold])
     }
@@ -1333,9 +1329,7 @@
                         (<span class="number">1</span>, signer_registration_record.signer_id.into()),
                         (
                             <span class="number">2</span>,
-                            i64::try_from(signer_registration_record.epoch_setting_id.<span class="number">0</span>)
-                                .unwrap()
-                                .into(),
+                            Value::Integer(<span class="kw-2">*</span>signer_registration_record.epoch_setting_id <span class="kw">as </span>i64),
                         ),
                         (<span class="number">3</span>, signer_registration_record.verification_key.into()),
                         (
@@ -1453,9 +1447,7 @@
         <span class="macro">assert_eq!</span>(
             <span class="macro">vec!</span>[
                 Value::String(signer_registration_record.signer_id),
-                Value::Integer(
-                    i64::try_from(signer_registration_record.epoch_setting_id.<span class="number">0</span>).unwrap(),
-                ),
+                Value::Integer(<span class="kw-2">*</span>signer_registration_record.epoch_setting_id <span class="kw">as </span>i64),
                 Value::String(signer_registration_record.verification_key),
                 signer_registration_record
                     .verification_key_signature

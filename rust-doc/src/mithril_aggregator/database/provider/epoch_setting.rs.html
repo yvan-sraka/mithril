@@ -636,7 +636,7 @@
     }
 
     <span class="kw">fn </span>condition_by_epoch(<span class="kw-2">&amp;</span><span class="self">self</span>, epoch: <span class="kw-2">&amp;</span>Epoch) -&gt; <span class="prelude-ty">Result</span>&lt;WhereCondition, StdError&gt; {
-        <span class="kw">let </span>epoch_setting_id: i64 = i64::try_from(epoch.<span class="number">0</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>epoch_setting_id: i64 = epoch.try_into()<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(WhereCondition::new(
             <span class="string">&quot;epoch_setting_id = ?*&quot;</span>,
@@ -694,7 +694,7 @@
         epoch: Epoch,
         protocol_parameters: ProtocolParameters,
     ) -&gt; WhereCondition {
-        <span class="kw">let </span>epoch_setting_id = i64::try_from(epoch.<span class="number">0</span>).unwrap();
+        <span class="kw">let </span>epoch_setting_id: i64 = epoch.try_into().unwrap();
 
         WhereCondition::new(
             <span class="string">&quot;(epoch_setting_id, protocol_parameters) values (?1, ?2)&quot;</span>,
@@ -768,7 +768,7 @@
 
     <span class="doccomment">/// Create the SQL condition to delete a record given the Epoch.
     </span><span class="kw">fn </span>get_delete_condition_by_epoch(<span class="kw-2">&amp;</span><span class="self">self</span>, epoch: Epoch) -&gt; WhereCondition {
-        <span class="kw">let </span>epoch_setting_id_value = Value::Integer(i64::try_from(epoch.<span class="number">0</span>).unwrap());
+        <span class="kw">let </span>epoch_setting_id_value = Value::Integer(epoch.try_into().unwrap());
 
         WhereCondition::new(<span class="string">&quot;epoch_setting_id = ?*&quot;</span>, <span class="macro">vec!</span>[epoch_setting_id_value])
     }
@@ -782,7 +782,7 @@
 
     <span class="doccomment">/// Create the SQL condition to prune data older than the given Epoch.
     </span><span class="kw">fn </span>get_prune_condition(<span class="kw-2">&amp;</span><span class="self">self</span>, epoch_threshold: Epoch) -&gt; WhereCondition {
-        <span class="kw">let </span>epoch_setting_id_value = Value::Integer(i64::try_from(epoch_threshold.<span class="number">0</span>).unwrap());
+        <span class="kw">let </span>epoch_setting_id_value = Value::Integer(epoch_threshold.try_into().unwrap());
 
         WhereCondition::new(<span class="string">&quot;epoch_setting_id &lt; ?*&quot;</span>, <span class="macro">vec!</span>[epoch_setting_id_value])
     }
