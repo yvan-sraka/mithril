@@ -280,8 +280,6 @@
 <a href="#280" id="280">280</a>
 <a href="#281" id="281">281</a>
 <a href="#282" id="282">282</a>
-<a href="#283" id="283">283</a>
-<a href="#284" id="284">284</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>kes_summed_ed25519::{kes::Sum6Kes, traits::KesSk};
 <span class="kw">use </span>rand_chacha::ChaCha20Rng;
 <span class="kw">use </span>rand_core::{RngCore, SeedableRng};
@@ -435,15 +433,13 @@
         party_index: usize,
         kes_key_seed: <span class="kw-2">&amp;mut </span>[u8],
     ) -&gt; PartyId {
-        <span class="kw">let </span>cold_key_seed: Vec&lt;u8&gt; = <span class="self">self
-            </span>.party_id_seed
+        <span class="kw">let </span><span class="kw-2">mut </span>cold_key_seed: Vec&lt;u8&gt; = (party_index)
+            .to_le_bytes()
             .iter()
-            .copied()
-            .map(|s| {
-                s.saturating_mul(<span class="self">self</span>.number_of_signers <span class="kw">as </span>u8)
-                    .saturating_add(party_index <span class="kw">as </span>u8)
-            })
+            .zip(<span class="self">self</span>.party_id_seed)
+            .map(|(v1, v2)| v1 + v2)
             .collect();
+        cold_key_seed.resize(<span class="number">32</span>, <span class="number">0</span>);
         <span class="kw">let </span>keypair =
             ColdKeyGenerator::create_deterministic_keypair(cold_key_seed.try_into().unwrap());
         <span class="kw">let </span><span class="kw-2">mut </span>dummy_buffer = [<span class="number">0u8</span>; Sum6Kes::SIZE + <span class="number">4</span>];
