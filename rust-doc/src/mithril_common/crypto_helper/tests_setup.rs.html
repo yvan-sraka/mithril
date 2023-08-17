@@ -296,9 +296,6 @@
 <a href="#296" id="296">296</a>
 <a href="#297" id="297">297</a>
 <a href="#298" id="298">298</a>
-<a href="#299" id="299">299</a>
-<a href="#300" id="300">300</a>
-<a href="#301" id="301">301</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Test data builders for Mithril STM types, for testing purpose.
 </span><span class="kw">use super</span>::{genesis::<span class="kw-2">*</span>, key_encode_hex, types::<span class="kw-2">*</span>, OpCert, SerDeShelleyFileFormat};
 <span class="kw">use crate</span>::{
@@ -378,9 +375,11 @@
     party_id: <span class="kw-2">&amp;</span>str,
     stake: Stake,
     protocol_initializer: <span class="kw-2">&amp;</span>ProtocolInitializer,
-    operational_certificate: <span class="prelude-ty">Option</span>&lt;OpCert&gt;,
+    operational_certificate: <span class="prelude-ty">Option</span>&lt;ProtocolOpCert&gt;,
     kes_period: u32,
 ) -&gt; SignerWithStake {
+    <span class="kw">let </span>kes_period = operational_certificate.as_ref().and(<span class="prelude-val">Some</span>(kes_period));
+
     SignerWithStake::new(
         party_id.to_owned(),
         protocol_initializer.verification_key().into(),
@@ -391,13 +390,8 @@
                 key_encode_hex(verification_key_signature)
                     .expect(<span class="string">&quot;key_encode_hex of verification_key_signature should not fail&quot;</span>)
             }),
-        operational_certificate
-            .as_ref()
-            .map(|operational_certificate| {
-                key_encode_hex(operational_certificate)
-                    .expect(<span class="string">&quot;key_encode_hex of operational_certificate should not fail&quot;</span>)
-            }),
-        operational_certificate.as_ref().map(|<span class="kw">_</span>| kes_period),
+        operational_certificate,
+        kes_period,
         stake,
     )
 }
@@ -432,7 +426,7 @@
             party_id,
             <span class="kw-2">*</span>stake,
             <span class="kw-2">&amp;</span>protocol_initializer,
-            operational_certificate.clone(),
+            operational_certificate.as_ref().map(|o| o.clone().into()),
             kes_period,
         );
 

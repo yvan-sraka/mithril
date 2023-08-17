@@ -281,8 +281,8 @@
 <a href="#281" id="281">281</a>
 <a href="#282" id="282">282</a>
 </pre></div><pre class="rust"><code><span class="kw">use crate</span>::{
-    crypto_helper::{KESPeriod, ProtocolSignerVerificationKey},
-    entities::{HexEncodedOpCert, HexEncodedVerificationKeySignature, PartyId, Stake},
+    crypto_helper::{KESPeriod, ProtocolOpCert, ProtocolSignerVerificationKey},
+    entities::{HexEncodedVerificationKeySignature, PartyId, Stake},
 };
 
 <span class="kw">use </span>serde::{Deserialize, Serialize};
@@ -306,7 +306,7 @@
     <span class="doccomment">/// The encoded operational certificate of stake pool operator attached to the signer node
     </span><span class="comment">// TODO: Option should be removed once the signer certification is fully deployed
     </span><span class="attr">#[serde(skip_serializing_if = <span class="string">&quot;Option::is_none&quot;</span>)]
-    </span><span class="kw">pub </span>operational_certificate: <span class="prelude-ty">Option</span>&lt;HexEncodedOpCert&gt;,
+    </span><span class="kw">pub </span>operational_certificate: <span class="prelude-ty">Option</span>&lt;ProtocolOpCert&gt;,
 
     <span class="doccomment">/// The kes period used to compute the verification key signature
     </span><span class="comment">// TODO: This kes period shoud not be used as is and should probably be within an allowed range of kes period for the epoch
@@ -326,7 +326,7 @@
         party_id: PartyId,
         verification_key: ProtocolSignerVerificationKey,
         verification_key_signature: <span class="prelude-ty">Option</span>&lt;HexEncodedVerificationKeySignature&gt;,
-        operational_certificate: <span class="prelude-ty">Option</span>&lt;HexEncodedOpCert&gt;,
+        operational_certificate: <span class="prelude-ty">Option</span>&lt;ProtocolOpCert&gt;,
         kes_period: <span class="prelude-ty">Option</span>&lt;KESPeriod&gt;,
     ) -&gt; Signer {
         Signer {
@@ -348,7 +348,7 @@
             hasher.update(verification_key_signature.as_bytes());
         }
         <span class="kw">if let </span><span class="prelude-val">Some</span>(operational_certificate) = <span class="kw-2">&amp;</span><span class="self">self</span>.operational_certificate {
-            hasher.update(operational_certificate.as_bytes());
+            hasher.update(operational_certificate.to_json_hex().unwrap().as_bytes());
         }
         hex::encode(hasher.finalize())
     }
@@ -384,7 +384,7 @@
     <span class="doccomment">/// The encoded operational certificate of stake pool operator attached to the signer node
     </span><span class="comment">// TODO: Option should be removed once the signer certification is fully deployed
     </span><span class="attr">#[serde(skip_serializing_if = <span class="string">&quot;Option::is_none&quot;</span>)]
-    </span><span class="kw">pub </span>operational_certificate: <span class="prelude-ty">Option</span>&lt;HexEncodedOpCert&gt;,
+    </span><span class="kw">pub </span>operational_certificate: <span class="prelude-ty">Option</span>&lt;ProtocolOpCert&gt;,
 
     <span class="doccomment">/// The kes period used to compute the verification key signature
     </span><span class="comment">// TODO: This kes period shoud not be used as is and should probably be within an allowed range of kes period for the epoch
@@ -419,7 +419,7 @@
         party_id: PartyId,
         verification_key: ProtocolSignerVerificationKey,
         verification_key_signature: <span class="prelude-ty">Option</span>&lt;HexEncodedVerificationKeySignature&gt;,
-        operational_certificate: <span class="prelude-ty">Option</span>&lt;HexEncodedOpCert&gt;,
+        operational_certificate: <span class="prelude-ty">Option</span>&lt;ProtocolOpCert&gt;,
         kes_period: <span class="prelude-ty">Option</span>&lt;KESPeriod&gt;,
         stake: Stake,
     ) -&gt; SignerWithStake {
@@ -456,7 +456,7 @@
         }
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(operational_certificate) = <span class="kw-2">&amp;</span><span class="self">self</span>.operational_certificate {
-            hasher.update(operational_certificate.as_bytes());
+            hasher.update(operational_certificate.to_json_hex().unwrap().as_bytes());
         }
         hasher.update(<span class="self">self</span>.stake.to_be_bytes());
         hex::encode(hasher.finalize())

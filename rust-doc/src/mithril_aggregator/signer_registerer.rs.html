@@ -466,8 +466,6 @@
 <a href="#466" id="466">466</a>
 <a href="#467" id="467">467</a>
 <a href="#468" id="468">468</a>
-<a href="#469" id="469">469</a>
-<a href="#470" id="470">470</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>thiserror::Error;
@@ -701,12 +699,10 @@
             ),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
         };
-        <span class="kw">let </span>operational_certificate = <span class="kw">match </span><span class="kw-2">&amp;</span>signer.operational_certificate {
-            <span class="prelude-val">Some</span>(operational_certificate) =&gt; <span class="prelude-val">Some</span>(
-                key_decode_hex(operational_certificate).map_err(SignerRegistrationError::Codec)<span class="question-mark">?</span>,
-            ),
-            <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
-        };
+        <span class="kw">let </span>operational_certificate = signer
+            .operational_certificate
+            .as_ref()
+            .map(|op_cert| op_cert.to_owned().into());
         <span class="kw">let </span>kes_period = <span class="kw">match </span><span class="kw-2">&amp;</span>operational_certificate {
             <span class="prelude-val">Some</span>(operational_certificate) =&gt; <span class="prelude-val">Some</span>(
                 <span class="self">self</span>.chain_observer

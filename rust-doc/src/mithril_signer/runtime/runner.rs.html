@@ -891,13 +891,6 @@
 <a href="#891" id="891">891</a>
 <a href="#892" id="892">892</a>
 <a href="#893" id="893">893</a>
-<a href="#894" id="894">894</a>
-<a href="#895" id="895">895</a>
-<a href="#896" id="896">896</a>
-<a href="#897" id="897">897</a>
-<a href="#898" id="898">898</a>
-<a href="#899" id="899">899</a>
-<a href="#900" id="900">900</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>anyhow::anyhow;
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>slog_scope::{debug, info, trace, warn};
@@ -906,7 +899,7 @@
 <span class="attr">#[cfg(test)]
 </span><span class="kw">use </span>mockall::automock;
 
-<span class="kw">use </span>mithril_common::crypto_helper::{KESPeriod, OpCert, SerDeShelleyFileFormat};
+<span class="kw">use </span>mithril_common::crypto_helper::{KESPeriod, OpCert, ProtocolOpCert, SerDeShelleyFileFormat};
 <span class="kw">use </span>mithril_common::entities::{PartyId, ProtocolParameters, SignedEntityType};
 <span class="kw">use </span>mithril_common::{
     crypto_helper::key_encode_hex,
@@ -1065,24 +1058,17 @@
         <span class="kw">let </span>stake = stake_distribution
             .get(<span class="kw-2">&amp;</span><span class="self">self</span>.services.single_signer.get_party_id())
             .ok_or_else(RunnerError::NoStakeForSelf)<span class="question-mark">?</span>;
-        <span class="kw">let </span>(operational_certificate, operational_certificate_encoded) = <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self
-            </span>.config
-            .operational_certificate_path
-        {
-            <span class="prelude-val">Some</span>(operational_certificate_path) =&gt; {
-                <span class="kw">let </span>opcert: OpCert =
-                    OpCert::from_file(operational_certificate_path).map_err(|<span class="kw">_</span>| {
-                        RunnerError::FileParse(<span class="string">&quot;operational_certificate_path&quot;</span>.to_string())
-                    })<span class="question-mark">?</span>;
-                (
-                    <span class="prelude-val">Some</span>(opcert.clone()),
-                    <span class="prelude-val">Some</span>(key_encode_hex(opcert).map_err(|e| {
-                        <span class="macro">anyhow!</span>(<span class="string">&quot;Json Hex encoding of Operational certificate failure, error: {e}&quot;</span>)
-                    })<span class="question-mark">?</span>),
-                )
-            }
-            <span class="kw">_ </span>=&gt; (<span class="prelude-val">None</span>, <span class="prelude-val">None</span>),
-        };
+        <span class="kw">let </span>(operational_certificate, protocol_operational_certificate) =
+            <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.config.operational_certificate_path {
+                <span class="prelude-val">Some</span>(operational_certificate_path) =&gt; {
+                    <span class="kw">let </span>opcert: OpCert =
+                        OpCert::from_file(operational_certificate_path).map_err(|<span class="kw">_</span>| {
+                            RunnerError::FileParse(<span class="string">&quot;operational_certificate_path&quot;</span>.to_string())
+                        })<span class="question-mark">?</span>;
+                    (<span class="prelude-val">Some</span>(opcert.clone()), <span class="prelude-val">Some</span>(ProtocolOpCert::new(opcert)))
+                }
+                <span class="kw">_ </span>=&gt; (<span class="prelude-val">None</span>, <span class="prelude-val">None</span>),
+            };
 
         <span class="kw">let </span>kes_period = <span class="kw">match </span>operational_certificate {
             <span class="prelude-val">Some</span>(operational_certificate) =&gt; <span class="prelude-val">Some</span>(
@@ -1114,7 +1100,7 @@
             <span class="self">self</span>.services.single_signer.get_party_id(),
             protocol_initializer.verification_key().into(),
             verification_key_signature_encoded,
-            operational_certificate_encoded,
+            protocol_operational_certificate,
             kes_period,
         );
         <span class="self">self</span>.services

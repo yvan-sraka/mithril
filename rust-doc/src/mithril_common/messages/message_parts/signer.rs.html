@@ -95,6 +95,11 @@
 <a href="#95" id="95">95</a>
 <a href="#96" id="96">96</a>
 <a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
 </pre></div><pre class="rust"><code><span class="kw">use crate</span>::{
     crypto_helper::KESPeriod,
     entities::{
@@ -170,7 +175,10 @@
                 verification_key: message.verification_key.try_into()<span class="question-mark">?</span>,
                 verification_key_signature: message.verification_key_signature,
                 kes_period: message.kes_period,
-                operational_certificate: message.operational_certificate,
+                operational_certificate: <span class="kw">match </span>message.operational_certificate {
+                    <span class="prelude-val">Some</span>(operational_certificate) =&gt; <span class="prelude-val">Some</span>(operational_certificate.try_into()<span class="question-mark">?</span>),
+                    <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
+                },
                 stake: message.stake,
             };
             signers.push(value);
@@ -186,7 +194,9 @@
             party_id: value.party_id,
             verification_key: value.verification_key.try_into().unwrap(),
             verification_key_signature: value.verification_key_signature,
-            operational_certificate: value.operational_certificate,
+            operational_certificate: value
+                .operational_certificate
+                .map(|op_cert| (op_cert.try_into().unwrap())),
             kes_period: value.kes_period,
             stake: value.stake,
         }

@@ -385,8 +385,6 @@
 <a href="#385" id="385">385</a>
 <a href="#386" id="386">386</a>
 <a href="#387" id="387">387</a>
-<a href="#388" id="388">388</a>
-<a href="#389" id="389">389</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>anyhow::{anyhow, Context, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span>rand_chacha::ChaCha20Rng;
 <span class="kw">use </span>rand_core::{CryptoRng, RngCore, SeedableRng};
@@ -587,12 +585,10 @@
 
 <span class="kw">impl </span>SignerCryptographicMaterial {
     <span class="kw">fn </span>decode_from_signer(signer: <span class="kw-2">&amp;</span>SignerWithStake) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
-        <span class="kw">let </span>operational_certificate = <span class="kw">match </span><span class="kw-2">&amp;</span>signer.operational_certificate {
-            <span class="prelude-val">Some</span>(operational_certificate) =&gt; key_decode_hex(operational_certificate)
-                .map_err(|e| <span class="macro">anyhow!</span>(e))
-                .with_context(|| <span class="string">&quot;Could not decode operational certificate&quot;</span>.to_string())<span class="question-mark">?</span>,
-            <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
-        };
+        <span class="kw">let </span>operational_certificate = signer
+            .operational_certificate
+            .as_ref()
+            .map(|op_cert| op_cert.to_owned().into());
         <span class="kw">let </span>verification_key = signer.verification_key.clone();
         <span class="kw">let </span>kes_signature = <span class="kw">match </span><span class="kw-2">&amp;</span>signer.verification_key_signature {
             <span class="prelude-val">Some</span>(verification_key_signature) =&gt; <span class="prelude-val">Some</span>(
@@ -637,7 +633,7 @@
     </span><span class="kw">fn </span>cant_construct_signer_builder_with_a_signer_with_invalid_keys() {
         <span class="kw">let </span>fixture = MithrilFixtureBuilder::default().with_signers(<span class="number">3</span>).build();
         <span class="kw">let </span><span class="kw-2">mut </span>signers = fixture.signers_with_stake();
-        signers[<span class="number">2</span>].operational_certificate = <span class="prelude-val">Some</span>(<span class="string">&quot;invalid&quot;</span>.to_string());
+        signers[<span class="number">2</span>].verification_key_signature = <span class="prelude-val">Some</span>(<span class="string">&quot;invalid&quot;</span>.to_string());
 
         <span class="kw">let </span>error = SignerBuilder::new(<span class="kw-2">&amp;</span>signers, <span class="kw-2">&amp;</span>fixture.protocol_parameters()).expect_err(
             <span class="string">&quot;We should not be able to construct a signer builder with a signer with invalid keys&quot;</span>,
