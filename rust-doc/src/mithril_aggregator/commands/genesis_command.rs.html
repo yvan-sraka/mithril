@@ -185,29 +185,16 @@
 <a href="#185" id="185">185</a>
 <a href="#186" id="186">186</a>
 <a href="#187" id="187">187</a>
-<a href="#188" id="188">188</a>
-<a href="#189" id="189">189</a>
-<a href="#190" id="190">190</a>
-<a href="#191" id="191">191</a>
-<a href="#192" id="192">192</a>
-<a href="#193" id="193">193</a>
-<a href="#194" id="194">194</a>
-<a href="#195" id="195">195</a>
-<a href="#196" id="196">196</a>
-<a href="#197" id="197">197</a>
-<a href="#198" id="198">198</a>
-<a href="#199" id="199">199</a>
-<a href="#200" id="200">200</a>
-<a href="#201" id="201">201</a>
-<a href="#202" id="202">202</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>clap::{Parser, Subcommand};
+</pre></div><pre class="rust"><code><span class="kw">use </span>anyhow::{anyhow, Context};
+<span class="kw">use </span>clap::{Parser, Subcommand};
 <span class="kw">use </span>config::{builder::DefaultState, ConfigBuilder};
 <span class="kw">use </span>mithril_common::{
     crypto_helper::{key_decode_hex, ProtocolGenesisSigner},
     entities::HexEncodedGenesisSecretKey,
+    StdResult,
 };
 <span class="kw">use </span>slog_scope::debug;
-<span class="kw">use </span>std::{error::Error, path::PathBuf};
+<span class="kw">use </span>std::path::PathBuf;
 
 <span class="kw">use crate</span>::{dependency_injection::DependenciesBuilder, tools::GenesisTools, Configuration};
 
@@ -220,10 +207,7 @@
 }
 
 <span class="kw">impl </span>GenesisCommand {
-    <span class="kw">pub async fn </span>execute(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        config_builder: ConfigBuilder&lt;DefaultState&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>Error&gt;&gt; {
+    <span class="kw">pub async fn </span>execute(<span class="kw-2">&amp;</span><span class="self">self</span>, config_builder: ConfigBuilder&lt;DefaultState&gt;) -&gt; StdResult&lt;()&gt; {
         <span class="self">self</span>.genesis_subcommand.execute(config_builder).<span class="kw">await
     </span>}
 }
@@ -245,10 +229,7 @@
 }
 
 <span class="kw">impl </span>GenesisSubCommand {
-    <span class="kw">pub async fn </span>execute(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        config_builder: ConfigBuilder&lt;DefaultState&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>Error&gt;&gt; {
+    <span class="kw">pub async fn </span>execute(<span class="kw-2">&amp;</span><span class="self">self</span>, config_builder: ConfigBuilder&lt;DefaultState&gt;) -&gt; StdResult&lt;()&gt; {
         <span class="kw">match </span><span class="self">self </span>{
             <span class="self">Self</span>::Bootstrap(cmd) =&gt; cmd.execute(config_builder).<span class="kw">await</span>,
             <span class="self">Self</span>::Export(cmd) =&gt; cmd.execute(config_builder).<span class="kw">await</span>,
@@ -267,15 +248,12 @@
 }
 
 <span class="kw">impl </span>ExportGenesisSubCommand {
-    <span class="kw">pub async fn </span>execute(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        config_builder: ConfigBuilder&lt;DefaultState&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>Error&gt;&gt; {
+    <span class="kw">pub async fn </span>execute(<span class="kw-2">&amp;</span><span class="self">self</span>, config_builder: ConfigBuilder&lt;DefaultState&gt;) -&gt; StdResult&lt;()&gt; {
         <span class="kw">let </span>config: Configuration = config_builder
             .build()
-            .map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;configuration build error: {e}&quot;</span>))<span class="question-mark">?
+            .with_context(|| <span class="string">&quot;configuration build error&quot;</span>)<span class="question-mark">?
             </span>.try_deserialize()
-            .map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;configuration deserialize error: {e}&quot;</span>))<span class="question-mark">?</span>;
+            .with_context(|| <span class="string">&quot;configuration deserialize error&quot;</span>)<span class="question-mark">?</span>;
         <span class="macro">debug!</span>(<span class="string">&quot;EXPORT GENESIS command&quot;</span>; <span class="string">&quot;config&quot; </span>=&gt; <span class="macro">format!</span>(<span class="string">&quot;{config:?}&quot;</span>));
         <span class="macro">println!</span>(
             <span class="string">&quot;Genesis export payload to sign to {}&quot;</span>,
@@ -286,10 +264,10 @@
 
         <span class="kw">let </span>genesis_tools = GenesisTools::from_dependencies(dependencies)
             .<span class="kw">await
-            </span>.map_err(|err| <span class="macro">format!</span>(<span class="string">&quot;genesis-tools: initialization error: {err}&quot;</span>))<span class="question-mark">?</span>;
+            </span>.with_context(|| <span class="string">&quot;genesis-tools: initialization error&quot;</span>)<span class="question-mark">?</span>;
         genesis_tools
             .export_payload_to_sign(<span class="kw-2">&amp;</span><span class="self">self</span>.target_path)
-            .map_err(|err| <span class="macro">format!</span>(<span class="string">&quot;genesis-tools: export error: {err}&quot;</span>))<span class="question-mark">?</span>;
+            .with_context(|| <span class="string">&quot;genesis-tools: export error&quot;</span>)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
 }
@@ -302,15 +280,12 @@
 }
 
 <span class="kw">impl </span>ImportGenesisSubCommand {
-    <span class="kw">pub async fn </span>execute(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        config_builder: ConfigBuilder&lt;DefaultState&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>Error&gt;&gt; {
+    <span class="kw">pub async fn </span>execute(<span class="kw-2">&amp;</span><span class="self">self</span>, config_builder: ConfigBuilder&lt;DefaultState&gt;) -&gt; StdResult&lt;()&gt; {
         <span class="kw">let </span>config: Configuration = config_builder
             .build()
-            .map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;configuration build error: {e}&quot;</span>))<span class="question-mark">?
+            .with_context(|| <span class="string">&quot;configuration build error&quot;</span>)<span class="question-mark">?
             </span>.try_deserialize()
-            .map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;configuration deserialize error: {e}&quot;</span>))<span class="question-mark">?</span>;
+            .with_context(|| <span class="string">&quot;configuration deserialize error&quot;</span>)<span class="question-mark">?</span>;
         <span class="macro">debug!</span>(<span class="string">&quot;IMPORT GENESIS command&quot;</span>; <span class="string">&quot;config&quot; </span>=&gt; <span class="macro">format!</span>(<span class="string">&quot;{config:?}&quot;</span>));
         <span class="macro">println!</span>(
             <span class="string">&quot;Genesis import signed payload from {}&quot;</span>,
@@ -321,11 +296,11 @@
 
         <span class="kw">let </span>genesis_tools = GenesisTools::from_dependencies(dependencies)
             .<span class="kw">await
-            </span>.map_err(|err| <span class="macro">format!</span>(<span class="string">&quot;genesis-tools: initialization error: {err}&quot;</span>))<span class="question-mark">?</span>;
+            </span>.with_context(|| <span class="string">&quot;genesis-tools: initialization error&quot;</span>)<span class="question-mark">?</span>;
         genesis_tools
             .import_payload_signature(<span class="kw-2">&amp;</span><span class="self">self</span>.signed_payload_path)
             .<span class="kw">await
-            </span>.map_err(|err| <span class="macro">format!</span>(<span class="string">&quot;genesis-tools: import error: {err}&quot;</span>))<span class="question-mark">?</span>;
+            </span>.with_context(|| <span class="string">&quot;genesis-tools: import error&quot;</span>)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
 }
@@ -346,10 +321,7 @@
 }
 
 <span class="kw">impl </span>SignGenesisSubCommand {
-    <span class="kw">pub async fn </span>execute(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        _config_builder: ConfigBuilder&lt;DefaultState&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>Error&gt;&gt; {
+    <span class="kw">pub async fn </span>execute(<span class="kw-2">&amp;</span><span class="self">self</span>, _config_builder: ConfigBuilder&lt;DefaultState&gt;) -&gt; StdResult&lt;()&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;SIGN GENESIS command&quot;</span>);
         <span class="macro">println!</span>(
             <span class="string">&quot;Genesis sign payload from {} to {}&quot;</span>,
@@ -363,7 +335,7 @@
             <span class="kw-2">&amp;</span><span class="self">self</span>.genesis_secret_key_path,
         )
         .<span class="kw">await
-        </span>.map_err(|err| <span class="macro">format!</span>(<span class="string">&quot;genesis-tools: sign error: {err}&quot;</span>))<span class="question-mark">?</span>;
+        </span>.with_context(|| <span class="string">&quot;genesis-tools: sign error&quot;</span>)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(())
     }
@@ -376,15 +348,12 @@
 }
 
 <span class="kw">impl </span>BootstrapGenesisSubCommand {
-    <span class="kw">pub async fn </span>execute(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        config_builder: ConfigBuilder&lt;DefaultState&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>Error&gt;&gt; {
+    <span class="kw">pub async fn </span>execute(<span class="kw-2">&amp;</span><span class="self">self</span>, config_builder: ConfigBuilder&lt;DefaultState&gt;) -&gt; StdResult&lt;()&gt; {
         <span class="kw">let </span>config: Configuration = config_builder
             .build()
-            .map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;configuration build error: {e}&quot;</span>))<span class="question-mark">?
+            .with_context(|| <span class="string">&quot;configuration build error&quot;</span>)<span class="question-mark">?
             </span>.try_deserialize()
-            .map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;configuration deserialize error: {e}&quot;</span>))<span class="question-mark">?</span>;
+            .with_context(|| <span class="string">&quot;configuration deserialize error&quot;</span>)<span class="question-mark">?</span>;
         <span class="macro">debug!</span>(<span class="string">&quot;BOOTSTRAP GENESIS command&quot;</span>; <span class="string">&quot;config&quot; </span>=&gt; <span class="macro">format!</span>(<span class="string">&quot;{config:?}&quot;</span>));
         <span class="macro">println!</span>(<span class="string">&quot;Genesis bootstrap for test only!&quot;</span>);
         <span class="kw">let </span><span class="kw-2">mut </span>dependencies_builder = DependenciesBuilder::new(config.clone());
@@ -392,13 +361,14 @@
 
         <span class="kw">let </span>genesis_tools = GenesisTools::from_dependencies(dependencies)
             .<span class="kw">await
-            </span>.map_err(|err| <span class="macro">format!</span>(<span class="string">&quot;genesis-tools: initialization error: {err}&quot;</span>))<span class="question-mark">?</span>;
-        <span class="kw">let </span>genesis_secret_key = key_decode_hex(<span class="kw-2">&amp;</span><span class="self">self</span>.genesis_secret_key)<span class="question-mark">?</span>;
+            </span>.with_context(|| <span class="string">&quot;genesis-tools: initialization error&quot;</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>genesis_secret_key = key_decode_hex(<span class="kw-2">&amp;</span><span class="self">self</span>.genesis_secret_key)
+            .map_err(|e| <span class="macro">anyhow!</span>(e).context(<span class="string">&quot;json hex decode of genesis secret key failure&quot;</span>))<span class="question-mark">?</span>;
         <span class="kw">let </span>genesis_signer = ProtocolGenesisSigner::from_secret_key(genesis_secret_key);
         genesis_tools
             .bootstrap_test_genesis_certificate(genesis_signer)
             .<span class="kw">await
-            </span>.map_err(|err| <span class="macro">format!</span>(<span class="string">&quot;genesis-tools: bootstrap error: {err}&quot;</span>))<span class="question-mark">?</span>;
+            </span>.with_context(|| <span class="string">&quot;genesis-tools: bootstrap error&quot;</span>)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
 }

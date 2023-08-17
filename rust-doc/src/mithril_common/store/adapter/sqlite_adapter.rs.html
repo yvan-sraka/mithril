@@ -515,14 +515,17 @@
 <a href="#515" id="515">515</a>
 <a href="#516" id="516">516</a>
 <a href="#517" id="517">517</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
+<a href="#518" id="518">518</a>
+<a href="#519" id="519">519</a>
+<a href="#520" id="520">520</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>anyhow::anyhow;
+<span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>serde::{de::DeserializeOwned, Serialize};
 <span class="kw">use </span>sha2::{Digest, Sha256};
 <span class="kw">use </span>sqlite::{Connection, State, Statement};
-<span class="kw">use </span>tokio::sync::Mutex;
-
-<span class="kw">use </span>lazy_static::__Deref;
+<span class="kw">use </span>std::ops::Deref;
 <span class="kw">use </span>std::{marker::PhantomData, sync::Arc, thread::sleep, time::Duration};
+<span class="kw">use </span>tokio::sync::Mutex;
 
 <span class="kw">use super</span>::{AdapterError, StoreAdapter};
 
@@ -603,9 +606,9 @@
 
     <span class="kw">fn </span>serialize_key(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>K) -&gt; <span class="prelude-ty">Result</span>&lt;String&gt; {
         serde_json::to_string(<span class="kw-2">&amp;</span>key).map_err(|e| {
-            AdapterError::GeneralError(<span class="macro">format!</span>(
-                <span class="string">&quot;SQLite adapter: Serde error while serializing store key: {e:?}&quot;
-            </span>))
+            AdapterError::GeneralError(
+                <span class="macro">anyhow!</span>(e).context(<span class="string">&quot;SQLite adapter: Serde error while serializing store key&quot;</span>),
+            )
         })
     }
 
@@ -676,9 +679,10 @@
             <span class="self">self</span>.table
         );
         <span class="kw">let </span>value = serde_json::to_string(record).map_err(|e| {
-            AdapterError::GeneralError(<span class="macro">format!</span>(
-                <span class="string">&quot;SQLite adapter error: could not serialize value before insertion: {e:?}&quot;
-            </span>))
+            AdapterError::GeneralError(
+                <span class="macro">anyhow!</span>(e)
+                    .context(<span class="string">&quot;SQLite adapter error: could not serialize value before insertion&quot;</span>),
+            )
         })<span class="question-mark">?</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>statement = connection
             .prepare(sql)
@@ -723,7 +727,9 @@
         statement
             .read::&lt;i64, <span class="kw">_</span>&gt;(<span class="number">0</span>)
             .map_err(|e| {
-                AdapterError::GeneralError(<span class="macro">format!</span>(<span class="string">&quot;There should be a result in this case ! {e:?}&quot;</span>))
+                AdapterError::GeneralError(
+                    <span class="macro">anyhow!</span>(e).context(<span class="string">&quot;There should be a result in this case !&quot;</span>),
+                )
             })
             .map(|res| res == <span class="number">1</span>)
     }

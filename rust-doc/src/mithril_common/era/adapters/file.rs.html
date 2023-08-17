@@ -69,11 +69,11 @@
 <a href="#69" id="69">69</a>
 <a href="#70" id="70">70</a>
 <a href="#71" id="71">71</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>std::{error::Error, fs, path::PathBuf};
+</pre></div><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
+<span class="kw">use </span>std::{fs, path::PathBuf};
 
-<span class="kw">use </span>async_trait::async_trait;
-
-<span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::{EraMarker, EraReaderAdapter};
+<span class="kw">use </span><span class="kw">crate</span>::era::{EraMarker, EraReaderAdapter};
+<span class="kw">use </span><span class="kw">crate</span>::StdResult;
 
 <span class="doccomment">/// File adapter is intended to be used in a test environment
 /// to simulate eras transitions.
@@ -90,7 +90,7 @@
 
 <span class="attr">#[async_trait]
 </span><span class="kw">impl </span>EraReaderAdapter <span class="kw">for </span>FileAdapter {
-    <span class="kw">async fn </span>read(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;EraMarker&gt;, Box&lt;<span class="kw">dyn </span>Error + Sync + Send&gt;&gt; {
+    <span class="kw">async fn </span>read(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StdResult&lt;Vec&lt;EraMarker&gt;&gt; {
         <span class="prelude-val">Ok</span>(serde_json::from_str(<span class="kw-2">&amp;</span>fs::read_to_string(
             <span class="kw-2">&amp;</span><span class="self">self</span>.markers_file,
         )<span class="question-mark">?</span>)<span class="question-mark">?</span>)

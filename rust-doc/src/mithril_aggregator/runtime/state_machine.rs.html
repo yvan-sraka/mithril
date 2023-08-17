@@ -1201,16 +1201,16 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
-
     <span class="kw">use </span><span class="kw">crate</span>::entities::OpenMessage;
-
-    <span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::runner::MockAggregatorRunner;
-    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use </span>anyhow::anyhow;
+    <span class="kw">use </span>mockall::predicate;
 
     <span class="kw">use </span>mithril_common::entities::{Epoch, SignedEntityType};
     <span class="kw">use </span>mithril_common::era::UnsupportedEraError;
     <span class="kw">use </span>mithril_common::test_utils::fake_data;
-    <span class="kw">use </span>mockall::predicate;
+
+    <span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::runner::MockAggregatorRunner;
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
     <span class="kw">async fn </span>init_runtime(
         init_state: <span class="prelude-ty">Option</span>&lt;AggregatorState&gt;,
@@ -1254,7 +1254,7 @@
         runner
             .expect_is_certificate_chain_valid()
             .once()
-            .returning(|<span class="kw">_</span>| <span class="prelude-val">Err</span>(<span class="string">&quot;error&quot;</span>.into()));
+            .returning(|<span class="kw">_</span>| <span class="prelude-val">Err</span>(<span class="macro">anyhow!</span>(<span class="string">&quot;error&quot;</span>)));
         runner
             .expect_update_era_checker()
             .with(predicate::eq(fake_data::beacon()))
@@ -1535,7 +1535,7 @@
         runner
             .expect_create_artifact()
             .once()
-            .returning(|<span class="kw">_</span>, <span class="kw">_</span>| <span class="prelude-val">Err</span>(<span class="string">&quot;whatever&quot;</span>.into()));
+            .returning(|<span class="kw">_</span>, <span class="kw">_</span>| <span class="prelude-val">Err</span>(<span class="macro">anyhow!</span>(<span class="string">&quot;whatever&quot;</span>)));
         <span class="kw">let </span>state = SigningState {
             current_beacon: fake_data::beacon(),
             open_message: OpenMessage::dummy(),

@@ -501,14 +501,13 @@
 <a href="#501" id="501">501</a>
 <a href="#502" id="502">502</a>
 <a href="#503" id="503">503</a>
-<a href="#504" id="504">504</a>
-<a href="#505" id="505">505</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>std::ops::Not;
-<span class="kw">use </span>std::sync::Arc;
-
+</pre></div><pre class="rust"><code><span class="kw">use </span>anyhow::Context;
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>chrono::{DateTime, Utc};
 <span class="kw">use </span>sqlite::{Connection, Value};
+<span class="kw">use </span>std::ops::Not;
+<span class="kw">use </span>std::sync::Arc;
+<span class="kw">use </span>tokio::sync::Mutex;
 
 <span class="kw">use </span>mithril_common::{
     entities::{Epoch, PartyId, Stake, StakeDistribution},
@@ -517,10 +516,8 @@
         WhereCondition,
     },
     store::{adapter::AdapterError, StakeStorer, StoreError},
+    StdResult,
 };
-
-<span class="kw">use </span>mithril_common::StdError;
-<span class="kw">use </span>tokio::sync::Mutex;
 
 <span class="doccomment">/// Stake pool as read from Chain.
 </span><span class="attr">#[derive(Debug, PartialEq)]
@@ -593,7 +590,7 @@
         <span class="self">Self </span>{ client }
     }
 
-    <span class="kw">fn </span>condition_by_epoch(<span class="kw-2">&amp;</span><span class="self">self</span>, epoch: <span class="kw-2">&amp;</span>Epoch) -&gt; <span class="prelude-ty">Result</span>&lt;WhereCondition, StdError&gt; {
+    <span class="kw">fn </span>condition_by_epoch(<span class="kw-2">&amp;</span><span class="self">self</span>, epoch: <span class="kw-2">&amp;</span>Epoch) -&gt; StdResult&lt;WhereCondition&gt; {
         <span class="prelude-val">Ok</span>(WhereCondition::new(
             <span class="string">&quot;epoch = ?*&quot;</span>,
             <span class="macro">vec!</span>[Value::Integer(epoch.try_into()<span class="question-mark">?</span>)],
@@ -601,7 +598,7 @@
     }
 
     <span class="doccomment">/// Get StakePools for a given Epoch for given pool_ids.
-    </span><span class="kw">pub fn </span>get_by_epoch(<span class="kw-2">&amp;</span><span class="self">self</span>, epoch: <span class="kw-2">&amp;</span>Epoch) -&gt; <span class="prelude-ty">Result</span>&lt;EntityCursor&lt;StakePool&gt;, StdError&gt; {
+    </span><span class="kw">pub fn </span>get_by_epoch(<span class="kw-2">&amp;</span><span class="self">self</span>, epoch: <span class="kw-2">&amp;</span>Epoch) -&gt; StdResult&lt;EntityCursor&lt;StakePool&gt;&gt; {
         <span class="kw">let </span>filters = <span class="self">self</span>.condition_by_epoch(epoch)<span class="question-mark">?</span>;
         <span class="kw">let </span>stake_pool = <span class="self">self</span>.find(filters)<span class="question-mark">?</span>;
 
@@ -655,12 +652,7 @@
         )
     }
 
-    <span class="kw">fn </span>persist(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        stake_pool_id: <span class="kw-2">&amp;</span>str,
-        epoch: Epoch,
-        stake: Stake,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;StakePool, StdError&gt; {
+    <span class="kw">fn </span>persist(<span class="kw-2">&amp;</span><span class="self">self</span>, stake_pool_id: <span class="kw-2">&amp;</span>str, epoch: Epoch, stake: Stake) -&gt; StdResult&lt;StakePool&gt; {
         <span class="kw">let </span>filters = <span class="self">self</span>.get_insert_or_replace_condition(stake_pool_id, epoch, stake);
 
         <span class="kw">let </span>entity = <span class="self">self</span>.find(filters)<span class="question-mark">?
@@ -725,7 +717,7 @@
     }
 
     <span class="doccomment">/// Prune the stake pools data older than the given epoch.
-    </span><span class="kw">pub fn </span>prune(<span class="kw-2">&amp;</span><span class="self">self</span>, epoch_threshold: Epoch) -&gt; <span class="prelude-ty">Result</span>&lt;EntityCursor&lt;StakePool&gt;, StdError&gt; {
+    </span><span class="kw">pub fn </span>prune(<span class="kw-2">&amp;</span><span class="self">self</span>, epoch_threshold: Epoch) -&gt; StdResult&lt;EntityCursor&lt;StakePool&gt;&gt; {
         <span class="kw">let </span>filters = <span class="self">self</span>.get_prune_condition(epoch_threshold);
 
         <span class="self">self</span>.find(filters)
@@ -768,7 +760,10 @@
         <span class="kw">for </span>(pool_id, stake) <span class="kw">in </span>stakes {
             <span class="kw">let </span>stake_pool = provider
                 .persist(<span class="kw-2">&amp;</span>pool_id, epoch, stake)
-                .map_err(|e| AdapterError::GeneralError(<span class="macro">format!</span>(<span class="string">&quot;{e}&quot;</span>)))<span class="question-mark">?</span>;
+                .with_context(|| {
+                    <span class="macro">format!</span>(<span class="string">&quot;persist stakes failure, epoch: {epoch}, pool_id: &#39;{pool_id}&#39;&quot;</span>)
+                })
+                .map_err(AdapterError::GeneralError)<span class="question-mark">?</span>;
             new_stakes.insert(pool_id.to_string(), stake_pool.stake);
         }
 
@@ -792,7 +787,8 @@
         <span class="kw">let </span>provider = StakePoolProvider::new(connection);
         <span class="kw">let </span>cursor = provider
             .get_by_epoch(<span class="kw-2">&amp;</span>epoch)
-            .map_err(|e| AdapterError::GeneralError(<span class="macro">format!</span>(<span class="string">&quot;Could not get stakes: {e}&quot;</span>)))<span class="question-mark">?</span>;
+            .with_context(|| <span class="macro">format!</span>(<span class="string">&quot;get stakes failure, epoch: {epoch}&quot;</span>))
+            .map_err(AdapterError::GeneralError)<span class="question-mark">?</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>stake_distribution = StakeDistribution::new();
 
         <span class="kw">for </span>stake_pool <span class="kw">in </span>cursor {
@@ -814,7 +810,7 @@
     <span class="kw">pub fn </span>setup_stake_db(
         connection: <span class="kw-2">&amp;</span>Connection,
         epoch_to_insert_settings: <span class="kw-2">&amp;</span>[i64],
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), StdError&gt; {
+    ) -&gt; StdResult&lt;()&gt; {
         apply_all_migrations_to_db(connection)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>query = {

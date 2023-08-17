@@ -215,8 +215,6 @@
 <a href="#215" id="215">215</a>
 <a href="#216" id="216">216</a>
 <a href="#217" id="217">217</a>
-<a href="#218" id="218">218</a>
-<a href="#219" id="219">219</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>hex::ToHex;
 <span class="kw">use </span>slog_scope::{info, trace, warn};
 <span class="kw">use </span>std::path::PathBuf;
@@ -329,7 +327,7 @@
             .restore_signer_from_initializer(<span class="self">self</span>.party_id.clone(), protocol_initializer.clone())
             .map_err(|e| SingleSignerError::ProtocolSignerCreationFailure(e.to_string()))<span class="question-mark">?
             </span>.sign(protocol_message)
-            .map_err(|e| SingleSignerError::SignatureFailed(e.into()))<span class="question-mark">?</span>;
+            .map_err(SingleSignerError::SignatureFailed)<span class="question-mark">?</span>;
 
         <span class="kw">match </span><span class="kw-2">&amp;</span>signatures {
             <span class="prelude-val">Some</span>(signature) =&gt; {
@@ -357,9 +355,7 @@
             signers_with_stake,
             <span class="kw-2">&amp;</span>protocol_initializer.get_protocol_parameters().into(),
         )
-        .map_err(|error| {
-            SingleSignerError::AggregateVerificationKeyComputationFailed(error.into())
-        })<span class="question-mark">?</span>;
+        .map_err(SingleSignerError::AggregateVerificationKeyComputationFailed)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>encoded_avk = key_encode_hex(signer_builder.compute_aggregate_verification_key())
             .map_err(SingleSignerError::Codec)<span class="question-mark">?</span>;

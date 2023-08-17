@@ -518,9 +518,6 @@
 <a href="#518" id="518">518</a>
 <a href="#519" id="519">519</a>
 <a href="#520" id="520">520</a>
-<a href="#521" id="521">521</a>
-<a href="#522" id="522">522</a>
-<a href="#523" id="523">523</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>chrono::{DateTime, Utc};
 <span class="kw">use </span>sqlite::{Connection, Value};
 <span class="kw">use </span>std::sync::Arc;
@@ -674,10 +671,7 @@
         <span class="self">Self </span>{ client }
     }
 
-    <span class="kw">fn </span>condition_by_open_message_id(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        open_message_id: <span class="kw-2">&amp;</span>Uuid,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;WhereCondition, StdError&gt; {
+    <span class="kw">fn </span>condition_by_open_message_id(<span class="kw-2">&amp;</span><span class="self">self</span>, open_message_id: <span class="kw-2">&amp;</span>Uuid) -&gt; StdResult&lt;WhereCondition&gt; {
         <span class="prelude-val">Ok</span>(WhereCondition::new(
             <span class="string">&quot;open_message_id = ?*&quot;</span>,
             <span class="macro">vec!</span>[Value::String(open_message_id.to_string())],
@@ -685,7 +679,7 @@
     }
 
     <span class="attr">#[allow(dead_code)] </span><span class="comment">// todo: Should we keep this ?
-    </span><span class="kw">fn </span>condition_by_signer_id(<span class="kw-2">&amp;</span><span class="self">self</span>, signer_id: String) -&gt; <span class="prelude-ty">Result</span>&lt;WhereCondition, StdError&gt; {
+    </span><span class="kw">fn </span>condition_by_signer_id(<span class="kw-2">&amp;</span><span class="self">self</span>, signer_id: String) -&gt; StdResult&lt;WhereCondition&gt; {
         <span class="prelude-val">Ok</span>(WhereCondition::new(
             <span class="string">&quot;signer_id = ?*&quot;</span>,
             <span class="macro">vec!</span>[Value::String(signer_id)],
@@ -696,7 +690,7 @@
     </span><span class="kw">fn </span>condition_by_registration_epoch(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         registration_epoch: <span class="kw-2">&amp;</span>Epoch,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;WhereCondition, StdError&gt; {
+    ) -&gt; StdResult&lt;WhereCondition&gt; {
         <span class="kw">let </span>epoch: i64 = registration_epoch.try_into()<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(WhereCondition::new(
@@ -709,7 +703,7 @@
     </span><span class="kw">pub fn </span>get_by_open_message_id(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         open_message_id: <span class="kw-2">&amp;</span>Uuid,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;EntityCursor&lt;SingleSignatureRecord&gt;, StdError&gt; {
+    ) -&gt; StdResult&lt;EntityCursor&lt;SingleSignatureRecord&gt;&gt; {
         <span class="kw">let </span>filters = <span class="self">self</span>.condition_by_open_message_id(open_message_id)<span class="question-mark">?</span>;
         <span class="kw">let </span>single_signature_record = <span class="self">self</span>.find(filters)<span class="question-mark">?</span>;
 
@@ -717,7 +711,7 @@
     }
 
     <span class="doccomment">/// Get all SingleSignatureRecords.
-    </span><span class="kw">pub fn </span>get_all(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;EntityCursor&lt;SingleSignatureRecord&gt;, StdError&gt; {
+    </span><span class="kw">pub fn </span>get_all(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StdResult&lt;EntityCursor&lt;SingleSignatureRecord&gt;&gt; {
         <span class="kw">let </span>filters = WhereCondition::default();
         <span class="kw">let </span>single_signature_record = <span class="self">self</span>.find(filters)<span class="question-mark">?</span>;
 
@@ -772,7 +766,7 @@
     <span class="kw">fn </span>persist(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         single_signature_record: SingleSignatureRecord,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;SingleSignatureRecord, StdError&gt; {
+    ) -&gt; StdResult&lt;SingleSignatureRecord&gt; {
         <span class="kw">let </span>filters = <span class="self">self</span>.get_update_condition(<span class="kw-2">&amp;</span>single_signature_record);
 
         <span class="kw">let </span>entity = <span class="self">self</span>.find(filters)<span class="question-mark">?</span>.next().unwrap_or_else(|| {
@@ -820,7 +814,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         single_signature: <span class="kw-2">&amp;</span>SingleSignatures,
         open_message: <span class="kw-2">&amp;</span>OpenMessageRecord,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;SingleSignatureRecord, StdError&gt; {
+    ) -&gt; StdResult&lt;SingleSignatureRecord&gt; {
         <span class="kw">let </span>connection = <span class="self">self</span>.connection.lock().<span class="kw">await</span>;
         <span class="kw">let </span>single_signature = SingleSignatureRecord::try_from_single_signatures(
             single_signature,

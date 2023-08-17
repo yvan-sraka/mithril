@@ -383,19 +383,19 @@
 </pre></div><pre class="rust"><code><span class="doccomment">//! Stake Pool manager for the Runners
 //!
 
-</span><span class="kw">use </span>std::{
+</span><span class="kw">use </span>async_trait::async_trait;
+<span class="kw">use </span>std::{
     fmt::Display,
     sync::{Arc, RwLock},
 };
+<span class="kw">use </span>tokio::sync::{Mutex, MutexGuard};
 
-<span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>mithril_common::{
     chain_observer::ChainObserver,
     entities::{Epoch, StakeDistribution},
     store::StakeStorer,
-    StdError,
+    StdError, StdResult,
 };
-<span class="kw">use </span>tokio::sync::{Mutex, MutexGuard};
 
 <span class="kw">use </span><span class="kw">crate</span>::database::provider::StakePoolStore;
 
@@ -499,7 +499,7 @@
 }
 
 <span class="kw">impl </span>UpdateToken {
-    <span class="kw">pub fn </span>update(<span class="kw-2">&amp;</span><span class="self">self</span>, epoch: Epoch) -&gt; <span class="prelude-ty">Result</span>&lt;MutexGuard&lt;()&gt;, StdError&gt; {
+    <span class="kw">pub fn </span>update(<span class="kw-2">&amp;</span><span class="self">self</span>, epoch: Epoch) -&gt; StdResult&lt;MutexGuard&lt;()&gt;&gt; {
         <span class="kw">let </span>update_semaphore = <span class="self">self</span>.is_busy.try_lock().map_err(|<span class="kw">_</span>| {
             <span class="kw">let </span>last_updated_epoch = <span class="self">self</span>.busy_on_epoch.read().unwrap();
 
@@ -585,7 +585,7 @@
         <span class="kw">let </span>_mutex = <span class="self">self
             </span>.update_token
             .update(current_epoch)
-            .map_err(|e| StakePoolDistributionServiceError::technical_subsystem(e))<span class="question-mark">?</span>;
+            .map_err(StakePoolDistributionServiceError::technical_subsystem)<span class="question-mark">?</span>;
         <span class="kw">let </span>stake_distribution = <span class="self">self
             </span>.chain_observer
             .get_current_stake_distribution()

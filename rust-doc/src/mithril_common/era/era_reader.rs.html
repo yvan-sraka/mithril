@@ -345,11 +345,15 @@
 <a href="#345" id="345">345</a>
 <a href="#346" id="346">346</a>
 <a href="#347" id="347">347</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::entities::Epoch;
-<span class="kw">use </span>async_trait::async_trait;
+<a href="#348" id="348">348</a>
+<a href="#349" id="349">349</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
-<span class="kw">use </span>std::{error::Error <span class="kw">as </span>StdError, str::FromStr, sync::Arc};
+<span class="kw">use </span>std::{str::FromStr, sync::Arc};
 <span class="kw">use </span>thiserror::Error;
+
+<span class="kw">use </span><span class="kw">crate</span>::entities::Epoch;
+<span class="kw">use crate</span>::{StdError, StdResult};
 
 <span class="kw">use super</span>::{supported_era::UnsupportedEraError, SupportedEra};
 
@@ -377,7 +381,7 @@
 </span><span class="attr">#[async_trait]
 </span><span class="kw">pub trait </span>EraReaderAdapter: Sync + Send {
     <span class="doccomment">/// Read era markers from the underlying adapter.
-    </span><span class="kw">async fn </span>read(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;EraMarker&gt;, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
+    </span><span class="kw">async fn </span>read(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StdResult&lt;Vec&lt;EraMarker&gt;&gt;;
 }
 
 <span class="doccomment">/// This is a response from the [EraReader]. It contains [EraMarker]s read from
@@ -453,7 +457,7 @@
         </span>message: String,
 
         <span class="doccomment">/// nested underlying adapter error
-        </span>error: Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;,
+        </span>error: StdError,
     },
 
     <span class="doccomment">/// Data returned from the adapter are inconsistent or incomplete.

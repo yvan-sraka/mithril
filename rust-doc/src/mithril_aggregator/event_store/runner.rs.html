@@ -50,15 +50,15 @@
 <a href="#50" id="50">50</a>
 <a href="#51" id="51">51</a>
 <a href="#52" id="52">52</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>slog_scope::{debug, info};
+</pre></div><pre class="rust"><code><span class="kw">use </span>anyhow::Context;
+<span class="kw">use </span>mithril_common::StdResult;
+<span class="kw">use </span>slog_scope::{debug, info};
 <span class="kw">use </span>sqlite::Connection;
-<span class="kw">use </span>tokio::sync::mpsc::UnboundedReceiver;
-
 <span class="kw">use </span>std::{
-    error::Error,
     path::PathBuf,
     sync::{Arc, Mutex},
 };
+<span class="kw">use </span>tokio::sync::mpsc::UnboundedReceiver;
 
 <span class="kw">use super</span>::{EventMessage, EventPersister};
 
@@ -76,7 +76,7 @@
     <span class="doccomment">/// Launch the service. It runs until all the transmitters are gone and all
     /// messages have been processed. This means this service shall be waited
     /// upon completion to ensure all events are properly saved in the database.
-    </span><span class="kw">pub async fn </span>run(<span class="kw-2">&amp;mut </span><span class="self">self</span>, file: <span class="prelude-ty">Option</span>&lt;PathBuf&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>Error&gt;&gt; {
+    </span><span class="kw">pub async fn </span>run(<span class="kw-2">&amp;mut </span><span class="self">self</span>, file: <span class="prelude-ty">Option</span>&lt;PathBuf&gt;) -&gt; StdResult&lt;()&gt; {
         <span class="kw">let </span>connection = {
             <span class="kw">let </span>connection = <span class="kw">match </span>file {
                 <span class="prelude-val">Some</span>(path) =&gt; Connection::open(path)<span class="question-mark">?</span>,
@@ -91,7 +91,7 @@
                 <span class="macro">debug!</span>(<span class="string">&quot;Event received: {message:?}&quot;</span>);
                 <span class="kw">let </span>event = persister
                     .persist(message)
-                    .map_err(|e| -&gt; Box&lt;<span class="kw">dyn </span>Error&gt; { e })<span class="question-mark">?</span>;
+                    .with_context(|| <span class="string">&quot;event persist failure&quot;</span>)<span class="question-mark">?</span>;
                 <span class="macro">debug!</span>(<span class="string">&quot;event ID={} created&quot;</span>, event.event_id);
             } <span class="kw">else </span>{
                 <span class="macro">info!</span>(<span class="string">&quot;No more events to proceed, quitting…&quot;</span>);

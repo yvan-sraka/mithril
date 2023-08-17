@@ -30,19 +30,16 @@
 <a href="#30" id="30">30</a>
 <a href="#31" id="31">31</a>
 <a href="#32" id="32">32</a>
-<a href="#33" id="33">33</a>
-<a href="#34" id="34">34</a>
-<a href="#35" id="35">35</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Commands for the Mithril Stake Distribution artifact
 </span><span class="kw">mod </span>download;
 <span class="kw">mod </span>list;
 
-<span class="kw">use </span>clap::Subcommand;
-<span class="kw">use </span>config::{builder::DefaultState, ConfigBuilder};
-
 <span class="kw">pub use </span>download::<span class="kw-2">*</span>;
 <span class="kw">pub use </span>list::<span class="kw-2">*</span>;
-<span class="kw">use </span>mithril_common::StdError;
+
+<span class="kw">use </span>clap::Subcommand;
+<span class="kw">use </span>config::{builder::DefaultState, ConfigBuilder};
+<span class="kw">use </span>mithril_common::StdResult;
 
 <span class="doccomment">/// Mithril Stake Distribution management (alias: msd)
 </span><span class="attr">#[derive(Subcommand, Debug, Clone)]
@@ -58,10 +55,7 @@
 
 <span class="kw">impl </span>MithrilStakeDistributionCommands {
     <span class="doccomment">/// Execute Mithril stake distribution command
-    </span><span class="kw">pub async fn </span>execute(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        config_builder: ConfigBuilder&lt;DefaultState&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), StdError&gt; {
+    </span><span class="kw">pub async fn </span>execute(<span class="kw-2">&amp;</span><span class="self">self</span>, config_builder: ConfigBuilder&lt;DefaultState&gt;) -&gt; StdResult&lt;()&gt; {
         <span class="kw">match </span><span class="self">self </span>{
             <span class="self">Self</span>::List(cmd) =&gt; cmd.execute(config_builder).<span class="kw">await</span>,
             <span class="self">Self</span>::Download(cmd) =&gt; cmd.execute(config_builder).<span class="kw">await</span>,

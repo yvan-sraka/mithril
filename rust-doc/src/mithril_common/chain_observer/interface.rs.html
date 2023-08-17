@@ -50,10 +50,10 @@
 </pre></div><pre class="rust"><code><span class="kw">use crate</span>::{
     crypto_helper::{KESPeriod, OpCert},
     entities::<span class="kw-2">*</span>,
+    StdError,
 };
 <span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>mockall::automock;
-<span class="kw">use </span>std::error::Error <span class="kw">as </span>StdError;
 <span class="kw">use </span>thiserror::Error;
 
 <span class="kw">use super</span>::{ChainAddress, TxDatum};
@@ -62,12 +62,12 @@
 </span><span class="attr">#[derive(Debug, Error)]
 </span><span class="kw">pub enum </span>ChainObserverError {
     <span class="doccomment">/// Generic [ChainObserver] error.
-    </span><span class="attr">#[error(<span class="string">&quot;general error {0}&quot;</span>)]
-    </span>General(Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;),
+    </span><span class="attr">#[error(<span class="string">&quot;general error {0:?}&quot;</span>)]
+    </span>General(StdError),
 
     <span class="doccomment">/// Error raised when the content could not be parsed.
-    </span><span class="attr">#[error(<span class="string">&quot;could not parse content: {0}&quot;</span>)]
-    </span>InvalidContent(Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;),
+    </span><span class="attr">#[error(<span class="string">&quot;could not parse content: {0:?}&quot;</span>)]
+    </span>InvalidContent(StdError),
 }
 
 <span class="doccomment">/// Retrieve data from the cardano network

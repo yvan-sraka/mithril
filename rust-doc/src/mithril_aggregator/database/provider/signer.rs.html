@@ -531,24 +531,16 @@
 <a href="#531" id="531">531</a>
 <a href="#532" id="532">532</a>
 <a href="#533" id="533">533</a>
-<a href="#534" id="534">534</a>
-<a href="#535" id="535">535</a>
-<a href="#536" id="536">536</a>
-<a href="#537" id="537">537</a>
-<a href="#538" id="538">538</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>chrono::{DateTime, Utc};
 <span class="kw">use </span>sqlite::{Connection, Value};
 <span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>tokio::sync::Mutex;
 
-<span class="kw">use </span>mithril_common::{
-    sqlite::{
-        EntityCursor, HydrationError, Projection, Provider, SourceAlias, SqLiteEntity,
-        WhereCondition,
-    },
-    StdError,
+<span class="kw">use </span>mithril_common::sqlite::{
+    EntityCursor, HydrationError, Projection, Provider, SourceAlias, SqLiteEntity, WhereCondition,
 };
+<span class="kw">use </span>mithril_common::StdResult;
 
 <span class="kw">use </span><span class="kw">crate</span>::signer_registerer::SignerRecorder;
 
@@ -622,7 +614,7 @@
         <span class="self">Self </span>{ client }
     }
 
-    <span class="kw">fn </span>condition_by_signer_id(<span class="kw-2">&amp;</span><span class="self">self</span>, signer_id: String) -&gt; <span class="prelude-ty">Result</span>&lt;WhereCondition, StdError&gt; {
+    <span class="kw">fn </span>condition_by_signer_id(<span class="kw-2">&amp;</span><span class="self">self</span>, signer_id: String) -&gt; StdResult&lt;WhereCondition&gt; {
         <span class="prelude-val">Ok</span>(WhereCondition::new(
             <span class="string">&quot;signer_id = ?*&quot;</span>,
             <span class="macro">vec!</span>[Value::String(signer_id)],
@@ -630,10 +622,7 @@
     }
 
     <span class="doccomment">/// Get SignerRecords for a given signer id.
-    </span><span class="kw">pub fn </span>get_by_signer_id(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        signer_id: String,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;EntityCursor&lt;SignerRecord&gt;, StdError&gt; {
+    </span><span class="kw">pub fn </span>get_by_signer_id(<span class="kw-2">&amp;</span><span class="self">self</span>, signer_id: String) -&gt; StdResult&lt;EntityCursor&lt;SignerRecord&gt;&gt; {
         <span class="kw">let </span>filters = <span class="self">self</span>.condition_by_signer_id(signer_id)<span class="question-mark">?</span>;
         <span class="kw">let </span>signer_record = <span class="self">self</span>.find(filters)<span class="question-mark">?</span>;
 
@@ -641,7 +630,7 @@
     }
 
     <span class="doccomment">/// Get all SignerRecords.
-    </span><span class="kw">pub fn </span>get_all(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;EntityCursor&lt;SignerRecord&gt;, StdError&gt; {
+    </span><span class="kw">pub fn </span>get_all(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StdResult&lt;EntityCursor&lt;SignerRecord&gt;&gt; {
         <span class="kw">let </span>filters = WhereCondition::default();
         <span class="kw">let </span>signer_record = <span class="self">self</span>.find(filters)<span class="question-mark">?</span>;
 
@@ -689,7 +678,7 @@
         )
     }
 
-    <span class="kw">fn </span>persist(<span class="kw-2">&amp;</span><span class="self">self</span>, signer_record: SignerRecord) -&gt; <span class="prelude-ty">Result</span>&lt;SignerRecord, StdError&gt; {
+    <span class="kw">fn </span>persist(<span class="kw-2">&amp;</span><span class="self">self</span>, signer_record: SignerRecord) -&gt; StdResult&lt;SignerRecord&gt; {
         <span class="kw">let </span>filters = <span class="self">self</span>.get_insert_condition(signer_record.clone());
 
         <span class="kw">let </span>entity = <span class="self">self</span>.find(filters)<span class="question-mark">?</span>.next().unwrap_or_else(|| {
@@ -743,7 +732,7 @@
         )
     }
 
-    <span class="kw">fn </span>persist(<span class="kw-2">&amp;</span><span class="self">self</span>, signer_record: SignerRecord) -&gt; <span class="prelude-ty">Result</span>&lt;SignerRecord, StdError&gt; {
+    <span class="kw">fn </span>persist(<span class="kw-2">&amp;</span><span class="self">self</span>, signer_record: SignerRecord) -&gt; StdResult&lt;SignerRecord&gt; {
         <span class="kw">let </span>filters = <span class="self">self</span>.get_update_condition(signer_record.clone());
 
         <span class="kw">let </span>entity = <span class="self">self</span>.find(filters)<span class="question-mark">?</span>.next().unwrap_or_else(|| {
@@ -785,7 +774,7 @@
 
 <span class="attr">#[async_trait]
 </span><span class="kw">impl </span>SignerRecorder <span class="kw">for </span>SignerStore {
-    <span class="kw">async fn </span>record_signer_id(<span class="kw-2">&amp;</span><span class="self">self</span>, signer_id: String) -&gt; <span class="prelude-ty">Result</span>&lt;(), StdError&gt; {
+    <span class="kw">async fn </span>record_signer_id(<span class="kw-2">&amp;</span><span class="self">self</span>, signer_id: String) -&gt; StdResult&lt;()&gt; {
         <span class="kw">let </span>connection = <span class="kw-2">&amp;*</span><span class="self">self</span>.connection.lock().<span class="kw">await</span>;
         <span class="kw">let </span>provider = InsertSignerRecordProvider::new(connection);
         <span class="kw">let </span>created_at = Utc::now();
@@ -805,7 +794,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         signer_id: String,
         pool_ticker: <span class="prelude-ty">Option</span>&lt;String&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), StdError&gt; {
+    ) -&gt; StdResult&lt;()&gt; {
         <span class="kw">let </span>connection = <span class="kw-2">&amp;*</span><span class="self">self</span>.connection.lock().<span class="kw">await</span>;
         <span class="kw">let </span>provider = UpdateSignerRecordProvider::new(connection);
         <span class="kw">let </span>created_at = Utc::now();
@@ -826,6 +815,7 @@
 </span><span class="kw">mod </span>tests {
     <span class="kw">use </span><span class="kw">crate</span>::database::provider::apply_all_migrations_to_db;
     <span class="kw">use </span>chrono::Duration;
+    <span class="kw">use </span>mithril_common::StdResult;
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
@@ -847,7 +837,7 @@
     <span class="kw">pub fn </span>setup_signer_db(
         connection: <span class="kw-2">&amp;</span>Connection,
         signer_records: Vec&lt;SignerRecord&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), StdError&gt; {
+    ) -&gt; StdResult&lt;()&gt; {
         apply_all_migrations_to_db(connection)<span class="question-mark">?</span>;
 
         <span class="kw">if </span>signer_records.is_empty() {

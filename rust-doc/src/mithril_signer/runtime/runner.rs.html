@@ -898,21 +898,9 @@
 <a href="#898" id="898">898</a>
 <a href="#899" id="899">899</a>
 <a href="#900" id="900">900</a>
-<a href="#901" id="901">901</a>
-<a href="#902" id="902">902</a>
-<a href="#903" id="903">903</a>
-<a href="#904" id="904">904</a>
-<a href="#905" id="905">905</a>
-<a href="#906" id="906">906</a>
-<a href="#907" id="907">907</a>
-<a href="#908" id="908">908</a>
-<a href="#909" id="909">909</a>
-<a href="#910" id="910">910</a>
-<a href="#911" id="911">911</a>
-<a href="#912" id="912">912</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
+</pre></div><pre class="rust"><code><span class="kw">use </span>anyhow::anyhow;
+<span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>slog_scope::{debug, info, trace, warn};
-<span class="kw">use </span>std::error::Error <span class="kw">as </span>StdError;
 <span class="kw">use </span>thiserror::Error;
 
 <span class="attr">#[cfg(test)]
@@ -927,6 +915,7 @@
         Signer, SignerWithStake, SingleSignatures,
     },
     store::StakeStorer,
+    StdResult,
 };
 
 <span class="kw">use crate</span>::{Configuration, MithrilProtocolInitializerBuilder};
@@ -937,36 +926,26 @@
 </span><span class="attr">#[async_trait]
 </span><span class="kw">pub trait </span>Runner {
     <span class="doccomment">/// Fetch the current epoch settings if any.
-    </span><span class="kw">async fn </span>get_epoch_settings(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;EpochSettings&gt;, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
+    </span><span class="kw">async fn </span>get_epoch_settings(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StdResult&lt;<span class="prelude-ty">Option</span>&lt;EpochSettings&gt;&gt;;
 
     <span class="doccomment">/// Fetch the current pending certificate if any.
-    </span><span class="kw">async fn </span>get_pending_certificate(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;CertificatePending&gt;, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
+    </span><span class="kw">async fn </span>get_pending_certificate(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StdResult&lt;<span class="prelude-ty">Option</span>&lt;CertificatePending&gt;&gt;;
 
     <span class="doccomment">/// Fetch the current beacon from the Cardano node.
-    </span><span class="kw">async fn </span>get_current_beacon(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Beacon, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
+    </span><span class="kw">async fn </span>get_current_beacon(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StdResult&lt;Beacon&gt;;
 
     <span class="doccomment">/// Register the signer verification key to the aggregator.
     </span><span class="kw">async fn </span>register_signer_to_aggregator(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         epoch: Epoch,
         protocol_parameters: <span class="kw-2">&amp;</span>ProtocolParameters,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
+    ) -&gt; StdResult&lt;()&gt;;
 
     <span class="doccomment">/// Read the stake distribution and store it.
-    </span><span class="kw">async fn </span>update_stake_distribution(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        epoch: Epoch,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
+    </span><span class="kw">async fn </span>update_stake_distribution(<span class="kw-2">&amp;</span><span class="self">self</span>, epoch: Epoch) -&gt; StdResult&lt;()&gt;;
 
     <span class="doccomment">/// Check if all prerequisites for signing are met.
-    </span><span class="kw">async fn </span>can_i_sign(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        pending_certificate: <span class="kw-2">&amp;</span>CertificatePending,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;bool, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
+    </span><span class="kw">async fn </span>can_i_sign(<span class="kw-2">&amp;</span><span class="self">self</span>, pending_certificate: <span class="kw-2">&amp;</span>CertificatePending) -&gt; StdResult&lt;bool&gt;;
 
     <span class="doccomment">/// From a list of signers, associate them with the stake read on the
     /// Cardano node.
@@ -974,14 +953,14 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         epoch: Epoch,
         signers: <span class="kw-2">&amp;</span>[Signer],
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;SignerWithStake&gt;, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
+    ) -&gt; StdResult&lt;Vec&lt;SignerWithStake&gt;&gt;;
 
     <span class="doccomment">/// Create the message to be signed with the single signature.
     </span><span class="kw">async fn </span>compute_message(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         signed_entity_type: <span class="kw-2">&amp;</span>SignedEntityType,
         next_signers: <span class="kw-2">&amp;</span>[SignerWithStake],
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;ProtocolMessage, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
+    ) -&gt; StdResult&lt;ProtocolMessage&gt;;
 
     <span class="doccomment">/// Create the single signature.
     </span><span class="kw">async fn </span>compute_single_signature(
@@ -989,18 +968,17 @@
         epoch: Epoch,
         message: <span class="kw-2">&amp;</span>ProtocolMessage,
         signers: <span class="kw-2">&amp;</span>[SignerWithStake],
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;SingleSignatures&gt;, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
+    ) -&gt; StdResult&lt;<span class="prelude-ty">Option</span>&lt;SingleSignatures&gt;&gt;;
 
     <span class="doccomment">/// Send the single signature to the aggregator in order to be aggregated.
     </span><span class="kw">async fn </span>send_single_signature(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         signed_entity_type: <span class="kw-2">&amp;</span>SignedEntityType,
         maybe_signature: <span class="prelude-ty">Option</span>&lt;SingleSignatures&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
+    ) -&gt; StdResult&lt;()&gt;;
 
     <span class="doccomment">/// Read the current era and update the EraChecker.
-    </span><span class="kw">async fn </span>update_era_checker(<span class="kw-2">&amp;</span><span class="self">self</span>, epoch: Epoch)
-        -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
+    </span><span class="kw">async fn </span>update_era_checker(<span class="kw-2">&amp;</span><span class="self">self</span>, epoch: Epoch) -&gt; StdResult&lt;()&gt;;
 }
 
 <span class="doccomment">/// This type represents the errors thrown from the Runner.
@@ -1036,9 +1014,7 @@
 <span class="attr">#[cfg_attr(test, automock)]
 #[async_trait]
 </span><span class="kw">impl </span>Runner <span class="kw">for </span>SignerRunner {
-    <span class="kw">async fn </span>get_epoch_settings(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;EpochSettings&gt;, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
+    <span class="kw">async fn </span>get_epoch_settings(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StdResult&lt;<span class="prelude-ty">Option</span>&lt;EpochSettings&gt;&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: get_epoch_settings&quot;</span>);
 
         <span class="self">self</span>.services
@@ -1048,9 +1024,7 @@
             </span>.map_err(|e| e.into())
     }
 
-    <span class="kw">async fn </span>get_pending_certificate(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;CertificatePending&gt;, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
+    <span class="kw">async fn </span>get_pending_certificate(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StdResult&lt;<span class="prelude-ty">Option</span>&lt;CertificatePending&gt;&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: get_pending_certificate&quot;</span>);
 
         <span class="self">self</span>.services
@@ -1060,7 +1034,7 @@
             </span>.map_err(|e| e.into())
     }
 
-    <span class="kw">async fn </span>get_current_beacon(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Beacon, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
+    <span class="kw">async fn </span>get_current_beacon(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StdResult&lt;Beacon&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: get_current_epoch&quot;</span>);
 
         <span class="self">self</span>.services
@@ -1074,7 +1048,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         epoch: Epoch,
         protocol_parameters: <span class="kw-2">&amp;</span>ProtocolParameters,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
+    ) -&gt; StdResult&lt;()&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: register_signer_to_aggregator&quot;</span>);
 
         <span class="kw">let </span>epoch_offset_to_recording_epoch = epoch.offset_to_recording_epoch();
@@ -1091,17 +1065,24 @@
         <span class="kw">let </span>stake = stake_distribution
             .get(<span class="kw-2">&amp;</span><span class="self">self</span>.services.single_signer.get_party_id())
             .ok_or_else(RunnerError::NoStakeForSelf)<span class="question-mark">?</span>;
-        <span class="kw">let </span>(operational_certificate, operational_certificate_encoded) =
-            <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.config.operational_certificate_path {
-                <span class="prelude-val">Some</span>(operational_certificate_path) =&gt; {
-                    <span class="kw">let </span>opcert: OpCert =
-                        OpCert::from_file(operational_certificate_path).map_err(|<span class="kw">_</span>| {
-                            RunnerError::FileParse(<span class="string">&quot;operational_certificate_path&quot;</span>.to_string())
-                        })<span class="question-mark">?</span>;
-                    (<span class="prelude-val">Some</span>(opcert.clone()), <span class="prelude-val">Some</span>(key_encode_hex(opcert)<span class="question-mark">?</span>))
-                }
-                <span class="kw">_ </span>=&gt; (<span class="prelude-val">None</span>, <span class="prelude-val">None</span>),
-            };
+        <span class="kw">let </span>(operational_certificate, operational_certificate_encoded) = <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self
+            </span>.config
+            .operational_certificate_path
+        {
+            <span class="prelude-val">Some</span>(operational_certificate_path) =&gt; {
+                <span class="kw">let </span>opcert: OpCert =
+                    OpCert::from_file(operational_certificate_path).map_err(|<span class="kw">_</span>| {
+                        RunnerError::FileParse(<span class="string">&quot;operational_certificate_path&quot;</span>.to_string())
+                    })<span class="question-mark">?</span>;
+                (
+                    <span class="prelude-val">Some</span>(opcert.clone()),
+                    <span class="prelude-val">Some</span>(key_encode_hex(opcert).map_err(|e| {
+                        <span class="macro">anyhow!</span>(<span class="string">&quot;Json Hex encoding of Operational certificate failure, error: {e}&quot;</span>)
+                    })<span class="question-mark">?</span>),
+                )
+            }
+            <span class="kw">_ </span>=&gt; (<span class="prelude-val">None</span>, <span class="prelude-val">None</span>),
+        };
 
         <span class="kw">let </span>kes_period = <span class="kw">match </span>operational_certificate {
             <span class="prelude-val">Some</span>(operational_certificate) =&gt; <span class="prelude-val">Some</span>(
@@ -1122,7 +1103,11 @@
         )<span class="question-mark">?</span>;
         <span class="kw">let </span>verification_key_signature_encoded =
             <span class="kw">match </span>protocol_initializer.verification_key_signature() {
-                <span class="prelude-val">Some</span>(verification_signature) =&gt; <span class="prelude-val">Some</span>(key_encode_hex(verification_signature)<span class="question-mark">?</span>),
+                <span class="prelude-val">Some</span>(verification_signature) =&gt; {
+                    <span class="prelude-val">Some</span>(key_encode_hex(verification_signature).map_err(|e| {
+                        <span class="macro">anyhow!</span>(<span class="string">&quot;Json Hex encoding of signer verification key signature failure, error: {e}&quot;</span>)
+                    })<span class="question-mark">?</span>)
+                }
                 <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
             };
         <span class="kw">let </span>signer = Signer::new(
@@ -1144,10 +1129,7 @@
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">async fn </span>update_stake_distribution(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        epoch: Epoch,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
+    <span class="kw">async fn </span>update_stake_distribution(<span class="kw-2">&amp;</span><span class="self">self</span>, epoch: Epoch) -&gt; StdResult&lt;()&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: update_stake_distribution&quot;</span>);
 
         <span class="kw">let </span>exists_stake_distribution = !<span class="self">self
@@ -1175,10 +1157,7 @@
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">async fn </span>can_i_sign(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        pending_certificate: <span class="kw-2">&amp;</span>CertificatePending,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;bool, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
+    <span class="kw">async fn </span>can_i_sign(<span class="kw-2">&amp;</span><span class="self">self</span>, pending_certificate: <span class="kw-2">&amp;</span>CertificatePending) -&gt; StdResult&lt;bool&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: can_i_sign&quot;</span>);
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(signer) =
@@ -1225,7 +1204,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         epoch: Epoch,
         signers: <span class="kw-2">&amp;</span>[Signer],
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;SignerWithStake&gt;, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
+    ) -&gt; StdResult&lt;Vec&lt;SignerWithStake&gt;&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: associate_signers_with_stake&quot;</span>);
 
         <span class="kw">let </span>stakes = <span class="self">self
@@ -1262,7 +1241,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         signed_entity_type: <span class="kw-2">&amp;</span>SignedEntityType,
         next_signers: <span class="kw-2">&amp;</span>[SignerWithStake],
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;ProtocolMessage, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
+    ) -&gt; StdResult&lt;ProtocolMessage&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: compute_message&quot;</span>);
 
         <span class="comment">// 1 compute the signed entity type part of the message
@@ -1301,7 +1280,7 @@
         epoch: Epoch,
         message: <span class="kw-2">&amp;</span>ProtocolMessage,
         signers: <span class="kw-2">&amp;</span>[SignerWithStake],
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;SingleSignatures&gt;, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
+    ) -&gt; StdResult&lt;<span class="prelude-ty">Option</span>&lt;SingleSignatures&gt;&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: compute_single_signature&quot;</span>);
 
         <span class="kw">let </span>signer_retrieval_epoch = epoch.offset_to_signer_retrieval_epoch()<span class="question-mark">?</span>;
@@ -1336,7 +1315,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         signed_entity_type: <span class="kw-2">&amp;</span>SignedEntityType,
         maybe_signature: <span class="prelude-ty">Option</span>&lt;SingleSignatures&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
+    ) -&gt; StdResult&lt;()&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: send_single_signature&quot;</span>);
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(single_signatures) = maybe_signature {
@@ -1353,10 +1332,7 @@
         }
     }
 
-    <span class="kw">async fn </span>update_era_checker(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        epoch: Epoch,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
+    <span class="kw">async fn </span>update_era_checker(<span class="kw-2">&amp;</span><span class="self">self</span>, epoch: Epoch) -&gt; StdResult&lt;()&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: update_era_checker&quot;</span>);
 
         <span class="kw">let </span>era_token = <span class="self">self

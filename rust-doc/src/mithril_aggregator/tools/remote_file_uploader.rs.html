@@ -85,16 +85,16 @@
 <a href="#85" id="85">85</a>
 <a href="#86" id="86">86</a>
 <a href="#87" id="87">87</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
-<span class="kw">use </span>cloud_storage::bucket::Entity;
-<span class="kw">use </span>cloud_storage::bucket_access_control::Role;
-<span class="kw">use </span>cloud_storage::object_access_control::NewObjectAccessControl;
-<span class="kw">use </span>cloud_storage::Client;
+</pre></div><pre class="rust"><code><span class="kw">use </span>anyhow::{anyhow, Context};
+<span class="kw">use </span>async_trait::async_trait;
+<span class="kw">use </span>cloud_storage::{
+    bucket::Entity, bucket_access_control::Role, object_access_control::NewObjectAccessControl,
+    Client,
+};
+<span class="kw">use </span>mithril_common::StdResult;
 <span class="kw">use </span>slog_scope::info;
-<span class="kw">use </span>std::env;
-<span class="kw">use </span>std::path::Path;
-<span class="kw">use </span>tokio_util::codec::BytesCodec;
-<span class="kw">use </span>tokio_util::codec::FramedRead;
+<span class="kw">use </span>std::{env, path::Path};
+<span class="kw">use </span>tokio_util::{codec::BytesCodec, codec::FramedRead};
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">use </span>mockall::automock;
@@ -104,7 +104,7 @@
 #[async_trait]
 </span><span class="kw">pub trait </span>RemoteFileUploader: Sync + Send {
     <span class="doccomment">/// Upload a snapshot
-    </span><span class="kw">async fn </span>upload_file(<span class="kw-2">&amp;</span><span class="self">self</span>, filepath: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt;;
+    </span><span class="kw">async fn </span>upload_file(<span class="kw-2">&amp;</span><span class="self">self</span>, filepath: <span class="kw-2">&amp;</span>Path) -&gt; StdResult&lt;()&gt;;
 }
 
 <span class="doccomment">/// GcpFileUploader represents a Google Cloud Platform file uploader interactor
@@ -121,11 +121,11 @@
 
 <span class="attr">#[async_trait]
 </span><span class="kw">impl </span>RemoteFileUploader <span class="kw">for </span>GcpFileUploader {
-    <span class="kw">async fn </span>upload_file(<span class="kw-2">&amp;</span><span class="self">self</span>, filepath: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
+    <span class="kw">async fn </span>upload_file(<span class="kw-2">&amp;</span><span class="self">self</span>, filepath: <span class="kw-2">&amp;</span>Path) -&gt; StdResult&lt;()&gt; {
         <span class="kw">if </span>env::var(<span class="string">&quot;GOOGLE_APPLICATION_CREDENTIALS_JSON&quot;</span>).is_err() {
-            <span class="kw">return </span><span class="prelude-val">Err</span>(
-                <span class="string">&quot;Missing GOOGLE_APPLICATION_CREDENTIALS_JSON environment variable&quot;</span>.to_string(),
-            );
+            <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">anyhow!</span>(
+                <span class="string">&quot;Missing GOOGLE_APPLICATION_CREDENTIALS_JSON environment variable&quot;</span>.to_string()
+            ));
         };
 
         <span class="kw">let </span>filename = filepath.file_name().unwrap().to_str().unwrap();
@@ -144,7 +144,7 @@
                 <span class="string">&quot;application/octet-stream&quot;</span>,
             )
             .<span class="kw">await
-            </span>.map_err(|e| e.to_string())<span class="question-mark">?</span>;
+            </span>.with_context(|| <span class="string">&quot;remote uploading failure&quot;</span>)<span class="question-mark">?</span>;
 
         <span class="macro">info!</span>(<span class="string">&quot;uploaded {}&quot;</span>, filename);
 
@@ -165,7 +165,7 @@
             .object_access_control()
             .create(<span class="kw-2">&amp;</span><span class="self">self</span>.bucket, filename, <span class="kw-2">&amp;</span>new_bucket_access_control)
             .<span class="kw">await
-            </span>.map_err(|e| e.to_string())<span class="question-mark">?</span>;
+            </span>.with_context(|| <span class="string">&quot;updating acl failure&quot;</span>)<span class="question-mark">?</span>;
 
         <span class="macro">info!</span>(<span class="string">&quot;updated acl for {} &quot;</span>, filename);
 

@@ -95,9 +95,11 @@
 <a href="#95" id="95">95</a>
 <a href="#96" id="96">96</a>
 <a href="#97" id="97">97</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>std::{error::Error <span class="kw">as </span>StdError, fmt::Display};
+<a href="#98" id="98">98</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>std::fmt::Display;
 
 <span class="kw">use </span>mithril_common::entities::EpochError;
+<span class="kw">use </span>mithril_common::StdError;
 
 <span class="kw">use </span><span class="kw">crate</span>::RunnerError;
 
@@ -112,7 +114,7 @@
         </span>message: String,
 
         <span class="doccomment">/// Eventual previous error message
-        </span>nested_error: <span class="prelude-ty">Option</span>&lt;Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;,
+        </span>nested_error: <span class="prelude-ty">Option</span>&lt;StdError&gt;,
     },
     <span class="doccomment">/// Critical error means the runtime will exit and the software will return
     /// an error code.
@@ -121,7 +123,7 @@
         </span>message: String,
 
         <span class="doccomment">/// Eventual previous error message
-        </span>nested_error: <span class="prelude-ty">Option</span>&lt;Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;,
+        </span>nested_error: <span class="prelude-ty">Option</span>&lt;StdError&gt;,
     },
 }
 
@@ -138,7 +140,7 @@
     }
 }
 
-<span class="kw">impl </span>StdError <span class="kw">for </span>RuntimeError {}
+<span class="kw">impl </span>std::error::Error <span class="kw">for </span>RuntimeError {}
 
 <span class="kw">impl </span>Display <span class="kw">for </span>RuntimeError {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; std::fmt::Result {
@@ -148,7 +150,7 @@
                 nested_error,
             } =&gt; {
                 <span class="kw">let </span>nested = <span class="kw">if let </span><span class="prelude-val">Some</span>(error) = nested_error {
-                    <span class="macro">format!</span>(<span class="string">&quot;nested error = {error}&quot;</span>)
+                    <span class="macro">format!</span>(<span class="string">&quot;nested error = {error:?}&quot;</span>)
                 } <span class="kw">else </span>{
                     String::new()
                 };
@@ -162,7 +164,7 @@
                 nested_error,
             } =&gt; {
                 <span class="kw">let </span>nested = <span class="kw">if let </span><span class="prelude-val">Some</span>(error) = nested_error {
-                    <span class="macro">format!</span>(<span class="string">&quot;nested error = {error}&quot;</span>)
+                    <span class="macro">format!</span>(<span class="string">&quot;nested error = {error:?}&quot;</span>)
                 } <span class="kw">else </span>{
                     String::new()
                 };

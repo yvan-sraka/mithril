@@ -224,19 +224,16 @@
 <a href="#224" id="224">224</a>
 <a href="#225" id="225">225</a>
 <a href="#226" id="226">226</a>
-<a href="#227" id="227">227</a>
-<a href="#228" id="228">228</a>
-<a href="#229" id="229">229</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>std::{collections::HashMap, sync::Arc};
-
+</pre></div><pre class="rust"><code><span class="kw">use </span>anyhow::anyhow;
 <span class="kw">use </span>chrono::{DateTime, Utc};
+<span class="kw">use </span>sqlite::Connection;
+<span class="kw">use </span>std::sync::Mutex;
+<span class="kw">use </span>std::{collections::HashMap, sync::Arc};
+
 <span class="kw">use </span>mithril_common::sqlite::{
     HydrationError, Projection, Provider, SourceAlias, SqLiteEntity, WhereCondition,
 };
-<span class="kw">use </span>sqlite::Connection;
-<span class="kw">use </span>std::sync::Mutex;
-
-<span class="kw">use </span>mithril_common::StdError;
+<span class="kw">use </span>mithril_common::StdResult;
 
 <span class="doccomment">/// Event that is sent from a thread to be persisted.
 </span><span class="attr">#[derive(Debug, Clone)]
@@ -383,7 +380,7 @@
         <span class="self">Self </span>{ connection }
     }
 
-    <span class="kw">fn </span>get_persist_parameters(<span class="kw-2">&amp;</span><span class="self">self</span>, message: EventMessage) -&gt; <span class="prelude-ty">Result</span>&lt;WhereCondition, StdError&gt; {
+    <span class="kw">fn </span>get_persist_parameters(<span class="kw-2">&amp;</span><span class="self">self</span>, message: EventMessage) -&gt; StdResult&lt;WhereCondition&gt; {
         <span class="kw">let </span>filters = WhereCondition::new(
             <span class="string">&quot;(source, action, content, created_at) values (?*, ?*, ?*, ?*)&quot;</span>,
             <span class="macro">vec!</span>[
@@ -402,18 +399,15 @@
     }
 
     <span class="doccomment">/// Save an EventMessage in the database.
-    </span><span class="kw">pub fn </span>persist(<span class="kw-2">&amp;</span><span class="self">self</span>, message: EventMessage) -&gt; <span class="prelude-ty">Result</span>&lt;Event, StdError&gt; {
+    </span><span class="kw">pub fn </span>persist(<span class="kw-2">&amp;</span><span class="self">self</span>, message: EventMessage) -&gt; StdResult&lt;Event&gt; {
         <span class="kw">let </span>connection = <span class="kw-2">&amp;*</span><span class="self">self</span>.connection.lock().unwrap();
         <span class="kw">let </span>provider = EventPersisterProvider::new(connection);
         <span class="kw">let </span>log_message = message.clone();
-        <span class="kw">let </span><span class="kw-2">mut </span>rows = provider
-            .find(<span class="self">self</span>.get_persist_parameters(message)<span class="question-mark">?</span>)
-            .map_err(|e| -&gt; StdError { e })<span class="question-mark">?</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>rows = provider.find(<span class="self">self</span>.get_persist_parameters(message)<span class="question-mark">?</span>)<span class="question-mark">?</span>;
 
-        rows.next().ok_or_else(|| {
-            <span class="macro">format!</span>(<span class="string">&quot;No record from the database after I saved event message {log_message:?}&quot;</span>)
-                .into()
-        })
+        rows.next().ok_or(<span class="macro">anyhow!</span>(
+            <span class="string">&quot;No record from the database after I saved event message {log_message:?}&quot;
+        </span>))
     }
 }
 

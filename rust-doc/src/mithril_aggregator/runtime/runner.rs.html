@@ -1079,73 +1079,17 @@
 <a href="#1079" id="1079">1079</a>
 <a href="#1080" id="1080">1080</a>
 <a href="#1081" id="1081">1081</a>
-<a href="#1082" id="1082">1082</a>
-<a href="#1083" id="1083">1083</a>
-<a href="#1084" id="1084">1084</a>
-<a href="#1085" id="1085">1085</a>
-<a href="#1086" id="1086">1086</a>
-<a href="#1087" id="1087">1087</a>
-<a href="#1088" id="1088">1088</a>
-<a href="#1089" id="1089">1089</a>
-<a href="#1090" id="1090">1090</a>
-<a href="#1091" id="1091">1091</a>
-<a href="#1092" id="1092">1092</a>
-<a href="#1093" id="1093">1093</a>
-<a href="#1094" id="1094">1094</a>
-<a href="#1095" id="1095">1095</a>
-<a href="#1096" id="1096">1096</a>
-<a href="#1097" id="1097">1097</a>
-<a href="#1098" id="1098">1098</a>
-<a href="#1099" id="1099">1099</a>
-<a href="#1100" id="1100">1100</a>
-<a href="#1101" id="1101">1101</a>
-<a href="#1102" id="1102">1102</a>
-<a href="#1103" id="1103">1103</a>
-<a href="#1104" id="1104">1104</a>
-<a href="#1105" id="1105">1105</a>
-<a href="#1106" id="1106">1106</a>
-<a href="#1107" id="1107">1107</a>
-<a href="#1108" id="1108">1108</a>
-<a href="#1109" id="1109">1109</a>
-<a href="#1110" id="1110">1110</a>
-<a href="#1111" id="1111">1111</a>
-<a href="#1112" id="1112">1112</a>
-<a href="#1113" id="1113">1113</a>
-<a href="#1114" id="1114">1114</a>
-<a href="#1115" id="1115">1115</a>
-<a href="#1116" id="1116">1116</a>
-<a href="#1117" id="1117">1117</a>
-<a href="#1118" id="1118">1118</a>
-<a href="#1119" id="1119">1119</a>
-<a href="#1120" id="1120">1120</a>
-<a href="#1121" id="1121">1121</a>
-<a href="#1122" id="1122">1122</a>
-<a href="#1123" id="1123">1123</a>
-<a href="#1124" id="1124">1124</a>
-<a href="#1125" id="1125">1125</a>
-<a href="#1126" id="1126">1126</a>
-<a href="#1127" id="1127">1127</a>
-<a href="#1128" id="1128">1128</a>
-<a href="#1129" id="1129">1129</a>
-<a href="#1130" id="1130">1130</a>
-<a href="#1131" id="1131">1131</a>
-<a href="#1132" id="1132">1132</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
-<span class="kw">use </span>mithril_common::entities::Epoch;
-<span class="kw">use </span>mithril_common::entities::SignedEntityType;
-<span class="kw">use </span>mithril_common::store::StakeStorer;
 <span class="kw">use </span>slog_scope::{debug, info, warn};
+<span class="kw">use </span>std::{path::Path, path::PathBuf, sync::Arc};
 
 <span class="kw">use </span>mithril_common::crypto_helper::ProtocolStakeDistribution;
 <span class="kw">use </span>mithril_common::entities::{
-    Beacon, Certificate, CertificatePending, ProtocolMessage, ProtocolMessagePartKey,
+    Beacon, Certificate, CertificatePending, Epoch, ProtocolMessage, ProtocolMessagePartKey,
+    SignedEntityType,
 };
-<span class="kw">use </span>mithril_common::CardanoNetwork;
-
-<span class="kw">use </span>std::error::Error <span class="kw">as </span>StdError;
-<span class="kw">use </span>std::path::Path;
-<span class="kw">use </span>std::path::PathBuf;
-<span class="kw">use </span>std::sync::Arc;
+<span class="kw">use </span>mithril_common::store::StakeStorer;
+<span class="kw">use </span>mithril_common::{CardanoNetwork, StdResult};
 
 <span class="kw">use </span><span class="kw">crate</span>::entities::OpenMessage;
 <span class="kw">use </span><span class="kw">crate</span>::RuntimeError;
@@ -1185,107 +1129,83 @@
 </span><span class="attr">#[async_trait]
 </span><span class="kw">pub trait </span>AggregatorRunnerTrait: Sync + Send {
     <span class="doccomment">/// Return the current beacon from the chain
-    </span><span class="kw">async fn </span>get_beacon_from_chain(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Beacon, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
+    </span><span class="kw">async fn </span>get_beacon_from_chain(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StdResult&lt;Beacon&gt;;
 
     <span class="doccomment">/// Retrieves the current non certified open message for a given signed entity type.
     </span><span class="kw">async fn </span>get_current_non_certified_open_message_for_signed_entity_type(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         signed_entity_type: <span class="kw-2">&amp;</span>SignedEntityType,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;OpenMessage&gt;, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
+    ) -&gt; StdResult&lt;<span class="prelude-ty">Option</span>&lt;OpenMessage&gt;&gt;;
 
     <span class="doccomment">/// Retrieves the current non certified open message.
-    </span><span class="kw">async fn </span>get_current_non_certified_open_message(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;OpenMessage&gt;, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
+    </span><span class="kw">async fn </span>get_current_non_certified_open_message(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StdResult&lt;<span class="prelude-ty">Option</span>&lt;OpenMessage&gt;&gt;;
 
     <span class="doccomment">/// Check if a certificate chain is valid.
-    </span><span class="kw">async fn </span>is_certificate_chain_valid(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        beacon: <span class="kw-2">&amp;</span>Beacon,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
+    </span><span class="kw">async fn </span>is_certificate_chain_valid(<span class="kw-2">&amp;</span><span class="self">self</span>, beacon: <span class="kw-2">&amp;</span>Beacon) -&gt; StdResult&lt;()&gt;;
 
     <span class="doccomment">/// Update the multisigner with the given beacon.
-    </span><span class="kw">async fn </span>update_beacon(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        new_beacon: <span class="kw-2">&amp;</span>Beacon,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
+    </span><span class="kw">async fn </span>update_beacon(<span class="kw-2">&amp;</span><span class="self">self</span>, new_beacon: <span class="kw-2">&amp;</span>Beacon) -&gt; StdResult&lt;()&gt;;
 
     <span class="doccomment">/// Read the stake distribution from the blockchain and store it.
-    </span><span class="kw">async fn </span>update_stake_distribution(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        new_beacon: <span class="kw-2">&amp;</span>Beacon,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
+    </span><span class="kw">async fn </span>update_stake_distribution(<span class="kw-2">&amp;</span><span class="self">self</span>, new_beacon: <span class="kw-2">&amp;</span>Beacon) -&gt; StdResult&lt;()&gt;;
 
     <span class="doccomment">/// Open the signer registration round of an epoch.
-    </span><span class="kw">async fn </span>open_signer_registration_round(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        new_beacon: <span class="kw-2">&amp;</span>Beacon,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
+    </span><span class="kw">async fn </span>open_signer_registration_round(<span class="kw-2">&amp;</span><span class="self">self</span>, new_beacon: <span class="kw-2">&amp;</span>Beacon) -&gt; StdResult&lt;()&gt;;
 
     <span class="doccomment">/// Close the signer registration round of an epoch.
-    </span><span class="kw">async fn </span>close_signer_registration_round(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
+    </span><span class="kw">async fn </span>close_signer_registration_round(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StdResult&lt;()&gt;;
 
     <span class="doccomment">/// Update the multisigner with the protocol parameters from configuration.
-    </span><span class="kw">async fn </span>update_protocol_parameters_in_multisigner(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        new_beacon: <span class="kw-2">&amp;</span>Beacon,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
+    </span><span class="kw">async fn </span>update_protocol_parameters_in_multisigner(<span class="kw-2">&amp;</span><span class="self">self</span>, new_beacon: <span class="kw-2">&amp;</span>Beacon)
+        -&gt; StdResult&lt;()&gt;;
 
     <span class="doccomment">/// Compute the protocol message
     </span><span class="kw">async fn </span>compute_protocol_message(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         signed_entity_type: <span class="kw-2">&amp;</span>SignedEntityType,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;ProtocolMessage, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
+    ) -&gt; StdResult&lt;ProtocolMessage&gt;;
 
     <span class="doccomment">/// Return the actual pending certificate from the multisigner.
     </span><span class="kw">async fn </span>create_new_pending_certificate_from_multisigner(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         beacon: Beacon,
         signed_entity_type: <span class="kw-2">&amp;</span>SignedEntityType,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;CertificatePending, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
+    ) -&gt; StdResult&lt;CertificatePending&gt;;
 
     <span class="doccomment">/// Store the given pending certificate.
     </span><span class="kw">async fn </span>save_pending_certificate(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         pending_certificate: CertificatePending,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
+    ) -&gt; StdResult&lt;()&gt;;
 
     <span class="doccomment">/// Drop the multisigner&#39;s actual pending certificate.
-    </span><span class="kw">async fn </span>drop_pending_certificate(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;CertificatePending&gt;, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
+    </span><span class="kw">async fn </span>drop_pending_certificate(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StdResult&lt;<span class="prelude-ty">Option</span>&lt;CertificatePending&gt;&gt;;
 
     <span class="doccomment">/// Create multi-signature.
     </span><span class="kw">async fn </span>create_certificate(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         signed_entity_type: <span class="kw-2">&amp;</span>SignedEntityType,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Certificate&gt;, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
+    ) -&gt; StdResult&lt;<span class="prelude-ty">Option</span>&lt;Certificate&gt;&gt;;
 
     <span class="doccomment">/// Create an artifact and persist it.
     </span><span class="kw">async fn </span>create_artifact(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         signed_entity_type: <span class="kw-2">&amp;</span>SignedEntityType,
         certificate: <span class="kw-2">&amp;</span>Certificate,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
+    ) -&gt; StdResult&lt;()&gt;;
 
     <span class="doccomment">/// Update the EraChecker with EraReader information.
-    </span><span class="kw">async fn </span>update_era_checker(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        beacon: <span class="kw-2">&amp;</span>Beacon,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
+    </span><span class="kw">async fn </span>update_era_checker(<span class="kw-2">&amp;</span><span class="self">self</span>, beacon: <span class="kw-2">&amp;</span>Beacon) -&gt; StdResult&lt;()&gt;;
 
     <span class="doccomment">/// Certifier inform new epoch
-    </span><span class="kw">async fn </span>certifier_inform_new_epoch(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        epoch: <span class="kw-2">&amp;</span>Epoch,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
+    </span><span class="kw">async fn </span>certifier_inform_new_epoch(<span class="kw-2">&amp;</span><span class="self">self</span>, epoch: <span class="kw-2">&amp;</span>Epoch) -&gt; StdResult&lt;()&gt;;
 
     <span class="doccomment">/// Create new open message
     </span><span class="kw">async fn </span>create_open_message(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         signed_entity_type: <span class="kw-2">&amp;</span>SignedEntityType,
         protocol_message: <span class="kw-2">&amp;</span>ProtocolMessage,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;OpenMessage, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt;;
+    ) -&gt; StdResult&lt;OpenMessage&gt;;
 }
 
 <span class="doccomment">/// The runner responsibility is to expose a code API for the state machine. It
@@ -1305,7 +1225,7 @@
 #[async_trait]
 </span><span class="kw">impl </span>AggregatorRunnerTrait <span class="kw">for </span>AggregatorRunner {
     <span class="doccomment">/// Return the current beacon from the chain
-    </span><span class="kw">async fn </span>get_beacon_from_chain(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Beacon, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
+    </span><span class="kw">async fn </span>get_beacon_from_chain(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StdResult&lt;Beacon&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: get beacon from chain&quot;</span>);
         <span class="kw">let </span>beacon = <span class="self">self
             </span>.dependencies
@@ -1319,7 +1239,7 @@
     <span class="kw">async fn </span>get_current_non_certified_open_message_for_signed_entity_type(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         signed_entity_type: <span class="kw-2">&amp;</span>SignedEntityType,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;OpenMessage&gt;, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
+    ) -&gt; StdResult&lt;<span class="prelude-ty">Option</span>&lt;OpenMessage&gt;&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: get_current_non_certified_open_message_for_signed_entity_type&quot;</span>; <span class="string">&quot;signed_entity_type&quot; </span>=&gt; <span class="question-mark">?</span>signed_entity_type);
         <span class="kw">let </span>open_message_maybe = <span class="kw">match </span><span class="self">self
             </span>.dependencies
@@ -1368,9 +1288,7 @@
         <span class="prelude-val">Ok</span>(open_message_maybe)
     }
 
-    <span class="kw">async fn </span>get_current_non_certified_open_message(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;OpenMessage&gt;, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
+    <span class="kw">async fn </span>get_current_non_certified_open_message(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StdResult&lt;<span class="prelude-ty">Option</span>&lt;OpenMessage&gt;&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: get_current_non_certified_open_message&quot;</span>);
         <span class="kw">let </span>signed_entity_types = <span class="macro">vec!</span>[
             SignedEntityType::MithrilStakeDistribution(
@@ -1400,10 +1318,7 @@
         <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
     }
 
-    <span class="kw">async fn </span>is_certificate_chain_valid(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        beacon: <span class="kw-2">&amp;</span>Beacon,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
+    <span class="kw">async fn </span>is_certificate_chain_valid(<span class="kw-2">&amp;</span><span class="self">self</span>, beacon: <span class="kw-2">&amp;</span>Beacon) -&gt; StdResult&lt;()&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: is_certificate_chain_valid&quot;</span>);
         <span class="self">self</span>.dependencies
             .certifier_service
@@ -1414,10 +1329,7 @@
     }
 
     <span class="comment">// TODO: is this still useful?
-    </span><span class="kw">async fn </span>update_beacon(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        new_beacon: <span class="kw-2">&amp;</span>Beacon,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
+    </span><span class="kw">async fn </span>update_beacon(<span class="kw-2">&amp;</span><span class="self">self</span>, new_beacon: <span class="kw-2">&amp;</span>Beacon) -&gt; StdResult&lt;()&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: update beacon&quot;</span>; <span class="string">&quot;beacon&quot; </span>=&gt; #<span class="question-mark">?</span>new_beacon);
         <span class="self">self</span>.dependencies
             .multi_signer
@@ -1428,10 +1340,7 @@
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">async fn </span>update_stake_distribution(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        new_beacon: <span class="kw-2">&amp;</span>Beacon,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
+    <span class="kw">async fn </span>update_stake_distribution(<span class="kw-2">&amp;</span><span class="self">self</span>, new_beacon: <span class="kw-2">&amp;</span>Beacon) -&gt; StdResult&lt;()&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: update stake distribution&quot;</span>; <span class="string">&quot;beacon&quot; </span>=&gt; #<span class="question-mark">?</span>new_beacon);
         <span class="kw">let </span>exists_stake_distribution = !<span class="self">self
             </span>.dependencies
@@ -1480,10 +1389,7 @@
             .<span class="kw">await</span><span class="question-mark">?</span>)
     }
 
-    <span class="kw">async fn </span>open_signer_registration_round(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        new_beacon: <span class="kw-2">&amp;</span>Beacon,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
+    <span class="kw">async fn </span>open_signer_registration_round(<span class="kw-2">&amp;</span><span class="self">self</span>, new_beacon: <span class="kw-2">&amp;</span>Beacon) -&gt; StdResult&lt;()&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: open signer registration round&quot;</span>; <span class="string">&quot;beacon&quot; </span>=&gt; #<span class="question-mark">?</span>new_beacon);
         <span class="kw">let </span>registration_epoch = new_beacon.epoch.offset_to_recording_epoch();
 
@@ -1501,7 +1407,7 @@
             </span>.map_err(|e| e.into())
     }
 
-    <span class="kw">async fn </span>close_signer_registration_round(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
+    <span class="kw">async fn </span>close_signer_registration_round(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StdResult&lt;()&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: close signer registration round&quot;</span>);
 
         <span class="self">self</span>.dependencies
@@ -1514,7 +1420,7 @@
     <span class="kw">async fn </span>update_protocol_parameters_in_multisigner(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         new_beacon: <span class="kw-2">&amp;</span>Beacon,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
+    ) -&gt; StdResult&lt;()&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: update protocol parameters&quot;</span>; <span class="string">&quot;beacon&quot; </span>=&gt; #<span class="question-mark">?</span>new_beacon);
         <span class="kw">let </span>protocol_parameters = <span class="self">self</span>.dependencies.config.protocol_parameters.clone();
 
@@ -1531,7 +1437,7 @@
     <span class="kw">async fn </span>compute_protocol_message(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         signed_entity_type: <span class="kw-2">&amp;</span>SignedEntityType,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;ProtocolMessage, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
+    ) -&gt; StdResult&lt;ProtocolMessage&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: compute protocol message&quot;</span>);
         <span class="kw">let </span><span class="kw-2">mut </span>protocol_message = <span class="self">self
             </span>.dependencies
@@ -1554,7 +1460,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         beacon: Beacon,
         signed_entity_type: <span class="kw-2">&amp;</span>SignedEntityType,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;CertificatePending, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
+    ) -&gt; StdResult&lt;CertificatePending&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: create new pending certificate from multisigner&quot;</span>);
         <span class="kw">let </span>multi_signer = <span class="self">self</span>.dependencies.multi_signer.read().<span class="kw">await</span>;
 
@@ -1603,7 +1509,7 @@
     <span class="kw">async fn </span>save_pending_certificate(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         pending_certificate: CertificatePending,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
+    ) -&gt; StdResult&lt;()&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: saving pending certificate&quot;</span>);
 
         <span class="self">self</span>.dependencies
@@ -1613,9 +1519,7 @@
             </span>.map_err(|e| e.into())
     }
 
-    <span class="kw">async fn </span>drop_pending_certificate(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;CertificatePending&gt;, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
+    <span class="kw">async fn </span>drop_pending_certificate(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StdResult&lt;<span class="prelude-ty">Option</span>&lt;CertificatePending&gt;&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: drop pending certificate&quot;</span>);
 
         <span class="kw">let </span>certificate_pending = <span class="self">self</span>.dependencies.certificate_pending_store.remove().<span class="kw">await</span><span class="question-mark">?</span>;
@@ -1629,7 +1533,7 @@
     <span class="kw">async fn </span>create_certificate(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         signed_entity_type: <span class="kw-2">&amp;</span>SignedEntityType,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Certificate&gt;, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
+    ) -&gt; StdResult&lt;<span class="prelude-ty">Option</span>&lt;Certificate&gt;&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: create multi-signature&quot;</span>);
 
         <span class="self">self</span>.dependencies
@@ -1642,7 +1546,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         signed_entity_type: <span class="kw-2">&amp;</span>SignedEntityType,
         certificate: <span class="kw-2">&amp;</span>Certificate,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
+    ) -&gt; StdResult&lt;()&gt; {
         <span class="macro">debug!</span>(<span class="string">&quot;RUNNER: create artifact&quot;</span>);
         <span class="self">self</span>.dependencies
             .signed_entity_service
@@ -1652,10 +1556,7 @@
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">async fn </span>update_era_checker(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        beacon: <span class="kw-2">&amp;</span>Beacon,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
+    <span class="kw">async fn </span>update_era_checker(<span class="kw-2">&amp;</span><span class="self">self</span>, beacon: <span class="kw-2">&amp;</span>Beacon) -&gt; StdResult&lt;()&gt; {
         <span class="kw">let </span>token = <span class="self">self
             </span>.dependencies
             .era_reader
@@ -1680,10 +1581,7 @@
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">async fn </span>certifier_inform_new_epoch(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        epoch: <span class="kw-2">&amp;</span>Epoch,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
+    <span class="kw">async fn </span>certifier_inform_new_epoch(<span class="kw-2">&amp;</span><span class="self">self</span>, epoch: <span class="kw-2">&amp;</span>Epoch) -&gt; StdResult&lt;()&gt; {
         <span class="self">self</span>.dependencies
             .certifier_service
             .inform_epoch(<span class="kw-2">*</span>epoch)
@@ -1696,7 +1594,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         signed_entity_type: <span class="kw-2">&amp;</span>SignedEntityType,
         protocol_message: <span class="kw-2">&amp;</span>ProtocolMessage,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;OpenMessage, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
+    ) -&gt; StdResult&lt;OpenMessage&gt; {
         <span class="self">self</span>.dependencies
             .certifier_service
             .create_open_message(signed_entity_type, protocol_message)

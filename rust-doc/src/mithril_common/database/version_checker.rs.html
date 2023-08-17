@@ -363,22 +363,19 @@
 <a href="#363" id="363">363</a>
 <a href="#364" id="364">364</a>
 <a href="#365" id="365">365</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>chrono::Utc;
-<span class="kw">use </span>slog::{debug, error};
-<span class="kw">use </span>slog::{info, Logger};
+</pre></div><pre class="rust"><code><span class="kw">use </span>anyhow::anyhow;
+<span class="kw">use </span>chrono::Utc;
+<span class="kw">use </span>slog::{debug, error, info, Logger};
 <span class="kw">use </span>sqlite::Connection;
+<span class="kw">use </span>std::{cmp::Ordering, collections::BTreeSet, ops::Deref, sync::Arc};
 <span class="kw">use </span>tokio::sync::Mutex;
-
-<span class="kw">use </span>std::ops::Deref;
-<span class="kw">use </span>std::sync::Arc;
-<span class="kw">use </span>std::{cmp::Ordering, collections::BTreeSet};
-
-<span class="kw">use </span><span class="kw">crate</span>::StdError;
 
 <span class="kw">use super</span>::{
     ApplicationNodeType, DatabaseVersion, DatabaseVersionProvider, DatabaseVersionUpdater,
     DbVersion,
 };
+
+<span class="kw">use </span><span class="kw">crate</span>::StdResult;
 
 <span class="doccomment">/// Struct to perform application version check in the database.
 </span><span class="kw">pub struct </span>DatabaseVersionChecker {
@@ -420,7 +417,7 @@
     </span>}
 
     <span class="doccomment">/// Apply migrations
-    </span><span class="kw">pub async fn </span>apply(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), StdError&gt; {
+    </span><span class="kw">pub async fn </span>apply(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StdResult&lt;()&gt; {
         <span class="macro">debug!</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.logger, <span class="string">&quot;check database version&quot;</span>,);
         <span class="kw">let </span>lock = <span class="self">self</span>.connection.lock().<span class="kw">await</span>;
         <span class="kw">let </span>connection = lock.deref();
@@ -457,7 +454,7 @@
                     migration_version,
                 );
 
-                <span class="prelude-val">Err</span>(<span class="string">&quot;This software version is older than the database structure. Aborting launch to prevent possible data corruption.&quot;</span>)<span class="question-mark">?</span>;
+                <span class="prelude-val">Err</span>(<span class="macro">anyhow!</span>(<span class="string">&quot;This software version is older than the database structure. Aborting launch to prevent possible data corruption.&quot;</span>))<span class="question-mark">?</span>;
             }
             Ordering::Equal =&gt; {
                 <span class="macro">debug!</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.logger, <span class="string">&quot;database up to date&quot;</span>);
@@ -472,7 +469,7 @@
         starting_version: <span class="kw-2">&amp;</span>DatabaseVersion,
         updater: <span class="kw-2">&amp;</span>DatabaseVersionUpdater,
         connection: <span class="kw-2">&amp;</span>Connection,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), StdError&gt; {
+    ) -&gt; StdResult&lt;()&gt; {
         <span class="kw">for </span>migration <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self
             </span>.migrations
             .iter()
@@ -534,6 +531,8 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
+    <span class="kw">use </span><span class="kw">crate</span>::StdResult;
+    <span class="kw">use </span>anyhow::Context;
     <span class="kw">use </span>std::path::PathBuf;
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
@@ -549,7 +548,7 @@
         <span class="macro">assert_eq!</span>(db_version, version.version);
     }
 
-    <span class="kw">fn </span>create_sqlite_file(name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;(PathBuf, Connection), StdError&gt; {
+    <span class="kw">fn </span>create_sqlite_file(name: <span class="kw-2">&amp;</span>str) -&gt; StdResult&lt;(PathBuf, Connection)&gt; {
         <span class="kw">let </span>dirpath = std::env::temp_dir().join(<span class="string">&quot;mithril_test_database&quot;</span>);
         std::fs::create_dir_all(<span class="kw-2">&amp;</span>dirpath).unwrap();
         <span class="kw">let </span>filepath = dirpath.join(name);
@@ -558,7 +557,8 @@
             std::fs::remove_file(filepath.as_path()).unwrap();
         }
 
-        <span class="kw">let </span>connection = Connection::open(<span class="kw-2">&amp;</span>filepath).map_err(|e| -&gt; StdError { e.into() })<span class="question-mark">?</span>;
+        <span class="kw">let </span>connection =
+            Connection::open(<span class="kw-2">&amp;</span>filepath).with_context(|| <span class="string">&quot;connection to sqlite file failure&quot;</span>)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>((filepath, connection))
     }

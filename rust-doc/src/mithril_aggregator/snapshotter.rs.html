@@ -352,14 +352,10 @@
 <a href="#352" id="352">352</a>
 <a href="#353" id="353">353</a>
 <a href="#354" id="354">354</a>
-<a href="#355" id="355">355</a>
-<a href="#356" id="356">356</a>
-<a href="#357" id="357">357</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>flate2::Compression;
 <span class="kw">use </span>flate2::{read::GzDecoder, write::GzEncoder};
 <span class="kw">use </span>mithril_common::StdResult;
 <span class="kw">use </span>slog_scope::{info, warn};
-<span class="kw">use </span>std::error::Error <span class="kw">as </span>StdError;
 <span class="kw">use </span>std::fs::File;
 <span class="kw">use </span>std::io::{<span class="self">self</span>, Seek, SeekFrom};
 <span class="kw">use </span>std::path::{Path, PathBuf};
@@ -546,9 +542,7 @@
     }
 
     <span class="doccomment">/// Return the last fake snapshot produced.
-    </span><span class="kw">pub fn </span>get_last_snapshot(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;OngoingSnapshot&gt;, Box&lt;<span class="kw">dyn </span>StdError + Sync + Send&gt;&gt; {
+    </span><span class="kw">pub fn </span>get_last_snapshot(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StdResult&lt;<span class="prelude-ty">Option</span>&lt;OngoingSnapshot&gt;&gt; {
         <span class="kw">let </span>value = <span class="self">self
             </span>.last_snapshot
             .read()
@@ -642,7 +636,7 @@
 
         std::fs::create_dir_all(<span class="kw-2">&amp;</span>pending_snapshot_directory).unwrap();
 
-        std::fs::File::create(pending_snapshot_directory.join(<span class="string">&quot;whatever.txt&quot;</span>)).unwrap();
+        File::create(pending_snapshot_directory.join(<span class="string">&quot;whatever.txt&quot;</span>)).unwrap();
 
         Arc::new(GzipSnapshotter::new(db_directory, pending_snapshot_directory.clone()).unwrap());
 
@@ -667,7 +661,7 @@
         );
 
         <span class="comment">// this file should not be deleted by the archive creation
-        </span>std::fs::File::create(pending_snapshot_directory.join(<span class="string">&quot;other-process.file&quot;</span>)).unwrap();
+        </span>File::create(pending_snapshot_directory.join(<span class="string">&quot;other-process.file&quot;</span>)).unwrap();
 
         <span class="kw">let _ </span>= snapshotter
             .snapshot(<span class="string">&quot;whatever.tar.gz&quot;</span>)

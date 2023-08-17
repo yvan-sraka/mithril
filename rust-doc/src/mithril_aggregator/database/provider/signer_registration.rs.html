@@ -835,7 +835,9 @@
 <a href="#835" id="835">835</a>
 <a href="#836" id="836">836</a>
 <a href="#837" id="837">837</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
+<a href="#838" id="838">838</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>anyhow::Context;
+<span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>chrono::{DateTime, Utc};
 <span class="kw">use </span>sqlite::{Connection, Value};
 <span class="kw">use </span>std::{collections::HashMap, sync::Arc};
@@ -852,7 +854,7 @@
         WhereCondition,
     },
     store::{adapter::AdapterError, StoreError},
-    StdError,
+    StdResult,
 };
 
 <span class="kw">use </span><span class="kw">crate</span>::VerificationKeyStorer;
@@ -1023,14 +1025,14 @@
         <span class="self">Self </span>{ client }
     }
 
-    <span class="kw">fn </span>condition_by_signer_id(<span class="kw-2">&amp;</span><span class="self">self</span>, signer_id: String) -&gt; <span class="prelude-ty">Result</span>&lt;WhereCondition, StdError&gt; {
+    <span class="kw">fn </span>condition_by_signer_id(<span class="kw-2">&amp;</span><span class="self">self</span>, signer_id: String) -&gt; StdResult&lt;WhereCondition&gt; {
         <span class="prelude-val">Ok</span>(WhereCondition::new(
             <span class="string">&quot;signer_id = ?*&quot;</span>,
             <span class="macro">vec!</span>[Value::String(signer_id)],
         ))
     }
 
-    <span class="kw">fn </span>condition_by_epoch(<span class="kw-2">&amp;</span><span class="self">self</span>, epoch: <span class="kw-2">&amp;</span>Epoch) -&gt; <span class="prelude-ty">Result</span>&lt;WhereCondition, StdError&gt; {
+    <span class="kw">fn </span>condition_by_epoch(<span class="kw-2">&amp;</span><span class="self">self</span>, epoch: <span class="kw-2">&amp;</span>Epoch) -&gt; StdResult&lt;WhereCondition&gt; {
         <span class="kw">let </span>epoch: i64 = epoch.try_into()<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(WhereCondition::new(
@@ -1044,7 +1046,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         signer_id: String,
         epoch: <span class="kw-2">&amp;</span>Epoch,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;EntityCursor&lt;SignerRegistrationRecord&gt;, StdError&gt; {
+    ) -&gt; StdResult&lt;EntityCursor&lt;SignerRegistrationRecord&gt;&gt; {
         <span class="kw">let </span>filters = <span class="self">self
             </span>.condition_by_signer_id(signer_id)<span class="question-mark">?
             </span>.and_where(<span class="self">self</span>.condition_by_epoch(epoch)<span class="question-mark">?</span>);
@@ -1054,10 +1056,7 @@
     }
 
     <span class="doccomment">/// Get SignerRegistrationRecords for a given Epoch.
-    </span><span class="kw">pub fn </span>get_by_epoch(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        epoch: <span class="kw-2">&amp;</span>Epoch,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;EntityCursor&lt;SignerRegistrationRecord&gt;, StdError&gt; {
+    </span><span class="kw">pub fn </span>get_by_epoch(<span class="kw-2">&amp;</span><span class="self">self</span>, epoch: <span class="kw-2">&amp;</span>Epoch) -&gt; StdResult&lt;EntityCursor&lt;SignerRegistrationRecord&gt;&gt; {
         <span class="kw">let </span>filters = <span class="self">self</span>.condition_by_epoch(epoch)<span class="question-mark">?</span>;
         <span class="kw">let </span>signer_registration_record = <span class="self">self</span>.find(filters)<span class="question-mark">?</span>;
 
@@ -1065,7 +1064,7 @@
     }
 
     <span class="doccomment">/// Get all SignerRegistrationRecords.
-    </span><span class="kw">pub fn </span>get_all(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;EntityCursor&lt;SignerRegistrationRecord&gt;, StdError&gt; {
+    </span><span class="kw">pub fn </span>get_all(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StdResult&lt;EntityCursor&lt;SignerRegistrationRecord&gt;&gt; {
         <span class="kw">let </span>filters = WhereCondition::default();
         <span class="kw">let </span>signer_registration_record = <span class="self">self</span>.find(filters)<span class="question-mark">?</span>;
 
@@ -1134,7 +1133,7 @@
     <span class="kw">fn </span>persist(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         signer_registration_record: SignerRegistrationRecord,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;SignerRegistrationRecord, StdError&gt; {
+    ) -&gt; StdResult&lt;SignerRegistrationRecord&gt; {
         <span class="kw">let </span>filters = <span class="self">self</span>.get_insert_or_replace_condition(signer_registration_record.clone());
 
         <span class="kw">let </span>entity = <span class="self">self</span>.find(filters)<span class="question-mark">?</span>.next().unwrap_or_else(|| {
@@ -1204,7 +1203,7 @@
     }
 
     <span class="doccomment">/// Delete the epoch setting data given the Epoch
-    </span><span class="kw">pub fn </span>delete(<span class="kw-2">&amp;</span><span class="self">self</span>, epoch: Epoch) -&gt; <span class="prelude-ty">Result</span>&lt;EntityCursor&lt;SignerRegistrationRecord&gt;, StdError&gt; {
+    </span><span class="kw">pub fn </span>delete(<span class="kw-2">&amp;</span><span class="self">self</span>, epoch: Epoch) -&gt; StdResult&lt;EntityCursor&lt;SignerRegistrationRecord&gt;&gt; {
         <span class="kw">let </span>filters = <span class="self">self</span>.get_delete_condition_by_epoch(epoch);
 
         <span class="self">self</span>.find(filters)
@@ -1221,7 +1220,7 @@
     </span><span class="kw">pub fn </span>prune(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         epoch_threshold: Epoch,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;EntityCursor&lt;SignerRegistrationRecord&gt;, StdError&gt; {
+    ) -&gt; StdResult&lt;EntityCursor&lt;SignerRegistrationRecord&gt;&gt; {
         <span class="kw">let </span>filters = <span class="self">self</span>.get_prune_condition(epoch_threshold);
 
         <span class="self">self</span>.find(filters)
@@ -1251,14 +1250,15 @@
         <span class="kw">let </span>provider = InsertOrReplaceSignerRegistrationRecordProvider::new(connection);
         <span class="kw">let </span>existing_record = SignerRegistrationRecordProvider::new(connection)
             .get_by_signer_id_and_epoch(signer.party_id.clone(), <span class="kw-2">&amp;</span>epoch)
-            .map_err(|e| AdapterError::QueryError(e))<span class="question-mark">?
+            .map_err(AdapterError::QueryError)<span class="question-mark">?
             </span>.next();
 
         <span class="kw">let </span>_updated_record = provider
             .persist(SignerRegistrationRecord::from_signer_with_stake(
                 signer, epoch,
             ))
-            .map_err(|e| AdapterError::GeneralError(<span class="macro">format!</span>(<span class="string">&quot;{e}&quot;</span>)))<span class="question-mark">?</span>;
+            .with_context(|| <span class="macro">format!</span>(<span class="string">&quot;persist verification key failure, epoch: {epoch}&quot;</span>))
+            .map_err(AdapterError::GeneralError)<span class="question-mark">?</span>;
 
         <span class="kw">match </span>existing_record {
             <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
@@ -1274,7 +1274,8 @@
         <span class="kw">let </span>provider = SignerRegistrationRecordProvider::new(connection);
         <span class="kw">let </span>cursor = provider
             .get_by_epoch(<span class="kw-2">&amp;</span>epoch)
-            .map_err(|e| AdapterError::GeneralError(<span class="macro">format!</span>(<span class="string">&quot;{e}&quot;</span>)))<span class="question-mark">?</span>;
+            .with_context(|| <span class="macro">format!</span>(<span class="string">&quot;get verification key failure, epoch: {epoch}&quot;</span>))
+            .map_err(AdapterError::GeneralError)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>signer_with_stakes: HashMap&lt;PartyId, Signer&gt; =
             HashMap::from_iter(cursor.map(|record| (record.signer_id.to_owned(), record.into())));
@@ -1290,7 +1291,7 @@
         <span class="kw">let </span>_deleted_records = DeleteSignerRegistrationRecordProvider::new(connection)
             <span class="comment">// we want to prune including the given epoch (+1)
             </span>.prune(max_epoch_to_prune + <span class="number">1</span>)
-            .map_err(|e| AdapterError::QueryError(e))<span class="question-mark">?
+            .map_err(AdapterError::QueryError)<span class="question-mark">?
             </span>.collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 
         <span class="prelude-val">Ok</span>(())
@@ -1304,7 +1305,8 @@
         <span class="kw">let </span>provider = SignerRegistrationRecordProvider::new(connection);
         <span class="kw">let </span>cursor = provider
             .get_by_epoch(<span class="kw-2">&amp;</span>epoch)
-            .map_err(|e| AdapterError::GeneralError(<span class="macro">format!</span>(<span class="string">&quot;{e}&quot;</span>)))<span class="question-mark">?</span>;
+            .with_context(|| <span class="macro">format!</span>(<span class="string">&quot;get stake distribution failure, epoch: {epoch}&quot;</span>))
+            .map_err(AdapterError::GeneralError)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>stake_distribution = StakeDistribution::from_iter(
             cursor.map(|r| (r.signer_id, r.stake.unwrap_or_default())),
@@ -1331,7 +1333,7 @@
     <span class="kw">pub fn </span>setup_signer_registration_db(
         connection: <span class="kw-2">&amp;</span>Connection,
         signer_with_stakes_by_epoch: Vec&lt;(Epoch, Vec&lt;SignerWithStake&gt;)&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), StdError&gt; {
+    ) -&gt; StdResult&lt;()&gt; {
         apply_all_migrations_to_db(connection)<span class="question-mark">?</span>;
         disable_foreign_key_support(connection)<span class="question-mark">?</span>;
 

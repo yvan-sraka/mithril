@@ -368,18 +368,16 @@
 <a href="#368" id="368">368</a>
 <a href="#369" id="369">369</a>
 <a href="#370" id="370">370</a>
-<a href="#371" id="371">371</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>config::{ConfigError, Map, Source, Value, ValueKind};
 <span class="kw">use </span>mithril_common::crypto_helper::{key_encode_hex, ProtocolGenesisSigner};
 <span class="kw">use </span>mithril_common::era::adapters::EraReaderAdapterType;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
-<span class="kw">use </span>std::error::Error;
 <span class="kw">use </span>std::path::PathBuf;
 <span class="kw">use </span>std::str::FromStr;
 <span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>mithril_common::entities::{HexEncodedGenesisVerificationKey, ProtocolParameters};
-<span class="kw">use </span>mithril_common::CardanoNetwork;
+<span class="kw">use </span>mithril_common::{CardanoNetwork, StdResult};
 
 <span class="kw">use </span><span class="kw">crate</span>::tools::GcpFileUploader;
 <span class="kw">use crate</span>::{LocalSnapshotUploader, RemoteSnapshotUploader, SnapshotUploader};
@@ -403,7 +401,7 @@
             <span class="string">&quot;production&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Production),
             <span class="string">&quot;test&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Test),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(ConfigError::Message(<span class="macro">format!</span>(
-                <span class="string">&quot;Unkown execution environement {s}&quot;
+                <span class="string">&quot;Unknown execution environment {s}&quot;
             </span>))),
         }
     }
@@ -530,7 +528,7 @@
     }
 
     <span class="doccomment">/// Create a snapshot uploader from configuration settings.
-    </span><span class="kw">pub fn </span>build_snapshot_uploader(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;<span class="kw">dyn </span>SnapshotUploader&gt;, Box&lt;<span class="kw">dyn </span>Error&gt;&gt; {
+    </span><span class="kw">pub fn </span>build_snapshot_uploader(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StdResult&lt;Arc&lt;<span class="kw">dyn </span>SnapshotUploader&gt;&gt; {
         <span class="kw">match </span><span class="self">self</span>.snapshot_uploader_type {
             SnapshotUploaderType::Gcp =&gt; {
                 <span class="kw">let </span>bucket = <span class="self">self</span>.snapshot_bucket_name.to_owned().ok_or_else(|| {

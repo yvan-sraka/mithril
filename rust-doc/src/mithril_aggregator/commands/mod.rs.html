@@ -108,8 +108,6 @@
 <a href="#108" id="108">108</a>
 <a href="#109" id="109">109</a>
 <a href="#110" id="110">110</a>
-<a href="#111" id="111">111</a>
-<a href="#112" id="112">112</a>
 </pre></div><pre class="rust"><code><span class="kw">mod </span>era_command;
 <span class="kw">mod </span>genesis_command;
 <span class="kw">mod </span>serve_command;
@@ -117,9 +115,10 @@
 
 <span class="kw">use </span>clap::{Parser, Subcommand};
 <span class="kw">use </span>config::{builder::DefaultState, ConfigBuilder, Map, Source, Value, ValueKind};
+<span class="kw">use </span>mithril_common::StdResult;
 <span class="kw">use </span>slog::Level;
 <span class="kw">use </span>slog_scope::debug;
-<span class="kw">use </span>std::{error::Error, path::PathBuf};
+<span class="kw">use </span>std::path::PathBuf;
 
 <span class="kw">use </span><span class="kw">crate</span>::DefaultConfiguration;
 
@@ -133,10 +132,7 @@
 }
 
 <span class="kw">impl </span>MainCommand {
-    <span class="kw">pub async fn </span>execute(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        config_builder: ConfigBuilder&lt;DefaultState&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>Error&gt;&gt; {
+    <span class="kw">pub async fn </span>execute(<span class="kw-2">&amp;</span><span class="self">self</span>, config_builder: ConfigBuilder&lt;DefaultState&gt;) -&gt; StdResult&lt;()&gt; {
         <span class="kw">match </span><span class="self">self </span>{
             <span class="self">Self</span>::Genesis(cmd) =&gt; cmd.execute(config_builder).<span class="kw">await</span>,
             <span class="self">Self</span>::Era(cmd) =&gt; cmd.execute(config_builder).<span class="kw">await</span>,
@@ -196,7 +192,7 @@
 
 <span class="kw">impl </span>MainOpts {
     <span class="doccomment">/// execute command
-    </span><span class="kw">pub async fn </span>execute(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>Error&gt;&gt; {
+    </span><span class="kw">pub async fn </span>execute(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StdResult&lt;()&gt; {
         <span class="kw">let </span>config_file_path = <span class="self">self
             </span>.config_directory
             .join(<span class="macro">format!</span>(<span class="string">&quot;{}.json&quot;</span>, <span class="self">self</span>.run_mode));

@@ -861,22 +861,8 @@
 <a href="#861" id="861">861</a>
 <a href="#862" id="862">862</a>
 <a href="#863" id="863">863</a>
-<a href="#864" id="864">864</a>
-<a href="#865" id="865">865</a>
-<a href="#866" id="866">866</a>
-<a href="#867" id="867">867</a>
-<a href="#868" id="868">868</a>
-<a href="#869" id="869">869</a>
-<a href="#870" id="870">870</a>
-<a href="#871" id="871">871</a>
-<a href="#872" id="872">872</a>
-<a href="#873" id="873">873</a>
-<a href="#874" id="874">874</a>
-<a href="#875" id="875">875</a>
-<a href="#876" id="876">876</a>
-<a href="#877" id="877">877</a>
-<a href="#878" id="878">878</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
+</pre></div><pre class="rust"><code><span class="kw">use </span>anyhow::{anyhow, Context};
+<span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>bech32::{<span class="self">self</span>, ToBase32, Variant};
 <span class="kw">use </span>hex::FromHex;
 <span class="kw">use </span>nom::IResult;
@@ -1035,12 +1021,11 @@
         } <span class="kw">else </span>{
             <span class="kw">let </span>message = String::from_utf8_lossy(<span class="kw-2">&amp;</span>output.stderr);
 
-            <span class="prelude-val">Err</span>(<span class="macro">format!</span>(
+            <span class="prelude-val">Err</span>(<span class="macro">anyhow!</span>(
                 <span class="string">&quot;Error launching command {:?}, error = &#39;{}&#39;&quot;</span>,
                 <span class="self">self</span>.command_for_utxo(address, out_file),
                 message
-            )
-            .into())
+            ))
         }
     }
 
@@ -1052,12 +1037,11 @@
         } <span class="kw">else </span>{
             <span class="kw">let </span>message = String::from_utf8_lossy(<span class="kw-2">&amp;</span>output.stderr);
 
-            <span class="prelude-val">Err</span>(<span class="macro">format!</span>(
+            <span class="prelude-val">Err</span>(<span class="macro">anyhow!</span>(
                 <span class="string">&quot;Error launching command {:?}, error = &#39;{}&#39;&quot;</span>,
                 <span class="self">self</span>.command_for_stake_distribution(),
                 message
-            )
-            .into())
+            ))
         }
     }
 
@@ -1072,12 +1056,11 @@
         } <span class="kw">else </span>{
             <span class="kw">let </span>message = String::from_utf8_lossy(<span class="kw-2">&amp;</span>output.stderr);
 
-            <span class="prelude-val">Err</span>(<span class="macro">format!</span>(
+            <span class="prelude-val">Err</span>(<span class="macro">anyhow!</span>(
                 <span class="string">&quot;Error launching command {:?}, error = &#39;{}&#39;&quot;</span>,
                 <span class="self">self</span>.command_for_stake_snapshot(stake_pool_id),
                 message
-            )
-            .into())
+            ))
         }
     }
 
@@ -1089,12 +1072,11 @@
         } <span class="kw">else </span>{
             <span class="kw">let </span>message = String::from_utf8_lossy(<span class="kw-2">&amp;</span>output.stderr);
 
-            <span class="prelude-val">Err</span>(<span class="macro">format!</span>(
+            <span class="prelude-val">Err</span>(<span class="macro">anyhow!</span>(
                 <span class="string">&quot;Error launching command {:?}, error = &#39;{}&#39;&quot;</span>,
                 <span class="self">self</span>.command_for_stake_snapshot_all_pools(),
                 message
-            )
-            .into())
+            ))
         }
     }
 
@@ -1106,12 +1088,11 @@
         } <span class="kw">else </span>{
             <span class="kw">let </span>message = String::from_utf8_lossy(<span class="kw-2">&amp;</span>output.stderr);
 
-            <span class="prelude-val">Err</span>(<span class="macro">format!</span>(
+            <span class="prelude-val">Err</span>(<span class="macro">anyhow!</span>(
                 <span class="string">&quot;Error launching command {:?}, error = &#39;{}&#39;&quot;</span>,
                 <span class="self">self</span>.command_for_epoch(),
                 message
-            )
-            .into())
+            ))
         }
     }
 
@@ -1123,12 +1104,11 @@
         } <span class="kw">else </span>{
             <span class="kw">let </span>message = String::from_utf8_lossy(<span class="kw-2">&amp;</span>output.stderr);
 
-            <span class="prelude-val">Err</span>(<span class="macro">format!</span>(
+            <span class="prelude-val">Err</span>(<span class="macro">anyhow!</span>(
                 <span class="string">&quot;Error launching command {:?}, error = &#39;{}&#39;&quot;</span>,
                 <span class="self">self</span>.command_for_kes_period(opcert_file),
                 message
-            )
-            .into())
+            ))
         }
     }
 }
@@ -1160,22 +1140,18 @@
             .<span class="kw">await
             </span>.map_err(ChainObserverError::General)<span class="question-mark">?</span>;
         <span class="kw">let </span>stake_pool_snapshot: Value = serde_json::from_str(<span class="kw-2">&amp;</span>stake_pool_snapshot_output)
-            .map_err(|e| {
-                ChainObserverError::InvalidContent(
-                    <span class="macro">format!</span>(<span class="string">&quot;Error: {e:?}, output was = &#39;{stake_pool_snapshot_output}&#39;&quot;</span>).into(),
-                )
-            })<span class="question-mark">?</span>;
+            .with_context(|| <span class="macro">format!</span>(<span class="string">&quot;output was = &#39;{stake_pool_snapshot_output}&#39;&quot;</span>))
+            .map_err(ChainObserverError::InvalidContent)<span class="question-mark">?</span>;
         <span class="kw">if let </span>Value::Number(stake_pool_stake) = <span class="kw-2">&amp;</span>stake_pool_snapshot[<span class="string">&quot;poolStakeMark&quot;</span>] {
             <span class="kw">return </span>stake_pool_stake.as_u64().ok_or_else(|| {
-                ChainObserverError::InvalidContent(
-                    <span class="macro">format!</span>(<span class="string">&quot;Error: could not parse stake pool value as u64 {stake_pool_stake:?}&quot;</span>)
-                        .into(),
-                )
+                ChainObserverError::InvalidContent(<span class="macro">anyhow!</span>(
+                    <span class="string">&quot;Error: could not parse stake pool value as u64 {stake_pool_stake:?}&quot;
+                </span>))
             });
         }
-        <span class="prelude-val">Err</span>(ChainObserverError::InvalidContent(
-            <span class="macro">format!</span>(<span class="string">&quot;Error: could not parse stake pool snapshot {stake_pool_snapshot:?}&quot;</span>).into(),
-        ))
+        <span class="prelude-val">Err</span>(ChainObserverError::InvalidContent(<span class="macro">anyhow!</span>(
+            <span class="string">&quot;Error: could not parse stake pool snapshot {stake_pool_snapshot:?}&quot;
+        </span>)))
     }
 
     <span class="comment">// This is the legacy way of computing stake distribution, not optimized for mainnet, and usable for versions of the Cardano node up to &#39;1.35.7&#39;
@@ -1209,9 +1185,10 @@
                     <span class="kw">let _ </span>= stake_distribution.insert(stake_pool_id.to_string(), stake);
                 }
             } <span class="kw">else </span>{
-                <span class="kw">return </span><span class="prelude-val">Err</span>(ChainObserverError::InvalidContent(
-                    <span class="macro">format!</span>(<span class="string">&quot;could not parse stake from &#39;{}&#39;&quot;</span>, words[<span class="number">1</span>]).into(),
-                ));
+                <span class="kw">return </span><span class="prelude-val">Err</span>(ChainObserverError::InvalidContent(<span class="macro">anyhow!</span>(
+                    <span class="string">&quot;could not parse stake from &#39;{}&#39;&quot;</span>,
+                    words[<span class="number">1</span>]
+                )));
             }
         }
 
@@ -1233,13 +1210,13 @@
             serde_json::from_str(<span class="kw-2">&amp;</span>output).map_err(|e| ChainObserverError::General(e.into()))<span class="question-mark">?</span>;
         <span class="kw">let </span>pools_data = data
             .get(<span class="string">&quot;pools&quot;</span>)
-            .ok_or(ChainObserverError::InvalidContent(
-                <span class="string">&quot;Missing &#39;pools&#39; field&quot;</span>.to_string().into(),
-            ))<span class="question-mark">?
+            .ok_or(ChainObserverError::InvalidContent(<span class="macro">anyhow!</span>(
+                <span class="string">&quot;Missing &#39;pools&#39; field&quot;
+            </span>)))<span class="question-mark">?
             </span>.as_object()
-            .ok_or(ChainObserverError::InvalidContent(
-                <span class="string">&quot;Could not convert pool data to object&quot;</span>.to_string().into(),
-            ))<span class="question-mark">?</span>;
+            .ok_or(ChainObserverError::InvalidContent(<span class="macro">anyhow!</span>(
+                <span class="string">&quot;Could not convert pool data to object&quot;
+            </span>)))<span class="question-mark">?</span>;
 
         <span class="kw">for </span>(k, v) <span class="kw">in </span>pools_data.iter() {
             <span class="kw">let </span>pool_id_hex = k;
@@ -1253,13 +1230,13 @@
             .map_err(|e| ChainObserverError::General(e.into()))<span class="question-mark">?</span>;
             <span class="kw">let </span>stakes = v
                 .get(<span class="string">&quot;stakeMark&quot;</span>)
-                .ok_or(ChainObserverError::InvalidContent(
-                    <span class="macro">format!</span>(<span class="string">&quot;Missing &#39;stakeMark&#39; field for {pool_id_bech32}&quot;</span>).into(),
-                ))<span class="question-mark">?
+                .ok_or(ChainObserverError::InvalidContent(<span class="macro">anyhow!</span>(
+                    <span class="string">&quot;Missing &#39;stakeMark&#39; field for {pool_id_bech32}&quot;
+                </span>)))<span class="question-mark">?
                 </span>.as_u64()
-                .ok_or(ChainObserverError::InvalidContent(
-                    <span class="macro">format!</span>(<span class="string">&quot;Stake could not be converted to integer for {pool_id_bech32}&quot;</span>).into(),
-                ))<span class="question-mark">?</span>;
+                .ok_or(ChainObserverError::InvalidContent(<span class="macro">anyhow!</span>(
+                    <span class="string">&quot;Stake could not be converted to integer for {pool_id_bech32}&quot;
+                </span>)))<span class="question-mark">?</span>;
             <span class="kw">if </span>stakes &gt; <span class="number">0 </span>{
                 stake_distribution.insert(pool_id_bech32, stakes);
             }
@@ -1277,11 +1254,9 @@
             .launch_epoch()
             .<span class="kw">await
             </span>.map_err(ChainObserverError::General)<span class="question-mark">?</span>;
-        <span class="kw">let </span>v: Value = serde_json::from_str(<span class="kw-2">&amp;</span>output).map_err(|e| {
-            ChainObserverError::InvalidContent(
-                <span class="macro">format!</span>(<span class="string">&quot;Error: {e:?}, output was = &#39;{output}&#39;&quot;</span>).into(),
-            )
-        })<span class="question-mark">?</span>;
+        <span class="kw">let </span>v: Value = serde_json::from_str(<span class="kw-2">&amp;</span>output)
+            .with_context(|| <span class="macro">format!</span>(<span class="string">&quot;output was = &#39;{output}&#39;&quot;</span>))
+            .map_err(ChainObserverError::InvalidContent)<span class="question-mark">?</span>;
 
         <span class="kw">if let </span>Value::Number(epoch) = <span class="kw-2">&amp;</span>v[<span class="string">&quot;epoch&quot;</span>] {
             <span class="prelude-val">Ok</span>(epoch.as_u64().map(Epoch))
@@ -1299,11 +1274,9 @@
             .launch_utxo(address)
             .<span class="kw">await
             </span>.map_err(ChainObserverError::General)<span class="question-mark">?</span>;
-        <span class="kw">let </span>v: HashMap&lt;String, Value&gt; = serde_json::from_str(<span class="kw-2">&amp;</span>output).map_err(|e| {
-            ChainObserverError::InvalidContent(
-                <span class="macro">format!</span>(<span class="string">&quot;Error: {e:?}, output was = &#39;{output}&#39;&quot;</span>).into(),
-            )
-        })<span class="question-mark">?</span>;
+        <span class="kw">let </span>v: HashMap&lt;String, Value&gt; = serde_json::from_str(<span class="kw-2">&amp;</span>output)
+            .with_context(|| <span class="macro">format!</span>(<span class="string">&quot;output was = &#39;{output}&#39;&quot;</span>))
+            .map_err(ChainObserverError::InvalidContent)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(v.values()
             .filter_map(|v| {
@@ -1329,12 +1302,12 @@
         opcert: <span class="kw-2">&amp;</span>OpCert,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;KESPeriod&gt;, ChainObserverError&gt; {
         <span class="kw">let </span>dir = std::env::temp_dir().join(<span class="string">&quot;mithril_kes_period&quot;</span>);
-        fs::create_dir_all(<span class="kw-2">&amp;</span>dir).map_err(|e| ChainObserverError::General(Box::new(e)))<span class="question-mark">?</span>;
+        fs::create_dir_all(<span class="kw-2">&amp;</span>dir).map_err(|e| ChainObserverError::General(e.into()))<span class="question-mark">?</span>;
         <span class="kw">let </span>opcert_file =
             std::env::temp_dir().join(<span class="macro">format!</span>(<span class="string">&quot;opcert_kes_period-{}&quot;</span>, opcert.compute_hash()));
         opcert
             .to_file(<span class="kw-2">&amp;</span>opcert_file)
-            .map_err(|e| ChainObserverError::General(Box::new(e)))<span class="question-mark">?</span>;
+            .map_err(|e| ChainObserverError::General(e.into()))<span class="question-mark">?</span>;
         <span class="kw">let </span>output = <span class="self">self
             </span>.cli_runner
             .launch_kes_period(opcert_file.to_str().unwrap())
@@ -1342,11 +1315,9 @@
             </span>.map_err(ChainObserverError::General)<span class="question-mark">?</span>;
         <span class="kw">let </span>first_left_curly_bracket_index = output.find(<span class="string">&#39;{&#39;</span>).unwrap_or_default();
         <span class="kw">let </span>output_cleaned = output.split_at(first_left_curly_bracket_index).<span class="number">1</span>;
-        <span class="kw">let </span>v: Value = serde_json::from_str(output_cleaned).map_err(|e| {
-            ChainObserverError::InvalidContent(
-                <span class="macro">format!</span>(<span class="string">&quot;Error: {e:?}, output was = &#39;{output}&#39;&quot;</span>).into(),
-            )
-        })<span class="question-mark">?</span>;
+        <span class="kw">let </span>v: Value = serde_json::from_str(output_cleaned)
+            .with_context(|| <span class="macro">format!</span>(<span class="string">&quot;output was = &#39;{output}&#39;&quot;</span>))
+            .map_err(ChainObserverError::InvalidContent)<span class="question-mark">?</span>;
 
         <span class="kw">if let </span>Value::Number(kes_period) = <span class="kw-2">&amp;</span>v[<span class="string">&quot;qKesCurrentKesPeriod&quot;</span>] {
             <span class="prelude-val">Ok</span>(kes_period.as_u64().map(|p| p <span class="kw">as </span>KESPeriod))
@@ -1500,10 +1471,9 @@ pool1qz2vzszautc2c8mljnqre2857dpmheq7kgt6vav0s38tvvhxm6w   1.051e-6
 }
             &quot;#</span>;
             <span class="kw">if </span><span class="self">self</span>.is_legacy {
-                <span class="prelude-val">Err</span>(
+                <span class="prelude-val">Err</span>(<span class="macro">anyhow!</span>(
                     <span class="string">&quot;launch_stake_snapshot_all_pools is not implemented in legacy cli runner&quot;
-                        </span>.into(),
-                )
+                </span>))
             } <span class="kw">else </span>{
                 <span class="prelude-val">Ok</span>(output.to_string())
             }

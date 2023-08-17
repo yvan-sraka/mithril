@@ -360,7 +360,13 @@
 <a href="#360" id="360">360</a>
 <a href="#361" id="361">361</a>
 <a href="#362" id="362">362</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
+<a href="#363" id="363">363</a>
+<a href="#364" id="364">364</a>
+<a href="#365" id="365">365</a>
+<a href="#366" id="366">366</a>
+<a href="#367" id="367">367</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>anyhow::{anyhow, Context};
+<span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>sqlite::Connection;
 <span class="kw">use </span>std::{fs, sync::Arc};
 <span class="kw">use </span>tokio::sync::Mutex;
@@ -381,7 +387,7 @@
         MithrilStakeDistributionSignableBuilder, SignableBuilderService,
     },
     store::{adapter::SQLiteAdapter, StakeStore},
-    BeaconProvider, BeaconProviderImpl, StdError, StdResult,
+    BeaconProvider, BeaconProviderImpl, StdResult,
 };
 
 <span class="kw">use crate</span>::{
@@ -467,16 +473,16 @@
         <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.config.operational_certificate_path {
             <span class="prelude-val">Some</span>(operational_certificate_path) =&gt; {
                 <span class="kw">let </span>opcert: OpCert = OpCert::from_file(operational_certificate_path)
-                    .map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;Could not decode operational certificate: {e:?}&quot;</span>))<span class="question-mark">?</span>;
-                <span class="prelude-val">Ok</span>(opcert.compute_protocol_party_id().map_err(|e| {
-                    <span class="macro">format!</span>(<span class="string">&quot;Could not compute party_id from operational certificate: {e:?}&quot;</span>)
-                })<span class="question-mark">?</span>)
+                    .with_context(|| <span class="string">&quot;Could not decode operational certificate&quot;</span>)<span class="question-mark">?</span>;
+                <span class="prelude-val">Ok</span>(opcert
+                    .compute_protocol_party_id()
+                    .with_context(|| <span class="string">&quot;Could not compute party_id from operational certificate&quot;</span>)<span class="question-mark">?</span>)
             }
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">self
                 </span>.config
                 .party_id
                 .to_owned()
-                .ok_or(<span class="string">&quot;A party_id should at least be provided&quot;</span>)<span class="question-mark">?</span>),
+                .ok_or(<span class="macro">anyhow!</span>(<span class="string">&quot;A party_id should at least be provided&quot;</span>))<span class="question-mark">?</span>),
         }
     }
 
@@ -514,7 +520,7 @@
         db_checker
             .apply()
             .<span class="kw">await
-            </span>.map_err(|e| -&gt; StdError { <span class="macro">format!</span>(<span class="string">&quot;Database migration error {e}&quot;</span>).into() })<span class="question-mark">?</span>;
+            </span>.with_context(|| <span class="string">&quot;Database migration error&quot;</span>)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(sqlite_connection)
     }
@@ -525,8 +531,12 @@
     <span class="doccomment">/// Build a Services for the Production environment.
     </span><span class="kw">async fn </span>build(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StdResult&lt;SignerServices&gt; {
         <span class="kw">if </span>!<span class="self">self</span>.config.data_stores_directory.exists() {
-            fs::create_dir_all(<span class="self">self</span>.config.data_stores_directory.clone())
-                .map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;Could not create data stores directory: {e:?}&quot;</span>))<span class="question-mark">?</span>;
+            fs::create_dir_all(<span class="self">self</span>.config.data_stores_directory.clone()).with_context(|| {
+                <span class="macro">format!</span>(
+                    <span class="string">&quot;Could not create data stores directory: `{}`&quot;</span>,
+                    <span class="self">self</span>.config.data_stores_directory.display()
+                )
+            })<span class="question-mark">?</span>;
         }
 
         <span class="kw">let </span>sqlite_connection = <span class="self">self</span>.build_sqlite_connection().<span class="kw">await</span><span class="question-mark">?</span>;

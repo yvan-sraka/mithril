@@ -141,11 +141,12 @@
 <a href="#141" id="141">141</a>
 <a href="#142" id="142">142</a>
 <a href="#143" id="143">143</a>
-<a href="#144" id="144">144</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>clap::Parser;
+</pre></div><pre class="rust"><code><span class="kw">use </span>anyhow::Context;
+<span class="kw">use </span>clap::Parser;
 <span class="kw">use </span>config::{builder::DefaultState, ConfigBuilder, Map, Source, Value, ValueKind};
+<span class="kw">use </span>mithril_common::StdResult;
 <span class="kw">use </span>slog_scope::{crit, debug, info};
-<span class="kw">use </span>std::{error::Error, net::IpAddr, path::PathBuf};
+<span class="kw">use </span>std::{net::IpAddr, path::PathBuf};
 <span class="kw">use </span>tokio::{sync::oneshot, task::JoinSet};
 
 <span class="kw">use crate</span>::{dependency_injection::DependenciesBuilder, Configuration};
@@ -215,16 +216,13 @@
 }
 
 <span class="kw">impl </span>ServeCommand {
-    <span class="kw">pub async fn </span>execute(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="kw-2">mut </span>config_builder: ConfigBuilder&lt;DefaultState&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>Error&gt;&gt; {
+    <span class="kw">pub async fn </span>execute(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>config_builder: ConfigBuilder&lt;DefaultState&gt;) -&gt; StdResult&lt;()&gt; {
         config_builder = config_builder.add_source(<span class="self">self</span>.clone());
         <span class="kw">let </span>config: Configuration = config_builder
             .build()
-            .map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;configuration build error: {e}&quot;</span>))<span class="question-mark">?
+            .with_context(|| <span class="string">&quot;configuration build error&quot;</span>)<span class="question-mark">?
             </span>.try_deserialize()
-            .map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;configuration deserialize error: {e}&quot;</span>))<span class="question-mark">?</span>;
+            .with_context(|| <span class="string">&quot;configuration deserialize error&quot;</span>)<span class="question-mark">?</span>;
         <span class="macro">debug!</span>(<span class="string">&quot;SERVE command&quot;</span>; <span class="string">&quot;config&quot; </span>=&gt; <span class="macro">format!</span>(<span class="string">&quot;{config:?}&quot;</span>));
         <span class="kw">let </span><span class="kw-2">mut </span>dependencies_builder = DependenciesBuilder::new(config.clone());
 

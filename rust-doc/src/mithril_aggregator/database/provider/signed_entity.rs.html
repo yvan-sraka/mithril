@@ -959,9 +959,8 @@
 <a href="#959" id="959">959</a>
 <a href="#960" id="960">960</a>
 <a href="#961" id="961">961</a>
-<a href="#962" id="962">962</a>
-<a href="#963" id="963">963</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
+</pre></div><pre class="rust"><code><span class="kw">use </span>anyhow::Context;
+<span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>chrono::{DateTime, Utc};
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>sqlite::{Connection, Value};
@@ -976,7 +975,7 @@
         WhereCondition,
     },
     store::adapter::AdapterError,
-    StdError, StdResult,
+    StdResult,
 };
 
 <span class="attr">#[cfg(test)]
@@ -1100,20 +1099,14 @@
         <span class="self">Self </span>{ client }
     }
 
-    <span class="kw">fn </span>condition_by_signed_entity_id(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        signed_entity_id: <span class="kw-2">&amp;</span>str,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;WhereCondition, StdError&gt; {
+    <span class="kw">fn </span>condition_by_signed_entity_id(<span class="kw-2">&amp;</span><span class="self">self</span>, signed_entity_id: <span class="kw-2">&amp;</span>str) -&gt; StdResult&lt;WhereCondition&gt; {
         <span class="prelude-val">Ok</span>(WhereCondition::new(
             <span class="string">&quot;signed_entity_id = ?*&quot;</span>,
             <span class="macro">vec!</span>[Value::String(signed_entity_id.to_owned())],
         ))
     }
 
-    <span class="kw">fn </span>condition_by_certificate_id(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        certificate_id: <span class="kw-2">&amp;</span>str,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;WhereCondition, StdError&gt; {
+    <span class="kw">fn </span>condition_by_certificate_id(<span class="kw-2">&amp;</span><span class="self">self</span>, certificate_id: <span class="kw-2">&amp;</span>str) -&gt; StdResult&lt;WhereCondition&gt; {
         <span class="prelude-val">Ok</span>(WhereCondition::new(
             <span class="string">&quot;certificate_id = ?*&quot;</span>,
             <span class="macro">vec!</span>[Value::String(certificate_id.to_owned())],
@@ -1132,7 +1125,7 @@
     <span class="kw">fn </span>condition_by_signed_entity_type(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         signed_entity_type: <span class="kw-2">&amp;</span>SignedEntityTypeDiscriminants,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;WhereCondition, StdError&gt; {
+    ) -&gt; StdResult&lt;WhereCondition&gt; {
         <span class="kw">let </span>signed_entity_type_id: i64 = signed_entity_type.index() <span class="kw">as </span>i64;
 
         <span class="prelude-val">Ok</span>(WhereCondition::new(
@@ -1145,7 +1138,7 @@
     </span><span class="kw">pub fn </span>get_by_signed_entity_id(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         signed_entity_id: <span class="kw-2">&amp;</span>str,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;EntityCursor&lt;SignedEntityRecord&gt;, StdError&gt; {
+    ) -&gt; StdResult&lt;EntityCursor&lt;SignedEntityRecord&gt;&gt; {
         <span class="kw">let </span>filters = <span class="self">self</span>.condition_by_signed_entity_id(signed_entity_id)<span class="question-mark">?</span>;
         <span class="kw">let </span>signed_entity_record = <span class="self">self</span>.find(filters)<span class="question-mark">?</span>;
 
@@ -1156,7 +1149,7 @@
     </span><span class="kw">pub fn </span>get_by_certificate_id(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         certificate_id: <span class="kw-2">&amp;</span>str,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;EntityCursor&lt;SignedEntityRecord&gt;, StdError&gt; {
+    ) -&gt; StdResult&lt;EntityCursor&lt;SignedEntityRecord&gt;&gt; {
         <span class="kw">let </span>filters = <span class="self">self</span>.condition_by_certificate_id(certificate_id)<span class="question-mark">?</span>;
         <span class="kw">let </span>signed_entity_record = <span class="self">self</span>.find(filters)<span class="question-mark">?</span>;
 
@@ -1167,7 +1160,7 @@
     </span><span class="kw">pub fn </span>get_by_certificates_ids(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         certificates_ids: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str],
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;EntityCursor&lt;SignedEntityRecord&gt;, StdError&gt; {
+    ) -&gt; StdResult&lt;EntityCursor&lt;SignedEntityRecord&gt;&gt; {
         <span class="kw">let </span>filters = <span class="self">self</span>.condition_by_certificates_ids(certificates_ids);
         <span class="kw">let </span>signed_entity_record = <span class="self">self</span>.find(filters)<span class="question-mark">?</span>;
 
@@ -1178,7 +1171,7 @@
     </span><span class="kw">pub fn </span>get_by_signed_entity_type(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         signed_entity_type: <span class="kw-2">&amp;</span>SignedEntityTypeDiscriminants,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;EntityCursor&lt;SignedEntityRecord&gt;, StdError&gt; {
+    ) -&gt; StdResult&lt;EntityCursor&lt;SignedEntityRecord&gt;&gt; {
         <span class="kw">let </span>filters = <span class="self">self</span>.condition_by_signed_entity_type(signed_entity_type)<span class="question-mark">?</span>;
         <span class="kw">let </span>signed_entity_record = <span class="self">self</span>.find(filters)<span class="question-mark">?</span>;
 
@@ -1186,7 +1179,7 @@
     }
 
     <span class="doccomment">/// Get all SignedEntityRecords.
-    </span><span class="kw">pub fn </span>get_all(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;EntityCursor&lt;SignedEntityRecord&gt;, StdError&gt; {
+    </span><span class="kw">pub fn </span>get_all(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StdResult&lt;EntityCursor&lt;SignedEntityRecord&gt;&gt; {
         <span class="kw">let </span>filters = WhereCondition::default();
         <span class="kw">let </span>signed_entity_record = <span class="self">self</span>.find(filters)<span class="question-mark">?</span>;
 
@@ -1235,10 +1228,7 @@
         )
     }
 
-    <span class="kw">fn </span>persist(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        signed_entity_record: SignedEntityRecord,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;SignedEntityRecord, StdError&gt; {
+    <span class="kw">fn </span>persist(<span class="kw-2">&amp;</span><span class="self">self</span>, signed_entity_record: SignedEntityRecord) -&gt; StdResult&lt;SignedEntityRecord&gt; {
         <span class="kw">let </span>filters = <span class="self">self</span>.get_insert_condition(signed_entity_record.clone());
 
         <span class="kw">let </span>entity = <span class="self">self</span>.find(filters)<span class="question-mark">?</span>.next().unwrap_or_else(|| {
@@ -1297,10 +1287,7 @@ where signed_entity_id = ?*&quot;</span>;
         <span class="prelude-val">Ok</span>(WhereCondition::new(expression, parameters))
     }
 
-    <span class="kw">fn </span>persist(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        signed_entity_record: <span class="kw-2">&amp;</span>SignedEntityRecord,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;SignedEntityRecord, StdError&gt; {
+    <span class="kw">fn </span>persist(<span class="kw-2">&amp;</span><span class="self">self</span>, signed_entity_record: <span class="kw-2">&amp;</span>SignedEntityRecord) -&gt; StdResult&lt;SignedEntityRecord&gt; {
         <span class="kw">let </span>filters = <span class="self">self</span>.get_update_condition(signed_entity_record)<span class="question-mark">?</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>cursor = <span class="self">self</span>.find(filters)<span class="question-mark">?</span>;
 
@@ -1397,7 +1384,8 @@ where signed_entity_id = ?*&quot;</span>;
         <span class="kw">let </span>provider = SignedEntityRecordProvider::new(connection);
         <span class="kw">let </span><span class="kw-2">mut </span>cursor = provider
             .get_by_signed_entity_id(signed_entity_id)
-            .map_err(|e| AdapterError::GeneralError(<span class="macro">format!</span>(<span class="string">&quot;{e}&quot;</span>)))<span class="question-mark">?</span>;
+            .with_context(|| <span class="macro">format!</span>(<span class="string">&quot;get signed entity by id failure, id: {signed_entity_id}&quot;</span>))
+            .map_err(AdapterError::GeneralError)<span class="question-mark">?</span>;
         <span class="kw">let </span>signed_entity = cursor.next();
 
         <span class="prelude-val">Ok</span>(signed_entity)
@@ -1411,7 +1399,12 @@ where signed_entity_id = ?*&quot;</span>;
         <span class="kw">let </span>provider = SignedEntityRecordProvider::new(connection);
         <span class="kw">let </span><span class="kw-2">mut </span>cursor = provider
             .get_by_certificate_id(certificate_id)
-            .map_err(|e| AdapterError::GeneralError(<span class="macro">format!</span>(<span class="string">&quot;{e}&quot;</span>)))<span class="question-mark">?</span>;
+            .with_context(|| {
+                <span class="macro">format!</span>(
+                    <span class="string">&quot;get signed entity by certificate id failure, certificate_id: {certificate_id}&quot;
+                </span>)
+            })
+            .map_err(AdapterError::GeneralError)<span class="question-mark">?</span>;
         <span class="kw">let </span>signed_entity = cursor.next();
 
         <span class="prelude-val">Ok</span>(signed_entity)
@@ -1437,7 +1430,10 @@ where signed_entity_id = ?*&quot;</span>;
         <span class="kw">let </span>provider = SignedEntityRecordProvider::new(connection);
         <span class="kw">let </span>cursor = provider
             .get_by_signed_entity_type(signed_entity_type_id)
-            .map_err(|e| AdapterError::GeneralError(<span class="macro">format!</span>(<span class="string">&quot;{e}&quot;</span>)))<span class="question-mark">?</span>;
+            .with_context(|| {
+                <span class="macro">format!</span>(<span class="string">&quot;get last signed entity by type failure, type: {signed_entity_type_id:?}&quot;</span>)
+            })
+            .map_err(AdapterError::GeneralError)<span class="question-mark">?</span>;
         <span class="kw">let </span>signed_entities: Vec&lt;SignedEntityRecord&gt; = cursor.take(total).collect();
 
         <span class="prelude-val">Ok</span>(signed_entities)
@@ -1512,7 +1508,7 @@ where signed_entity_id = ?*&quot;</span>;
     <span class="kw">pub fn </span>setup_signed_entity_db(
         connection: <span class="kw-2">&amp;</span>Connection,
         signed_entity_records: Vec&lt;SignedEntityRecord&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), StdError&gt; {
+    ) -&gt; StdResult&lt;()&gt; {
         apply_all_migrations_to_db(connection)<span class="question-mark">?</span>;
         disable_foreign_key_support(connection)<span class="question-mark">?</span>;
 

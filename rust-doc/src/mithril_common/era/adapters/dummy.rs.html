@@ -74,11 +74,11 @@
 <a href="#74" id="74">74</a>
 <a href="#75" id="75">75</a>
 <a href="#76" id="76">76</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>std::{error::Error, sync::RwLock};
+</pre></div><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
+<span class="kw">use </span>std::sync::RwLock;
 
-<span class="kw">use </span>async_trait::async_trait;
-
-<span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::{EraMarker, EraReaderAdapter};
+<span class="kw">use </span><span class="kw">crate</span>::era::{EraMarker, EraReaderAdapter};
+<span class="kw">use </span><span class="kw">crate</span>::StdResult;
 
 <span class="doccomment">/// Dummy adapter is intended to be used in a test environment (end to end test)
 /// to simulate not yet activated Eras.
@@ -105,7 +105,7 @@
 
 <span class="attr">#[async_trait]
 </span><span class="kw">impl </span>EraReaderAdapter <span class="kw">for </span>DummyAdapter {
-    <span class="kw">async fn </span>read(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;EraMarker&gt;, Box&lt;<span class="kw">dyn </span>Error + Sync + Send&gt;&gt; {
+    <span class="kw">async fn </span>read(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StdResult&lt;Vec&lt;EraMarker&gt;&gt; {
         <span class="kw">let </span>markers = <span class="self">self</span>.markers.read().unwrap();
 
         <span class="prelude-val">Ok</span>((<span class="kw-2">*</span>markers.clone()).to_vec())

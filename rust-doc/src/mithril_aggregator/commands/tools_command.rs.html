@@ -78,18 +78,13 @@
 <a href="#78" id="78">78</a>
 <a href="#79" id="79">79</a>
 <a href="#80" id="80">80</a>
-<a href="#81" id="81">81</a>
-<a href="#82" id="82">82</a>
-<a href="#83" id="83">83</a>
-<a href="#84" id="84">84</a>
-<a href="#85" id="85">85</a>
-<a href="#86" id="86">86</a>
-<a href="#87" id="87">87</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>clap::{Parser, Subcommand};
+</pre></div><pre class="rust"><code><span class="kw">use </span>anyhow::Context;
+<span class="kw">use </span>clap::{Parser, Subcommand};
 <span class="kw">use </span>config::{builder::DefaultState, ConfigBuilder};
 <span class="kw">use </span>mithril_common::sqlite::vacuum_database;
+<span class="kw">use </span>mithril_common::StdResult;
 <span class="kw">use </span>slog_scope::debug;
-<span class="kw">use </span>std::{error::Error, sync::Arc};
+<span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use crate</span>::{
     database::provider::{CertificateRepository, SignedEntityStoreAdapter},
@@ -107,10 +102,7 @@
 }
 
 <span class="kw">impl </span>ToolsCommand {
-    <span class="kw">pub async fn </span>execute(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        config_builder: ConfigBuilder&lt;DefaultState&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>Error&gt;&gt; {
+    <span class="kw">pub async fn </span>execute(<span class="kw-2">&amp;</span><span class="self">self</span>, config_builder: ConfigBuilder&lt;DefaultState&gt;) -&gt; StdResult&lt;()&gt; {
         <span class="self">self</span>.genesis_subcommand.execute(config_builder).<span class="kw">await
     </span>}
 }
@@ -127,10 +119,7 @@
 }
 
 <span class="kw">impl </span>ToolsSubCommand {
-    <span class="kw">pub async fn </span>execute(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        config_builder: ConfigBuilder&lt;DefaultState&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>Error&gt;&gt; {
+    <span class="kw">pub async fn </span>execute(<span class="kw-2">&amp;</span><span class="self">self</span>, config_builder: ConfigBuilder&lt;DefaultState&gt;) -&gt; StdResult&lt;()&gt; {
         <span class="kw">match </span><span class="self">self </span>{
             <span class="self">Self</span>::RecomputeCertificatesHash(cmd) =&gt; cmd.execute(config_builder).<span class="kw">await</span>,
         }
@@ -142,15 +131,12 @@
 </span><span class="kw">pub struct </span>RecomputeCertificatesHashCommand {}
 
 <span class="kw">impl </span>RecomputeCertificatesHashCommand {
-    <span class="kw">pub async fn </span>execute(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        config_builder: ConfigBuilder&lt;DefaultState&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>Error&gt;&gt; {
+    <span class="kw">pub async fn </span>execute(<span class="kw-2">&amp;</span><span class="self">self</span>, config_builder: ConfigBuilder&lt;DefaultState&gt;) -&gt; StdResult&lt;()&gt; {
         <span class="kw">let </span>config: Configuration = config_builder
             .build()
-            .map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;configuration build error: {e}&quot;</span>))<span class="question-mark">?
+            .with_context(|| <span class="string">&quot;configuration build error&quot;</span>)<span class="question-mark">?
             </span>.try_deserialize()
-            .map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;configuration deserialize error: {e}&quot;</span>))<span class="question-mark">?</span>;
+            .with_context(|| <span class="string">&quot;configuration deserialize error&quot;</span>)<span class="question-mark">?</span>;
         <span class="macro">debug!</span>(<span class="string">&quot;RECOMPUTE CERTIFICATES HASH command&quot;</span>; <span class="string">&quot;config&quot; </span>=&gt; <span class="macro">format!</span>(<span class="string">&quot;{config:?}&quot;</span>));
         <span class="macro">println!</span>(<span class="string">&quot;Recomputing all certificate hash&quot;</span>,);
         <span class="kw">let </span><span class="kw-2">mut </span>dependencies_builder = DependenciesBuilder::new(config.clone());
@@ -163,11 +149,11 @@
         migrator
             .migrate()
             .<span class="kw">await
-            </span>.map_err(|err| <span class="macro">format!</span>(<span class="string">&quot;recompute-certificates-hash: migration error: {err}&quot;</span>))<span class="question-mark">?</span>;
+            </span>.with_context(|| <span class="string">&quot;recompute-certificates-hash: database migration error&quot;</span>)<span class="question-mark">?</span>;
 
         vacuum_database(connection)
             .<span class="kw">await
-            </span>.map_err(|err| <span class="macro">format!</span>(<span class="string">&quot;recompute-certificates-hash: database vacuum error: {err}&quot;</span>))<span class="question-mark">?</span>;
+            </span>.with_context(|| <span class="string">&quot;recompute-certificates-hash: database vacuum error&quot;</span>)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(())
     }

@@ -278,18 +278,18 @@
 <a href="#278" id="278">278</a>
 <a href="#279" id="279">279</a>
 <a href="#280" id="280">280</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>std::{
+</pre></div><pre class="rust"><code><span class="kw">use </span>anyhow::anyhow;
+<span class="kw">use </span>chrono::{DateTime, NaiveDateTime, Utc};
+<span class="kw">use </span>sqlite::{Connection, Row, Value};
+<span class="kw">use </span>std::{
     cmp::Ordering,
     fmt::{Debug, Display},
 };
 
-<span class="kw">use </span>chrono::{DateTime, NaiveDateTime, Utc};
-<span class="kw">use </span>sqlite::{Connection, Row, Value};
-
-<span class="kw">use </span><span class="kw">crate</span>::sqlite::{
-    HydrationError, Projection, Provider, SourceAlias, SqLiteEntity, WhereCondition,
+<span class="kw">use crate</span>::{
+    sqlite::{HydrationError, Projection, Provider, SourceAlias, SqLiteEntity, WhereCondition},
+    StdResult,
 };
-<span class="kw">use </span><span class="kw">crate</span>::StdError;
 
 <span class="kw">use </span><span class="kw">super</span>::DbVersion;
 
@@ -305,11 +305,11 @@
 
 <span class="kw">impl </span>ApplicationNodeType {
     <span class="doccomment">/// [ApplicationNodeType] constructor.
-    </span><span class="kw">pub fn </span>new(node_type: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, StdError&gt; {
+    </span><span class="kw">pub fn </span>new(node_type: <span class="kw-2">&amp;</span>str) -&gt; StdResult&lt;<span class="self">Self</span>&gt; {
         <span class="kw">match </span>node_type {
             <span class="string">&quot;aggregator&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Aggregator),
             <span class="string">&quot;signer&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Signer),
-            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">&quot;unknown node type &#39;{node_type}&#39;&quot;</span>).into()),
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">anyhow!</span>(<span class="string">&quot;unknown node type &#39;{node_type}&#39;&quot;</span>)),
         }
     }
 }
@@ -401,7 +401,7 @@
     </span><span class="kw">pub fn </span>create_table_if_not_exists(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         application_type: <span class="kw-2">&amp;</span>ApplicationNodeType,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), StdError&gt; {
+    ) -&gt; StdResult&lt;()&gt; {
         <span class="kw">let </span>connection = <span class="self">self</span>.get_connection();
         <span class="kw">let </span>sql = <span class="string">&quot;select exists(select name from sqlite_master where type=&#39;table&#39; and name=&#39;db_version&#39;) as table_exists&quot;</span>;
         <span class="kw">let </span>table_exists = connection
@@ -428,7 +428,7 @@ insert into db_version (application_type, version, updated_at) values (&#39;{app
     </span><span class="kw">pub fn </span>get_application_version(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         application_type: <span class="kw-2">&amp;</span>ApplicationNodeType,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;DatabaseVersion&gt;, StdError&gt; {
+    ) -&gt; StdResult&lt;<span class="prelude-ty">Option</span>&lt;DatabaseVersion&gt;&gt; {
         <span class="kw">let </span>filters = WhereCondition::new(
             <span class="string">&quot;application_type = ?*&quot;</span>,
             <span class="macro">vec!</span>[Value::String(<span class="macro">format!</span>(<span class="string">&quot;{application_type}&quot;</span>))],
@@ -473,7 +473,7 @@ where {condition}
     }
 
     <span class="doccomment">/// Persist the given entity and return the projection of the saved entity.
-    </span><span class="kw">pub fn </span>save(<span class="kw-2">&amp;</span><span class="self">self</span>, version: DatabaseVersion) -&gt; <span class="prelude-ty">Result</span>&lt;DatabaseVersion, StdError&gt; {
+    </span><span class="kw">pub fn </span>save(<span class="kw-2">&amp;</span><span class="self">self</span>, version: DatabaseVersion) -&gt; StdResult&lt;DatabaseVersion&gt; {
         <span class="kw">let </span>filters = WhereCondition::new(
             <span class="string">&quot;&quot;</span>,
             <span class="macro">vec!</span>[
@@ -485,7 +485,7 @@ where {condition}
         <span class="kw">let </span>entity = <span class="self">self
             </span>.find(filters)<span class="question-mark">?
             </span>.next()
-            .ok_or(<span class="string">&quot;No data returned after insertion&quot;</span>)<span class="question-mark">?</span>;
+            .ok_or(<span class="macro">anyhow!</span>(<span class="string">&quot;No data returned after insertion&quot;</span>))<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(entity)
     }

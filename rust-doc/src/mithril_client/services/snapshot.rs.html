@@ -798,28 +798,21 @@
 <a href="#798" id="798">798</a>
 <a href="#799" id="799">799</a>
 <a href="#800" id="800">800</a>
-<a href="#801" id="801">801</a>
-<a href="#802" id="802">802</a>
-<a href="#803" id="803">803</a>
-<a href="#804" id="804">804</a>
-<a href="#805" id="805">805</a>
-<a href="#806" id="806">806</a>
-<a href="#807" id="807">807</a>
-<a href="#808" id="808">808</a>
-<a href="#809" id="809">809</a>
-<a href="#810" id="810">810</a>
-<a href="#811" id="811">811</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>std::{
+</pre></div><pre class="rust"><code><span class="kw">use </span>anyhow::{anyhow, Context};
+<span class="kw">use </span>async_trait::async_trait;
+<span class="kw">use </span>futures::Future;
+<span class="kw">use </span>indicatif::{MultiProgress, ProgressBar, ProgressDrawTarget, ProgressState, ProgressStyle};
+<span class="kw">use </span>slog_scope::{debug, warn};
+<span class="kw">use </span>std::{
     fmt::Write,
     fs::File,
     path::{Path, PathBuf},
     sync::Arc,
     time::Duration,
 };
+<span class="kw">use </span>thiserror::Error;
+<span class="kw">use </span>tokio::{select, time::sleep};
 
-<span class="kw">use </span>async_trait::async_trait;
-<span class="kw">use </span>futures::Future;
-<span class="kw">use </span>indicatif::{MultiProgress, ProgressBar, ProgressDrawTarget, ProgressState, ProgressStyle};
 <span class="kw">use </span>mithril_common::{
     certificate_chain::CertificateVerifier,
     crypto_helper::{key_decode_hex, ProtocolGenesisVerifier},
@@ -828,9 +821,6 @@
     messages::{SnapshotListItemMessage, SnapshotMessage},
     StdError, StdResult,
 };
-<span class="kw">use </span>slog_scope::{debug, warn};
-<span class="kw">use </span>thiserror::Error;
-<span class="kw">use </span>tokio::{select, time::sleep};
 
 <span class="kw">use crate</span>::{
     aggregator_client::{AggregatorHTTPClientError, CertificateClient, SnapshotClient},
@@ -860,14 +850,8 @@
     </span>CouldNotFindCertificate(String),
 
     <span class="doccomment">/// The configuration has invalid or missing parameters
-    </span><span class="attr">#[error(<span class="string">&quot;Missing or invalid parameters: {context}. Error: {error}&quot;</span>)]
-    </span>InvalidParameters {
-        <span class="doccomment">/// Error context
-        </span>context: String,
-
-        <span class="doccomment">/// Eventual nested error
-        </span>error: StdError,
-    },
+    </span><span class="attr">#[error(<span class="string">&quot;Missing or invalid parameters: {0:?}&quot;</span>)]
+    </span>InvalidParameters(StdError),
 }
 
 <span class="doccomment">/// ## SnapshotService
@@ -944,10 +928,9 @@
         certificate: <span class="kw-2">&amp;</span>Certificate,
     ) -&gt; StdResult&lt;()&gt; {
         <span class="kw">let </span>genesis_verification_key = key_decode_hex(genesis_verification_key).map_err(|e| {
-            SnapshotServiceError::InvalidParameters {
-                context: <span class="macro">format!</span>(<span class="string">&quot;Invalid genesis verification key &#39;{genesis_verification_key}&#39;&quot;</span>),
-                error: e.into(),
-            }
+            SnapshotServiceError::InvalidParameters(<span class="macro">anyhow!</span>(e).context(<span class="macro">format!</span>(
+                <span class="string">&quot;Invalid genesis verification key &#39;{genesis_verification_key}&#39;&quot;
+            </span>)))
         })<span class="question-mark">?</span>;
         <span class="kw">let </span>genesis_verifier =
             ProtocolGenesisVerifier::from_verification_key(genesis_verification_key);
@@ -1013,7 +996,7 @@
                 <span class="prelude-val">Some</span>(error)
                     <span class="kw">if </span><span class="macro">matches!</span>(error, &amp;&amp;AggregatorHTTPClientError::RemoteServerLogical(<span class="kw">_</span>)) =&gt;
                 {
-                    Box::new(SnapshotServiceError::SnapshotNotFound(digest.to_owned())) <span class="kw">as </span>StdError
+                    SnapshotServiceError::SnapshotNotFound(digest.to_owned()).into()
                 }
                 <span class="kw">_ </span>=&gt; e,
             })<span class="question-mark">?</span>;
@@ -1064,12 +1047,7 @@
             </span>.snapshot_client
             .download(<span class="kw-2">&amp;</span>snapshot_entity.artifact, download_dir, pb)
             .<span class="kw">await
-            </span>.map_err(|e| {
-                <span class="macro">format!</span>(
-                    <span class="string">&quot;Could not download file in &#39;{}&#39;: {e}&quot;</span>,
-                    download_dir.display()
-                )
-            })<span class="question-mark">?</span>;
+            </span>.with_context(|| <span class="macro">format!</span>(<span class="string">&quot;Could not download file in &#39;{}&#39;&quot;</span>, download_dir.display()))<span class="question-mark">?</span>;
 
         progress_bar.println(<span class="string">&quot;5/7 - Unpacking the snapshot…&quot;</span>)<span class="question-mark">?</span>;
         <span class="kw">let </span>unpacker = unpacker.unpack_snapshot(<span class="kw-2">&amp;</span>snapshot_path, <span class="kw-2">&amp;</span>db_dir);
@@ -1088,7 +1066,7 @@
             </span>.immutable_digester
             .compute_digest(<span class="kw-2">&amp;</span>db_dir, <span class="kw-2">&amp;</span>certificate.beacon)
             .<span class="kw">await
-            </span>.map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;Could not compute digest in &#39;{}&#39;: {e}&quot;</span>, db_dir.display()))<span class="question-mark">?</span>;
+            </span>.with_context(|| <span class="macro">format!</span>(<span class="string">&quot;Could not compute digest in &#39;{}&#39;&quot;</span>, db_dir.display()))<span class="question-mark">?</span>;
 
         progress_bar.println(<span class="string">&quot;7/7 - Verifying the snapshot signature…&quot;</span>)<span class="question-mark">?</span>;
         <span class="kw">let </span>expected_message = {

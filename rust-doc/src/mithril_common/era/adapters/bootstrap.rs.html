@@ -44,8 +44,8 @@
 </pre></div><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 
 <span class="kw">use </span><span class="kw">crate</span>::entities::Epoch;
-
-<span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::{EraMarker, EraReaderAdapter, SupportedEra};
+<span class="kw">use </span><span class="kw">crate</span>::era::{EraMarker, EraReaderAdapter, SupportedEra};
+<span class="kw">use </span><span class="kw">crate</span>::StdResult;
 
 <span class="doccomment">/// The goal of the bootstrap adapter is to advertise for the first existing Era
 /// while it does not exist yet on any backend. This adapter is intended to be
@@ -54,7 +54,7 @@
 
 <span class="attr">#[async_trait]
 </span><span class="kw">impl </span>EraReaderAdapter <span class="kw">for </span>BootstrapAdapter {
-    <span class="kw">async fn </span>read(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;EraMarker&gt;, Box&lt;<span class="kw">dyn </span>std::error::Error + Sync + Send&gt;&gt; {
+    <span class="kw">async fn </span>read(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StdResult&lt;Vec&lt;EraMarker&gt;&gt; {
         <span class="prelude-val">Ok</span>(<span class="macro">vec!</span>[EraMarker::new(
             <span class="kw-2">&amp;</span>SupportedEra::eras().first().unwrap().to_string(),
             <span class="prelude-val">Some</span>(Epoch(<span class="number">1</span>)),

@@ -580,7 +580,11 @@
 <a href="#580" id="580">580</a>
 <a href="#581" id="581">581</a>
 <a href="#582" id="582">582</a>
+<a href="#583" id="583">583</a>
+<a href="#584" id="584">584</a>
+<a href="#585" id="585">585</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::database::provider::{CertificateRepository, SignedEntityStorer};
+<span class="kw">use </span>anyhow::anyhow;
 <span class="kw">use </span>mithril_common::{entities::Certificate, StdResult};
 <span class="kw">use </span>slog_scope::{debug, info, trace};
 <span class="kw">use </span>std::{collections::HashMap, sync::Arc};
@@ -645,10 +649,10 @@
                 <span class="kw">let </span>old_previous_hash = certificate.previous_hash.clone();
                 certificate.previous_hash = old_and_new_hashes
                     .get(<span class="kw-2">&amp;</span>certificate.previous_hash)
-                    .ok_or(<span class="macro">format!</span>(
+                    .ok_or(<span class="macro">anyhow!</span>(
                         <span class="string">&quot;Could not migrate certificate previous_hash: The hash &#39;{}&#39; doesn&#39;t exist in the certificate table&quot;</span>,
-                        certificate.previous_hash
-                    ))<span class="question-mark">?</span>.to_string();
+                        <span class="kw-2">&amp;</span>certificate.previous_hash
+                    ))<span class="question-mark">?</span>.to_owned();
 
                 old_previous_hash
             };
@@ -658,10 +662,12 @@
                 <span class="comment">// return none if the hash did not change to trigger an error
                 </span>(computed_hash != certificate.hash).then_some(computed_hash)
             }
-            .ok_or(<span class="macro">format!</span>(
+            .ok_or(<span class="macro">anyhow!</span>(
                 <span class="string">&quot;Hash did not change for certificate {:?}, hash: {}&quot;</span>,
-                certificate.beacon, certificate.hash
-            ))<span class="question-mark">?</span>;
+                certificate.beacon,
+                certificate.hash
+            ))<span class="question-mark">?
+            </span>.to_owned();
 
             old_and_new_hashes.insert(certificate.hash.clone(), new_hash.clone());
 
@@ -715,11 +721,11 @@
             <span class="kw">let </span>new_certificate_hash =
                 old_and_new_certificate_hashes
                     .get(<span class="kw-2">&amp;</span>signed_entity_record.certificate_id)
-                    .ok_or( <span class="macro">format!</span>(
+                    .ok_or( <span class="macro">anyhow!</span>(
                         <span class="string">&quot;Migration Error: no migrated hash found for signed entity with certificate id: {}&quot;</span>,
                         signed_entity_record.certificate_id
                     ))<span class="question-mark">?
-                    </span>.to_string();
+                    </span>.to_owned();
 
             <span class="macro">trace!</span>(
                 <span class="string">&quot;🔧 Certificate Hash Migrator: migrating signed entity {} certificate hash computed for certificate&quot;</span>,

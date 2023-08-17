@@ -500,6 +500,7 @@
 <a href="#500" id="500">500</a>
 <a href="#501" id="501">501</a>
 <a href="#502" id="502">502</a>
+<a href="#503" id="503">503</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::http_server::routes::middlewares;
 <span class="kw">use </span><span class="kw">crate</span>::DependencyContainer;
 <span class="kw">use </span>std::sync::Arc;
@@ -696,6 +697,7 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
+    <span class="kw">use </span>anyhow::anyhow;
     <span class="kw">use </span>mithril_common::entities::Epoch;
     <span class="kw">use </span>mithril_common::{
         crypto_helper::ProtocolRegistrationError,
@@ -979,7 +981,7 @@
         <span class="kw">let </span><span class="kw-2">mut </span>mock_verification_key_store = MockVerificationKeyStorer::new();
         mock_verification_key_store
             .expect_get_stake_distribution_for_epoch()
-            .return_once(|<span class="kw">_</span>| <span class="prelude-val">Err</span>(AdapterError::GeneralError(<span class="string">&quot;invalid query&quot;</span>.to_string()).into()));
+            .return_once(|<span class="kw">_</span>| <span class="prelude-val">Err</span>(AdapterError::GeneralError(<span class="macro">anyhow!</span>(<span class="string">&quot;invalid query&quot;</span>)).into()));
         <span class="kw">let </span><span class="kw-2">mut </span>dependency_manager = initialize_dependencies().<span class="kw">await</span>;
         dependency_manager.verification_key_store = Arc::new(mock_verification_key_store);
 
