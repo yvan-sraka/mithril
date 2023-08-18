@@ -40,6 +40,9 @@
 <a href="#40" id="40">40</a>
 <a href="#41" id="41">41</a>
 <a href="#42" id="42">42</a>
+<a href="#43" id="43">43</a>
+<a href="#44" id="44">44</a>
+<a href="#45" id="45">45</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>mithril_common::{
     entities::Signer,
     messages::{RegisterSignerMessage, TryFromMessageAdapter},
@@ -55,7 +58,10 @@
         <span class="prelude-val">Ok</span>(Signer {
             party_id: register_signer_message.party_id,
             verification_key: register_signer_message.verification_key.try_into()<span class="question-mark">?</span>,
-            verification_key_signature: register_signer_message.verification_key_signature,
+            verification_key_signature: <span class="kw">match </span>register_signer_message.verification_key_signature {
+                <span class="prelude-val">Some</span>(verification_key_signature) =&gt; <span class="prelude-val">Some</span>(verification_key_signature.try_into()<span class="question-mark">?</span>),
+                <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
+            },
             operational_certificate: <span class="kw">match </span>register_signer_message.operational_certificate {
                 <span class="prelude-val">Some</span>(operational_certificate) =&gt; <span class="prelude-val">Some</span>(operational_certificate.try_into()<span class="question-mark">?</span>),
                 <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,

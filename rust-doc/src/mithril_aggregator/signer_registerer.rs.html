@@ -453,19 +453,6 @@
 <a href="#453" id="453">453</a>
 <a href="#454" id="454">454</a>
 <a href="#455" id="455">455</a>
-<a href="#456" id="456">456</a>
-<a href="#457" id="457">457</a>
-<a href="#458" id="458">458</a>
-<a href="#459" id="459">459</a>
-<a href="#460" id="460">460</a>
-<a href="#461" id="461">461</a>
-<a href="#462" id="462">462</a>
-<a href="#463" id="463">463</a>
-<a href="#464" id="464">464</a>
-<a href="#465" id="465">465</a>
-<a href="#466" id="466">466</a>
-<a href="#467" id="467">467</a>
-<a href="#468" id="468">468</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>async_trait::async_trait;
 <span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>thiserror::Error;
@@ -473,9 +460,7 @@
 
 <span class="kw">use </span>mithril_common::{
     chain_observer::ChainObserver,
-    crypto_helper::{
-        key_decode_hex, KESPeriod, ProtocolKeyRegistration, ProtocolRegistrationError,
-    },
+    crypto_helper::{KESPeriod, ProtocolKeyRegistration, ProtocolRegistrationError},
     entities::{Epoch, Signer, SignerWithStake, StakeDistribution},
     store::StoreError,
     StdResult,
@@ -692,18 +677,7 @@
             <span class="string">&quot;&quot; </span>=&gt; <span class="prelude-val">None</span>,
             party_id =&gt; <span class="prelude-val">Some</span>(party_id.to_string()),
         };
-        <span class="kw">let </span>verification_key_signature = <span class="kw">match </span><span class="kw-2">&amp;</span>signer.verification_key_signature {
-            <span class="prelude-val">Some</span>(verification_key_signature) =&gt; <span class="prelude-val">Some</span>(
-                key_decode_hex(verification_key_signature)
-                    .map_err(SignerRegistrationError::Codec)<span class="question-mark">?</span>,
-            ),
-            <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
-        };
-        <span class="kw">let </span>operational_certificate = signer
-            .operational_certificate
-            .as_ref()
-            .map(|op_cert| op_cert.to_owned().into());
-        <span class="kw">let </span>kes_period = <span class="kw">match </span><span class="kw-2">&amp;</span>operational_certificate {
+        <span class="kw">let </span>kes_period = <span class="kw">match </span><span class="kw-2">&amp;</span>signer.operational_certificate {
             <span class="prelude-val">Some</span>(operational_certificate) =&gt; <span class="prelude-val">Some</span>(
                 <span class="self">self</span>.chain_observer
                     .get_current_kes_period(operational_certificate)
@@ -716,8 +690,8 @@
         };
         <span class="kw">let </span>party_id_save = key_registration.register(
             party_id_register.clone(),
-            operational_certificate,
-            verification_key_signature,
+            signer.operational_certificate.clone(),
+            signer.verification_key_signature.clone(),
             kes_period,
             signer.verification_key.clone(),
         )<span class="question-mark">?</span>;

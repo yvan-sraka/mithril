@@ -71,8 +71,19 @@
 <a href="#71" id="71">71</a>
 <a href="#72" id="72">72</a>
 <a href="#73" id="73">73</a>
+<a href="#74" id="74">74</a>
+<a href="#75" id="75">75</a>
+<a href="#76" id="76">76</a>
+<a href="#77" id="77">77</a>
+<a href="#78" id="78">78</a>
+<a href="#79" id="79">79</a>
+<a href="#80" id="80">80</a>
+<a href="#81" id="81">81</a>
+<a href="#82" id="82">82</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>mithril_common::{
-    crypto_helper::{ProtocolOpCert, ProtocolSignerVerificationKey},
+    crypto_helper::{
+        ProtocolOpCert, ProtocolSignerVerificationKey, ProtocolSignerVerificationKeySignature,
+    },
     entities::{CertificatePending, Signer},
     messages::{CertificatePendingMessage, SignerMessage, TryFromMessageAdapter},
     StdResult,
@@ -88,7 +99,14 @@
         <span class="kw">let </span>signer = Signer::new(
             msg.party_id.to_owned(),
             ProtocolSignerVerificationKey::from_json_hex(<span class="kw-2">&amp;</span>msg.verification_key)<span class="question-mark">?</span>,
-            msg.verification_key_signature.to_owned(),
+            <span class="kw">match </span><span class="kw-2">&amp;</span>msg.verification_key_signature {
+                <span class="prelude-val">Some</span>(verification_key_signature) =&gt; {
+                    <span class="prelude-val">Some</span>(ProtocolSignerVerificationKeySignature::from_json_hex(
+                        verification_key_signature,
+                    )<span class="question-mark">?</span>)
+                }
+                <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
+            },
             <span class="kw">match </span><span class="kw-2">&amp;</span>msg.operational_certificate {
                 <span class="prelude-val">Some</span>(operational_certificate) =&gt; {
                     <span class="prelude-val">Some</span>(ProtocolOpCert::from_json_hex(operational_certificate)<span class="question-mark">?</span>)
